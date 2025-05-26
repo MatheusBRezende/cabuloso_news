@@ -28,16 +28,27 @@ let CONFIG = {
 };
 
 fetch('/api/chave-google')
-  .then(response => response.json())
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    return response.json().catch(() => {
+      throw new Error("Resposta não é JSON válido");
+    });
+  })
   .then(data => {
-    console.log('Chave da API recebida:', data.apiKey);
-    CONFIG.apiKey = data.apiKey; // Atualiza a chave no CONFIG global
-
-    // Agora inicialize o app (após CONFIG estar pronto)
-    initApp();
+    if (!data.apiKey) {
+      throw new Error("Chave da API não encontrada na resposta");
+    }
+    console.log('Chave recebida:', data.apiKey);
+    CONFIG.apiKey = data.apiKey;
+    initApp(); // Só inicializa após ter a chave
   })
   .catch(error => {
-    console.error('Erro ao buscar chave da API:', error);
+    console.error("Falha ao carregar chave:", error);
+    // Exibe uma mensagem de erro para o usuário (opcional)
+    document.getElementById("erro-api").textContent = 
+      "Erro ao carregar dados. Recarregue a página ou tente mais tarde.";
   });
 
  const escudos = {

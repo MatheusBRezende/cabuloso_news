@@ -6,10 +6,9 @@ const PORT = 3000;
 
 app.use(express.static('public/meu-frontend'));
 
-// Rota da API para a chave
-app.get('/api/dados', (req, res) => {
-  const apiKey = process.env.GOOGLE_API_KEY;
-  res.json({ message: 'Chave acessada com sucesso!', apiKey });
+// Backend (Node.js)
+app.get('/api/chave-google', (req, res) => {
+  res.json({ apiKey: process.env.GOOGLE_API_KEY }); // Retorna JSON válido
 });
 
 // Rota simples na raiz só pra garantir
