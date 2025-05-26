@@ -1,6 +1,6 @@
 /*====CONST UNIVERSAIS====*/
 const CONFIG = {
- apiKey: process.env.GOOGLE_API_KEY || "AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8",
+  apiKey: process.env.GOOGLE_API_KEY,
   intervaloAtualizacao: 30000,
   planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
   intervaloJogos: "A2:F9",
