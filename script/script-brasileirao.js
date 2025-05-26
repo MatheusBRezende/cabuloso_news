@@ -1,6 +1,6 @@
 /**
  * Script para a página de competições do Cruzeiro
- * Versão otimizada e organizada - 2025
+ * Versão otimizada com detecção de jogos ao vivo e ícones de variação - 2025
  */
 
 const CONFIG = {
@@ -31,13 +31,36 @@ const CONFIG = {
   }
 };
 
-// ==================== INICIALIZAÇÃO ====================
+// Inicialização quando o DOM estiver carregado
 document.addEventListener("DOMContentLoaded", () => {
   createWhiteStars();
   console.log("Inicializando aplicação...");
   initApp();
 });
 
+function createWhiteStars() {
+  const starsContainer = document.querySelector(".stars-background")
+  if (!starsContainer) return
+
+  starsContainer.innerHTML = ""
+  const starCount = 80 // Número de estrelas
+
+  for (let i = 0; i < starCount; i++) {
+    const star = document.createElement("i")
+    star.className = "star bi bi-star-fill"
+    star.setAttribute("aria-hidden", "true")
+    star.style.fontSize = `${Math.random() * 0.8 + 0.6}rem`
+    star.style.left = `${Math.random() * 100}%`
+    star.style.top = `${Math.random() * 100}%`
+    const duration = Math.random() * 5 + 4
+    star.style.setProperty("--duration", `${duration}s`)
+    star.style.animationDelay = `${Math.random() * 10}s`
+    star.style.transform = `rotate(${Math.random() * 360}deg)`
+    starsContainer.appendChild(star)
+  }
+}
+
+// Função principal de inicialização
 async function initApp() {
   try {
     setupMobileNavigation();
@@ -63,37 +86,38 @@ async function initApp() {
   }
 }
 
-// ==================== EFEITOS VISUAIS ====================
-function createWhiteStars() {
-  const starsContainer = document.querySelector(".stars-background");
-  if (!starsContainer) return;
-
-  starsContainer.innerHTML = "";
-  const starCount = 80;
-
-  for (let i = 0; i < starCount; i++) {
-    const star = document.createElement("i");
-    star.className = "star bi bi-star-fill";
-    star.setAttribute("aria-hidden", "true");
-
-    star.style.fontSize = `${Math.random() * 0.8 + 0.6}rem`;
-    star.style.left = `${Math.random() * 100}%`;
-    star.style.top = `${Math.random() * 100}%`;
-
-    const duration = Math.random() * 5 + 4;
-    star.style.setProperty("--duration", `${duration}s`);
-    star.style.animationDelay = `${Math.random() * 10}s`;
-    star.style.transform = `rotate(${Math.random() * 360}deg)`;
-
-    starsContainer.appendChild(star);
-  }
+// Funções de utilidade geral
+function mostrarErroGeral(mensagem) {
+  const container = document.createElement("div");
+  container.className = "erro-geral";
+  container.innerHTML = `
+    <div class="alert alert-danger">
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>${mensagem}</p>
+      <button onclick="window.location.reload()">Recarregar</button>
+    </div>
+  `;
+  document.body.prepend(container);
 }
 
-// ==================== NAVEGAÇÃO E UI ====================
+function formatarData() {
+  return new Date()
+    .toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    })
+    .replace(",", " -");
+}
+
+// Configuração de listeners e navegação
 function setupEventListeners() {
   const campeonatoSelect = document.getElementById("campeonato-select");
   if (campeonatoSelect) {
-    campeonatoSelect.addEventListener("change", function() {
+    campeonatoSelect.addEventListener("change", function () {
       const campeonato = this.value;
       localStorage.setItem("campeonatoSelecionado", campeonato);
 
@@ -189,52 +213,7 @@ function setupBackToTop() {
   });
 }
 
-// ==================== FUNÇÕES UTILITÁRIAS ====================
-function mostrarErroGeral(mensagem) {
-  const container = document.createElement("div");
-  container.className = "erro-geral";
-  container.innerHTML = `
-    <div class="alert alert-danger">
-      <i class="fas fa-exclamation-triangle"></i>
-      <p>${mensagem}</p>
-      <button onclick="window.location.reload()">Recarregar</button>
-    </div>
-  `;
-  document.body.prepend(container);
-}
-
-function formatarData() {
-  return new Date()
-    .toLocaleTimeString("pt-BR", {
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      day: "2-digit",
-      month: "long",
-      year: "numeric",
-    })
-    .replace(",", " -");
-}
-
-function obterNumeroMes(nomeMes) {
-  const meses = {
-    'janeiro': '01', 'fevereiro': '02', 'março': '03', 'abril': '04',
-    'maio': '05', 'junho': '06', 'julho': '07', 'agosto': '08',
-    'setembro': '09', 'outubro': '10', 'novembro': '11', 'dezembro': '12'
-  };
-  return meses[nomeMes.toLowerCase()] || '00';
-}
-
-function formatarNomeCampeonato(nome) {
-  const mapeamento = {
-    "CONMEBOL Sudamericana": "Sul-Americana",
-    "Campeonato Brasileiro": "Campeonato Brasileiro",
-    "Copa do Brasil": "Copa do Brasil",
-  };
-  return mapeamento[nome] || nome;
-}
-
-// ==================== GERENCIAMENTO DE JOGOS ====================
+// Funções relacionadas a jogos
 async function carregarProximosJogos() {
   const container = document.querySelector(".lista-jogos");
   if (!container) return;
@@ -270,75 +249,168 @@ async function carregarProximosJogos() {
 }
 
 function processarDadosJogos(dados) {
-  return dados.filter(linha => linha.length > 0 && linha[0] && linha[0].trim() !== '')
-    .map((linha, index) => {
-      if (index === 0 && linha[0].toLowerCase().includes("data")) return null;
-      
-      const conteudo = linha[0].split('\n')
-        .map(item => item.trim())
-        .filter(item => item !== '');
+  // Identifica o índice do cabeçalho (linha que contém "DATA" ou "Jogo" ou "CAMPEONATO")
+  let headerIndex = -1;
+  for (let i = 0; i < dados.length; i++) {
+    const row = dados[i].map(cell => (cell || "").toString().toUpperCase());
+    if (
+      row.includes("DATA") &&
+      (row.includes("JOGO") || row.includes("TIME") || row.includes("CAMPEONATO"))
+    ) {
+      headerIndex = i;
+      break;
+    }
+  }
 
-      if (conteudo.length < 6) return null;
+  // Remove cabeçalho e linhas vazias
+  const linhas = dados.slice(headerIndex + 1).filter(row => {
+    // Considera linha válida se tem pelo menos 4 colunas preenchidas e não é vazia
+    return row && row.length >= 4 && row.some(cell => !!cell && cell.toString().trim() !== "");
+  });
 
+  return linhas.map((jogo) => {
+    // Data
+    let dataFormatada = "--/--";
+    if (typeof jogo[0] === "number") {
+      const data = new Date((jogo[0] - 25569) * 86400 * 1000);
+      dataFormatada = data.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+    } else if (typeof jogo[0] === "string" && jogo[0].match(/\d{1,2}[/\.]\d{1,2}/)) {
+      dataFormatada = jogo[0].replace(/\./g, "/");
+    } else if (typeof jogo[0] === "string") {
+      dataFormatada = jogo[0];
+    }
+
+    // Times
+    const timeCasa = (jogo[1] || "").trim();
+    const timeVisitante = (jogo[3] || "").trim();
+
+    // Fase
+    let fase = "";
+    if (jogo[2] && typeof jogo[2] === "string") {
+      if (jogo[2].toLowerCase().includes("ida")) fase = "Ida";
+      else if (jogo[2].toLowerCase().includes("volta")) fase = "Volta";
+      else fase = jogo[2];
+    }
+
+    // Placar
+    const placar = jogo[5] || "";
+
+    // Hora
+    let horaFormatada = "--:--";
+    let aoVivo = false;
+    if (jogo[7] === "LIVE" || jogo[7] === "AO VIVO") {
+      horaFormatada = "AO VIVO";
+      aoVivo = true;
+    } else if (typeof jogo[7] === "string" && jogo[7].match(/^\d{2}:\d{2}$/)) {
+      horaFormatada = jogo[7];
+    } else if (typeof jogo[7] === "number") {
+      const horaDecimal = Number.parseFloat(jogo[7]);
+      const horas = Math.floor(horaDecimal * 24);
+      const minutos = Math.round((horaDecimal * 24 - horas) * 60);
+      horaFormatada = `${horas.toString().padStart(2, "0")}:${minutos.toString().padStart(2, "0")}`;
+    } else if (jogo[4] && typeof jogo[4] === "string" && jogo[4].match(/^\d{2}:\d{2}$/)) {
+      // Se a coluna 7 não tem hora, tenta pegar da coluna 4 (algumas planilhas podem estar assim)
+      horaFormatada = jogo[4];
+    } else {
+      horaFormatada = jogo[7] || jogo[4] || "--:--";
+    }
+
+    // Campeonato
+    const campeonato = formatarNomeCampeonato(jogo[6] || jogo[5] || "Campeonato Desconhecido");
+
+    // Resultados
+    let resultadoCasa = "";
+    let resultadoVisitante = "";
+    if (placar && placar.includes('-')) {
+      const [golsCasa, golsVisitante] = placar.split('-').map(Number);
+      resultadoCasa = golsCasa > golsVisitante ? "vitoria" :
+        golsCasa < golsVisitante ? "derrota" : "empate";
+      resultadoVisitante = golsVisitante > golsCasa ? "vitoria" :
+        golsVisitante < golsCasa ? "derrota" : "empate";
+    }
+
+    // Identifica se é jogo do Cruzeiro
+    const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") ||
+      timeVisitante.toLowerCase().includes("cruzeiro");
+    const isMandante = timeCasa.toLowerCase().includes("cruzeiro");
+
+    return {
+      data: dataFormatada,
+      hora: horaFormatada,
+      campeonato: campeonato,
+      timeCasa: timeCasa || "Time Desconhecido",
+      escudoCasa: obterEscudoTime(timeCasa),
+      timeVisitante: timeVisitante || "Time Desconhecido",
+      escudoVisitante: obterEscudoTime(timeVisitante),
+      local: jogo[6] || "Local a definir",
+      transmissao: jogo[7] || "A definir",
+      isCruzeiro,
+      isMandante,
+      fase,
+      placar,
+      resultadoCasa,
+      resultadoVisitante,
+      aoVivo
+    };
+  })
+    .filter(jogo =>
+      jogo.timeCasa !== "DATA" &&
+      jogo.timeCasa !== "Jogo" &&
+      jogo.timeCasa !== "" &&
+      jogo.timeCasa !== "Time" &&
+      jogo.timeCasa !== "CAMPEONATO"
+    )
+    .sort((a, b) => {
       try {
-        const dataCompleta = conteudo[0];
-        const hora = conteudo[2];
-        const campeonato = conteudo[3];
-        const local = conteudo[4];
-        const transmissao = conteudo[5];
-        const confronto = conteudo[6];
-
-        const [dia, mes] = dataCompleta.split(' - ')[0].split(' de ');
-        const dataFormatada = `${dia.padStart(2, '0')}/${obterNumeroMes(mes)}`;
-
-        const [timeCasa, timeVisitante] = confronto.split(' x ').map(t => t.trim());
-
-        return {
-          data: dataFormatada,
-          hora: hora,
-          campeonato: campeonato,
-          timeCasa: timeCasa,
-          escudoCasa: obterEscudoTime(timeCasa),
-          timeVisitante: timeVisitante,
-          escudoVisitante: obterEscudoTime(timeVisitante),
-          local: local,
-          transmissao: transmissao,
-          isCruzeiro: timeCasa.toLowerCase().includes("cruzeiro") || 
-                     timeVisitante.toLowerCase().includes("cruzeiro"),
-          isMandante: timeCasa.toLowerCase().includes("cruzeiro"),
-          aoVivo: transmissao === "AO VIVO" || transmissao === "LIVE",
-          placar: "",
-          resultadoCasa: "",
-          resultadoVisitante: ""
-        };
-      } catch (error) {
-        console.error("Erro ao processar jogo:", linha, error);
-        return null;
+        const dateA = new Date(a.data.split("/").reverse().join("-"));
+        const dateB = new Date(b.data.split("/").reverse().join("-"));
+        return dateA - dateB;
+      } catch {
+        return 0;
       }
-    })
-    .filter(Boolean)
-    .sort(ordenarJogosPorData);
+    });
 }
 
-function ordenarJogosPorData(a, b) {
-  const [diaA, mesA] = a.data.split('/').map(Number);
-  const [diaB, mesB] = b.data.split('/').map(Number);
-  const [horaA, minutoA] = a.hora.split(':').map(Number);
-  const [horaB, minutoB] = b.hora.split(':').map(Number);
+function verificarJogoAoVivo(jogos) {
+  const agora = new Date();
+  return jogos.some(jogo => {
+    if (!jogo.data || !jogo.hora || jogo.placar) return false;
 
-  const dataA = new Date(2025, mesA - 1, diaA, horaA, minutoA);
-  const dataB = new Date(2025, mesB - 1, diaB, horaB, minutoB);
+    // Verifica se é hoje
+    const [dia, mes] = jogo.data.split('/');
+    const dataJogo = new Date();
+    dataJogo.setDate(parseInt(dia));
+    dataJogo.setMonth(parseInt(mes) - 1);
 
-  return dataA - dataB;
+    const hoje = new Date();
+    const mesmoDia = dataJogo.getDate() === hoje.getDate() &&
+      dataJogo.getMonth() === hoje.getMonth();
+
+    if (!mesmoDia) return false;
+
+    // Verifica horário (considerando que o jogo dura 2h30)
+    const [hora, minuto] = jogo.hora.split(':');
+    const inicioJogo = new Date();
+    inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
+    const fimJogo = new Date(inicioJogo.getTime() + (60 * 60 * 1000));
+
+    return agora >= inicioJogo && agora <= fimJogo;
+  });
+}
+
+function formatarNomeCampeonato(nome) {
+  const mapeamento = {
+    "CONMEBOL Sudamericana": "Sul-Americana",
+    "Campeonato Brasileiro": "Campeonato Brasileiro",
+    "Copa do Brasil": "Copa do Brasil",
+  };
+  return mapeamento[nome] || nome;
 }
 
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "") return 'https://via.placeholder.com/70';
 
   const escudos = {
-    "Unión de Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
-    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
-    "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
     "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
     "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
     "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
@@ -360,7 +432,9 @@ function obterEscudoTime(nomeTime) {
     "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
     "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
     "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
-    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png"
+    "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
+    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
+    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
   };
 
   const nomeLower = nomeTime.toLowerCase().trim();
@@ -377,7 +451,7 @@ function obterEscudoTime(nomeTime) {
     }
   }
 
-  return 'https://via.placeholder.com/70';
+  return 'https://via.placeholder.com/70'; // Escudo padrão caso não encontre
 }
 
 function exibirJogos(jogos, termosFiltro = ["todos"]) {
@@ -407,7 +481,7 @@ function exibirJogos(jogos, termosFiltro = ["todos"]) {
 
   container.innerHTML = jogosFiltrados
     .map((jogo) => {
-      const estaAoVivo = jogo.aoVivo && verificarJogoAoVivo(jogo);
+      const estaAoVivo = jogo.aoVivo && verificarJogoAoVivo([jogo]);
       const cruzeiroCasa = jogo.isCruzeiro && jogo.isMandante;
       const cruzeiroVisitante = jogo.isCruzeiro && !jogo.isMandante;
 
@@ -441,39 +515,19 @@ function exibirJogos(jogos, termosFiltro = ["todos"]) {
     .join("");
 }
 
-function verificarJogoAoVivo(jogo) {
-  if (!jogo.data || !jogo.hora || jogo.placar) return false;
-
-  // Verifica se é hoje
-  const [dia, mes] = jogo.data.split('/');
-  const dataJogo = new Date();
-  dataJogo.setDate(parseInt(dia));
-  dataJogo.setMonth(parseInt(mes) - 1);
-
-  const hoje = new Date();
-  const mesmoDia = dataJogo.getDate() === hoje.getDate() &&
-    dataJogo.getMonth() === hoje.getMonth();
-
-  if (!mesmoDia) return false;
-
-  // Verifica horário (considerando que o jogo dura 2h30)
-  const [hora, minuto] = jogo.hora.split(':');
-  const inicioJogo = new Date();
-  inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
-  const fimJogo = new Date(inicioJogo.getTime() + (2.5 * 60 * 60 * 1000));
-
-  return new Date() >= inicioJogo && new Date() <= fimJogo;
-}
-
 function abrirMinutoAMinuto(timeCasa, timeVisitante, campeonato) {
+  // Garante que os nomes estejam formatados corretamente
   timeCasa = timeCasa.trim();
   timeVisitante = timeVisitante.trim();
 
+  // Cria os escudos
   const escudoCasa = obterEscudoTime(timeCasa);
   const escudoVisitante = obterEscudoTime(timeVisitante);
 
+  // Cria um identificador único para o jogo
   const idJogo = `${timeCasa.replace(/\s+/g, '-')}-vs-${timeVisitante.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
 
+  // Armazena os dados do jogo no localStorage
   localStorage.setItem('jogoAoVivo', JSON.stringify({
     timeCasa,
     timeVisitante,
@@ -485,6 +539,7 @@ function abrirMinutoAMinuto(timeCasa, timeVisitante, campeonato) {
     planilhaId: '1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs'
   }));
 
+  // Redireciona para a página de minuto a minuto
   window.location.href = `minuto-a-minuto.html?id=${idJogo}`;
 }
 
@@ -498,28 +553,44 @@ function verificarEAjustarBotaoMinutoAMinuto() {
   if (jogoSalvo) {
     try {
       const jogo = JSON.parse(jogoSalvo);
+
+      // Verificar se o jogo é Mushuc Runa vs Cruzeiro (que já terminou)
+      if ((jogo.timeCasa === "Mushuc Runa" && jogo.timeVisitante === "Cruzeiro") ||
+        (jogo.timeCasa === "Cruzeiro" && jogo.timeVisitante === "Mushuc Runa")) {
+        // Remover o jogo do localStorage e esconder o botão
+        localStorage.removeItem('jogoAoVivo');
+        btnContainer.style.display = 'none';
+        return;
+      }
+
       const agora = new Date();
       const inicioJogo = new Date(jogo.horaInicio);
-      const fimJogo = new Date(inicioJogo.getTime() + (3 * 60 * 60 * 1000));
+      const fimJogo = new Date(inicioJogo.getTime() + (3 * 60 * 60 * 1000)); // 3 horas depois
 
+      // Mostra o botão apenas se o jogo está em andamento
       if (agora >= inicioJogo && agora <= fimJogo) {
+        // Atualiza o texto com os times que estão jogando
         if (btnTimes) {
           btnTimes.textContent = `${jogo.timeCasa} x ${jogo.timeVisitante}`;
         }
 
+        // Atualiza o link para incluir o ID do jogo
         const btnLink = btnContainer.querySelector('a');
         if (btnLink) {
           btnLink.href = `minuto-a-minuto.html?id=${jogo.idJogo}`;
         }
 
+        // Exibe o botão com animação
         btnContainer.style.display = 'block';
 
+        // Adiciona classe para destacar o botão se for um jogo do Cruzeiro
         if (jogo.timeCasa.includes('Cruzeiro') || jogo.timeVisitante.includes('Cruzeiro')) {
           btnContainer.classList.add('jogo-cruzeiro');
         } else {
           btnContainer.classList.remove('jogo-cruzeiro');
         }
       } else {
+        // Remove o jogo do localStorage se já terminou
         localStorage.removeItem('jogoAoVivo');
         btnContainer.style.display = 'none';
       }
@@ -529,6 +600,7 @@ function verificarEAjustarBotaoMinutoAMinuto() {
       btnContainer.style.display = 'none';
     }
   } else {
+    // Verifica se há algum jogo ao vivo agora
     verificarJogosAoVivo();
   }
 }
@@ -548,12 +620,22 @@ async function verificarJogosAoVivo() {
     }
 
     const jogos = processarDadosJogos(data.values);
-    const jogosAoVivo = jogos.filter(jogo => jogo.aoVivo);
+    const jogosAoVivo = jogos.filter(jogo => {
+      // Excluir o jogo Mushuc Runa vs Cruzeiro que já terminou
+      if ((jogo.timeCasa === "Mushuc Runa" && jogo.timeVisitante === "Cruzeiro") ||
+        (jogo.timeCasa === "Cruzeiro" && jogo.timeVisitante === "Mushuc Runa")) {
+        return false;
+      }
+      return jogo.aoVivo;
+    });
 
+    // Se encontrar jogos ao vivo, seleciona o primeiro (ou preferencialmente do Cruzeiro)
     if (jogosAoVivo.length > 0) {
+      // Prioriza jogos do Cruzeiro
       const jogoCruzeiro = jogosAoVivo.find(jogo => jogo.isCruzeiro);
       const jogoSelecionado = jogoCruzeiro || jogosAoVivo[0];
 
+      // Salva o jogo no localStorage
       const idJogo = `${jogoSelecionado.timeCasa.replace(/\s+/g, '-')}-vs-${jogoSelecionado.timeVisitante.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
 
       localStorage.setItem('jogoAoVivo', JSON.stringify({
@@ -567,6 +649,7 @@ async function verificarJogosAoVivo() {
         planilhaId: '1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs'
       }));
 
+      // Atualiza o botão
       verificarEAjustarBotaoMinutoAMinuto();
     }
   } catch (error) {
@@ -576,9 +659,72 @@ async function verificarJogosAoVivo() {
 
 document.addEventListener('DOMContentLoaded', () => {
   verificarEAjustarBotaoMinutoAMinuto();
+
+  // Verifica a cada minuto
   setInterval(verificarEAjustarBotaoMinutoAMinuto, 60000);
+
+  // Verifica jogos ao vivo a cada 5 minutos
   setInterval(verificarJogosAoVivo, 300000);
 });
+
+// Adicione um evento de clique para o botão ao vivo
+document.addEventListener('DOMContentLoaded', () => {
+  const btnAoVivo = document.querySelector('.btn-ao-vivo');
+  if (btnAoVivo) {
+    btnAoVivo.addEventListener('click', (e) => {
+      // Adiciona um efeito de clique
+      btnAoVivo.classList.add('btn-clicked');
+      setTimeout(() => {
+        btnAoVivo.classList.remove('btn-clicked');
+      }, 200);
+    });
+  }
+});
+
+async function carregarDadosMinutoAMinuto() {
+  try {
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs/values/MINUTO_A_MINUTO?key=${CONFIG.apiKey}`
+    );
+
+    if (!response.ok) throw new Error("Erro ao carregar minuto a minuto");
+
+    const data = await response.json();
+    if (!data.values || data.values.length === 0) {
+      throw new Error("Nenhum dado de minuto a minuto encontrado");
+    }
+
+    // Processa os dados para exibir na página
+    const eventos = data.values.slice(1); // Remove cabeçalho
+    exibirEventosMinutoAMinuto(eventos);
+  } catch (error) {
+    console.error("Erro ao carregar minuto a minuto:", error);
+  }
+}
+
+function exibirEventosMinutoAMinuto(eventos) {
+  const container = document.getElementById('narrativa-jogo');
+  if (!container) return;
+
+  container.innerHTML = eventos.map(evento => `
+    <div class="evento-jogo">
+      <span class="tempo-evento">${evento[0] || ''}</span>
+      <p>${evento[1] || ''} <strong>${evento[2] || ''}</strong></p>
+    </div>
+  `).join('');
+}
+
+function exibirErroJogos() {
+  const container = document.querySelector(".lista-jogos");
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="sem-jogos">
+      <i class="fas fa-exclamation-triangle"></i>
+      <p>Erro ao carregar jogos</p>
+    </div>
+  `;
+}
 
 function setupFiltrosJogos(jogos) {
   const filtrosContainer = document.querySelector(".filtros-jogos");
@@ -664,7 +810,7 @@ function setupWidgetJogos() {
   btnAbrir.style.display = "visible";
 }
 
-// ==================== TABELA DE CLASSIFICAÇÃO ====================
+// Funções relacionadas à tabela de classificação
 async function carregarTabela(campeonato = "brasileirao") {
   const config = CONFIG.campeonatos[campeonato];
   const tabelaContainer = document.getElementById("tabela-container");
@@ -699,15 +845,16 @@ async function carregarTabela(campeonato = "brasileirao") {
       }
 
       const jogos = processarDadosJogos(data.values);
-      
-      tabelaContainer.innerHTML = `
-        <div class="jogos-copa-container">
-          ${gerarHTMLCopaDoBrasil(jogos)}
-        </div>
-      `;
-      
-      if (verificarJogoAoVivo(jogos.find(j => j.isCruzeiro))) {
+
+      if (verificarJogoAoVivo(jogos)) {
+        tabelaContainer.innerHTML = `
+          <div class="jogos-copa-container">
+            ${gerarHTMLCopaDoBrasil(jogos)}
+          </div>
+        `;
         carregarDadosMinutoAMinuto();
+      } else {
+        tabelaContainer.innerHTML = gerarHTMLCopaDoBrasil(jogos);
       }
     } catch (error) {
       console.error("Erro ao carregar jogos:", error);
@@ -742,7 +889,7 @@ async function carregarTabela(campeonato = "brasileirao") {
     if (!data.values) throw new Error("Dados vazios");
 
     tabelaContainer.innerHTML = gerarHTMLTabela(data.values);
-    processarTabelaBrasileirao(data.values);
+    processarTabelaBrasileirao(data.values); // Processa para armazenar variações
   } catch (error) {
     console.error(`Erro ao carregar tabela do ${campeonato}:`, error);
     tabelaContainer.innerHTML = `
@@ -753,6 +900,37 @@ async function carregarTabela(campeonato = "brasileirao") {
     `;
     setTimeout(() => carregarTabela(campeonato), 30000);
   }
+}
+
+function calcularVariacaoPosicao(dadosAtuais) {
+  const dadosAnteriores = JSON.parse(localStorage.getItem('dadosClassificacao')) || {};
+  const variacoes = {};
+
+  dadosAtuais.forEach((time, index) => {
+    if (index === 0) return; // Pula cabeçalho
+
+    const nomeTime = time[1].replace(/^\d+°\s*/, '').trim();
+    const posicaoAnterior = dadosAnteriores[nomeTime]?.posicao;
+
+    if (posicaoAnterior !== undefined) {
+      variacoes[nomeTime] = {
+        variacao: posicaoAnterior - (index), // positivo = subiu, negativo = desceu
+        ultimaAtualizacao: new Date().getTime()
+      };
+    }
+  });
+
+  // Salva para próxima comparação
+  localStorage.setItem('dadosClassificacao', JSON.stringify(
+    dadosAtuais.reduce((acc, time, index) => {
+      if (index === 0) return acc; // Pula cabeçalho
+      const nomeTime = time[1].replace(/^\d+°\s*/, '').trim();
+      acc[nomeTime] = { posicao: index };
+      return acc;
+    }, {})
+  ));
+
+  return variacoes;
 }
 
 function gerarHTMLTabela(dados) {
@@ -784,9 +962,6 @@ function gerarHTMLTabela(dados) {
   `;
 
   const escudos = {
-    "Unión de Santa": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
-    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
-    "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
     "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
     "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
     "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
@@ -810,9 +985,10 @@ function gerarHTMLTabela(dados) {
     "Vila Nova": "https://logodetimes.com/times/vila-nova/logo-vila-nova-256.png",
     "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
     "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
-    "Unión de Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
+    "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
   };
 
+  // Busca dados anteriores para comparação
   const dadosAnteriores = JSON.parse(localStorage.getItem('dadosTimes')) || {};
   const novosDados = {};
 
@@ -824,12 +1000,14 @@ function gerarHTMLTabela(dados) {
       .trim();
     const pontosAtuais = parseInt(row[2] || 0);
 
+    // Armazena dados atuais para próxima comparação
     novosDados[nomeTime] = {
       pontos: pontosAtuais,
       jogos: parseInt(row[3] || 0),
       ultimaAtualizacao: new Date().getTime()
     };
 
+    // Verifica variação de pontos
     const timeAnterior = dadosAnteriores[nomeTime];
     let iconeVariacao = '';
 
@@ -838,7 +1016,7 @@ function gerarHTMLTabela(dados) {
       const variacaoJogos = parseInt(row[3] || 0) - (timeAnterior.jogos || 0);
       const minutosDesdeAtualizacao = (new Date().getTime() - (timeAnterior.ultimaAtualizacao || 0)) / (1000 * 60);
 
-      if (variacaoJogos > 0 && minutosDesdeAtualizacao < 120) {
+      if (variacaoJogos > 0 && minutosDesdeAtualizacao < 120) { // Só mostra se houve novo jogo e foi recente
         let classeAnimacao = minutosDesdeAtualizacao < 30 ? 'nova-variacao' : '';
 
         if (variacaoPontos === 3) {
@@ -876,13 +1054,14 @@ function gerarHTMLTabela(dados) {
     `;
   }
 
+  // Atualiza localStorage com os novos dados
   localStorage.setItem('dadosTimes', JSON.stringify(novosDados));
 
   return html + "</tbody></table>";
 }
 
 function processarTabelaBrasileirao(dados) {
-  const linhas = dados.slice(1);
+  const linhas = dados.slice(1); // Remove cabeçalho
   const dadosAtuais = {};
 
   linhas.forEach((linha, index) => {
@@ -897,7 +1076,7 @@ function processarTabelaBrasileirao(dados) {
       vitorias: parseInt(linha[4] || 0),
       empates: parseInt(linha[5] || 0),
       derrotas: parseInt(linha[6] || 0),
-      ultimaAtualizacao: new Date().getTime()
+      ultimaAtualizacao: new Date().getTime() // Adiciona timestamp
     };
   });
 
@@ -930,10 +1109,12 @@ function isCruzeiro(nomeTime) {
 }
 
 function iniciarAtualizacaoPeriodica() {
+  // Inicializa dados se não existirem
   if (!localStorage.getItem('dadosTimes')) {
     localStorage.setItem('dadosTimes', JSON.stringify({}));
   }
 
+  // Atualiza a cada 30 segundos
   setInterval(() => {
     const campeonatoSelect = document.getElementById("campeonato-select");
     const campeonato = campeonatoSelect?.value || "brasileirao";
@@ -941,11 +1122,48 @@ function iniciarAtualizacaoPeriodica() {
   }, 30000);
 }
 
-// ==================== COPA DO BRASIL ====================
+// Funções para controle de legendas
+function atualizarLegendas(campeonato) {
+  const legenda = document.querySelector(".legenda");
+  const legendaItens = document.querySelectorAll('.legenda-item');
+
+  if (campeonato === "copa-do-brasil") {
+    if (legenda) legenda.style.display = "none";
+    return;
+  }
+
+  if (legenda) legenda.style.display = "flex";
+
+  legendaItens.forEach(item => {
+    const camp = item.getAttribute('data-campeonato');
+    if (camp === campeonato) {
+      item.style.display = 'flex';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+
+// Event listeners para legendas
+const select = document.getElementById('campeonato-select');
+if (select) {
+  select.addEventListener('change', () => {
+    atualizarLegendas(select.value);
+  });
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  if (select) {
+    atualizarLegendas(select.value);
+  }
+});
+
+// Funções para a Copa do Brasil
 function gerarHTMLCopaDoBrasil(jogos) {
   let html = '';
   const jogosCopa = jogos.filter((jogo) => jogo.campeonato.includes("Copa do Brasil"));
-  const jogosCruzeiroCopa = jogosCopa.filter(jogo => jogo.isCruzeiro);
+
+    const jogosCruzeiroCopa = jogosCopa.filter(jogo => jogo.isCruzeiro);
   
   if (jogosCruzeiroCopa.length === 0) {
     return `
@@ -955,9 +1173,9 @@ function gerarHTMLCopaDoBrasil(jogos) {
       </div>
     `;
   }
-
-  const jogosIda = jogosCruzeiroCopa.filter((jogo) => jogo.fase === "Ida");
-  const jogosVolta = jogosCruzeiroCopa.filter((jogo) => jogo.fase === "Volta");
+  
+  const jogosIda = jogosCopa.filter((jogo) => jogo.fase === "Ida");
+  const jogosVolta = jogosCopa.filter((jogo) => jogo.fase === "Volta");
 
   if (jogosIda.length > 0) {
     html += '<div class="fase-copa">';
@@ -1001,47 +1219,32 @@ function gerarHTMLJogoCopa(jogo) {
   `;
 }
 
-// ==================== MINUTO A MINUTO ====================
-async function carregarDadosMinutoAMinuto() {
-  try {
-    const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs/values/MINUTO_A_MINUTO?key=${CONFIG.apiKey}`
-    );
+function verificarJogoEncerrado(jogo) {
+  if (!jogo.data || !jogo.hora || !jogo.placar) return false;
 
-    if (!response.ok) throw new Error("Erro ao carregar minuto a minuto");
+  // Verifica se é hoje ou no passado
+  const [dia, mes] = jogo.data.split('/');
+  const dataJogo = new Date();
+  dataJogo.setDate(parseInt(dia));
+  dataJogo.setMonth(parseInt(mes) - 1);
 
-    const data = await response.json();
-    if (!data.values || data.values.length === 0) {
-      throw new Error("Nenhum dado de minuto a minuto encontrado");
-    }
+  const agora = new Date();
 
-    const eventos = data.values.slice(1);
-    exibirEventosMinutoAMinuto(eventos);
-  } catch (error) {
-    console.error("Erro ao carregar minuto a minuto:", error);
+  // Se a data do jogo é anterior a hoje, certamente terminou
+  if (dataJogo < new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())) {
+    return true;
   }
-}
 
-function exibirEventosMinutoAMinuto(eventos) {
-  const container = document.getElementById('narrativa-jogo');
-  if (!container) return;
+  // Se for hoje, verifica o horário
+  if (dataJogo.getDate() === agora.getDate() &&
+    dataJogo.getMonth() === agora.getMonth()) {
+    const [hora, minuto] = jogo.hora.split(':');
+    const inicioJogo = new Date();
+    inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
+    const fimJogo = new Date(inicioJogo.getTime() + (2.5 * 60 * 60 * 1000));
 
-  container.innerHTML = eventos.map(evento => `
-    <div class="evento-jogo">
-      <span class="tempo-evento">${evento[0] || ''}</span>
-      <p>${evento[1] || ''} <strong>${evento[2] || ''}</strong></p>
-    </div>
-  `).join('');
-}
+    return agora > fimJogo;
+  }
 
-function exibirErroJogos() {
-  const container = document.querySelector(".lista-jogos");
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="sem-jogos">
-      <i class="fas fa-exclamation-triangle"></i>
-      <p>Erro ao carregar jogos</p>
-    </div>
-  `;
+  return false;
 }
