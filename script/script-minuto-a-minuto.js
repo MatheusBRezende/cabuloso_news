@@ -1,5 +1,5 @@
 // Variáveis globais
-const apiKey = import.meta.env.SHEETS;
+const apiKey = process.env.SHEETS;
 let cache = { ultimoPlacar: { home: 0, visitante: 0 }, ultimaAtualizacao: 0 };
 let ultimoPlacarProcessado = null;
 let timestampUltimoPlacar = 0;
