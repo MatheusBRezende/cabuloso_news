@@ -1,11 +1,12 @@
-/*====CONST UNIVERSAIS====*/
+/*====CARREGAR CHAVE DO BACKEND====*/
 fetch('/api/chave-google')
   .then(response => response.json())
   .then(data => {
     console.log('API key recebida do backend:', data.apiKey);
 
+    // Define a variável CONFIG de forma global
     const CONFIG = {
-      apiKey: data.apiKey,  
+      apiKey: data.apiKey,
       intervaloAtualizacao: 30000,
       planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
       intervaloJogos: "A2:F9",
@@ -31,7 +32,13 @@ fetch('/api/chave-google')
         },
       }
     };
-     })
+
+    // Agora que CONFIG existe, podemos iniciar o app
+    initApp(CONFIG);
+  })
+  .catch(err => {
+    console.error('Erro ao buscar a chave:', err);
+  });
 
  const escudos = {
     "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
