@@ -1,8 +1,4 @@
-/**
- * Script para a página de competições do Cruzeiro
- * Versão otimizada com detecção de jogos ao vivo e ícones de variação - 2025
- */
-
+/*====CONST UNIVERSAIS====*/
 const CONFIG = {
   apiKey: "AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8",
   intervaloAtualizacao: 30000,
@@ -31,6 +27,34 @@ const CONFIG = {
   }
 };
 
+ const escudos = {
+    "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
+    "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
+    "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
+    "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+    "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
+    "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
+    "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
+    "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
+    "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
+    "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
+    "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
+    "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+    "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
+    "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
+    "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
+    "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+    "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
+    "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
+    "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
+    "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
+    "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
+    "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
+    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
+    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
+    "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
+  };
+
 // Inicialização quando o DOM estiver carregado
 document.addEventListener("DOMContentLoaded", () => {
   createWhiteStars();
@@ -38,6 +62,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initApp();
 });
 
+/*====CRIAÇÃO DE ESTRELAS====*/
 function createWhiteStars() {
   const starsContainer = document.querySelector(".stars-background")
   if (!starsContainer) return
@@ -86,7 +111,7 @@ async function initApp() {
   }
 }
 
-// Funções de utilidade geral
+/*====FUNÇÕES DE UTILIDADE GERAL====*/
 function mostrarErroGeral(mensagem) {
   const container = document.createElement("div");
   container.className = "erro-geral";
@@ -249,7 +274,6 @@ async function carregarProximosJogos() {
 }
 
 function processarDadosJogos(dados) {
-  // Identifica o índice do cabeçalho (linha que contém "DATA" ou "Jogo" ou "CAMPEONATO")
   let headerIndex = -1;
   for (let i = 0; i < dados.length; i++) {
     const row = dados[i].map(cell => (cell || "").toString().toUpperCase());
@@ -261,10 +285,7 @@ function processarDadosJogos(dados) {
       break;
     }
   }
-
-  // Remove cabeçalho e linhas vazias
   const linhas = dados.slice(headerIndex + 1).filter(row => {
-    // Considera linha válida se tem pelo menos 4 colunas preenchidas e não é vazia
     return row && row.length >= 4 && row.some(cell => !!cell && cell.toString().trim() !== "");
   });
 
@@ -309,7 +330,6 @@ function processarDadosJogos(dados) {
       const minutos = Math.round((horaDecimal * 24 - horas) * 60);
       horaFormatada = `${horas.toString().padStart(2, "0")}:${minutos.toString().padStart(2, "0")}`;
     } else if (jogo[4] && typeof jogo[4] === "string" && jogo[4].match(/^\d{2}:\d{2}$/)) {
-      // Se a coluna 7 não tem hora, tenta pegar da coluna 4 (algumas planilhas podem estar assim)
       horaFormatada = jogo[4];
     } else {
       horaFormatada = jogo[7] || jogo[4] || "--:--";
@@ -328,8 +348,6 @@ function processarDadosJogos(dados) {
       resultadoVisitante = golsVisitante > golsCasa ? "vitoria" :
         golsVisitante < golsCasa ? "derrota" : "empate";
     }
-
-    // Identifica se é jogo do Cruzeiro
     const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") ||
       timeVisitante.toLowerCase().includes("cruzeiro");
     const isMandante = timeCasa.toLowerCase().includes("cruzeiro");
@@ -388,7 +406,7 @@ function verificarJogoAoVivo(jogos) {
 
     if (!mesmoDia) return false;
 
-    // Verifica horário (considerando que o jogo dura 2h30)
+    
     const [hora, minuto] = jogo.hora.split(':');
     const inicioJogo = new Date();
     inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
@@ -410,48 +428,22 @@ function formatarNomeCampeonato(nome) {
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "") return 'https://via.placeholder.com/70';
 
-  const escudos = {
-    "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
-    "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
-    "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
-    "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-    "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
-    "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
-    "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
-    "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
-    "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
-    "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
-    "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-    "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
-    "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
-    "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-    "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
-    "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
-    "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
-    "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
-    "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
-    "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
-    "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
-    "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
-    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
-    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
-  };
 
   const nomeLower = nomeTime.toLowerCase().trim();
 
-  // Verifica correspondência exata primeiro
+  
   for (const [key, value] of Object.entries(escudos)) {
     if (key.toLowerCase() === nomeLower) return value;
   }
 
-  // Depois verifica correspondência parcial
+  
   for (const [key, value] of Object.entries(escudos)) {
     if (key.toLowerCase().includes(nomeLower) || nomeLower.includes(key.toLowerCase())) {
       return value;
     }
   }
 
-  return 'https://via.placeholder.com/70'; // Escudo padrão caso não encontre
+  return 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1024px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png';
 }
 
 function exibirJogos(jogos, termosFiltro = ["todos"]) {
@@ -516,18 +508,14 @@ function exibirJogos(jogos, termosFiltro = ["todos"]) {
 }
 
 function abrirMinutoAMinuto(timeCasa, timeVisitante, campeonato) {
-  // Garante que os nomes estejam formatados corretamente
   timeCasa = timeCasa.trim();
   timeVisitante = timeVisitante.trim();
 
-  // Cria os escudos
   const escudoCasa = obterEscudoTime(timeCasa);
   const escudoVisitante = obterEscudoTime(timeVisitante);
 
-  // Cria um identificador único para o jogo
   const idJogo = `${timeCasa.replace(/\s+/g, '-')}-vs-${timeVisitante.replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}`;
 
-  // Armazena os dados do jogo no localStorage
   localStorage.setItem('jogoAoVivo', JSON.stringify({
     timeCasa,
     timeVisitante,
@@ -553,16 +541,6 @@ function verificarEAjustarBotaoMinutoAMinuto() {
   if (jogoSalvo) {
     try {
       const jogo = JSON.parse(jogoSalvo);
-
-      // Verificar se o jogo é Mushuc Runa vs Cruzeiro (que já terminou)
-      if ((jogo.timeCasa === "Mushuc Runa" && jogo.timeVisitante === "Cruzeiro") ||
-        (jogo.timeCasa === "Cruzeiro" && jogo.timeVisitante === "Mushuc Runa")) {
-        // Remover o jogo do localStorage e esconder o botão
-        localStorage.removeItem('jogoAoVivo');
-        btnContainer.style.display = 'none';
-        return;
-      }
-
       const agora = new Date();
       const inicioJogo = new Date(jogo.horaInicio);
       const fimJogo = new Date(inicioJogo.getTime() + (3 * 60 * 60 * 1000)); // 3 horas depois
@@ -620,16 +598,9 @@ async function verificarJogosAoVivo() {
     }
 
     const jogos = processarDadosJogos(data.values);
-    const jogosAoVivo = jogos.filter(jogo => {
-      // Excluir o jogo Mushuc Runa vs Cruzeiro que já terminou
-      if ((jogo.timeCasa === "Mushuc Runa" && jogo.timeVisitante === "Cruzeiro") ||
-        (jogo.timeCasa === "Cruzeiro" && jogo.timeVisitante === "Mushuc Runa")) {
-        return false;
-      }
-      return jogo.aoVivo;
-    });
+    const jogosAoVivo = jogos.filter(jogo => {return jogo.aoVivo;});
 
-    // Se encontrar jogos ao vivo, seleciona o primeiro (ou preferencialmente do Cruzeiro)
+   
     if (jogosAoVivo.length > 0) {
       // Prioriza jogos do Cruzeiro
       const jogoCruzeiro = jogosAoVivo.find(jogo => jogo.isCruzeiro);
@@ -694,8 +665,8 @@ async function carregarDadosMinutoAMinuto() {
       throw new Error("Nenhum dado de minuto a minuto encontrado");
     }
 
-    // Processa os dados para exibir na página
-    const eventos = data.values.slice(1); // Remove cabeçalho
+    
+    const eventos = data.values.slice(1); 
     exibirEventosMinutoAMinuto(eventos);
   } catch (error) {
     console.error("Erro ao carregar minuto a minuto:", error);
@@ -902,37 +873,6 @@ async function carregarTabela(campeonato = "brasileirao") {
   }
 }
 
-function calcularVariacaoPosicao(dadosAtuais) {
-  const dadosAnteriores = JSON.parse(localStorage.getItem('dadosClassificacao')) || {};
-  const variacoes = {};
-
-  dadosAtuais.forEach((time, index) => {
-    if (index === 0) return; // Pula cabeçalho
-
-    const nomeTime = time[1].replace(/^\d+°\s*/, '').trim();
-    const posicaoAnterior = dadosAnteriores[nomeTime]?.posicao;
-
-    if (posicaoAnterior !== undefined) {
-      variacoes[nomeTime] = {
-        variacao: posicaoAnterior - (index), // positivo = subiu, negativo = desceu
-        ultimaAtualizacao: new Date().getTime()
-      };
-    }
-  });
-
-  // Salva para próxima comparação
-  localStorage.setItem('dadosClassificacao', JSON.stringify(
-    dadosAtuais.reduce((acc, time, index) => {
-      if (index === 0) return acc; // Pula cabeçalho
-      const nomeTime = time[1].replace(/^\d+°\s*/, '').trim();
-      acc[nomeTime] = { posicao: index };
-      return acc;
-    }, {})
-  ));
-
-  return variacoes;
-}
-
 function gerarHTMLTabela(dados) {
   if (!dados || dados.length === 0) {
     return '<div class="error">Nenhum dado disponível</div>';
@@ -961,36 +901,7 @@ function gerarHTMLTabela(dados) {
       <tbody>
   `;
 
-  const escudos = {
-    "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
-    "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
-    "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
-    "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-    "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
-    "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
-    "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
-    "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
-    "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
-    "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
-    "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-    "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
-    "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
-    "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-    "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
-    "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
-    "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
-    "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
-    "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
-    "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
-    "Vila Nova": "https://logodetimes.com/times/vila-nova/logo-vila-nova-256.png",
-    "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
-    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
-    "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
-  };
 
-  // Busca dados anteriores para comparação
-  const dadosAnteriores = JSON.parse(localStorage.getItem('dadosTimes')) || {};
-  const novosDados = {};
 
   for (let i = startRow; i < dados.length; i++) {
     const row = dados[i];
@@ -998,36 +909,11 @@ function gerarHTMLTabela(dados) {
       .replace(/^\d+°\s*/, "")
       .replace(/\s[A-Z]{2,4}$/, "")
       .trim();
-    const pontosAtuais = parseInt(row[2] || 0);
+    parseInt(row[2] || 0);
 
-    // Armazena dados atuais para próxima comparação
-    novosDados[nomeTime] = {
-      pontos: pontosAtuais,
-      jogos: parseInt(row[3] || 0),
-      ultimaAtualizacao: new Date().getTime()
-    };
+ 
 
-    // Verifica variação de pontos
-    const timeAnterior = dadosAnteriores[nomeTime];
-    let iconeVariacao = '';
 
-    if (timeAnterior) {
-      const variacaoPontos = pontosAtuais - timeAnterior.pontos;
-      const variacaoJogos = parseInt(row[3] || 0) - (timeAnterior.jogos || 0);
-      const minutosDesdeAtualizacao = (new Date().getTime() - (timeAnterior.ultimaAtualizacao || 0)) / (1000 * 60);
-
-      if (variacaoJogos > 0 && minutosDesdeAtualizacao < 120) { // Só mostra se houve novo jogo e foi recente
-        let classeAnimacao = minutosDesdeAtualizacao < 30 ? 'nova-variacao' : '';
-
-        if (variacaoPontos === 3) {
-          iconeVariacao = `<span class="variacao-pontos variacao-up ${classeAnimacao}" title="Ganhou 3 pontos no último jogo">↑</span>`;
-        } else if (variacaoPontos === 1) {
-          iconeVariacao = `<span class="variacao-pontos variacao-equal ${classeAnimacao}" title="Empatou no último jogo (+1 ponto)">─</span>`;
-        } else if (variacaoPontos === 0) {
-          iconeVariacao = `<span class="variacao-pontos variacao-down ${classeAnimacao}" title="Perdeu o último jogo (sem pontos)">↓</span>`;
-        }
-      }
-    }
 
     const posicaoClass = getPositionClass(i);
     const cruzeiroClass = isCruzeiro(nomeTime) ? "cruzeiro" : "";
@@ -1039,7 +925,6 @@ function gerarHTMLTabela(dados) {
         <td class="time">
           <img src="${escudoTime}" alt="${nomeTime}" class="escudo" loading="lazy">
           <span>${nomeTime}</span>
-          ${iconeVariacao}
         </td>
         <td>${row[2] || 0}</td>
         <td>${row[3] || 0}</td>
@@ -1054,8 +939,6 @@ function gerarHTMLTabela(dados) {
     `;
   }
 
-  // Atualiza localStorage com os novos dados
-  localStorage.setItem('dadosTimes', JSON.stringify(novosDados));
 
   return html + "</tbody></table>";
 }
