@@ -1,31 +1,37 @@
 /*====CONST UNIVERSAIS====*/
-const CONFIG = {
-  apiKey: process.env.GOOGLE_API_KEY,
-  intervaloAtualizacao: 30000,
-  planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
-  intervaloJogos: "A2:F9",
-  campeonatos: {
-    brasileirao: {
-      nome: "Brasileirão Série A 2025",
-      sheetId: "1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0",
-      intervaloDados: "A1:M21",
-      cor: "#0033A0",
-    },
-    "sul-americana": {
-      nome: "Sul-Americana 2025",
-      sheetId: "196poqvqSo7aRm5P8o0ljNIQvA_mXnCSKfLyG7ic8teE",
-      intervaloDados: "A1:J5",
-      cor: "#0033A0",
-      tipo: "grupos",
-    },
-    "copa-do-brasil": {
-      nome: "Copa do Brasil 2025",
-      sheetId: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
-      intervaloDados: "A1:F10",
-      cor: "#0033A0",
-    },
-  }
-};
+fetch('/api/chave-google')
+  .then(response => response.json())
+  .then(data => {
+    console.log('API key recebida do backend:', data.apiKey);
+
+    const CONFIG = {
+      apiKey: data.apiKey,  
+      intervaloAtualizacao: 30000,
+      planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
+      intervaloJogos: "A2:F9",
+      campeonatos: {
+        brasileirao: {
+          nome: "Brasileirão Série A 2025",
+          sheetId: "1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0",
+          intervaloDados: "A1:M21",
+          cor: "#0033A0",
+        },
+        "sul-americana": {
+          nome: "Sul-Americana 2025",
+          sheetId: "196poqvqSo7aRm5P8o0ljNIQvA_mXnCSKfLyG7ic8teE",
+          intervaloDados: "A1:J5",
+          cor: "#0033A0",
+          tipo: "grupos",
+        },
+        "copa-do-brasil": {
+          nome: "Copa do Brasil 2025",
+          sheetId: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
+          intervaloDados: "A1:F10",
+          cor: "#0033A0",
+        },
+      }
+    };
+     })
 
  const escudos = {
     "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
