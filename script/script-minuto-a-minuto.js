@@ -1,4 +1,5 @@
 // Variáveis globais
+const apiKey = import.meta.env.SHEETS;
 let cache = { ultimoPlacar: { home: 0, visitante: 0 }, ultimaAtualizacao: 0 };
 let ultimoPlacarProcessado = null;
 let timestampUltimoPlacar = 0;
@@ -9,7 +10,6 @@ let placarAtual = { home: 0, visitante: 0 };
 document.addEventListener("DOMContentLoaded", async () => {
   const config = {
     planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
-    apiKey: "AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8",
     nomeAba: "minutoaminuto",
     nomeAbaEstatisticas: "minutoaminuto",
   };
@@ -25,7 +25,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     escudoVisitante: urlParams.get('escudoVisitante') || (jogoSalvo ? JSON.parse(jogoSalvo).escudoVisitante : ""),
     campeonato: urlParams.get('campeonato') || (jogoSalvo ? JSON.parse(jogoSalvo).campeonato : ""),
     planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
-    apiKey: "AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8"
   };
 
   // Garante que não há valores nulos
@@ -55,7 +54,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await Promise.all([
           carregarDadosDaPlanilha(
             config.planilhaId,
-            config.apiKey,
+            apiKey,
             config.nomeAba,
             jogoAoVivo.timeCasa,
             jogoAoVivo.timeVisitante,
@@ -64,7 +63,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           ),
           carregarEstatisticas(
             config.planilhaId,
-            config.apiKey,
+            apiKey,
             config.nomeAbaEstatisticas,
             jogoAoVivo.timeCasa,
             jogoAoVivo.timeVisitante
@@ -84,7 +83,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([
       carregarDadosDaPlanilha(
         config.planilhaId,
-        config.apiKey,
+        apiKey,
         config.nomeAba,
         jogoAoVivo.timeCasa,
         jogoAoVivo.timeVisitante,
@@ -93,7 +92,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ),
       carregarEstatisticas(
         config.planilhaId,
-        config.apiKey,
+        apiKey,
         config.nomeAbaEstatisticas,
         jogoAoVivo.timeCasa,
         jogoAoVivo.timeVisitante
@@ -109,7 +108,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await Promise.all([
         carregarDadosDaPlanilha(
           config.planilhaId,
-          config.apiKey,
+          apiKey,
           config.nomeAba,
           jogoAoVivo.timeCasa,
           jogoAoVivo.timeVisitante,
@@ -118,7 +117,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ),
         carregarEstatisticas(
           config.planilhaId,
-          config.apiKey,
+          apiKey,
           config.nomeAbaEstatisticas,
           jogoAoVivo.timeCasa,
           jogoAoVivo.timeVisitante

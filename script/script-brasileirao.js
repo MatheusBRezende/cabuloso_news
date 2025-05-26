@@ -1,6 +1,6 @@
 /*====CONST UNIVERSAIS====*/
+const apiKey = import.meta.env.SHEETS;
 const CONFIG = {
-  apiKey: "AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8",
   intervaloAtualizacao: 30000,
   planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
   intervaloJogos: "A2:F9",
@@ -253,7 +253,7 @@ async function carregarProximosJogos() {
   try {
     const timestamp = new Date().getTime();
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}&t=${timestamp}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${apiKey}&t=${timestamp}`
     );
 
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
@@ -587,7 +587,7 @@ async function verificarJogosAoVivo() {
   try {
     const timestamp = new Date().getTime();
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}&t=${timestamp}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${apiKey}&t=${timestamp}`
     );
 
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
@@ -655,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
 async function carregarDadosMinutoAMinuto() {
   try {
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs/values/MINUTO_A_MINUTO?key=${CONFIG.apiKey}`
+      `https://sheets.googleapis.com/v4/spreadsheets/1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs/values/MINUTO_A_MINUTO?key=${apiKey}`
     );
 
     if (!response.ok) throw new Error("Erro ao carregar minuto a minuto");
@@ -805,7 +805,7 @@ async function carregarTabela(campeonato = "brasileirao") {
     try {
       const timestamp = new Date().getTime();
       const response = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}&t=${timestamp}`
+        `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${apiKey}&t=${timestamp}`
       );
 
       if (!response.ok) throw new Error("Erro na resposta da API");
@@ -849,7 +849,7 @@ async function carregarTabela(campeonato = "brasileirao") {
 
   try {
     const timestamp = new Date().getTime();
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${config.intervaloDados}?key=${CONFIG.apiKey}&t=${timestamp}`;
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${config.intervaloDados}?key=${apiKey}&t=${timestamp}`;
 
     console.log(`Carregando dados de: ${url}`);
     const response = await fetch(url);
