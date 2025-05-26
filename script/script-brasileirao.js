@@ -1,5 +1,5 @@
 /*====CONST UNIVERSAIS====*/
-const apiKey = process.env.SHEETS;
+const apiKey = import.meta.env.VITE_SHEETS;
 const CONFIG = {
   intervaloAtualizacao: 30000,
   planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
