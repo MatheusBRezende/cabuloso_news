@@ -1,21 +1,26 @@
+
 require('dotenv').config();
 const express = require('express');
+const path = require('path');  // Adicione esta linha
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
+// Configuração correta para arquivos estáticos
+app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(express.static('public/meu-frontend'));
-
-// Backend (Node.js)
+// Sua rota de API deve vir ANTES do static
 app.get('/api/chave-google', (req, res) => {
-  res.json({ apiKey: process.env.GOOGLE_API_KEY }); // Retorna JSON válido
+  if (!process.env.GOOGLE_API_KEY) {
+    return res.status(500).json({ error: "Chave API não configurada" });
+  }
+  res.json({ apiKey: process.env.GOOGLE_API_KEY });
 });
 
-// Rota simples na raiz só pra garantir
-app.get('/', (req, res) => {
-  res.send('Olá, backend rodando!');
+// Rota fallback para SPA (opcional)
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
