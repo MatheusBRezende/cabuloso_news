@@ -1,43 +1,43 @@
-/*====CARREGAR CHAVE DO BACKEND====*/
+/*====CONST UNIVERSAIS====*/
+let CONFIG = {
+  apiKey: null, // Inicialmente nulo (será preenchido pelo fetch)
+  intervaloAtualizacao: 30000,
+  planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
+  intervaloJogos: "A2:F9",
+  campeonatos: {
+    brasileirao: {
+      nome: "Brasileirão Série A 2025",
+      sheetId: "1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0",
+      intervaloDados: "A1:M21",
+      cor: "#0033A0",
+    },
+    "sul-americana": {
+      nome: "Sul-Americana 2025",
+      sheetId: "196poqvqSo7aRm5P8o0ljNIQvA_mXnCSKfLyG7ic8teE",
+      intervaloDados: "A1:J5",
+      cor: "#0033A0",
+      tipo: "grupos",
+    },
+    "copa-do-brasil": {
+      nome: "Copa do Brasil 2025",
+      sheetId: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
+      intervaloDados: "A1:F10",
+      cor: "#0033A0",
+    },
+  }
+};
+
 fetch('/api/chave-google')
   .then(response => response.json())
   .then(data => {
-    console.log('API key recebida do backend:', data.apiKey);
+    console.log('Chave da API recebida:', data.apiKey);
+    CONFIG.apiKey = data.apiKey; // Atualiza a chave no CONFIG global
 
-    // Define a variável CONFIG de forma global
-    const CONFIG = {
-      apiKey: data.apiKey,
-      intervaloAtualizacao: 30000,
-      planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
-      intervaloJogos: "A2:F9",
-      campeonatos: {
-        brasileirao: {
-          nome: "Brasileirão Série A 2025",
-          sheetId: "1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0",
-          intervaloDados: "A1:M21",
-          cor: "#0033A0",
-        },
-        "sul-americana": {
-          nome: "Sul-Americana 2025",
-          sheetId: "196poqvqSo7aRm5P8o0ljNIQvA_mXnCSKfLyG7ic8teE",
-          intervaloDados: "A1:J5",
-          cor: "#0033A0",
-          tipo: "grupos",
-        },
-        "copa-do-brasil": {
-          nome: "Copa do Brasil 2025",
-          sheetId: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
-          intervaloDados: "A1:F10",
-          cor: "#0033A0",
-        },
-      }
-    };
-
-    // Agora que CONFIG existe, podemos iniciar o app
-    initApp(CONFIG);
+    // Agora inicialize o app (após CONFIG estar pronto)
+    initApp();
   })
-  .catch(err => {
-    console.error('Erro ao buscar a chave:', err);
+  .catch(error => {
+    console.error('Erro ao buscar chave da API:', error);
   });
 
  const escudos = {
