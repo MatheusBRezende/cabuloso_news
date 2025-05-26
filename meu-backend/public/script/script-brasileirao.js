@@ -1,6 +1,6 @@
 /*====CONST UNIVERSAIS====*/
 let CONFIG = {
-  apiKey: null, // Inicialmente nulo (será preenchido pelo fetch)
+  apiKey: null, 
   intervaloAtualizacao: 30000,
   planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
   intervaloJogos: "A2:F9",
@@ -27,29 +27,28 @@ let CONFIG = {
   }
 };
 
-fetch('/api/chave-google')
-  .then(response => {
+async function fetchAPIKey() {
+  try {
+    const response = await fetch('/api/chave-google');
+    
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`);
     }
-    return response.json().catch(() => {
-      throw new Error("Resposta não é JSON válido");
-    });
-  })
-  .then(data => {
+
+    const data = await response.json();
+    
     if (!data.apiKey) {
       throw new Error("Chave da API não encontrada na resposta");
     }
+
     console.log('Chave recebida:', data.apiKey);
     CONFIG.apiKey = data.apiKey;
-    initApp(); // Só inicializa após ter a chave
-  })
-  .catch(error => {
+    return true;
+  } catch (error) {
     console.error("Falha ao carregar chave:", error);
-    // Exibe uma mensagem de erro para o usuário (opcional)
-    document.getElementById("erro-api").textContent = 
-      "Erro ao carregar dados. Recarregue a página ou tente mais tarde.";
-  });
+    return false;
+  }
+}
 
  const escudos = {
     "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
@@ -80,10 +79,19 @@ fetch('/api/chave-google')
   };
 
 // Inicialização quando o DOM estiver carregado
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   createWhiteStars();
   console.log("Inicializando aplicação...");
-  initApp();
+
+  const apiKeyLoaded = await fetchAPIKey();
+  
+  if (apiKeyLoaded) {
+    initApp();
+  } else {
+    mostrarErroGeral("Falha ao conectar com o servidor. Recarregue a página.");
+    // Tentar novamente após 30 segundos
+    setTimeout(() => window.location.reload(), 30000);
+  }
 });
 
 /*====CRIAÇÃO DE ESTRELAS====*/
