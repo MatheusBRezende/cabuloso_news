@@ -3,8 +3,8 @@ const express = require('express');
 const app = express();
 const PORT = 3000;
 
-// Serve arquivos estáticos da pasta 'public' (coloque seu site aqui)
-app.use(express.static('public'));
+
+app.use(express.static('public/meu-frontend'));
 
 // Rota da API para a chave
 app.get('/api/dados', (req, res) => {
