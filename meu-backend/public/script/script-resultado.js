@@ -1,32 +1,10 @@
 // Configurações da API do Google Sheets
- const config = {
-    apiKey: null, 
-    spreadsheetId : "12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0",
-    range : "A:F"
- }
+const spreadsheetId = "12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0"
+let apiKey = "";
 
-   async function fetchAPIKey() {
-  try {
-    const response = await fetch('/api/chave-google');
-    
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`);
-    }
 
-    const data = await response.json();
-    
-    if (!data.apiKey) {
-      throw new Error("Chave da API não encontrada na resposta");
-    }
+const range = "A:F"
 
-    console.log('Chave recebida:', data.apiKey);
-    config.apiKey = data.apiKey;
-    return true;
-  } catch (error) {
-    console.error("Falha ao carregar chave:", error);
-    return false;
-  }
-}
 // Variáveis globais
 let allResults = []
 let performanceStats = {}
@@ -56,6 +34,16 @@ function createStars() {
     star.style.transform = `rotate(${Math.random() * 360}deg)`
 
     starsContainer.appendChild(star)
+  }
+}
+
+async function fetchAPIKey() {
+  try {
+    const response = await fetch('/api/chave-google');
+    const data = await response.json();
+    apiKey = data.apiKey;
+  } catch (error) {
+    console.error("Erro ao obter API Key:", error);
   }
 }
 
@@ -328,17 +316,6 @@ function calculateOverallStats() {
   }
 }
 
-// Funções auxiliares
-function getColorByCompetition(competition) {
-  const competitionLower = competition.toLowerCase()
-  if (competitionLower.includes("campeonato brasileiro")) return "rgb(46, 125, 50)"
-  if (competitionLower.includes("copa do brasil")) return "rgb(255, 215, 0)"
-  if (competitionLower.includes("conmebol sudamericana")) return "rgb(0, 51, 160)"
-  if (competitionLower.includes("libertadores")) return "rgb(25, 118, 210)"
-  if (competitionLower.includes("mineiro")) return "rgb(156, 39, 176)"
-  return "rgb(96, 125, 139)"
-}
-
 function formatDate(dateStr) {
   const parts = dateStr.split(" ")
   return parts.length >= 2 ? `${parts[0]} ${parts[1]}` : dateStr
@@ -408,8 +385,8 @@ function getMatchResult(result) {
 document.addEventListener("DOMContentLoaded", () => {
   createStars();
   loadData();
+  fetchAPIKey();
 
-  // MENU RESPONSIVO igual ao index
   const menuToggle = document.querySelector(".menu-toggle");
   const navMenu = document.querySelector(".nav-menu");
   if (menuToggle && navMenu) {
@@ -440,25 +417,19 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("resize", createStars);
 });
 
-// Redimensionar estrelas ao redimensionar a janela
 function handleResize() {
   createStars()
 }
 
-// Inicialização
 document.addEventListener("DOMContentLoaded", () => {
+  
   createStars()
   loadData()
-
-  // Adicionar evento ao botão de menu mobile
-  
-
-  // Configurar links de navegação
   setupNavLinks()
 
-  // Adicionar evento ao botão de atualizar
+  
   document.getElementById("btn-atualizar").addEventListener("click", loadData)
 
-  // Adicionar evento de redimensionamento
+  
   window.addEventListener("resize", handleResize)
 })
