@@ -1,8 +1,32 @@
 // Configurações da API do Google Sheets
-const spreadsheetId = "12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0"
-const apiKey = "AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8"
-const range = "A:F"
+ const config = {
+    apiKey: null, 
+    spreadsheetId : "12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0",
+    range : "A:F"
+ }
 
+   async function fetchAPIKey() {
+  try {
+    const response = await fetch('/api/chave-google');
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.apiKey) {
+      throw new Error("Chave da API não encontrada na resposta");
+    }
+
+    console.log('Chave recebida:', data.apiKey);
+    config.apiKey = data.apiKey;
+    return true;
+  } catch (error) {
+    console.error("Falha ao carregar chave:", error);
+    return false;
+  }
+}
 // Variáveis globais
 let allResults = []
 let performanceStats = {}
