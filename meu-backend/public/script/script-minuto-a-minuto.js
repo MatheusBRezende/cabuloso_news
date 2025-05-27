@@ -1,5 +1,5 @@
 // Variáveis globais
-const apiKey = process.env.SHEETS;
+
 let cache = { ultimoPlacar: { home: 0, visitante: 0 }, ultimaAtualizacao: 0 };
 let ultimoPlacarProcessado = null;
 let timestampUltimoPlacar = 0;
@@ -9,10 +9,34 @@ let placarAtual = { home: 0, visitante: 0 };
 
 document.addEventListener("DOMContentLoaded", async () => {
   const config = {
+    apiKey: null, 
     planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
     nomeAba: "minutoaminuto",
     nomeAbaEstatisticas: "minutoaminuto",
   };
+
+  async function fetchAPIKey() {
+  try {
+    const response = await fetch('/api/chave-google');
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.apiKey) {
+      throw new Error("Chave da API não encontrada na resposta");
+    }
+
+    console.log('Chave recebida:', data.apiKey);
+    CONFIG.apiKey = data.apiKey;
+    return true;
+  } catch (error) {
+    console.error("Falha ao carregar chave:", error);
+    return false;
+  }
+}
 
   // Recupera dados do jogo
   const urlParams = new URLSearchParams(window.location.search);

@@ -1,3 +1,32 @@
+/*====CONST UNIVERSAIS====*/
+let CONFIG = {
+  apiKey: null, 
+}
+
+async function fetchAPIKey() {
+  try {
+    const response = await fetch('/api/chave-google');
+    
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    if (!data.apiKey) {
+      throw new Error("Chave da API não encontrada na resposta");
+    }
+
+    console.log('Chave recebida:', data.apiKey);
+    CONFIG.apiKey = data.apiKey;
+    return true;
+  } catch (error) {
+    console.error("Falha ao carregar chave:", error);
+    return false;
+  }
+}
+
+
 // Menu Toggle para dispositivos móveis
 document.addEventListener('DOMContentLoaded', function() {
     const menuToggle = document.getElementById('menuToggle');
@@ -139,7 +168,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 async function loadMiniTable() {
     try {
         const response = await fetch(
-            'https://sheets.googleapis.com/v4/spreadsheets/1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0/values/A1:M6?key=AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8'
+            `https://sheets.googleapis.com/v4/spreadsheets/1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0/values/A1:M6?key=${CONFIG.apiKey}`
         );
         const data = await response.json();
         
@@ -192,7 +221,7 @@ async function loadMiniTable() {
 async function loadMiniResults() {
   try {
     const response = await fetch(
-      "https://sheets.googleapis.com/v4/spreadsheets/12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0/values/A1:F6?key=AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8",
+      `https://sheets.googleapis.com/v4/spreadsheets/12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0/values/A1:F6?key=${CONFIG.apiKey}`,
     )
     const data = await response.json()
         
@@ -235,7 +264,7 @@ async function loadMiniResults() {
 async function loadNextMatches() {
     try {
         const response = await fetch(
-            'https://sheets.googleapis.com/v4/spreadsheets/1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c/values/PARTIDAS?key=AIzaSyACnLooxGcu7L_QRNoqZpYvmKirsbuIVi8'
+            `https://sheets.googleapis.com/v4/spreadsheets/1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c/values/PARTIDAS?key=${CONFIG.apiKey}`
         );
         const data = await response.json();
         
