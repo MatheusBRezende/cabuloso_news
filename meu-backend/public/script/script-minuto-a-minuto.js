@@ -30,7 +30,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     console.log('Chave recebida:', data.apiKey);
-    CONFIG.apiKey = data.apiKey;
+    config.apiKey = data.apiKey;
     return true;
   } catch (error) {
     console.error("Falha ao carregar chave:", error);
@@ -78,7 +78,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         await Promise.all([
           carregarDadosDaPlanilha(
             config.planilhaId,
-            apiKey,
+            config.apiKey,
             config.nomeAba,
             jogoAoVivo.timeCasa,
             jogoAoVivo.timeVisitante,
@@ -87,7 +87,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           ),
           carregarEstatisticas(
             config.planilhaId,
-            apiKey,
+            config.apiKey,
             config.nomeAbaEstatisticas,
             jogoAoVivo.timeCasa,
             jogoAoVivo.timeVisitante
@@ -107,7 +107,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await Promise.all([
       carregarDadosDaPlanilha(
         config.planilhaId,
-        apiKey,
+        config.apiKey,
         config.nomeAba,
         jogoAoVivo.timeCasa,
         jogoAoVivo.timeVisitante,
@@ -116,7 +116,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       ),
       carregarEstatisticas(
         config.planilhaId,
-        apiKey,
+        config.apiKey,
         config.nomeAbaEstatisticas,
         jogoAoVivo.timeCasa,
         jogoAoVivo.timeVisitante
@@ -132,7 +132,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       await Promise.all([
         carregarDadosDaPlanilha(
           config.planilhaId,
-          apiKey,
+          config.apiKey,
           config.nomeAba,
           jogoAoVivo.timeCasa,
           jogoAoVivo.timeVisitante,
@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         ),
         carregarEstatisticas(
           config.planilhaId,
-          apiKey,
+          config.apiKey,
           config.nomeAbaEstatisticas,
           jogoAoVivo.timeCasa,
           jogoAoVivo.timeVisitante
@@ -549,7 +549,7 @@ async function carregarDadosDaPlanilha(planilhaId, apiKey, nomeAba, timeCasa, ti
     if (containerNarrativa) containerNarrativa.style.opacity = "0.7";
 
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}?key=${apiKey}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}?key=${config.apiKey}`
     );
 
     if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
@@ -591,7 +591,7 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
     if (containerEstatisticas) containerEstatisticas.style.opacity = "0.7";
 
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}!C2:J3?key=${apiKey}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}!C2:J3?key=${config.apiKey}`
     );
 
     if (!response.ok) throw new Error(`Erro ao buscar dados: ${response.status}`);
