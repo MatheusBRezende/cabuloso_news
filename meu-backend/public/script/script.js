@@ -25,6 +25,45 @@ async function fetchAPIKey() {
     return false;
   }
 }
+// Função para inicializar os widgets após carregar a API key
+async function initWidgets() {
+  const apiKeyLoaded = await fetchAPIKey();
+  
+  if (apiKeyLoaded) {
+    loadMiniTable();
+    loadMiniResults();
+    loadNextMatches();
+    
+    // Atualiza a cada 30 segundos
+    setInterval(() => {
+      loadMiniTable();
+      loadMiniResults();
+      loadNextMatches();
+    }, 30000);
+  } else {
+    console.error("Não foi possível carregar a API key");
+    // Mostra mensagem de erro nos widgets
+    document.getElementById('mini-tabela').innerHTML = `
+      <tr>
+        <td colspan="3" style="text-align: center; padding: 20px 0; color: #666;">
+          <i class="fas fa-exclamation-triangle"></i> Falha ao conectar com o servidor
+        </td>
+      </tr>
+    `;
+    
+    document.getElementById('mini-resultados').innerHTML = `
+      <div class="mini-result" style="color: #666; text-align: center;">
+        <i class="fas fa-exclamation-triangle"></i> Falha ao conectar com o servidor
+      </div>
+    `;
+    
+    document.getElementById('proximos-jogos').innerHTML = `
+      <div class="next-match" style="color: #666; text-align: center;">
+        <i class="fas fa-exclamation-triangle"></i> Falha ao conectar com o servidor
+      </div>
+    `;
+  }
+}
 
 
 // Menu Toggle para dispositivos móveis
@@ -66,6 +105,9 @@ document.addEventListener('DOMContentLoaded', function() {
             loadMoreNews();
         });
     }
+    
+    // Inicializa os widgets
+    initWidgets();
 });
 
 // Função para carregar mais notícias (simulação)
