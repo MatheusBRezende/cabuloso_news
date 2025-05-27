@@ -549,7 +549,7 @@ async function carregarDadosDaPlanilha(planilhaId, apiKey, nomeAba, timeCasa, ti
     if (containerNarrativa) containerNarrativa.style.opacity = "0.7";
 
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}?key=${config.apiKey}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}?key=${apiKey}`
     );
 
     if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
@@ -591,7 +591,7 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
     if (containerEstatisticas) containerEstatisticas.style.opacity = "0.7";
 
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}!C2:J3?key=${config.apiKey}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}!C2:J3?key=${apiKey}`
     );
 
     if (!response.ok) throw new Error(`Erro ao buscar dados: ${response.status}`);
