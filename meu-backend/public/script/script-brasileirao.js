@@ -1,6 +1,6 @@
 /*====CONST UNIVERSAIS====*/
-let CONFIG = {
-  apiKey: null, 
+const CONFIG = {
+  apiKey: null,
   intervaloAtualizacao: 30000,
   planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
   intervaloJogos: "A2:F9",
@@ -27,21 +27,62 @@ let CONFIG = {
   }
 };
 
+const escudos = {
+  "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
+  "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
+  "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
+  "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+  "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
+  "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
+  "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
+  "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
+  "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
+  "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
+  "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
+  "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+  "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
+  "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
+  "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
+  "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+  "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
+  "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
+  "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
+  "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
+  "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
+  "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
+  "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
+  "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
+  "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
+};
+
+/*====CRIAÇÃO DE ESTRELAS====*/
+function createWhiteStars() {
+  const starsContainer = document.querySelector(".stars-background");
+  if (!starsContainer) return;
+  starsContainer.innerHTML = "";
+  const starCount = window.innerWidth < 600 ? 25 : 60;
+  for (let i = 0; i < starCount; i++) {
+    const star = document.createElement("i");
+    star.className = "star bi bi-star-fill";
+    star.setAttribute("aria-hidden", "true");
+    star.style.fontSize = `${Math.random() * 0.8 + 0.6}rem`;
+    star.style.left = `${Math.random() * 100}%`;
+    star.style.top = `${Math.random() * 100}%`;
+    const duration = Math.random() * 5 + 4;
+    star.style.setProperty("--duration", `${duration}s`);
+    star.style.animationDelay = `${Math.random() * 10}s`;
+    star.style.transform = `rotate(${Math.random() * 360}deg)`;
+    starsContainer.appendChild(star);
+  }
+}
+
+/*====API KEY====*/
 async function fetchAPIKey() {
   try {
     const response = await fetch('/api/chave-google');
-    
-    if (!response.ok) {
-      throw new Error(`Erro HTTP: ${response.status}`);
-    }
-
+    if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
     const data = await response.json();
-    
-    if (!data.apiKey) {
-      throw new Error("Chave da API não encontrada na resposta");
-    }
-
-    console.log('Chave recebida:', data.apiKey);
+    if (!data.apiKey) throw new Error("Chave da API não encontrada na resposta");
     CONFIG.apiKey = data.apiKey;
     return true;
   } catch (error) {
@@ -50,91 +91,37 @@ async function fetchAPIKey() {
   }
 }
 
- const escudos = {
-    "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
-    "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
-    "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
-    "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-    "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
-    "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
-    "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
-    "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
-    "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
-    "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
-    "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-    "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
-    "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
-    "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-    "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
-    "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
-    "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
-    "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
-    "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
-    "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
-    "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
-    "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
-    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
-    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
-    "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
-  };
-
-// Inicialização quando o DOM estiver carregado
+/*====INICIALIZAÇÃO====*/
 document.addEventListener("DOMContentLoaded", async () => {
   createWhiteStars();
   console.log("Inicializando aplicação...");
-
   const apiKeyLoaded = await fetchAPIKey();
-  
   if (apiKeyLoaded) {
-    initApp();
+    await initApp();
   } else {
     mostrarErroGeral("Falha ao conectar com o servidor. Recarregue a página.");
-    // Tentar novamente após 30 segundos
     setTimeout(() => window.location.reload(), 30000);
   }
 });
 
-/*====CRIAÇÃO DE ESTRELAS====*/
-function createWhiteStars() {
-  const starsContainer = document.querySelector(".stars-background")
-  if (!starsContainer) return
-
-  starsContainer.innerHTML = ""
-  const starCount = 80 // Número de estrelas
-
-  for (let i = 0; i < starCount; i++) {
-    const star = document.createElement("i")
-    star.className = "star bi bi-star-fill"
-    star.setAttribute("aria-hidden", "true")
-    star.style.fontSize = `${Math.random() * 0.8 + 0.6}rem`
-    star.style.left = `${Math.random() * 100}%`
-    star.style.top = `${Math.random() * 100}%`
-    const duration = Math.random() * 5 + 4
-    star.style.setProperty("--duration", `${duration}s`)
-    star.style.animationDelay = `${Math.random() * 10}s`
-    star.style.transform = `rotate(${Math.random() * 360}deg)`
-    starsContainer.appendChild(star)
-  }
-}
-
-// Função principal de inicialização
+/*====FUNÇÃO PRINCIPAL====*/
 async function initApp() {
   try {
     setupMobileNavigation();
     await carregarProximosJogos();
     setupWidgetJogos();
     setupScrollEffects();
-
     const campeonatoSelecionado = localStorage.getItem("campeonatoSelecionado") || "brasileirao";
     const campeonatoSelect = document.getElementById("campeonato-select");
-    if (campeonatoSelect) {
-      campeonatoSelect.value = campeonatoSelecionado;
-    }
-
+    if (campeonatoSelect) campeonatoSelect.value = campeonatoSelecionado;
     await carregarTabela(campeonatoSelecionado);
     setupEventListeners();
     setupBackToTop();
     iniciarAtualizacaoPeriodica();
+
+    verificarEAjustarBotaoMinutoAMinuto();
+    setInterval(verificarEAjustarBotaoMinutoAMinuto, 60000);
+    setInterval(verificarJogosAoVivo, 300000);
 
     console.log("Aplicação inicializada com sucesso!");
   } catch (error) {
@@ -170,20 +157,17 @@ function formatarData() {
     .replace(",", " -");
 }
 
-// Configuração de listeners e navegação
 function setupEventListeners() {
   const campeonatoSelect = document.getElementById("campeonato-select");
   if (campeonatoSelect) {
     campeonatoSelect.addEventListener("change", function () {
       const campeonato = this.value;
       localStorage.setItem("campeonatoSelecionado", campeonato);
-
       const tabelaContainer = document.getElementById("tabela-container");
       if (tabelaContainer) {
         tabelaContainer.style.opacity = "0";
         tabelaContainer.style.transform = "translateY(20px)";
         tabelaContainer.style.transition = "all 0.3s ease";
-
         setTimeout(() => {
           carregarTabela(campeonato);
           tabelaContainer.style.opacity = "1";
@@ -194,12 +178,10 @@ function setupEventListeners() {
       }
     });
   }
-
   const themeToggle = document.querySelector(".theme-toggle");
   if (themeToggle) {
     themeToggle.addEventListener("click", toggleDarkMode);
   }
-
   const savedDarkMode = localStorage.getItem("darkMode");
   if (savedDarkMode === "true") {
     document.body.classList.add("dark-mode");
@@ -223,7 +205,6 @@ function toggleDarkMode() {
 function setupScrollEffects() {
   const navbar = document.querySelector(".navbar");
   if (!navbar) return;
-
   window.addEventListener("scroll", () => {
     if (window.scrollY > 50) {
       navbar.classList.add("scrolled");
@@ -236,15 +217,12 @@ function setupScrollEffects() {
 function setupMobileNavigation() {
   const menuToggle = document.querySelector(".menu-toggle");
   const navMenu = document.querySelector(".nav-menu");
-
   if (!menuToggle || !navMenu) return;
-
   menuToggle.addEventListener("click", () => {
     menuToggle.classList.toggle("active");
     navMenu.classList.toggle("active");
     menuToggle.setAttribute("aria-expanded", menuToggle.classList.contains("active"));
   });
-
   document.querySelectorAll(".nav-link").forEach((link) => {
     link.addEventListener("click", () => {
       if (menuToggle.classList.contains("active")) {
@@ -259,42 +237,33 @@ function setupMobileNavigation() {
 function setupBackToTop() {
   const backToTopBtn = document.querySelector(".back-to-top");
   if (!backToTopBtn) return;
-
   window.addEventListener("scroll", () => {
     backToTopBtn.classList.toggle("active", window.pageYOffset > 300);
   });
-
   backToTopBtn.addEventListener("click", (e) => {
     e.preventDefault();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
 
-// Funções relacionadas a jogos
+/*====FUNÇÕES DE JOGOS====*/
 async function carregarProximosJogos() {
   const container = document.querySelector(".lista-jogos");
   if (!container) return;
-
   container.innerHTML = `
     <div class="loading-jogos">
       <i class="fas fa-spinner fa-spin"></i>
       <p>Carregando próximos jogos...</p>
     </div>
   `;
-
   try {
     const timestamp = new Date().getTime();
     const response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}&t=${timestamp}`
     );
-
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-
     const data = await response.json();
-    if (!data.values || data.values.length === 0) {
-      throw new Error("Planilha de jogos vazia");
-    }
-
+    if (!data.values || data.values.length === 0) throw new Error("Planilha de jogos vazia");
     const jogos = processarDadosJogos(data.values);
     exibirJogos(jogos);
     setupFiltrosJogos(jogos);
@@ -320,7 +289,6 @@ function processarDadosJogos(dados) {
   const linhas = dados.slice(headerIndex + 1).filter(row => {
     return row && row.length >= 4 && row.some(cell => !!cell && cell.toString().trim() !== "");
   });
-
   return linhas.map((jogo) => {
     // Data
     let dataFormatada = "--/--";
@@ -332,11 +300,9 @@ function processarDadosJogos(dados) {
     } else if (typeof jogo[0] === "string") {
       dataFormatada = jogo[0];
     }
-
     // Times
     const timeCasa = (jogo[1] || "").trim();
     const timeVisitante = (jogo[3] || "").trim();
-
     // Fase
     let fase = "";
     if (jogo[2] && typeof jogo[2] === "string") {
@@ -344,10 +310,8 @@ function processarDadosJogos(dados) {
       else if (jogo[2].toLowerCase().includes("volta")) fase = "Volta";
       else fase = jogo[2];
     }
-
     // Placar
     const placar = jogo[5] || "";
-
     // Hora
     let horaFormatada = "--:--";
     let aoVivo = false;
@@ -366,10 +330,8 @@ function processarDadosJogos(dados) {
     } else {
       horaFormatada = jogo[7] || jogo[4] || "--:--";
     }
-
     // Campeonato
     const campeonato = formatarNomeCampeonato(jogo[6] || jogo[5] || "Campeonato Desconhecido");
-
     // Resultados
     let resultadoCasa = "";
     let resultadoVisitante = "";
@@ -383,7 +345,6 @@ function processarDadosJogos(dados) {
     const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") ||
       timeVisitante.toLowerCase().includes("cruzeiro");
     const isMandante = timeCasa.toLowerCase().includes("cruzeiro");
-
     return {
       data: dataFormatada,
       hora: horaFormatada,
@@ -425,25 +386,18 @@ function verificarJogoAoVivo(jogos) {
   const agora = new Date();
   return jogos.some(jogo => {
     if (!jogo.data || !jogo.hora || jogo.placar) return false;
-
-    // Verifica se é hoje
     const [dia, mes] = jogo.data.split('/');
     const dataJogo = new Date();
     dataJogo.setDate(parseInt(dia));
     dataJogo.setMonth(parseInt(mes) - 1);
-
     const hoje = new Date();
     const mesmoDia = dataJogo.getDate() === hoje.getDate() &&
       dataJogo.getMonth() === hoje.getMonth();
-
     if (!mesmoDia) return false;
-
-    
     const [hora, minuto] = jogo.hora.split(':');
     const inicioJogo = new Date();
     inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
     const fimJogo = new Date(inicioJogo.getTime() + (60 * 60 * 1000));
-
     return agora >= inicioJogo && agora <= fimJogo;
   });
 }
@@ -459,29 +413,21 @@ function formatarNomeCampeonato(nome) {
 
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "") return 'https://via.placeholder.com/70';
-
-
   const nomeLower = nomeTime.toLowerCase().trim();
-
-  
   for (const [key, value] of Object.entries(escudos)) {
     if (key.toLowerCase() === nomeLower) return value;
   }
-
-  
   for (const [key, value] of Object.entries(escudos)) {
     if (key.toLowerCase().includes(nomeLower) || nomeLower.includes(key.toLowerCase())) {
       return value;
     }
   }
-
   return 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1024px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png';
 }
 
 function exibirJogos(jogos, termosFiltro = ["todos"]) {
   const container = document.querySelector(".lista-jogos");
   if (!container) return;
-
   let jogosFiltrados = jogos;
   if (!termosFiltro.includes("todos")) {
     if (termosFiltro.includes("Cruzeiro")) {
@@ -492,7 +438,6 @@ function exibirJogos(jogos, termosFiltro = ["todos"]) {
       );
     }
   }
-
   if (jogosFiltrados.length === 0) {
     container.innerHTML = `
       <div class="sem-jogos">
@@ -502,13 +447,11 @@ function exibirJogos(jogos, termosFiltro = ["todos"]) {
     `;
     return;
   }
-
   container.innerHTML = jogosFiltrados
     .map((jogo) => {
       const estaAoVivo = jogo.aoVivo && verificarJogoAoVivo([jogo]);
       const cruzeiroCasa = jogo.isCruzeiro && jogo.isMandante;
       const cruzeiroVisitante = jogo.isCruzeiro && !jogo.isMandante;
-
       return `
         <div class="jogo-container ${estaAoVivo ? 'jogo-ao-vivo' : ''} ${cruzeiroCasa ? 'cruzeiro-mandante' : ''} ${cruzeiroVisitante ? 'cruzeiro-visitante' : ''}" 
              ${estaAoVivo ? `onclick="abrirMinutoAMinuto('${jogo.timeCasa}', '${jogo.timeVisitante}', '${jogo.campeonato}')"` : ''}>
@@ -659,16 +602,6 @@ async function verificarJogosAoVivo() {
     console.error('Erro ao verificar jogos ao vivo:', error);
   }
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  verificarEAjustarBotaoMinutoAMinuto();
-
-  // Verifica a cada minuto
-  setInterval(verificarEAjustarBotaoMinutoAMinuto, 60000);
-
-  // Verifica jogos ao vivo a cada 5 minutos
-  setInterval(verificarJogosAoVivo, 300000);
-});
 
 // Adicione um evento de clique para o botão ao vivo
 document.addEventListener('DOMContentLoaded', () => {
@@ -882,8 +815,6 @@ async function carregarTabela(campeonato = "brasileirao") {
   try {
     const timestamp = new Date().getTime();
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${config.intervaloDados}?key=${CONFIG.apiKey}&t=${timestamp}`;
-
-    console.log(`Carregando dados de: ${url}`);
     const response = await fetch(url);
 
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
