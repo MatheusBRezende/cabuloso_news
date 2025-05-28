@@ -3,19 +3,17 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node scraper.js",
+    "install": "node node_modules/puppeteer/install.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "description": "",
   "dependencies": {
-    "axios": "^1.9.0",
     "cheerio": "^1.0.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.0",
-    "express": "^5.1.0",
-    "puppeteer": "^24.9.0",
-    "rss-parser": "^3.13.0"
+    "express": "^4.18.2",
+    "puppeteer": "^24.9.0"
+  },
+  "puppeteer": {
+    "product": "chrome",
+    "args": ["--no-sandbox", "--disable-setuid-sandbox"]
   }
 }
