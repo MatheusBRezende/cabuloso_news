@@ -18,8 +18,7 @@ const browser = await puppeteer.launch({
     '--no-zygote',
     '--single-process'
   ],
-  headless: 'new',
-  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser'
+headless: 'new'
 });
     const page = await browser.newPage();
     await page.goto("https://www.espn.com.br/futebol/time/_/id/2022/cruzeiro", {
