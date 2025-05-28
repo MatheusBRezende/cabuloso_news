@@ -2,15 +2,26 @@
   "name": "meu-backend",
   "version": "1.0.0",
   "main": "index.js",
- "scripts": {
-  "start": "node scraper.js",
-  "postinstall": "node node_modules/puppeteer/install.js"
-},
+  "scripts": {
+    "start": "node scraper.js",
+    "postinstall": "node node_modules/puppeteer/install.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
     "puppeteer": "^24.9.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "puppeteer": {
+    "product": "chrome",
+    "args": ["--no-sandbox", "--disable-setuid-sandbox"]
   }
 }
