@@ -3,15 +3,15 @@ const CONFIG = {
   apiKey: null,
 };
 
-// Função para buscar a API key
+// Função para buscar a API key do Google Sheets
 async function fetchAPIKey() {
   try {
-    const response = await fetch('/api/chave-google');
+    const response = await fetch("/api/chave-google");
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
     const data = await response.json();
-    if (!data.apiKey) throw new Error("Chave da API não encontrada na resposta");
+    if (!data.apiKey)
+      throw new Error("Chave da API não encontrada na resposta");
     CONFIG.apiKey = data.apiKey;
-    console.log('Chave recebida:', data.apiKey);
     return true;
   } catch (error) {
     console.error("Falha ao carregar chave:", error);
@@ -40,122 +40,187 @@ async function initWidgets() {
 
 // Função para mostrar erro nos widgets
 function showWidgetError() {
-  document.getElementById('mini-tabela').innerHTML = `
+  document.getElementById("mini-tabela").innerHTML = `
     <tr>
       <td colspan="3" style="text-align: center; padding: 20px 0; color: #666;">
         <i class="fas fa-exclamation-triangle"></i> Falha ao conectar com o servidor
       </td>
     </tr>
   `;
-  document.getElementById('mini-resultados').innerHTML = `
+  document.getElementById("mini-resultados").innerHTML = `
     <div class="mini-result" style="color: #666; text-align: center;">
       <i class="fas fa-exclamation-triangle"></i> Falha ao conectar com o servidor
     </div>
   `;
-  document.getElementById('proximos-jogos').innerHTML = `
+  document.getElementById("proximos-jogos").innerHTML = `
     <div class="next-match" style="color: #666; text-align: center;">
       <i class="fas fa-exclamation-triangle"></i> Falha ao conectar com o servidor
     </div>
   `;
 }
 
-// Função para carregar mais notícias (simulação)
-function loadMoreNews() {
-  const newsGrid = document.querySelector('.news-grid');
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
-  const additionalNews = [
-    {
-      image: 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia+5',
-      category: 'Treino',
-      title: 'Equipe realiza treino tático visando próximo desafio',
-      content: 'Jogadores participaram de atividades específicas para aprimorar o sistema defensivo.',
-      time: 'Há 2 dias'
-    },
-    {
-      image: 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia+6',
-      category: 'Lesão',
-      title: 'Atacante se recupera de lesão e deve retornar em breve',
-      content: 'Departamento médico atualiza situação do jogador que está em fase final de recuperação.',
-      time: 'Há 2 dias'
-    },
-    {
-      image: 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia+7',
-      category: 'Mercado',
-      title: 'Cruzeiro monitora lateral-direito do futebol europeu',
-      content: 'Diretoria busca reforçar o elenco com jogador experiente para a sequência da temporada.',
-      time: 'Há 3 dias'
-    },
-    {
-      image: 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia+8',
-      category: 'História',
-      title: 'Há 20 anos: relembre a conquista histórica da Tríplice Coroa',
-      content: 'Nesta data, o Cruzeiro completava uma das campanhas mais vitoriosas de sua história.',
-      time: 'Há 3 dias'
+// =================== SCRAPING TERRA ===================
+
+// Função para buscar notícias do Cruzeiro usando o scraper do Terra
+async function fetchTerraNews() {
+  try {
+    const response = await fetch('http://localhost:4001/api/noticias-espn');
+    const noticias = await response.json();
+    console.log("Resposta do backend:", noticias);
+
+    if (!Array.isArray(noticias)) {
+      console.error("A resposta não é um array!", noticias);
+      throw new Error("Resposta inesperada do backend");
     }
-  ];
-  additionalNews.forEach(news => {
-    const newsCard = document.createElement('article');
-    newsCard.className = 'news-card';
-    newsCard.innerHTML = `
-      <div class="news-image">
-        <img src="${news.image}" alt="Notícia do Cruzeiro">
-      </div>
-      <div class="news-content">
-        <span class="category">${news.category}</span>
-        <h3>${news.title}</h3>
-        <p>${news.content}</p>
-        <span class="date">${news.time}</span>
-        <a href="#" class="read-more">Ler mais</a>
+    if (noticias.length === 0) throw new Error("Nenhuma notícia encontrada");
+
+    // Mostra a primeira como destaque e as próximas 6 como grid
+    renderFeaturedNews(noticias[0]);
+    renderNews(noticias.slice(1, 7));
+
+    // Mostra botão se houver mais de 7 notícias
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (noticias.length > 7 && loadMoreBtn) {
+      loadMoreBtn.style.display = "block";
+      loadMoreBtn.onclick = () => renderNews(noticias.slice(1)); // Mostra todas menos a featured
+    } else if (loadMoreBtn) {
+      loadMoreBtn.style.display = "none";
+    }
+    // Guarda todas as notícias para uso posterior (opcional)
+    window._todasNoticias = noticias;
+  } catch (error) {
+    console.error("Erro ao buscar notícias da ESPN:", error);
+    document.querySelector(".news-grid").innerHTML = `
+      <div style="text-align:center; color:#666; padding:20px;">
+        <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar as notícias da ESPN.
       </div>
     `;
-    newsCard.style.opacity = '0';
-    newsGrid.appendChild(newsCard);
-    void newsCard.offsetWidth;
-    newsCard.style.transition = 'opacity 0.5s ease';
-    newsCard.style.opacity = '1';
-  });
-  loadMoreBtn.textContent = 'Todas as notícias carregadas';
-  loadMoreBtn.disabled = true;
-  loadMoreBtn.style.opacity = '0.5';
+    document.querySelector(".featured-article").innerHTML = `
+      <div style="text-align:center; color:#666; padding:20px;">
+        <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar a notícia em destaque da ESPN.
+      </div>
+    `;
+  }
 }
 
-// Função para simular o carregamento de conteúdo dinâmico
-function simulateLoading() {
-  console.log('Carregando conteúdo dinâmico...');
+// Função para renderizar a notícia em destaque
+function renderFeaturedNews(article) {
+  const featured = document.querySelector(".featured-article");
+  if (!article) {
+    featured.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">
+      <i class="fas fa-exclamation-triangle"></i> Nenhuma notícia em destaque encontrada.
+    </div>`;
+    return;
+  }
+  featured.innerHTML = `
+    <div class="featured-image">
+      <img src="${article.image ? article.image : 'https://via.placeholder.com/600x350/003399/ffffff?text=Noticia+Cruzeiro'}" alt="Notícia em destaque do Cruzeiro">
+    </div>
+    <div class="featured-content">
+      <span class="category">ESPN</span>
+      <h3>${article.title}</h3>
+      <p>${article.description || "Sem descrição disponível."}</p>
+      <a href="${article.url}" class="read-more" target="_blank" rel="noopener"><i class="bi bi-arrow-right-circle"></i> Ler mais</a>
+    </div>
+  `;
 }
+
+// Função para renderizar as notícias na grid
+function renderNews(articles) {
+  const newsGrid = document.querySelector(".news-grid");
+  newsGrid.innerHTML = "";
+  if (!articles || articles.length === 0) {
+    newsGrid.innerHTML = `<div style="text-align:center; color:#666; padding:20px;">
+      <i class="fas fa-exclamation-triangle"></i> Nenhuma notícia encontrada.
+    </div>`;
+    return;
+  }
+  articles.forEach((article) => {
+    const newsCard = document.createElement("article");
+    newsCard.className = "news-card";
+    newsCard.innerHTML = `
+      <div class="news-image">
+        <img src="${article.image ? article.image : 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia'}" alt="Notícia do Cruzeiro">
+      </div>
+      <div class="news-content">
+        <span class="category">ESPN</span>
+        <h3>${article.title}</h3>
+        <p>${article.description || "Sem descrição disponível."}</p>
+        <a href="${article.url}" class="read-more" target="_blank" rel="noopener">Ler mais</a>
+      </div>
+    `;
+    newsGrid.appendChild(newsCard);
+  });
+}
+
+// Função para carregar mais notícias (opcional, pode buscar mais do scraper)
+function loadMoreNews() {
+  if (window._todasNoticias) {
+    renderNews(window._todasNoticias.slice(1));
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (loadMoreBtn) {
+      loadMoreBtn.textContent = "Todas as notícias carregadas";
+      loadMoreBtn.disabled = true;
+      loadMoreBtn.style.opacity = "0.5";
+    }
+  }
+}
+
+// =================== WIDGETS GOOGLE SHEETS ===================
 
 // Função auxiliar para obter logos
 function getTeamLogo(teamName) {
   const logos = {
-    "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
-    "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
-    "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
-    "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-    "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
-    "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
-    "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
-    "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
-    "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
-    "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
-    "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-    "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
-    "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
-    "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-    "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
-    "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
-    "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
-    "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
-    "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
-    "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
-    "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
-    "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
-    "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
-    "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
+    Flamengo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
+    Palmeiras:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
+    "Red Bull Bragantino":
+      "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
+    Cruzeiro:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+    Fluminense:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
+    Internacional:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
+    Bahia: "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
+    "São Paulo":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
+    Botafogo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
+    Ceará:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
+    Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
+    Corinthians:
+      "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+    Juventude:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
+    Mirassol:
+      "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
+    Fortaleza:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
+    Vitória:
+      "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+    "Atlético-MG":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
+    Grêmio:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
+    Santos:
+      "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
+    Sport:
+      "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
+    "Vila Nova":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
+    "Mushuc Runa":
+      "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
+    Palestino: "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
+    "Unión (Santa Fe)":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
   };
   for (const [key, value] of Object.entries(logos)) {
     if (teamName.includes(key)) return value;
   }
-  return 'https://via.placeholder.com/40/0033a0/ffffff?text=CRU';
+  return "https://via.placeholder.com/40/0033a0/ffffff?text=CRU";
 }
 
 // Função para carregar a mini tabela
@@ -165,40 +230,46 @@ async function loadMiniTable() {
       `https://sheets.googleapis.com/v4/spreadsheets/1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0/values/A1:M6?key=${CONFIG.apiKey}`
     );
     const data = await response.json();
-    let html = '';
+    let html = "";
     data.values.slice(1, 6).forEach((row, index) => {
-      const isCruzeiro = row[1].includes('Cruzeiro');
+      const isCruzeiro = row[1].includes("Cruzeiro");
       html += `
-        <tr class="${isCruzeiro ? 'cruzeiro-row' : ''}">
+        <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
           <td>${index + 1}º</td>
           <td class="team-cell">
             <img src="${getTeamLogo(row[1])}" class="team-logo" alt="${row[1]}">
-            ${row[1].replace(/^\d+°\s*/, '').replace(/\s[A-Z]{2,4}$/, '')}
+            ${row[1].replace(/^\d+°\s*/, "").replace(/\s[A-Z]{2,4}$/, "")}
           </td>
           <td>${row[2] || 0}</td>
         </tr>
       `;
     });
     // Adiciona link para o Cruzeiro se não estiver no top 5
-    if (!html.includes('cruzeiro-row')) {
-      const cruzeiroRow = data.values.find(row => row[1].includes('Cruzeiro'));
+    if (!html.includes("cruzeiro-row")) {
+      const cruzeiroRow = data.values.find((row) =>
+        row[1].includes("Cruzeiro")
+      );
       if (cruzeiroRow) {
         const pos = parseInt(cruzeiroRow[0]);
         html += `
           <tr class="cruzeiro-row">
             <td>${pos}º</td>
             <td class="team-cell">
-              <img src="${getTeamLogo(cruzeiroRow[1])}" class="team-logo" alt="${cruzeiroRow[1]}">
-              ${cruzeiroRow[1].replace(/^\d+°\s*/, '').replace(/\s[A-Z]{2,4}$/, '')}
+              <img src="${getTeamLogo(
+                cruzeiroRow[1]
+              )}" class="team-logo" alt="${cruzeiroRow[1]}">
+              ${cruzeiroRow[1]
+                .replace(/^\d+°\s*/, "")
+                .replace(/\s[A-Z]{2,4}$/, "")}
             </td>
             <td>${cruzeiroRow[2] || 0}</td>
           </tr>
         `;
       }
     }
-    document.getElementById('mini-tabela').innerHTML = html;
+    document.getElementById("mini-tabela").innerHTML = html;
   } catch (error) {
-    document.getElementById('mini-tabela').innerHTML = `
+    document.getElementById("mini-tabela").innerHTML = `
       <tr>
         <td colspan="3" style="text-align: center; padding: 20px 0; color: #666;">
           <i class="fas fa-exclamation-triangle"></i> Dados não disponíveis
@@ -215,32 +286,45 @@ async function loadMiniResults() {
       `https://sheets.googleapis.com/v4/spreadsheets/12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0/values/A1:F6?key=${CONFIG.apiKey}`
     );
     const data = await response.json();
-    let html = '';
-    data.values.slice(1, 4).forEach(row => {
-      const isCruzeiro = row[1].includes('Cruzeiro') || row[3].includes('Cruzeiro');
-      const scoreParts = row[2]?.split(/(?=[A-Za-z])/) || ['-'];
+    let html = "";
+    data.values.slice(1, 4).forEach((row) => {
+      const isCruzeiro =
+        row[1].includes("Cruzeiro") || row[3].includes("Cruzeiro");
+      const scoreParts = row[2]?.split(/(?=[A-Za-z])/) || ["-"];
       html += `
         <div class="mini-result">
           <div class="mini-teams">
-            <div class="mini-team ${row[1].includes('Cruzeiro') ? 'cruzeiro' : ''}">
+            <div class="mini-team ${
+              row[1].includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
               <img src="${getTeamLogo(row[1])}" class="mini-team-logo">
-              <span>${row[1].includes('Cruzeiro') ? 'Cruzeiro' : row[1].split(' ').slice(-1)[0]}</span>
+              <span>${
+                row[1].includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[1].split(" ").slice(-1)[0]
+              }</span>
             </div>
             <div class="mini-score">${scoreParts[0].trim()}</div>
-            <div class="mini-team ${row[3].includes('Cruzeiro') ? 'cruzeiro' : ''}">
-              <span>${row[3].includes('Cruzeiro') ? 'Cruzeiro' : row[3].split(' ').slice(-1)[0]}</span>
+            <div class="mini-team ${
+              row[3].includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
+              <span>${
+                row[3].includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[3].split(" ").slice(-1)[0]
+              }</span>
               <img src="${getTeamLogo(row[3])}" class="mini-team-logo">
             </div>
           </div>
           <div class="mini-competition">
-            ${row[0]} • ${row[5] || 'Amistoso'}
+            ${row[0]} • ${row[5] || "Amistoso"}
           </div>
         </div>
       `;
     });
-    document.getElementById('mini-resultados').innerHTML = html;
+    document.getElementById("mini-resultados").innerHTML = html;
   } catch (error) {
-    document.getElementById('mini-resultados').innerHTML = `
+    document.getElementById("mini-resultados").innerHTML = `
       <div class="mini-result" style="color: #666; text-align: center;">
         <i class="fas fa-exclamation-triangle"></i> Dados não disponíveis
       </div>
@@ -255,49 +339,70 @@ async function loadNextMatches() {
       `https://sheets.googleapis.com/v4/spreadsheets/1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c/values/PARTIDAS?key=${CONFIG.apiKey}`
     );
     const data = await response.json();
-    let html = '';
+    let html = "";
     let count = 0;
     for (let i = 1; i < data.values.length && count < 3; i++) {
       const row = data.values[i];
       if (!row[0] || !row[1] || !row[3]) continue;
-      const isCruzeiro = row[1].includes('Cruzeiro') || row[3].includes('Cruzeiro');
+      const isCruzeiro =
+        row[1].includes("Cruzeiro") || row[3].includes("Cruzeiro");
       if (!isCruzeiro && count > 0) continue;
       const hoje = new Date();
-      const [dia, mes] = row[0].split('/');
-      const dataJogo = new Date(hoje.getFullYear(), parseInt(mes) - 1, parseInt(dia));
+      const [dia, mes] = row[0].split("/");
+      const dataJogo = new Date(
+        hoje.getFullYear(),
+        parseInt(mes) - 1,
+        parseInt(dia)
+      );
       if (dataJogo < hoje) continue;
-      const isLive = row[7] === 'LIVE' || row[7] === 'AO VIVO';
+      const isLive = row[7] === "LIVE" || row[7] === "AO VIVO";
       html += `
         <div class="next-match">
           <div class="match-date">
-            ${row[0]} • ${row[7] === 'LIVE' ? '<span class="live-badge">AO VIVO</span>' : row[7]}
+            ${row[0]} • ${
+        row[7] === "LIVE" ? '<span class="live-badge">AO VIVO</span>' : row[7]
+      }
           </div>
           <div class="match-teams">
-            <div class="match-team ${row[1].includes('Cruzeiro') ? 'cruzeiro' : ''}">
+            <div class="match-team ${
+              row[1].includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
               <img src="${getTeamLogo(row[1])}" class="match-team-logo">
-              <span>${row[1].includes('Cruzeiro') ? 'Cruzeiro' : row[1].split(' ').slice(-1)[0]}</span>
+              <span>${
+                row[1].includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[1].split(" ").slice(-1)[0]
+              }</span>
             </div>
             <span class="match-vs">vs</span>
-            <div class="match-team ${row[3].includes('Cruzeiro') ? 'cruzeiro' : ''}">
-              <span>${row[3].includes('Cruzeiro') ? 'Cruzeiro' : row[3].split(' ').slice(-1)[0]}</span>
+            <div class="match-team ${
+              row[3].includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
+              <span>${
+                row[3].includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[3].split(" ").slice(-1)[0]
+              }</span>
               <img src="${getTeamLogo(row[3])}" class="match-team-logo">
             </div>
           </div>
           <div class="match-info">
-            <span>${row[5] || 'Amistoso'}</span>
-            <span>${row[6] || 'Local a definir'}</span>
+            <span>${row[5] || "Amistoso"}</span>
+            <span>${row[6] || "Local a definir"}</span>
           </div>
         </div>
       `;
       count++;
     }
-    document.getElementById('proximos-jogos').innerHTML = html || `
+    document.getElementById("proximos-jogos").innerHTML =
+      html ||
+      `
       <div class="next-match" style="color: #666; text-align: center;">
         <i class="fas fa-calendar-times"></i> Nenhum jogo agendado
       </div>
     `;
   } catch (error) {
-    document.getElementById('proximos-jogos').innerHTML = `
+    document.getElementById("proximos-jogos").innerHTML = `
       <div class="next-match" style="color: #666; text-align: center;">
         <i class="fas fa-exclamation-triangle"></i> Dados não disponíveis
       </div>
@@ -306,59 +411,61 @@ async function loadNextMatches() {
 }
 
 // ========== INICIALIZAÇÃO ÚNICA ==========
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener("DOMContentLoaded", function () {
   // Menu Toggle para dispositivos móveis
-  const menuToggle = document.getElementById('menuToggle');
-  const menu = document.getElementById('menu');
+  const menuToggle = document.getElementById("menuToggle");
+  const menu = document.getElementById("menu");
   if (menuToggle && menu) {
-    menuToggle.addEventListener('click', function() {
-      menu.classList.toggle('active');
+    menuToggle.addEventListener("click", function () {
+      menu.classList.toggle("active");
     });
     // Fechar menu ao clicar em um link
-    const menuLinks = document.querySelectorAll('#menu a');
-    menuLinks.forEach(link => {
-      link.addEventListener('click', function() {
-        menu.classList.remove('active');
+    const menuLinks = document.querySelectorAll("#menu a");
+    menuLinks.forEach((link) => {
+      link.addEventListener("click", function () {
+        menu.classList.remove("active");
       });
     });
   }
 
   // Formulário de Newsletter
-  const newsletterForm = document.getElementById('newsletterForm');
+  const newsletterForm = document.getElementById("newsletterForm");
   if (newsletterForm) {
-    newsletterForm.addEventListener('submit', function(e) {
+    newsletterForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const email = this.querySelector('input[type="email"]').value;
-      alert(`Obrigado por se inscrever! Você receberá as notícias no email: ${email}`);
+      alert(
+        `Obrigado por se inscrever! Você receberá as notícias no email: ${email}`
+      );
       this.reset();
     });
   }
 
   // Botão "Carregar mais notícias"
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const loadMoreBtn = document.getElementById("loadMoreBtn");
   if (loadMoreBtn) {
-    loadMoreBtn.addEventListener('click', function() {
+    loadMoreBtn.addEventListener("click", function () {
       loadMoreNews();
     });
   }
 
   // Efeito de scroll suave para links internos
-  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-    anchor.addEventListener('click', function (e) {
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+    anchor.addEventListener("click", function (e) {
       e.preventDefault();
-      const targetId = this.getAttribute('href');
-      if (targetId === '#') return;
+      const targetId = this.getAttribute("href");
+      if (targetId === "#") return;
       const targetElement = document.querySelector(targetId);
       if (targetElement) {
         window.scrollTo({
           top: targetElement.offsetTop - 80,
-          behavior: 'smooth'
+          behavior: "smooth",
         });
       }
     });
   });
 
-  // Inicializa os widgets (API key + dados)
+  // Inicializa widgets Google Sheets
   initWidgets();
 
   // Script para menu hambúrguer (caso use nav diferente)
@@ -379,4 +486,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   }
+
+  // Carrega notícias do Terra automaticamente (scraping)
+  fetchTerraNews();
 });
