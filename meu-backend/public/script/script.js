@@ -66,7 +66,9 @@ function parseRelativeDate(str) {
   str = str.toLowerCase().trim();
 
   // UOL: "28/05/2025 05h30" ou "28/05/2025"
-  const dataUOL = str.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2})h(\d{2}))?$/);
+  const dataUOL = str.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2})h(\d{2}))?$/
+  );
   if (dataUOL) {
     const dia = parseInt(dataUOL[1]);
     const mes = parseInt(dataUOL[2]) - 1;
@@ -83,8 +85,18 @@ function parseRelativeDate(str) {
   const dataAbs = str.match(/^(\d{1,2}) de (\w+) de (\d{4})$/);
   if (dataAbs) {
     const meses = [
-      "janeiro", "fevereiro", "março", "abril", "maio", "junho",
-      "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro",
     ];
     const dia = parseInt(dataAbs[1]);
     const mes = meses.indexOf(dataAbs[2]);
@@ -115,6 +127,17 @@ function parseRelativeDate(str) {
 
 // Função para buscar notícias do Cruzeiro usando o scraper do backend
 async function fetchTerraNews() {
+  // mensagem de carregamento
+  document.querySelector(".featured-article").innerHTML = `
+    <div style="width:100%;text-align:center;padding:40px 0;color:#0033a0;font-size:1.2rem;">
+      <i class="fas fa-spinner fa-spin"></i> Aguarde, estamos pegando as melhores notícias para você...
+    </div>
+  `;
+  document.querySelector(".news-grid").innerHTML = `
+    <div style="width:100%;text-align:center;padding:30px 0;color:#0033a0;">
+      <i class="fas fa-spinner fa-spin"></i> Carregando notícias...
+    </div>
+  `;
   try {
     const response = await fetch("api/noticias-espn");
     let noticias = await response.json();
@@ -126,21 +149,24 @@ async function fetchTerraNews() {
     }
     if (noticias.length === 0) throw new Error("Nenhuma notícia encontrada");
 
-    
-    noticias = noticias.filter(n => !/gol/i.test(n.title));
+    noticias = noticias.filter((n) => !/gol/i.test(n.title));
 
     // Ordena as notícias da mais recente para a mais antiga
     noticias.sort(
-      (a, b) => parseRelativeDate(a.description) - parseRelativeDate(b.description)
+      (a, b) =>
+        parseRelativeDate(a.description) - parseRelativeDate(b.description)
     );
 
     // Mostra a mais recente como destaque
     renderFeaturedNews(noticias[0]);
 
     // O restante em ordem crescente (mais antiga para mais recente)
-    const restantes = noticias.slice(1).sort(
-      (a, b) => parseRelativeDate(a.description) - parseRelativeDate(b.description)
-    );
+    const restantes = noticias
+      .slice(1)
+      .sort(
+        (a, b) =>
+          parseRelativeDate(a.description) - parseRelativeDate(b.description)
+      );
     renderNews(restantes.slice(0, 6));
 
     // Mostra botão se houver mais de 7 notícias
@@ -185,7 +211,9 @@ function renderFeaturedNews(article) {
       }" alt="Notícia em destaque do Cruzeiro">
     </div>
     <div class="featured-content">
-      <span class="category">Noticia retirada de: ${article.fonte || ""}.com.br</span>
+      <span class="category">Noticia retirada de: ${
+        article.fonte || ""
+      }.com.br</span>
       <h3>${article.title}</h3>
       <p>${article.description || "Sem descrição disponível."}</p>
       <a href="${
@@ -217,7 +245,9 @@ function renderNews(articles) {
         }" alt="Notícia do Cruzeiro">
       </div>
       <div class="news-content">
-        <span class="category">Noticia retirada de: ${article.fonte || ""}.com.br</span>
+        <span class="category">Noticia retirada de: ${
+          article.fonte || ""
+        }.com.br</span>
         <h3>${article.title}</h3>
         <p>${article.description || "Sem descrição disponível."}</p>
         <a href="${
