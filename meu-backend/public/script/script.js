@@ -1,4 +1,7 @@
 // =================== CONFIGURAÇÃO OTIMIZADA ===================
+let allNews = [];
+let newsLoaded = 8;
+const NEWS_PER_LOAD = 8;
 const CONFIG = {
   apiKey: null,
   cache: new Map(),
@@ -246,21 +249,13 @@ async function loadMiniResults() {
               <img data-src="${getTeamLogo(
                 row[1]
               )}" class="mini-team-logo lazy">
-              <span>${
-                row[1]?.includes("Cruzeiro")
-                  ? "Cruzeiro"
-                  : row[1]?.split(" ").slice(-1)[0] || ""
-              }</span>
+  <span>${row[1]?.includes("Cruzeiro") ? "Cruzeiro" : row[1] || ""}</span>
             </div>
             <div class="mini-score">${scoreParts[0]?.trim() || "-"}</div>
             <div class="mini-team ${
               row[3]?.includes("Cruzeiro") ? "cruzeiro" : ""
             }">
-              <span>${
-                row[3]?.includes("Cruzeiro")
-                  ? "Cruzeiro"
-                  : row[3]?.split(" ").slice(-1)[0] || ""
-              }</span>
+<span>${row[3]?.includes("Cruzeiro") ? "Cruzeiro" : row[3] || ""}</span>
               <img data-src="${getTeamLogo(
                 row[3]
               )}" class="mini-team-logo lazy">
@@ -376,11 +371,12 @@ async function fetchNews() {
   try {
     const cached = getCachedData("news");
     if (cached) {
-      renderNews(cached);
+      allNews = cached;
+      renderNews(allNews, true);
       return;
     }
 
-    const response = await fetch("api/noticias-espn");
+    const response = await fetch("http://localhost:4001/api/noticias-espn");
     let noticias = await response.json();
 
     if (!Array.isArray(noticias) || noticias.length === 0) {
@@ -390,20 +386,70 @@ async function fetchNews() {
     // Filtra e ordena
     noticias = noticias
       .filter((n) => !/gol/i.test(n.title))
-      .sort(
-        (a, b) =>
-          parseRelativeDate(a.description) - parseRelativeDate(b.description)
-      );
+      .sort((a, b) => {
+        // Troque "date" pelo campo correto da sua notícia (ex: a.date, a.data, a.pubDate, etc)
+        const dataA = parseNewsDate(
+          a.date || a.data || a.pubDate || a.description || ""
+        );
+        const dataB = parseNewsDate(
+          b.date || b.data || b.pubDate || b.description || ""
+        );
+        return dataB - dataA; // Mais recentes primeiro
+      });
 
     setCachedData("news", noticias);
-    renderNews(noticias);
+    allNews = noticias;
+    renderNews(allNews, true);
   } catch (error) {
     console.error("Erro ao buscar notícias:", error);
     showNewsError();
   }
 }
 
-function renderNews(noticias) {
+function parseNewsDate(dateStr) {
+  if (!dateStr) return new Date(0); // Data inválida, vai para o fim
+
+  // UOL: 25/05/2025 22h27
+  const uolMatch = dateStr.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})\s+(\d{2})h(\d{2})$/
+  );
+  if (uolMatch) {
+    const [_, dia, mes, ano, hora, min] = uolMatch;
+    return new Date(`${ano}-${mes}-${dia}T${hora}:${min}:00`);
+  }
+
+  // Zeiro: 28 de maio de 2025
+  const zeiroMatch = dateStr.match(/^(\d{1,2}) de ([a-zç]+) de (\d{4})$/i);
+  if (zeiroMatch) {
+    const [_, dia, mesNome, ano] = zeiroMatch;
+    const meses = [
+      "janeiro",
+      "fevereiro",
+      "março",
+      "abril",
+      "maio",
+      "junho",
+      "julho",
+      "agosto",
+      "setembro",
+      "outubro",
+      "novembro",
+      "dezembro",
+    ];
+    const mesNum = meses.findIndex((m) => m === mesNome.toLowerCase());
+    if (mesNum >= 0) {
+      return new Date(Number(ano), mesNum, Number(dia));
+    }
+  }
+
+  // Tenta converter direto (caso venha em outro formato ISO)
+  const d = new Date(dateStr);
+  if (!isNaN(d)) return d;
+
+  return new Date(0); // Data inválida
+}
+
+function renderNews(noticias, reset = false) {
   // Featured news
   const featured = document.querySelector(".featured-article");
   if (featured && noticias[0]) {
@@ -433,9 +479,14 @@ function renderNews(noticias) {
   // News grid
   const newsGrid = document.querySelector(".news-grid");
   if (newsGrid) {
+    if (reset) {
+      newsGrid.innerHTML = "";
+      newsLoaded = 6;
+    }
     const fragment = document.createDocumentFragment();
 
-    noticias.slice(1, 7).forEach((noticia) => {
+    // Sempre pule a primeira notícia (em destaque)
+    noticias.slice(1, 1 + (newsLoaded - 1)).forEach((noticia) => {
       const article = document.createElement("article");
       article.className = "news-card";
       article.innerHTML = `
@@ -460,8 +511,17 @@ function renderNews(noticias) {
       fragment.appendChild(article);
     });
 
-    newsGrid.innerHTML = "";
     newsGrid.appendChild(fragment);
+
+    // Esconde o botão se não houver mais notícias
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    if (loadMoreBtn) {
+      if (newsLoaded >= noticias.length) {
+        loadMoreBtn.style.display = "none";
+      } else {
+        loadMoreBtn.style.display = "";
+      }
+    }
   }
 
   DOMUtils.lazyLoadImages();
@@ -652,4 +712,11 @@ function setupEventListeners() {
       CONFIG.isMobile = window.innerWidth <= 768;
     }, 250)
   );
+  const loadMoreBtn = document.getElementById("loadMoreBtn");
+  if (loadMoreBtn) {
+    loadMoreBtn.addEventListener("click", function () {
+      newsLoaded += NEWS_PER_LOAD;
+      renderNews(allNews);
+    });
+  }
 }
