@@ -410,7 +410,7 @@ function showNewsError() {
   if (featured) featured.innerHTML = errorMsg;
   if (newsGrid) newsGrid.innerHTML = errorMsg;
 }
-
+//teste//
 // =================== UTILITÁRIOS ===================
 function getTeamLogo(teamName) {
   const logos = {
