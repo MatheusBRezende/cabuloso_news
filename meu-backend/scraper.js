@@ -6,32 +6,36 @@ const app = express();
 
 app.use(cors());
 
-// Configurações otimizadas para o Render
-const puppeteerOptions = {
-  args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage',
-    '--disable-accelerated-2d-canvas',
-    '--no-first-run',
-    '--no-zygote',
-    '--single-process'
-  ],
-  headless: 'new',
-  executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser'
+// Configuração garantida para o Render
+const getBrowser = async () => {
+  try {
+    return await puppeteer.launch({
+      args: [
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-dev-shm-usage',
+        '--single-process'
+      ],
+      headless: 'new',
+      executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium-browser' || '/usr/bin/google-chrome-stable'
+    });
+  } catch (error) {
+    console.error('Fallback to default browser path');
+    return await puppeteer.launch({
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      headless: 'new'
+    });
+  }
 };
 
 app.get('/api/noticias-espn', async (req, res) => {
   let browser;
   try {
-    browser = await puppeteer.launch(puppeteerOptions);
+    browser = await getBrowser();
     const page = await browser.newPage();
     
-    // Configurações adicionais para evitar bloqueios
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-    await page.setViewport({ width: 1366, height: 768 });
-    
-    await page.goto('https://www.espn.com.br/futebol/time/_/id/2022/cruzeiro', { 
+    await page.goto('https://www.espn.com.br/futebol/time/_/id/2022/cruzeiro', {
       waitUntil: 'networkidle2',
       timeout: 30000
     });
@@ -65,7 +69,7 @@ app.get('/api/noticias-espn', async (req, res) => {
     console.error("Erro detalhado no scraper:", err);
     res.status(500).json({ 
       error: 'Erro ao buscar notícias da ESPN',
-      details: err.message // Adiciona detalhes do erro
+      details: err.message
     });
   } finally {
     if (browser) await browser.close();
