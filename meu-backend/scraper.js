@@ -16,7 +16,7 @@ const CACHE_TTL = 60 * 1000; // 1 minuto
 
 // Função para abrir o navegador (Puppeteer)
 const getBrowser = async () => {
-  const options = {
+  return await puppeteer.launch({
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -24,25 +24,9 @@ const getBrowser = async () => {
       '--single-process'
     ],
     headless: 'new'
-  };
-
-  // Tenta caminhos alternativos para o Chrome/Chromium
-  const paths = [
-    process.env.PUPPETEER_EXECUTABLE_PATH,
-    '/usr/bin/chromium-browser',
-    '/usr/bin/google-chrome-stable'
-  ].filter(Boolean);
-
-  for (const executablePath of paths) {
-    try {
-      return await puppeteer.launch({ ...options, executablePath });
-    } catch (e) {
-      console.log(`Não encontrado em ${executablePath}, tentando próximo...`);
-    }
-  }
-  // Fallback final
-  return await puppeteer.launch(options);
+  });
 };
+
 
 // Função para buscar notícias da ESPN do Cruzeiro
 async function fetchNoticiasESPN() {
