@@ -64,7 +64,7 @@ function showWidgetError() {
 // Função para buscar notícias do Cruzeiro usando o scraper do Terra
 async function fetchTerraNews() {
   try {
-    const response = await fetch('/api/noticias-espn');
+    const response = await fetch('http://localhost:4001/api/noticias-espn');
     const noticias = await response.json();
     console.log("Resposta do backend:", noticias);
 

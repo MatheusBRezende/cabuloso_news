@@ -1,97 +1,66 @@
 const express = require('express');
 const cors = require('cors');
-const puppeteer = require('puppeteer');
+const axios = require('axios');
 const cheerio = require('cheerio');
 const path = require('path');
 const app = express();
 
-// Configurações
 app.use(cors());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Cache de notícias
 let noticiasCache = [];
 let cacheTimestamp = 0;
 const CACHE_TTL = 60 * 1000; // 1 minuto
 
-// Função para abrir o navegador (Puppeteer)
-const getBrowser = async () => {
-  return await puppeteer.launch({
-    args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--single-process'
-    ],
-    headless: 'new'
+async function fetchNoticiasUOL() {
+  const { data: html } = await axios.get('https://zeiro.com.br/noticias-do-cruzeiro/');
+  const $ = cheerio.load(html);
+  const noticias = [];
+
+  // Seleciona apenas os links de notícia dentro dos blocos de notícias
+  $('.results-items a').each((i, el) => {
+    const title = $(el).find('.thumb-title').text().trim();
+    const url = $(el).attr('href');
+    const image = $(el).find('img').attr('src') || $(el).find('img').attr('data-src');
+    const date = $(el).find('.thumb-date').text().trim();
+
+    if (title && url && image) {
+      noticias.push({
+        title,
+        url: url.startsWith('http') ? url : `https://zeiro.com.br${url}`,
+        description: date,
+        image
+      });
+    }
   });
-};
 
-
-// Função para buscar notícias da ESPN do Cruzeiro
-async function fetchNoticiasESPN() {
-  let browser;
-  try {
-    browser = await getBrowser();
-    const page = await browser.newPage();
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
-    await page.goto('https://www.espn.com.br/futebol/time/_/id/2022/cruzeiro', {
-      waitUntil: 'networkidle2',
-      timeout: 20000
-    });
-    const html = await page.content();
-    const $ = cheerio.load(html);
-    const noticias = [];
-    $('article.contentItem').each((i, el) => {
-      const a = $(el).find('a.AnchorLink').first();
-      const title = a.find('.contentItem__title').text().trim();
-      const url = a.attr('href') || '';
-      const description = a.find('.contentItem__subhead').text().trim();
-      let image = $(el).find('figure source').first().attr('srcset') ||
-                  $(el).find('figure img').first().attr('src') ||
-                  $(el).find('img').first().attr('src');
-      if (title && url) {
-        noticias.push({
-          title,
-          url: url.startsWith('http') ? url : `https://www.espn.com.br${url}`,
-          description,
-          image: image || null
-        });
-      }
-    });
-    return noticias;
-  } finally {
-    if (browser) await browser.close();
-  }
+  return noticias;
 }
 
-// Rota da API de notícias (com cache)
 app.get('/api/noticias-espn', async (req, res) => {
   try {
     const now = Date.now();
     if (noticiasCache.length > 0 && now - cacheTimestamp < CACHE_TTL) {
       return res.json(noticiasCache);
     }
-    const noticias = await fetchNoticiasESPN();
+    const noticias = await fetchNoticiasUOL();
     noticiasCache = noticias;
     cacheTimestamp = now;
     res.json(noticias);
   } catch (err) {
-    console.error("Erro no scraper:", err);
+    console.error("Erro no scraping UOL:", err);
     res.status(500).json({
       error: 'Erro ao buscar notícias',
-      details: process.env.NODE_ENV === 'development' ? err.message : null
+      details: err && err.message ? err.message : String(err)
     });
   }
 });
 
-// Rota para a chave da API do Google
 app.get('/api/chave-google', (req, res) => {
   const apiKey = process.env.GOOGLE_API_KEY;
   res.json({ apiKey: apiKey || 'not-set' });
 });
 
-// Rota principal (SPA)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
