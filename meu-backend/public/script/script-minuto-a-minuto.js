@@ -11,7 +11,6 @@ async function fetchAPIKey() {
     if (!data.apiKey) {
       throw new Error("Chave da API não encontrada na resposta");
     }
-    console.log("Chave recebida!");
     apiKey = data.apiKey;
     return true;
   } catch (error) {
@@ -328,10 +327,6 @@ function processarEventos(dados, timeCasa, timeVisitante) {
             golsCasa = gols2;
             golsVisitante = gols1;
           } else {
-            console.warn(
-              "Não foi possível identificar os times no placar, usando ordem padrão:",
-              descricao
-            );
             golsCasa = gols1;
             golsVisitante = gols2;
           }
@@ -352,7 +347,6 @@ function processarEventos(dados, timeCasa, timeVisitante) {
             ultimoTempoComPlacar = tempo;
             placarAtual = { casa: golsCasa, visitante: golsVisitante };
             atualizarPlacar(placarAtual.casa, placarAtual.visitante);
-            console.log("Placar atualizado:", placarAtual, "no tempo:", tempo);
             let timeFezGol = null;
             if (golsCasa > (placarConfirmado?.casa ?? 0)) {
               timeFezGol = "casa";
@@ -572,6 +566,10 @@ function exibirEventos(eventosAgrupados) {
     )
     .join("");
 
+  // Só atualiza se mudou
+  if (container._ultimoEventosHTML === eventosHTML) return;
+  container._ultimoEventosHTML = eventosHTML;
+
   // Adiciona os eventos ao container
   const eventosContainer = document.createElement("div");
   eventosContainer.className = "eventos-wrapper";
@@ -651,9 +649,16 @@ async function carregarDadosDaPlanilha(
 ) {
   const loadingNarrativa = document.querySelector(".loading-narrativa");
   const containerNarrativa = document.getElementById("narrativa-jogo");
+  if (jogoEncerradoGlobal) {
+    if (loadingNarrativa) loadingNarrativa.style.display = "none";
+    if (containerNarrativa) containerNarrativa.style.opacity = "1";
+    return;
+  }
   try {
     if (loadingNarrativa) loadingNarrativa.style.display = "flex";
     if (containerNarrativa) containerNarrativa.style.opacity = "0.7";
+
+    // Busca os dados da planilha
     const response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}?key=${apiKey}`
     );
@@ -661,10 +666,21 @@ async function carregarDadosDaPlanilha(
     const data = await response.json();
     if (!data.values || data.values.length === 0)
       throw new Error("Planilha vazia ou sem dados");
+
+    // Checa se os dados mudaram antes de processar/renderizar tudo
+    const dadosString = JSON.stringify(data.values);
+    if (carregarDadosDaPlanilha._ultimoDados === dadosString) {
+      if (containerNarrativa) containerNarrativa.style.opacity = "1";
+      if (loadingNarrativa) loadingNarrativa.style.display = "none";
+      return; // Não faz nada se não mudou
+    }
+    carregarDadosDaPlanilha._ultimoDados = dadosString;
+
+    // Processa e exibe eventos só se mudou
     const eventos = processarEventos(data.values, timeCasa, timeVisitante);
     exibirEventos(eventos);
+
     if (containerNarrativa) {
-      containerNarrativa.scrollTop = containerNarrativa.scrollHeight;
       containerNarrativa.style.opacity = "1";
     }
   } catch (error) {
