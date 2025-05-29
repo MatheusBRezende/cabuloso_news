@@ -5,7 +5,7 @@ const CONFIG = {
   cacheTimeout: 30000, // 30 segundos
   debounceTimeout: 300,
   isMobile: window.innerWidth <= 768,
-  reducedMotion: window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  reducedMotion: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
 };
 
 // =================== UTILITÁRIOS DE PERFORMANCE ===================
@@ -23,15 +23,15 @@ const debounce = (func, wait) => {
 
 const throttle = (func, limit) => {
   let inThrottle;
-  return function() {
+  return function () {
     const args = arguments;
     const context = this;
     if (!inThrottle) {
       func.apply(context, args);
       inThrottle = true;
-      setTimeout(() => inThrottle = false, limit);
+      setTimeout(() => (inThrottle = false), limit);
     }
-  }
+  };
 };
 
 // Cache inteligente
@@ -46,27 +46,27 @@ const getCachedData = (key) => {
 const setCachedData = (key, data) => {
   CONFIG.cache.set(key, {
     data,
-    timestamp: Date.now()
+    timestamp: Date.now(),
   });
 };
 
 // =================== API OTIMIZADA ===================
 async function fetchAPIKey() {
   try {
-    const cached = getCachedData('apiKey');
+    const cached = getCachedData("apiKey");
     if (cached) {
       CONFIG.apiKey = cached;
       return true;
     }
 
-    const response = await fetch('/api/chave-google');
+    const response = await fetch("/api/chave-google");
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-    
+
     const data = await response.json();
     if (!data.apiKey) throw new Error("API key não encontrada");
-    
+
     CONFIG.apiKey = data.apiKey;
-    setCachedData('apiKey', data.apiKey);
+    setCachedData("apiKey", data.apiKey);
     return true;
   } catch (error) {
     console.error("Erro ao carregar API key:", error);
@@ -82,9 +82,9 @@ async function fetchSheetData(sheetId, range, cacheKey) {
 
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}?key=${CONFIG.apiKey}`;
     const response = await fetch(url);
-    
+
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-    
+
     const data = await response.json();
     setCachedData(cacheKey, data);
     return data;
@@ -100,28 +100,28 @@ const DOMUtils = {
   batchUpdate: (element, updates) => {
     const fragment = document.createDocumentFragment();
     const temp = element.cloneNode(false);
-    
-    updates.forEach(update => update(temp));
-    
+
+    updates.forEach((update) => update(temp));
+
     fragment.appendChild(temp);
     element.parentNode.replaceChild(fragment.firstChild, element);
   },
 
   // Lazy loading de imagens
   lazyLoadImages: () => {
-    if ('IntersectionObserver' in window) {
+    if ("IntersectionObserver" in window) {
       const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
+        entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const img = entry.target;
             img.src = img.dataset.src;
-            img.classList.remove('lazy');
+            img.classList.remove("lazy");
             observer.unobserve(img);
           }
         });
       });
 
-      document.querySelectorAll('img[data-src]').forEach(img => {
+      document.querySelectorAll("img[data-src]").forEach((img) => {
         imageObserver.observe(img);
       });
     }
@@ -131,7 +131,7 @@ const DOMUtils = {
   animate: (element, animation) => {
     if (CONFIG.reducedMotion || CONFIG.isMobile) return;
     element.style.animation = animation;
-  }
+  },
 };
 
 // =================== WIDGETS OTIMIZADOS ===================
@@ -146,7 +146,7 @@ class WidgetManager {
     this.widgets.set(name, {
       update: updateFunction,
       lastUpdate: 0,
-      interval: 30000 // 30 segundos
+      interval: 30000, // 30 segundos
     });
   }
 
@@ -170,7 +170,7 @@ class WidgetManager {
     this.isUpdating = true;
 
     try {
-      const promises = Array.from(this.widgets.keys()).map(name => 
+      const promises = Array.from(this.widgets.keys()).map((name) =>
         this.updateWidget(name)
       );
       await Promise.allSettled(promises);
@@ -186,85 +186,113 @@ const widgetManager = new WidgetManager();
 async function loadMiniTable() {
   try {
     const data = await fetchSheetData(
-      '1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0',
-      'A1:M6',
-      'miniTable'
+      "1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0",
+      "A1:M6",
+      "miniTable"
     );
 
-    const container = document.getElementById('mini-tabela');
+    const container = document.getElementById("mini-tabela");
     if (!container) return;
 
-    const html = data.values.slice(1, 6).map((row, index) => {
-      const isCruzeiro = row[1]?.includes('Cruzeiro');
-      return `
-        <tr class="${isCruzeiro ? 'cruzeiro-row' : ''}">
+    const html = data.values
+      .slice(1, 6)
+      .map((row, index) => {
+        const isCruzeiro = row[1]?.includes("Cruzeiro");
+        return `
+        <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
           <td>${index + 1}º</td>
           <td class="team-cell">
-            <img data-src="${getTeamLogo(row[1])}" class="team-logo lazy" alt="${row[1]}">
-            ${row[1]?.replace(/^\d+°\s*/, '').replace(/\s[A-Z]{2,4}$/, '') || ''}
+            <img data-src="${getTeamLogo(
+              row[1]
+            )}" class="team-logo lazy" alt="${row[1]}">
+            ${
+              row[1]?.replace(/^\d+°\s*/, "").replace(/\s[A-Z]{2,4}$/, "") || ""
+            }
           </td>
           <td>${row[2] || 0}</td>
         </tr>
       `;
-    }).join('');
+      })
+      .join("");
 
     container.innerHTML = html;
     DOMUtils.lazyLoadImages();
   } catch (error) {
-    console.error('Erro ao carregar mini tabela:', error);
+    console.error("Erro ao carregar mini tabela:", error);
   }
 }
 
 async function loadMiniResults() {
   try {
     const data = await fetchSheetData(
-      '12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0',
-      'A1:F6',
-      'miniResults'
+      "12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0",
+      "A1:F6",
+      "miniResults"
     );
 
-    const container = document.getElementById('mini-resultados');
+    const container = document.getElementById("mini-resultados");
     if (!container) return;
 
-    const html = data.values.slice(1, 4).map(row => {
-      const scoreParts = row[2]?.split(/(?=[A-Za-z])/) || ['-'];
-      return `
+    const html = data.values
+      .slice(1, 4)
+      .map((row) => {
+        const scoreParts = row[2]?.split(/(?=[A-Za-z])/) || ["-"];
+        return `
         <div class="mini-result">
           <div class="mini-teams">
-            <div class="mini-team ${row[1]?.includes('Cruzeiro') ? 'cruzeiro' : ''}">
-              <img data-src="${getTeamLogo(row[1])}" class="mini-team-logo lazy">
-              <span>${row[1]?.includes('Cruzeiro') ? 'Cruzeiro' : row[1]?.split(' ').slice(-1)[0] || ''}</span>
+            <div class="mini-team ${
+              row[1]?.includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
+              <img data-src="${getTeamLogo(
+                row[1]
+              )}" class="mini-team-logo lazy">
+              <span>${
+                row[1]?.includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[1]?.split(" ").slice(-1)[0] || ""
+              }</span>
             </div>
-            <div class="mini-score">${scoreParts[0]?.trim() || '-'}</div>
-            <div class="mini-team ${row[3]?.includes('Cruzeiro') ? 'cruzeiro' : ''}">
-              <span>${row[3]?.includes('Cruzeiro') ? 'Cruzeiro' : row[3]?.split(' ').slice(-1)[0] || ''}</span>
-              <img data-src="${getTeamLogo(row[3])}" class="mini-team-logo lazy">
+            <div class="mini-score">${scoreParts[0]?.trim() || "-"}</div>
+            <div class="mini-team ${
+              row[3]?.includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
+              <span>${
+                row[3]?.includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[3]?.split(" ").slice(-1)[0] || ""
+              }</span>
+              <img data-src="${getTeamLogo(
+                row[3]
+              )}" class="mini-team-logo lazy">
             </div>
           </div>
-          <div class="mini-competition">${row[0]} • ${row[5] || 'Amistoso'}</div>
+          <div class="mini-competition">${row[0]} • ${
+          row[5] || "Amistoso"
+        }</div>
         </div>
       `;
-    }).join('');
+      })
+      .join("");
 
     container.innerHTML = html;
     DOMUtils.lazyLoadImages();
   } catch (error) {
-    console.error('Erro ao carregar mini resultados:', error);
+    console.error("Erro ao carregar mini resultados:", error);
   }
 }
 
 async function loadNextMatches() {
   try {
     const data = await fetchSheetData(
-      '1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c',
-      'PARTIDAS',
-      'nextMatches'
+      "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
+      "PARTIDAS",
+      "nextMatches"
     );
 
-    const container = document.getElementById('proximos-jogos');
+    const container = document.getElementById("proximos-jogos");
     if (!container) return;
 
-    let html = '';
+    let html = "";
     let count = 0;
     const hoje = new Date();
 
@@ -272,41 +300,66 @@ async function loadNextMatches() {
       const row = data.values[i];
       if (!row[0] || !row[1] || !row[3]) continue;
 
-      const isCruzeiro = row[1]?.includes('Cruzeiro') || row[3]?.includes('Cruzeiro');
+      const isCruzeiro =
+        row[1]?.includes("Cruzeiro") || row[3]?.includes("Cruzeiro");
       if (!isCruzeiro && count > 0) continue;
 
-      const [dia, mes] = row[0].split('/');
-      const dataJogo = new Date(hoje.getFullYear(), parseInt(mes) - 1, parseInt(dia));
+      const [dia, mes] = row[0].split("/");
+      const dataJogo = new Date(
+        hoje.getFullYear(),
+        parseInt(mes) - 1,
+        parseInt(dia)
+      );
       if (dataJogo < hoje) continue;
 
-      const isLive = row[7] === 'LIVE' || row[7] === 'AO VIVO';
+      const isLive = row[7] === "LIVE" || row[7] === "AO VIVO";
 
       html += `
         <div class="next-match">
           <div class="match-date">
-            ${row[0]} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : row[7]}
+            ${row[0]} • ${
+        isLive ? '<span class="live-badge">AO VIVO</span>' : row[7]
+      }
           </div>
           <div class="match-teams">
-            <div class="match-team ${row[1]?.includes('Cruzeiro') ? 'cruzeiro' : ''}">
-              <img data-src="${getTeamLogo(row[1])}" class="match-team-logo lazy">
-              <span>${row[1]?.includes('Cruzeiro') ? 'Cruzeiro' : row[1]?.split(' ').slice(-1)[0] || ''}</span>
+            <div class="match-team ${
+              row[1]?.includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
+              <img data-src="${getTeamLogo(
+                row[1]
+              )}" class="match-team-logo lazy">
+              <span>${
+                row[1]?.includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[1]?.split(" ").slice(-1)[0] || ""
+              }</span>
             </div>
             <span class="match-vs">vs</span>
-            <div class="match-team ${row[3]?.includes('Cruzeiro') ? 'cruzeiro' : ''}">
-              <span>${row[3]?.includes('Cruzeiro') ? 'Cruzeiro' : row[3]?.split(' ').slice(-1)[0] || ''}</span>
-              <img data-src="${getTeamLogo(row[3])}" class="match-team-logo lazy">
+            <div class="match-team ${
+              row[3]?.includes("Cruzeiro") ? "cruzeiro" : ""
+            }">
+              <span>${
+                row[3]?.includes("Cruzeiro")
+                  ? "Cruzeiro"
+                  : row[3]?.split(" ").slice(-1)[0] || ""
+              }</span>
+              <img data-src="${getTeamLogo(
+                row[3]
+              )}" class="match-team-logo lazy">
             </div>
           </div>
           <div class="match-info">
-            <span>${row[5] || 'Amistoso'}</span>
-            <span>${row[6] || 'Local a definir'}</span>
+            <span>${row[5] || "Amistoso"}</span>
+            <span>${row[6] || "Local a definir"}</span>
           </div>
         </div>
       `;
       count++;
     }
 
-    container.innerHTML = html || `
+    container.innerHTML =
+      html ||
+      `
       <div class="next-match" style="color: #666; text-align: center;">
         <i class="fas fa-calendar-times"></i> Nenhum jogo agendado
       </div>
@@ -314,53 +367,63 @@ async function loadNextMatches() {
 
     DOMUtils.lazyLoadImages();
   } catch (error) {
-    console.error('Erro ao carregar próximos jogos:', error);
+    console.error("Erro ao carregar próximos jogos:", error);
   }
 }
 
 // =================== NOTÍCIAS OTIMIZADAS ===================
 async function fetchNews() {
   try {
-    const cached = getCachedData('news');
+    const cached = getCachedData("news");
     if (cached) {
       renderNews(cached);
       return;
     }
 
-    const response = await fetch('api/noticias-espn');
+    const response = await fetch("api/noticias-espn");
     let noticias = await response.json();
 
     if (!Array.isArray(noticias) || noticias.length === 0) {
-      throw new Error('Nenhuma notícia encontrada');
+      throw new Error("Nenhuma notícia encontrada");
     }
 
     // Filtra e ordena
     noticias = noticias
-      .filter(n => !/gol/i.test(n.title))
-      .sort((a, b) => parseRelativeDate(a.description) - parseRelativeDate(b.description));
+      .filter((n) => !/gol/i.test(n.title))
+      .sort(
+        (a, b) =>
+          parseRelativeDate(a.description) - parseRelativeDate(b.description)
+      );
 
-    setCachedData('news', noticias);
+    setCachedData("news", noticias);
     renderNews(noticias);
   } catch (error) {
-    console.error('Erro ao buscar notícias:', error);
+    console.error("Erro ao buscar notícias:", error);
     showNewsError();
   }
 }
 
 function renderNews(noticias) {
   // Featured news
-  const featured = document.querySelector('.featured-article');
+  const featured = document.querySelector(".featured-article");
   if (featured && noticias[0]) {
     featured.innerHTML = `
       <div class="featured-image">
-        <img data-src="${noticias[0].image || 'https://via.placeholder.com/600x350/003399/ffffff?text=Noticia+Cruzeiro'}" 
+        <img data-src="${
+          noticias[0].image ||
+          "https://via.placeholder.com/600x350/003399/ffffff?text=Noticia+Cruzeiro"
+        }" 
              class="lazy" alt="Notícia em destaque">
       </div>
       <div class="featured-content">
-        <span class="category">Notícia retirada de: ${noticias[0].fonte || ''}.com.br</span>
+        <span class="category">Notícia retirada de: ${
+          noticias[0].fonte || ""
+        }.com.br</span>
         <h3>${noticias[0].title}</h3>
-        <p>${noticias[0].description || 'Sem descrição disponível.'}</p>
-        <a href="${noticias[0].url}" class="read-more" target="_blank" rel="noopener">
+        <p>${noticias[0].description || "Sem descrição disponível."}</p>
+        <a href="${
+          noticias[0].url
+        }" class="read-more" target="_blank" rel="noopener">
           <i class="bi bi-arrow-right-circle"></i> Ler mais
         </a>
       </div>
@@ -368,29 +431,36 @@ function renderNews(noticias) {
   }
 
   // News grid
-  const newsGrid = document.querySelector('.news-grid');
+  const newsGrid = document.querySelector(".news-grid");
   if (newsGrid) {
     const fragment = document.createDocumentFragment();
-    
-    noticias.slice(1, 7).forEach(noticia => {
-      const article = document.createElement('article');
-      article.className = 'news-card';
+
+    noticias.slice(1, 7).forEach((noticia) => {
+      const article = document.createElement("article");
+      article.className = "news-card";
       article.innerHTML = `
         <div class="news-image">
-          <img data-src="${noticia.image || 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia'}" 
+          <img data-src="${
+            noticia.image ||
+            "https://via.placeholder.com/400x250/003399/ffffff?text=Noticia"
+          }" 
                class="lazy" alt="Notícia">
         </div>
         <div class="news-content">
-          <span class="category">Notícia retirada de: ${noticia.fonte || ''}.com.br</span>
+          <span class="category">Notícia retirada de: ${
+            noticia.fonte || ""
+          }.com.br</span>
           <h3>${noticia.title}</h3>
-          <p>${noticia.description || 'Sem descrição disponível.'}</p>
-          <a href="${noticia.url}" class="read-more" target="_blank" rel="noopener">Ler mais</a>
+          <p>${noticia.description || "Sem descrição disponível."}</p>
+          <a href="${
+            noticia.url
+          }" class="read-more" target="_blank" rel="noopener">Ler mais</a>
         </div>
       `;
       fragment.appendChild(article);
     });
 
-    newsGrid.innerHTML = '';
+    newsGrid.innerHTML = "";
     newsGrid.appendChild(fragment);
   }
 
@@ -398,47 +468,90 @@ function renderNews(noticias) {
 }
 
 function showNewsError() {
-  const featured = document.querySelector('.featured-article');
-  const newsGrid = document.querySelector('.news-grid');
-  
+  const featured = document.querySelector(".featured-article");
+  const newsGrid = document.querySelector(".news-grid");
+
   const errorMsg = `
     <div style="text-align:center; color:#666; padding:20px;">
       <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar as notícias.
     </div>
   `;
-  
+
   if (featured) featured.innerHTML = errorMsg;
   if (newsGrid) newsGrid.innerHTML = errorMsg;
 }
-//teste//
+
 // =================== UTILITÁRIOS ===================
 function getTeamLogo(teamName) {
   const logos = {
-    'Cruzeiro': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
-    'Flamengo': 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png',
-    'Palmeiras': 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png',
-    // ... outros logos
+    Flamengo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
+    Palmeiras:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
+    "Red Bull Bragantino":
+      "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
+    Cruzeiro:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+    Fluminense:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/50px-FFC_crest.svg.png",
+    Internacional:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/50px-SC_Internacional_Brazil_Logo.svg.png",
+    Bahia: "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
+    "São Paulo":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/50px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
+    Botafogo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/50px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
+    Ceará:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
+    Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
+    Corinthians:
+      "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+    Juventude:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
+    Mirassol:
+      "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
+    Fortaleza:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
+    Vitória:
+      "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+    "Atlético-MG":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
+    Grêmio:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
+    Santos:
+      "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
+    Sport:
+      "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
+    "Vila Nova":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/50px-Vila_Nova_Logo_Oficial.svg.png",
+    "Mushuc Runa":
+      "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
+    Palestino: "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
+    "Unión (Santa Fe)":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/50px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
+    "Unión Santa Fe":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/50px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
   };
-  
+
   for (const [key, value] of Object.entries(logos)) {
     if (teamName?.includes(key)) return value;
   }
-  return 'https://via.placeholder.com/40/0033a0/ffffff?text=CRU';
+  return "https://via.placeholder.com/40/0033a0/ffffff?text=CRU";
 }
 
 function parseRelativeDate(str) {
   if (!str) return Infinity;
   str = str.toLowerCase().trim();
-  
-  if (str.includes('minuto')) {
+
+  if (str.includes("minuto")) {
     const n = parseInt(str);
     return isNaN(n) ? Infinity : n;
   }
-  if (str.includes('hora')) {
+  if (str.includes("hora")) {
     const n = parseInt(str);
     return isNaN(n) ? Infinity : n * 60;
   }
-  if (str.includes('dia')) {
+  if (str.includes("dia")) {
     const n = parseInt(str);
     return isNaN(n) ? Infinity : n * 24 * 60;
   }
@@ -446,28 +559,27 @@ function parseRelativeDate(str) {
 }
 
 // =================== INICIALIZAÇÃO ===================
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener("DOMContentLoaded", async function () {
   // Detecta preferências do usuário
   CONFIG.isMobile = window.innerWidth <= 768;
-  CONFIG.reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  CONFIG.reducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
 
   // Carrega API key
   const apiKeyLoaded = await fetchAPIKey();
   if (!apiKeyLoaded) {
-    console.error('Falha ao carregar API key');
+    console.error("Falha ao carregar API key");
     return;
   }
 
   // Registra widgets
-  widgetManager.register('miniTable', loadMiniTable);
-  widgetManager.register('miniResults', loadMiniResults);
-  widgetManager.register('nextMatches', loadNextMatches);
+  widgetManager.register("miniTable", loadMiniTable);
+  widgetManager.register("miniResults", loadMiniResults);
+  widgetManager.register("nextMatches", loadNextMatches);
 
   // Carregamento inicial
-  await Promise.allSettled([
-    fetchNews(),
-    widgetManager.updateAll()
-  ]);
+  await Promise.allSettled([fetchNews(), widgetManager.updateAll()]);
 
   // Setup de eventos
   setupEventListeners();
@@ -481,7 +593,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   }, updateInterval);
 
   // Pausa atualizações quando a aba não está visível
-  document.addEventListener('visibilitychange', () => {
+  document.addEventListener("visibilitychange", () => {
     if (document.hidden) {
       // Limpa cache quando a aba fica inativa por muito tempo
       setTimeout(() => {
@@ -495,44 +607,49 @@ document.addEventListener('DOMContentLoaded', async function() {
 
 function setupEventListeners() {
   // Menu mobile
-  const menuToggle = document.querySelector('.menu-toggle');
-  const navMenu = document.querySelector('.nav-menu');
-  
+  const menuToggle = document.querySelector(".menu-toggle");
+  const navMenu = document.querySelector(".nav-menu");
+
   if (menuToggle && navMenu) {
-    menuToggle.addEventListener('click', () => {
-      menuToggle.classList.toggle('active');
-      navMenu.classList.toggle('active');
+    menuToggle.addEventListener("click", () => {
+      menuToggle.classList.toggle("active");
+      navMenu.classList.toggle("active");
     });
   }
 
   // Newsletter
-  const newsletterForm = document.getElementById('newsletterForm');
+  const newsletterForm = document.getElementById("newsletterForm");
   if (newsletterForm) {
-    newsletterForm.addEventListener('submit', function(e) {
+    newsletterForm.addEventListener("submit", function (e) {
       e.preventDefault();
       const email = this.querySelector('input[type="email"]').value;
-      alert(`Obrigado por se inscrever! Você receberá as notícias no email: ${email}`);
+      alert(
+        `Obrigado por se inscrever! Você receberá as notícias no email: ${email}`
+      );
       this.reset();
     });
   }
 
   // Scroll suave otimizado
-  document.addEventListener('click', function(e) {
+  document.addEventListener("click", function (e) {
     if (e.target.matches('a[href^="#"]')) {
       e.preventDefault();
-      const targetId = e.target.getAttribute('href');
+      const targetId = e.target.getAttribute("href");
       const targetElement = document.querySelector(targetId);
       if (targetElement) {
-        targetElement.scrollIntoView({ 
-          behavior: CONFIG.reducedMotion ? 'auto' : 'smooth',
-          block: 'start'
+        targetElement.scrollIntoView({
+          behavior: CONFIG.reducedMotion ? "auto" : "smooth",
+          block: "start",
         });
       }
     }
   });
 
   // Resize otimizado
-  window.addEventListener('resize', throttle(() => {
-    CONFIG.isMobile = window.innerWidth <= 768;
-  }, 250));
+  window.addEventListener(
+    "resize",
+    throttle(() => {
+      CONFIG.isMobile = window.innerWidth <= 768;
+    }, 250)
+  );
 }
