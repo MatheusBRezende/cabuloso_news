@@ -64,7 +64,7 @@ function showWidgetError() {
 // Função para buscar notícias do Cruzeiro usando o scraper do Terra
 async function fetchTerraNews() {
   try {
-    const response = await fetch('http://localhost:4001/api/noticias-espn');
+    const response = await fetch('/api/noticias-espn');
     const noticias = await response.json();
     console.log("Resposta do backend:", noticias);
 
@@ -117,7 +117,7 @@ function renderFeaturedNews(article) {
       <img src="${article.image ? article.image : 'https://via.placeholder.com/600x350/003399/ffffff?text=Noticia+Cruzeiro'}" alt="Notícia em destaque do Cruzeiro">
     </div>
     <div class="featured-content">
-      <span class="category">ESPN</span>
+      <span class="category">Zeiro.com</span>
       <h3>${article.title}</h3>
       <p>${article.description || "Sem descrição disponível."}</p>
       <a href="${article.url}" class="read-more" target="_blank" rel="noopener"><i class="bi bi-arrow-right-circle"></i> Ler mais</a>
@@ -143,7 +143,7 @@ function renderNews(articles) {
         <img src="${article.image ? article.image : 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia'}" alt="Notícia do Cruzeiro">
       </div>
       <div class="news-content">
-        <span class="category">ESPN</span>
+        <span class="category">Zeiro.com</span>
         <h3>${article.title}</h3>
         <p>${article.description || "Sem descrição disponível."}</p>
         <a href="${article.url}" class="read-more" target="_blank" rel="noopener">Ler mais</a>
