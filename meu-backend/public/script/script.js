@@ -60,12 +60,64 @@ function showWidgetError() {
 }
 
 // =================== SCRAPING TERRA ===================
+// Função para converter datas relativas e absolutas em minutos atrás
+function parseRelativeDate(str) {
+  if (!str) return Infinity;
+  str = str.toLowerCase().trim();
 
-// Função para buscar notícias do Cruzeiro usando o scraper do Terra
+  // UOL: "28/05/2025 05h30" ou "28/05/2025"
+  const dataUOL = str.match(/^(\d{2})\/(\d{2})\/(\d{4})(?:\s+(\d{2})h(\d{2}))?$/);
+  if (dataUOL) {
+    const dia = parseInt(dataUOL[1]);
+    const mes = parseInt(dataUOL[2]) - 1;
+    const ano = parseInt(dataUOL[3]);
+    const hora = dataUOL[4] ? parseInt(dataUOL[4]) : 0;
+    const min = dataUOL[5] ? parseInt(dataUOL[5]) : 0;
+    const dataNoticia = new Date(ano, mes, dia, hora, min);
+    const agora = new Date();
+    const diffMs = agora - dataNoticia;
+    return Math.floor(diffMs / 60000); // minutos atrás
+  }
+
+  // Zeiro: "28 de maio de 2025"
+  const dataAbs = str.match(/^(\d{1,2}) de (\w+) de (\d{4})$/);
+  if (dataAbs) {
+    const meses = [
+      "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+      "julho", "agosto", "setembro", "outubro", "novembro", "dezembro"
+    ];
+    const dia = parseInt(dataAbs[1]);
+    const mes = meses.indexOf(dataAbs[2]);
+    const ano = parseInt(dataAbs[3]);
+    if (mes >= 0) {
+      const dataNoticia = new Date(ano, mes, dia);
+      const agora = new Date();
+      const diffMs = agora - dataNoticia;
+      return Math.floor(diffMs / 60000); // minutos atrás
+    }
+  }
+
+  // Relativo: "há X minutos/horas/dias"
+  if (str.includes("minuto")) {
+    const n = parseInt(str);
+    return isNaN(n) ? Infinity : n;
+  }
+  if (str.includes("hora")) {
+    const n = parseInt(str);
+    return isNaN(n) ? Infinity : n * 60;
+  }
+  if (str.includes("dia")) {
+    const n = parseInt(str);
+    return isNaN(n) ? Infinity : n * 24 * 60;
+  }
+  return Infinity;
+}
+
+// Função para buscar notícias do Cruzeiro usando o scraper do backend
 async function fetchTerraNews() {
   try {
-    const response = await fetch('/api/noticias-espn');
-    const noticias = await response.json();
+    const response = await fetch("http://localhost:4001/api/noticias-espn");
+    let noticias = await response.json();
     console.log("Resposta do backend:", noticias);
 
     if (!Array.isArray(noticias)) {
@@ -74,30 +126,42 @@ async function fetchTerraNews() {
     }
     if (noticias.length === 0) throw new Error("Nenhuma notícia encontrada");
 
-    // Mostra a primeira como destaque e as próximas 6 como grid
+    // Remove notícias com "Gol" no título
+    noticias = noticias.filter(n => !/gol/i.test(n.title));
+
+    // Ordena as notícias da mais recente para a mais antiga
+    noticias.sort(
+      (a, b) => parseRelativeDate(a.description) - parseRelativeDate(b.description)
+    );
+
+    // Mostra a mais recente como destaque
     renderFeaturedNews(noticias[0]);
-    renderNews(noticias.slice(1, 7));
+
+    // O restante em ordem crescente (mais antiga para mais recente)
+    const restantes = noticias.slice(1).sort(
+      (a, b) => parseRelativeDate(a.description) - parseRelativeDate(b.description)
+    );
+    renderNews(restantes.slice(0, 6));
 
     // Mostra botão se houver mais de 7 notícias
     const loadMoreBtn = document.getElementById("loadMoreBtn");
     if (noticias.length > 7 && loadMoreBtn) {
       loadMoreBtn.style.display = "block";
-      loadMoreBtn.onclick = () => renderNews(noticias.slice(1)); // Mostra todas menos a featured
+      loadMoreBtn.onclick = () => renderNews(restantes);
     } else if (loadMoreBtn) {
       loadMoreBtn.style.display = "none";
     }
-    // Guarda todas as notícias para uso posterior (opcional)
     window._todasNoticias = noticias;
   } catch (error) {
-    console.error("Erro ao buscar notícias da ESPN:", error);
+    console.error("Erro ao buscar notícias:", error);
     document.querySelector(".news-grid").innerHTML = `
       <div style="text-align:center; color:#666; padding:20px;">
-        <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar as notícias da ESPN.
+        <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar as notícias.
       </div>
     `;
     document.querySelector(".featured-article").innerHTML = `
       <div style="text-align:center; color:#666; padding:20px;">
-        <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar a notícia em destaque da ESPN.
+        <i class="fas fa-exclamation-triangle"></i> Não foi possível carregar a notícia em destaque.
       </div>
     `;
   }
@@ -114,13 +178,19 @@ function renderFeaturedNews(article) {
   }
   featured.innerHTML = `
     <div class="featured-image">
-      <img src="${article.image ? article.image : 'https://via.placeholder.com/600x350/003399/ffffff?text=Noticia+Cruzeiro'}" alt="Notícia em destaque do Cruzeiro">
+      <img src="${
+        article.image
+          ? article.image
+          : "https://via.placeholder.com/600x350/003399/ffffff?text=Noticia+Cruzeiro"
+      }" alt="Notícia em destaque do Cruzeiro">
     </div>
     <div class="featured-content">
-      <span class="category">Zeiro.com</span>
+      <span class="category">${article.fonte || ""}</span>
       <h3>${article.title}</h3>
       <p>${article.description || "Sem descrição disponível."}</p>
-      <a href="${article.url}" class="read-more" target="_blank" rel="noopener"><i class="bi bi-arrow-right-circle"></i> Ler mais</a>
+      <a href="${
+        article.url
+      }" class="read-more" target="_blank" rel="noopener"><i class="bi bi-arrow-right-circle"></i> Ler mais</a>
     </div>
   `;
 }
@@ -140,13 +210,19 @@ function renderNews(articles) {
     newsCard.className = "news-card";
     newsCard.innerHTML = `
       <div class="news-image">
-        <img src="${article.image ? article.image : 'https://via.placeholder.com/400x250/003399/ffffff?text=Noticia'}" alt="Notícia do Cruzeiro">
+        <img src="${
+          article.image
+            ? article.image
+            : "https://via.placeholder.com/400x250/003399/ffffff?text=Noticia"
+        }" alt="Notícia do Cruzeiro">
       </div>
       <div class="news-content">
-        <span class="category">Zeiro.com</span>
+        <span class="category">${article.fonte || ""}</span>
         <h3>${article.title}</h3>
         <p>${article.description || "Sem descrição disponível."}</p>
-        <a href="${article.url}" class="read-more" target="_blank" rel="noopener">Ler mais</a>
+        <a href="${
+          article.url
+        }" class="read-more" target="_blank" rel="noopener">Ler mais</a>
       </div>
     `;
     newsGrid.appendChild(newsCard);
@@ -156,7 +232,14 @@ function renderNews(articles) {
 // Função para carregar mais notícias (opcional, pode buscar mais do scraper)
 function loadMoreNews() {
   if (window._todasNoticias) {
-    renderNews(window._todasNoticias.slice(1));
+    // Remove a featured e mostra o restante em ordem crescente
+    const restantes = window._todasNoticias
+      .slice(1)
+      .sort(
+        (a, b) =>
+          parseRelativeDate(b.description) - parseRelativeDate(a.description)
+      );
+    renderNews(restantes);
     const loadMoreBtn = document.getElementById("loadMoreBtn");
     if (loadMoreBtn) {
       loadMoreBtn.textContent = "Todas as notícias carregadas";
