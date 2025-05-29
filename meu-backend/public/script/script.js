@@ -116,7 +116,7 @@ function parseRelativeDate(str) {
 // Função para buscar notícias do Cruzeiro usando o scraper do backend
 async function fetchTerraNews() {
   try {
-    const response = await fetch("api/noticias-espn");
+    const response = await fetch("http://localhost:4001/api/noticias-espn");
     let noticias = await response.json();
     console.log("Resposta do backend:", noticias);
 
@@ -126,7 +126,7 @@ async function fetchTerraNews() {
     }
     if (noticias.length === 0) throw new Error("Nenhuma notícia encontrada");
 
-    // Remove notícias com "Gol" no título
+    
     noticias = noticias.filter(n => !/gol/i.test(n.title));
 
     // Ordena as notícias da mais recente para a mais antiga
@@ -185,7 +185,7 @@ function renderFeaturedNews(article) {
       }" alt="Notícia em destaque do Cruzeiro">
     </div>
     <div class="featured-content">
-      <span class="category">${article.fonte || ""}</span>
+      <span class="category">Noticia retirada de: ${article.fonte || ""}.com.br</span>
       <h3>${article.title}</h3>
       <p>${article.description || "Sem descrição disponível."}</p>
       <a href="${
@@ -217,7 +217,7 @@ function renderNews(articles) {
         }" alt="Notícia do Cruzeiro">
       </div>
       <div class="news-content">
-        <span class="category">${article.fonte || ""}</span>
+        <span class="category">Noticia retirada de: ${article.fonte || ""}.com.br</span>
         <h3>${article.title}</h3>
         <p>${article.description || "Sem descrição disponível."}</p>
         <a href="${

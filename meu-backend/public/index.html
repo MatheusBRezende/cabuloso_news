@@ -1,149 +1,215 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CABULOSO NEWS | Portal do Torcedor</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="icon" type="image/png" href="assets/logo_m.png">
-    <link rel="stylesheet" href="style/style.css">
-</head>
-<body>
-
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+    />
+    <link rel="icon" type="image/png" href="assets/logo_m.png" />
+    <link rel="stylesheet" href="style/style.css" />
+  </head>
+  <body>
     <!-- Navbar -->
     <nav class="navbar">
-        <div class="container nav-container">
-            <a href="index.html" class="logo">
-                <img src="assets/logo_m.png" alt="Logo do Cruzeiro" class="nav-logo">
-                <span>Cabuloso News | Inicio</span>
-            </a>
-            <button class="menu-toggle" aria-label="Abrir menu" aria-expanded="false">
-                <span class="hamburger"></span>
-            </button>
-            <ul class="nav-menu">
-                <li><a href="index.html" class="nav-link active">Início</a></li>
-                <li><a href="competicao.html" class="nav-link">Competições</a></li>
-                <li><a href="resultados.html" class="nav-link ">Resultados</a></li>
-            </ul>
-        </div>
+      <div class="container nav-container">
+        <a href="index.html" class="logo">
+          <img
+            src="assets/logo_m.png"
+            alt="Logo do Cruzeiro"
+            class="nav-logo"
+          />
+          <span>Cabuloso News | Inicio</span>
+        </a>
+        <button
+          class="menu-toggle"
+          aria-label="Abrir menu"
+          aria-expanded="false"
+        >
+          <span class="hamburger"></span>
+        </button>
+        <ul class="nav-menu">
+          <li><a href="index.html" class="nav-link active">Início</a></li>
+          <li><a href="competicao.html" class="nav-link">Competições</a></li>
+          <li><a href="resultados.html" class="nav-link">Resultados</a></li>
+        </ul>
+      </div>
     </nav>
 
     <section class="hero">
-        <div class="container">
-            <div class="hero-content">
-                <h2>Notícias da Nação Azul</h2>
-                <p>Seu portal de notícias não oficial do Cruzeiro Esporte Clube</p>
-            </div>
+      <div class="container">
+        <div class="hero-content">
+          <h2>Notícias da Nação Azul</h2>
+          <p>Seu portal de notícias não oficial do Cruzeiro Esporte Clube</p>
         </div>
+      </div>
     </section>
 
-<!-- ...existing code... -->
-<section class="featured-news">
-    <div class="container">
-        <h2 class="section-title"><i class="bi bi-star-fill"></i> Notícias em Destaque</h2>
+    <!-- ...existing code... -->
+    <section class="featured-news">
+      <div class="container">
+        <h2 class="section-title">
+          <i class="bi bi-star-fill"></i> Notícias em Destaque
+        </h2>
         <div class="featured-article">
-            <!-- Notícia em destaque será carregada via JS -->
+          <!-- Notícia em destaque será carregada via JS -->
         </div>
-    </div>
-</section>
-<!-- ...existing code... -->
+      </div>
+    </section>
+    <!-- ...existing code... -->
 
-<section class="latest-news">
-  <div class="container">
-    <h2 class="section-title"><i class="bi bi-newspaper"></i> Últimas Notícias</h2>
-    <div class="news-grid">
-      <!-- As notícias serão carregadas via JS -->
-    </div>
-    <div class="load-more">
-      <button id="loadMoreBtn"><i class="bi bi-plus-circle"></i> Carregar mais notícias</button>
-    </div>
-  </div>
-</section>
+    <section class="latest-news">
+      <div class="container">
+        <h2 class="section-title">
+          <i class="bi bi-newspaper"></i> Últimas Notícias
+        </h2>
+        <div class="news-grid">
+          <!-- As notícias serão carregadas via JS -->
+        </div>
+        <div class="load-more">
+          <button id="loadMoreBtn">
+            <i class="bi bi-plus-circle"></i> Carregar mais notícias
+          </button>
+        </div>
+      </div>
+    </section>
 
     <section class="widgets-section">
-    <div class="container">
-        <h2 class="section-title"><i class="bi bi-graph-up"></i> Acompanhe a Raposa</h2>
-        
+      <div class="container">
+        <h2 class="section-title">
+          <i class="bi bi-graph-up"></i> Acompanhe a Raposa
+        </h2>
+
         <div class="widgets-grid">
-            <!-- Widget Tabela Brasileirão -->
-            <div class="widget-card">
-                <div class="widget-header">
-                    <h3><i class="bi bi-table"></i> Tabela Brasileirão</h3>
-                    <a href="competicao.html" class="view-all">Ver completa <i class="bi bi-arrow-right"></i></a>
-                </div>
-                <div class="widget-content">
-                    <table class="mini-table">
-                        <tbody id="mini-tabela">
-                            <tr>
-                                <td colspan="3" style="text-align: center; padding: 20px 0;">
-                                    <i class="bi bi-arrow-repeat fa-spin"></i> Carregando...
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+          <!-- Widget Tabela Brasileirão -->
+          <div class="widget-card">
+            <div class="widget-header">
+              <h3><i class="bi bi-table"></i> Tabela Brasileirão</h3>
+              <a href="competicao.html" class="view-all"
+                >Ver completa <i class="bi bi-arrow-right"></i
+              ></a>
             </div>
-            
-            <!-- Widget Últimos Resultados -->
-            <div class="widget-card">
-                <div class="widget-header">
-                    <h3><i class="bi bi-clock-history"></i> Últimos Resultados</h3>
-                    <a href="resultados.html" class="view-all">Ver todos <i class="bi bi-arrow-right"></i></a>
-                </div>
-                <div class="widget-content" id="mini-resultados">
-                    <div class="mini-result">
-                        <div style="text-align: center; width: 100%; padding: 10px 0;">
-                            <i class="bi bi-arrow-repeat fa-spin"></i> Carregando...
-                        </div>
-                    </div>
-                </div>
+            <div class="widget-content">
+              <table class="mini-table">
+                <tbody id="mini-tabela">
+                  <tr>
+                    <td colspan="3" style="text-align: center; padding: 20px 0">
+                      <i class="bi bi-arrow-repeat fa-spin"></i> Carregando...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            
-            <!-- Widget Próximos Jogos -->
-            <div class="widget-card">
-                <div class="widget-header">
-        <h3><i class="bi bi-stopwatch"></i> Próximo Jogo</h3>
-    </div>                <div class="widget-header">
-                    <h3><i class="bi bi-calendar-event"></i> Próximos Jogos</h3>
-                    <a href="competicao.html" class="view-all">Ver agenda <i class="bi bi-arrow-right"></i></a>
-                </div>
-                <div class="widget-content" id="proximos-jogos">
-                    <div class="next-match">
-                        <div style="text-align: center; width: 100%; padding: 10px 0;">
-                            <i class="bi bi-arrow-repeat fa-spin"></i> Carregando...
-                        </div>
-                    </div>
-                </div>
+          </div>
+
+          <!-- Widget Últimos Resultados -->
+          <div class="widget-card">
+            <div class="widget-header">
+              <h3><i class="bi bi-clock-history"></i> Últimos Resultados</h3>
+              <a href="resultados.html" class="view-all"
+                >Ver todos <i class="bi bi-arrow-right"></i
+              ></a>
             </div>
+            <div class="widget-content" id="mini-resultados">
+              <div class="mini-result">
+                <div style="text-align: center; width: 100%; padding: 10px 0">
+                  <i class="bi bi-arrow-repeat fa-spin"></i> Carregando...
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Widget Próximos Jogos -->
+          <div class="widget-card">
+            <div class="widget-header">
+              <h3><i class="bi bi-stopwatch"></i> Próximo Jogo</h3>
+            </div>
+            <div class="widget-header">
+              <h3><i class="bi bi-calendar-event"></i> Próximos Jogos</h3>
+              <a href="competicao.html" class="view-all"
+                >Ver agenda <i class="bi bi-arrow-right"></i
+              ></a>
+            </div>
+            <div class="widget-content" id="proximos-jogos">
+              <div class="next-match">
+                <div style="text-align: center; width: 100%; padding: 10px 0">
+                  <i class="bi bi-arrow-repeat fa-spin"></i> Carregando...
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-    </div>
-</section>
+      </div>
+    </section>
 
     <section class="newsletter">
-        <div class="container">
-            <div class="newsletter-content">
-                <h2>Fique por dentro de todas as notícias</h2>
-                <p>Cadastre seu e-mail e receba atualizações diárias sobre o Cruzeiro</p>
-                <form id="newsletterForm">
-                    <input type="email" placeholder="Seu melhor e-mail" required aria-label="Seu email">
-                    <button type="submit"><i class="bi bi-envelope"></i> Inscrever-se</button>
-                </form>
-            </div>
+      <div class="container">
+        <div class="newsletter-content">
+          <h2>Fique por dentro de todas as notícias</h2>
+          <p>
+            Cadastre seu e-mail e receba atualizações diárias sobre o Cruzeiro
+          </p>
+          <form id="newsletterForm">
+            <input
+              type="email"
+              placeholder="Seu melhor e-mail"
+              required
+              aria-label="Seu email"
+            />
+            <button type="submit">
+              <i class="bi bi-envelope"></i> Inscrever-se
+            </button>
+          </form>
         </div>
+      </div>
     </section>
 
     <footer>
-        <div class="container">
-            <div class="footer-bottom">
-                <p>&copy; 2025 CruzeiroNotícias - Site de fãs para fãs. Não possuímos vínculo oficial com o Cruzeiro Esporte Clube.</p>
-            </div>
+      <div class="container">
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
+            vínculo oficial com o Cruzeiro Esporte Clube.<br />
+            Todo conteúdo, imagens e notícias pertencem aos seus respectivos
+            autores e portais de origem. Se você é detentor de direitos e deseja
+            remoção de algum conteúdo, entre em contato pelo e-mail:
+            contato@seudominio.com.
+          </p>
         </div>
+      </div>
     </footer>
 
     <script src="script/script.js"></script>
-</body>
+
+    <!-- AdSense script global -->
+    <script
+      async
+      src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6313205148679744"
+      crossorigin="anonymous"
+    ></script>
+
+    <!-- Bloco de anúncio -->
+    <ins
+      class="adsbygoogle"
+      style="display: block"
+      data-ad-client="ca-pub-6313205148679744"
+      data-ad-slot="1234567890"
+      data-ad-format="auto"
+    ></ins>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+  </body>
 </html>
