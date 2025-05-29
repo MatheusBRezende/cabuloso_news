@@ -28,53 +28,32 @@ const CONFIG = {
 };
 
 const escudos = {
-  "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/500px-Flamengo-RJ_%28BRA%29.png",
-  "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/1280px-Palmeiras_logo.svg.png",
+  "Flamengo": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
+  "Palmeiras": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
   "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
-  "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1280px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-  "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/1106px-FFC_crest.svg.png",
-  "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/1280px-SC_Internacional_Brazil_Logo.svg.png",
+  "Cruzeiro": "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+  "Fluminense": "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/50px-FFC_crest.svg.png",
+  "Internacional": "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/50px-SC_Internacional_Brazil_Logo.svg.png",
   "Bahia": "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
-  "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/1284px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
-  "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/1135px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
-  "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/1153px-Cear%C3%A1_Sporting_Club_logo.svg.png",
+  "São Paulo": "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/50px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
+  "Botafogo": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/50px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
+  "Ceará": "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
   "Vasco": "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
   "Corinthians": "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
-  "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/1280px-EC_Juventude.svg.png",
+  "Juventude": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
   "Mirassol": "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-  "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/978px-Fortaleza_EC_2018.png",
+  "Fortaleza": "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
   "Vitória": "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
-  "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/960px-Atletico_mineiro_galo.png",
-  "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/1074px-Gremio_logo.svg.png",
+  "Atlético-MG": "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
+  "Grêmio": "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
   "Santos": "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
   "Sport": "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
-  "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/1024px-Vila_Nova_Logo_Oficial.svg.png",
+  "Vila Nova": "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/50px-Vila_Nova_Logo_Oficial.svg.png",
   "Mushuc Runa": "https://upload.wikimedia.org/wikipedia/pt/3/39/Mushuc_Runa_SC.png",
   "Palestino": "https://upload.wikimedia.org/wikipedia/pt/7/72/CDPalestino.png",
-  "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
-  "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/1024px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
+  "Unión (Santa Fe)": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/50px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png",
+  "Unión Santa Fe": "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7c/Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg/50px-Escudo_club_Atl%C3%A9tico_Uni%C3%B3n_de_santa_fe.svg.png"
 };
-
-/*====CRIAÇÃO DE ESTRELAS====*/
-function createWhiteStars() {
-  const starsContainer = document.querySelector(".stars-background");
-  if (!starsContainer) return;
-  starsContainer.innerHTML = "";
-  const starCount = window.innerWidth < 600 ? 25 : 60;
-  for (let i = 0; i < starCount; i++) {
-    const star = document.createElement("i");
-    star.className = "star bi bi-star-fill";
-    star.setAttribute("aria-hidden", "true");
-    star.style.fontSize = `${Math.random() * 0.8 + 0.6}rem`;
-    star.style.left = `${Math.random() * 100}%`;
-    star.style.top = `${Math.random() * 100}%`;
-    const duration = Math.random() * 5 + 4;
-    star.style.setProperty("--duration", `${duration}s`);
-    star.style.animationDelay = `${Math.random() * 10}s`;
-    star.style.transform = `rotate(${Math.random() * 360}deg)`;
-    starsContainer.appendChild(star);
-  }
-}
 
 /*====API KEY====*/
 async function fetchAPIKey() {
@@ -93,7 +72,6 @@ async function fetchAPIKey() {
 
 /*====INICIALIZAÇÃO====*/
 document.addEventListener("DOMContentLoaded", async () => {
-  createWhiteStars();
   console.log("Inicializando aplicação...");
   const apiKeyLoaded = await fetchAPIKey();
   if (apiKeyLoaded) {
@@ -438,48 +416,53 @@ function exibirJogos(jogos, termosFiltro = ["todos"]) {
       );
     }
   }
+  let jogosHTML = "";
   if (jogosFiltrados.length === 0) {
-    container.innerHTML = `
+    jogosHTML = `
       <div class="sem-jogos">
         <i class="far fa-calendar-times"></i>
         <p>Nenhum jogo ${termosFiltro.includes("todos") ? "agendado" : termosFiltro.includes("Cruzeiro") ? "do Cruzeiro" : `do ${termosFiltro[0]}`}</p>
       </div>
     `;
-    return;
+  } else {
+    jogosHTML = jogosFiltrados
+      .map((jogo) => {
+        const estaAoVivo = jogo.aoVivo && verificarJogoAoVivo([jogo]);
+        const cruzeiroCasa = jogo.isCruzeiro && jogo.isMandante;
+        const cruzeiroVisitante = jogo.isCruzeiro && !jogo.isMandante;
+        return `
+          <div class="jogo-container ${estaAoVivo ? 'jogo-ao-vivo' : ''} ${cruzeiroCasa ? 'cruzeiro-mandante' : ''} ${cruzeiroVisitante ? 'cruzeiro-visitante' : ''}" 
+               ${estaAoVivo ? `onclick="abrirMinutoAMinuto('${jogo.timeCasa}', '${jogo.timeVisitante}', '${jogo.campeonato}')"` : ''}>
+            <div class="info-jogo">
+              <span class="data-jogo">${jogo.data}</span>
+              <span class="hora-jogo ${estaAoVivo ? 'ao-vivo' : ''}">${jogo.hora}</span>
+              ${estaAoVivo ? '<span class="badge-live">LIVE</span>' : ''}
+            </div>
+            <div class="detalhes-jogo">
+              <div class="time-jogo ${cruzeiroCasa ? "destaque" : ""} ${jogo.resultadoCasa}">
+                <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}" loading="lazy" width="30" height="30">
+                <span class="nome">${jogo.timeCasa}</span>
+                ${jogo.resultadoCasa ? `<span class="resultado-icon ${jogo.resultadoCasa}"></span>` : ""}
+              </div>
+              <span class="vs">vs</span>
+              <div class="time-jogo ${cruzeiroVisitante ? "destaque" : ""} ${jogo.resultadoVisitante}">
+                <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}" loading="lazy" width="30" height="30">
+                <span class="nome">${jogo.timeVisitante}</span>
+                ${jogo.resultadoVisitante ? `<span class="resultado-icon ${jogo.resultadoVisitante}"></span>` : ""}
+              </div>
+            </div>
+            <div class="info-adicional">
+              <span class="campeonato-jogo">${formatarNomeCampeonato(jogo.campeonato)}</span>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
   }
-  container.innerHTML = jogosFiltrados
-    .map((jogo) => {
-      const estaAoVivo = jogo.aoVivo && verificarJogoAoVivo([jogo]);
-      const cruzeiroCasa = jogo.isCruzeiro && jogo.isMandante;
-      const cruzeiroVisitante = jogo.isCruzeiro && !jogo.isMandante;
-      return `
-        <div class="jogo-container ${estaAoVivo ? 'jogo-ao-vivo' : ''} ${cruzeiroCasa ? 'cruzeiro-mandante' : ''} ${cruzeiroVisitante ? 'cruzeiro-visitante' : ''}" 
-             ${estaAoVivo ? `onclick="abrirMinutoAMinuto('${jogo.timeCasa}', '${jogo.timeVisitante}', '${jogo.campeonato}')"` : ''}>
-          <div class="info-jogo">
-            <span class="data-jogo">${jogo.data}</span>
-            <span class="hora-jogo ${estaAoVivo ? 'ao-vivo' : ''}">${jogo.hora}</span>
-            ${estaAoVivo ? '<span class="badge-live">LIVE</span>' : ''}
-          </div>
-          <div class="detalhes-jogo">
-            <div class="time-jogo ${cruzeiroCasa ? "destaque" : ""} ${jogo.resultadoCasa}">
-              <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}" loading="lazy">
-              <span class="nome">${jogo.timeCasa}</span>
-              ${jogo.resultadoCasa ? `<span class="resultado-icon ${jogo.resultadoCasa}"></span>` : ""}
-            </div>
-            <span class="vs">vs</span>
-            <div class="time-jogo ${cruzeiroVisitante ? "destaque" : ""} ${jogo.resultadoVisitante}">
-              <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}" loading="lazy">
-              <span class="nome">${jogo.timeVisitante}</span>
-              ${jogo.resultadoVisitante ? `<span class="resultado-icon ${jogo.resultadoVisitante}"></span>` : ""}
-            </div>
-          </div>
-          <div class="info-adicional">
-            <span class="campeonato-jogo">${formatarNomeCampeonato(jogo.campeonato)}</span>
-          </div>
-        </div>
-      `;
-    })
-    .join("");
+  // Só atualiza o DOM se mudou
+  if (container._ultimoHTML === jogosHTML) return;
+  container._ultimoHTML = jogosHTML;
+  container.innerHTML = jogosHTML;
 }
 
 function abrirMinutoAMinuto(timeCasa, timeVisitante, campeonato) {
@@ -702,48 +685,43 @@ function setupWidgetJogos() {
 
   if (!btnFechar || !btnAbrir || !widget) return;
 
-  btnFechar.addEventListener("click", () => {
-    widget.classList.remove("visible");
-    btnAbrir.style.display = "flex";
-  });
-
-  btnAbrir.addEventListener("click", () => {
-    const btnRect = btnAbrir.getBoundingClientRect();
-
-    if (window.innerWidth <= 768) {
-      widget.style.top = `${btnRect.bottom + 10}px`;
-      widget.style.right = `${window.innerWidth - btnRect.right}px`;
+  // Função para verificar tamanho da tela e ajustar o widget
+  function ajustarWidget() {
+    if (window.innerWidth > 768) {
+      // Desktop - widget começa fechado mas pode ser aberto/fechado
+      btnAbrir.style.display = "flex";
+      widget.classList.remove("visible");
+    } else {
+      // Mobile - lógica normal
+      btnAbrir.style.display = "flex";
+      widget.classList.remove("visible");
     }
-
-    widget.classList.add("visible");
-    btnAbrir.style.display = "none";
-    carregarProximosJogos();
-  });
-
-  if (window.innerWidth > 768) {
-    widget.classList.add("visible");
-    btnAbrir.style.display = "none";
-  } else {
-    widget.classList.remove("visible");
-    btnAbrir.style.display = "flex";
   }
 
-  window.addEventListener("resize", () => {
-    if (window.innerWidth > 768) {
-      widget.classList.add("visible");
-      btnAbrir.style.display = "none";
+  // Mostrar conteúdo ao abrir
+  btnAbrir.addEventListener("click", () => {
+    widget.classList.add("visible");
+    btnAbrir.style.display = "none";
+    // Forçar recarregamento dos jogos com filtro "todos"
+    const filtroAtivo = document.querySelector(".filtros-jogos .filtro-ativo");
+    if (filtroAtivo) {
+      filtroAtivo.click();
     } else {
-      widget.classList.remove("visible");
+      document.querySelector('.filtros-jogos button[data-filtro="todos"]').click();
+    }
+  });
+
+  // Fechar widget
+  btnFechar.addEventListener("click", () => {
+    widget.classList.remove("visible");
+    if (window.innerWidth > 768) {
       btnAbrir.style.display = "flex";
     }
   });
 
-  btnFechar.addEventListener("click", () => {
-    widget.classList.remove("visible");
-    widget.classList.add("hidden");
-    btnAbrir.style.display = "flex";
-  });
-  btnAbrir.style.display = "visible";
+  // Ajustar inicialmente e ao redimensionar
+  ajustarWidget();
+  window.addEventListener("resize", ajustarWidget);
 }
 
 // Funções relacionadas à tabela de classificação

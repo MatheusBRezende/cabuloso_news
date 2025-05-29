@@ -115,12 +115,12 @@ ul {
   -webkit-backdrop-filter: blur(10px);
   box-shadow: var(--shadow);
   z-index: 1000;
-  padding: 12px 0;
+  padding: 10px 0;
   transition: all 0.3s ease;
 }
 
 .navbar.scrolled {
-  padding: 8px 0;
+  padding: 6px 0;
   background-color: rgba(0, 34, 119, 0.98);
 }
 
@@ -128,20 +128,20 @@ ul {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 20px;
+  padding: 0 12px;
 }
 
 .logo {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   color: var(--text-light);
   font-weight: 700;
-  font-size: 1.3rem;
+  font-size: 1.1rem;
 }
 
 .nav-logo {
-  height: 45px;
+  height: 36px;
   width: auto;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
   transition: transform 0.3s ease;
@@ -154,7 +154,7 @@ ul {
 .nav-menu {
   display: flex;
   list-style: none;
-  gap: 25px;
+  gap: 18px;
 }
 
 .nav-link {
@@ -208,10 +208,6 @@ ul {
   display: none;
 }
 
-/* ============================================= */
-/* MENU HAMBÚRGUER MELHORADO */
-/* ============================================= */
-
 .menu-toggle {
   display: none;
   background: transparent;
@@ -219,96 +215,62 @@ ul {
   cursor: pointer;
   padding: 10px;
   z-index: 1001;
-  width: 50px;
-  height: 50px;
+  width: 44px;
+  height: 44px;
   position: relative;
 }
+
 
 .hamburger,
 .hamburger::before,
 .hamburger::after {
   display: block;
   position: absolute;
-  width: 30px;
+  width: 28px;
   height: 3px;
   background-color: var(--text-light);
-  transition: transform 0.3s ease-in-out, top 0.3s ease-in-out, background-color 0.3s ease-in-out;
+  transition: transform 0.3s, top 0.3s, background-color 0.3s;
 }
-
-.hamburger {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
 .hamburger::before,
 .hamburger::after {
   content: "";
   left: 0;
 }
 
-.hamburger::before {
-  top: -10px;
+.hamburger::before { top: -9px; }
+.hamburger::after { top: 9px; }
+
+.menu-toggle.active .hamburger { background-color: transparent; }
+.menu-toggle.active .hamburger::before { top: 0; transform: rotate(45deg);}
+.menu-toggle.active .hamburger::after { top: 0; transform: rotate(-45deg);}
+
+@media (max-width: 900px) {
+  .container { max-width: 98vw; }
+  .nav-container { padding: 0 6px; }
 }
 
-.hamburger::after {
-  top: 10px;
-}
-
-/* Estado ativo do menu */
-.menu-toggle.active .hamburger {
-  background-color: transparent;
-}
-
-.menu-toggle.active .hamburger::before {
-  top: 0;
-  transform: rotate(45deg);
-}
-
-.menu-toggle.active .hamburger::after {
-  top: 0;
-  transform: rotate(-45deg);
-}
-
-/* Responsividade para o menu */
 @media (max-width: 768px) {
-  .menu-toggle {
-    display: block;
-  }
-
+  .menu-toggle { display: block; }
   .nav-menu {
     position: fixed;
-    top: 70px;
+    top: 56px;
     left: -100%;
-    width: 100%;
-    height: calc(100vh - 70px);
+    width: 100vw;
+    height: calc(100vh - 56px);
     background-color: var(--primary-dark);
     flex-direction: column;
     align-items: center;
-    padding: 40px 0;
-    transition: var(--transition);
-    z-index: 999;
-    gap: 30px;
+    justify-content: flex-start;
+    padding-top: 30px;
+    transition: left 0.3s;
+    z-index: 1000;
+    overflow-y: auto;
+    gap: 0;
   }
-
-  .nav-menu.active {
-    left: 0;
-  }
-
-  .nav-link {
-    font-size: 1.2rem;
-    padding: 15px 25px;
-  }
-
-  .nav-link-highlight {
-    padding: 15px 25px;
-    font-size: 1.2rem;
-  }
-
-  .logo span {
-    display: inline !important;
-    font-size: 1rem;
-  }
+  .nav-menu.active { left: 0; }
+  .nav-menu li { width: 100%; text-align: center; margin: 7px 0; }
+  .nav-link { display: block; padding: 12px; font-size: 1.1rem; width: 100%; }
+  .nav-link-highlight { margin: 20px auto; width: 80%; text-align: center; }
 }
 
 /* ============================================= */
@@ -1052,6 +1014,11 @@ tr:hover .escudo {
   width: 420px;
   z-index: 900;
   transition: all 0.3s ease;
+  display: none; /* Começa oculto em todas as telas */
+}
+
+.proximos-jogos-container.visible {
+  display: block; /* Mostra quando tem a classe visible */
 }
 
 .proximos-jogos {
@@ -1328,21 +1295,21 @@ tr:hover .escudo {
 .jogo-container.jogo-ao-vivo:hover {
   background: rgba(255, 77, 77, 0.2);
 }
-
+@media (max-width: 768px) {
+  .proximos-jogos-container {
+    position: fixed;
+    top: 150px;
+    right: 15px;
+    width: calc(100% - 30px);
+    max-width: 400px;
+    transform: translateX(150%);
+  }
+}
 /* Destaque para jogos do Cruzeiro */
 .jogo-container .time-jogo.destaque .nome {
   font-weight: 700;
   color: var(--accent-color);
   position: relative;
-}
-
-.jogo-container .time-jogo.destaque .nome::after {
-  content: '★';
-  position: absolute;
-  top: -8px;
-  right: -12px;
-  font-size: 12px;
-  color: var(--accent-color);
 }
 
 .btn-abrir-jogos {
@@ -1899,6 +1866,27 @@ tr:hover .escudo {
     gap: 40px;
   }
 }
+/* Adicione ao final do arquivo ou logo após .tabela-container */
+@media (max-width: 900px) {
+  .tabela-container {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  #tabela-brasileirao {
+    min-width: 700px;
+    font-size: 0.95rem;
+  }
+    .proximos-jogos-container {
+    width: 98vw;
+    right: 1vw;
+    left: 1vw;
+    max-width: none;
+    top: 90px;
+  }
+}
+@media (max-width: 700px) {
+  html { font-size: 16px; }
+}
 
 @media (max-width: 400px) {
   .jogo-widget .time-jogo .nome {
@@ -1919,6 +1907,38 @@ tr:hover .escudo {
   }
   .competicao-header {
     padding: 10px;
+  }
+    .proximos-jogos {
+    padding: 4px 0;
+  }
+  .lista-jogos {
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .jogo-container,
+  .tabela-container,
+  .fase-copa,
+  .proximos-jogos,
+  .legenda,
+  .footer,
+  .jogo-widget {
+    box-shadow: none !important;
+    transition: none !important;
+    padding: 8px !important;
+  }
+  .proximos-jogos,
+  .navbar {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: var(--primary-dark) !important;
+  }
+  .time-jogo .nome,
+  .time-casa span,
+  .time-visitante span {
+    font-size: 0.75rem !important;
+    max-width: 50px !important;
   }
 }
 
@@ -1968,6 +1988,27 @@ tr:hover .escudo {
   }
   .footer-legal {
     justify-content: center;
+  }
+    #tabela-brasileirao {
+    min-width: 650px;
+    font-size: 0.85rem;
+  }
+  #tabela-brasileirao th,
+  #tabela-brasileirao td {
+    padding: 6px 2px;
+  }
+  .legenda {
+    padding: 4px;
+    gap: 4px;
+  }
+  .legenda-item {
+    padding: 1px 4px;
+    gap: 3px;
+    font-size: 0.75rem;
+  }
+  .legenda-cor {
+    width: 12px;
+    height: 12px;
   }
 }
 
