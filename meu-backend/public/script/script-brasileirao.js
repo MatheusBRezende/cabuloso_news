@@ -85,9 +85,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 /*====FUNÇÃO PRINCIPAL====*/
 async function initApp() {
   try {
+    setupWidgetJogos();
+    setupMobileWidget();
     setupMobileNavigation();
     await carregarProximosJogos();
-    setupWidgetJogos();
+    
     setupScrollEffects();
     const campeonatoSelecionado = localStorage.getItem("campeonatoSelecionado") || "brasileirao";
     const campeonatoSelect = document.getElementById("campeonato-select");
@@ -156,29 +158,32 @@ function setupEventListeners() {
       }
     });
   }
-  const themeToggle = document.querySelector(".theme-toggle");
-  if (themeToggle) {
-    themeToggle.addEventListener("click", toggleDarkMode);
-  }
-  const savedDarkMode = localStorage.getItem("darkMode");
-  if (savedDarkMode === "true") {
-    document.body.classList.add("dark-mode");
-    const icon = document.querySelector(".theme-toggle i");
-    if (icon) {
-      icon.classList.replace("fa-circle-half-stroke", "fa-sun");
-    }
+
+}
+
+function setupMobileWidget() {
+  const btnAbrir = document.getElementById('widget-toggle');
+  const btnFechar = document.getElementById('widget-close');
+  const widget = document.getElementById('games-widget');
+
+  if (btnAbrir && btnFechar && widget) {
+    btnAbrir.addEventListener('click', () => {
+      widget.classList.add('visible');
+    });
+
+    btnFechar.addEventListener('click', () => {
+      widget.classList.remove('visible');
+    });
+
+    // Fechar ao clicar fora
+    document.addEventListener('click', (e) => {
+      if (!widget.contains(e.target) && e.target !== btnAbrir) {
+        widget.classList.remove('visible');
+      }
+    });
   }
 }
 
-function toggleDarkMode() {
-  document.body.classList.toggle("dark-mode");
-  const icon = this.querySelector("i");
-  if (icon) {
-    icon.classList.toggle("fa-sun");
-    icon.classList.toggle("fa-circle-half-stroke");
-  }
-  localStorage.setItem("darkMode", document.body.classList.contains("dark-mode"));
-}
 
 function setupScrollEffects() {
   const navbar = document.querySelector(".navbar");
@@ -226,30 +231,79 @@ function setupBackToTop() {
 
 /*====FUNÇÕES DE JOGOS====*/
 async function carregarProximosJogos() {
-  const container = document.querySelector(".lista-jogos");
+  const container = document.querySelector(".games-list");
   if (!container) return;
+  
   container.innerHTML = `
     <div class="loading-jogos">
-      <i class="fas fa-spinner fa-spin"></i>
+      <div class="spinner"></div>
       <p>Carregando próximos jogos...</p>
     </div>
   `;
+
   try {
-    const timestamp = new Date().getTime();
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}&t=${timestamp}`
+      `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}`
     );
+    
     if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+    
     const data = await response.json();
     if (!data.values || data.values.length === 0) throw new Error("Planilha de jogos vazia");
+    
     const jogos = processarDadosJogos(data.values);
-    exibirJogos(jogos);
+    exibirJogosWidget(jogos);
     setupFiltrosJogos(jogos);
   } catch (error) {
     console.error("Erro ao carregar jogos:", error);
-    exibirErroJogos();
-    setTimeout(carregarProximosJogos, 30000);
+    container.innerHTML = `
+      <div class="error-jogos">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Erro ao carregar jogos. Tente novamente.</p>
+      </div>
+    `;
   }
+}
+
+function exibirJogosWidget(jogos, filtro = "todos") {
+  const container = document.querySelector(".games-list");
+  if (!container) return;
+
+  let jogosFiltrados = jogos;
+  if (filtro !== "todos") {
+    jogosFiltrados = jogos.filter(jogo => 
+      jogo.campeonato.includes(filtro) || 
+      (filtro === "Cruzeiro" && jogo.isCruzeiro)
+    );
+  }
+
+  if (jogosFiltrados.length === 0) {
+    container.innerHTML = `
+      <div class="sem-jogos">
+        <i class="far fa-calendar-times"></i>
+        <p>Nenhum jogo ${filtro === "todos" ? "agendado" : filtro === "Cruzeiro" ? "do Cruzeiro" : `do ${filtro}`}</p>
+      </div>
+    `;
+    return;
+  }
+
+  container.innerHTML = jogosFiltrados.map(jogo => `
+    <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${jogo.aoVivo ? "ao-vivo" : ""}">
+      <div class="jogo-data">${jogo.data} - ${jogo.hora}</div>
+      <div class="jogo-times">
+        <div class="time ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
+          <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}">
+          <span>${jogo.timeCasa}</span>
+        </div>
+        <span class="vs">vs</span>
+        <div class="time ${jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""}">
+          <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}">
+          <span>${jogo.timeVisitante}</span>
+        </div>
+      </div>
+      <div class="jogo-campeonato">${jogo.campeonato}</div>
+    </div>
+  `).join("");
 }
 
 function processarDadosJogos(dados) {
@@ -364,19 +418,32 @@ function verificarJogoAoVivo(jogos) {
   const agora = new Date();
   return jogos.some(jogo => {
     if (!jogo.data || !jogo.hora || jogo.placar) return false;
-    const [dia, mes] = jogo.data.split('/');
-    const dataJogo = new Date();
-    dataJogo.setDate(parseInt(dia));
-    dataJogo.setMonth(parseInt(mes) - 1);
-    const hoje = new Date();
-    const mesmoDia = dataJogo.getDate() === hoje.getDate() &&
-      dataJogo.getMonth() === hoje.getMonth();
-    if (!mesmoDia) return false;
-    const [hora, minuto] = jogo.hora.split(':');
-    const inicioJogo = new Date();
-    inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
-    const fimJogo = new Date(inicioJogo.getTime() + (60 * 60 * 1000));
-    return agora >= inicioJogo && agora <= fimJogo;
+    
+    try {
+      const [dia, mes] = jogo.data.split('/');
+      const dataJogo = new Date();
+      dataJogo.setFullYear(new Date().getFullYear());
+      dataJogo.setMonth(parseInt(mes) - 1);
+      dataJogo.setDate(parseInt(dia));
+      
+      const hoje = new Date();
+      const mesmoDia = dataJogo.getDate() === hoje.getDate() &&
+                      dataJogo.getMonth() === hoje.getMonth();
+      
+      if (!mesmoDia) return false;
+      
+      if (jogo.hora === "AO VIVO" || jogo.hora === "LIVE") return true;
+      
+      const [hora, minuto] = jogo.hora.split(':');
+      const inicioJogo = new Date(dataJogo);
+      inicioJogo.setHours(parseInt(hora), parseInt(minuto), 0, 0);
+      const fimJogo = new Date(inicioJogo.getTime() + (2.5 * 60 * 60 * 1000));
+      
+      return agora >= inicioJogo && agora <= fimJogo;
+    } catch (e) {
+      console.error("Erro ao verificar jogo ao vivo:", e);
+      return false;
+    }
   });
 }
 
@@ -390,17 +457,19 @@ function formatarNomeCampeonato(nome) {
 }
 
 function obterEscudoTime(nomeTime) {
-  if (!nomeTime || nomeTime.trim() === "") return 'https://via.placeholder.com/70';
+  if (!nomeTime || nomeTime.trim() === "") {
+    return 'https://via.placeholder.com/70';
+  }
+  
   const nomeLower = nomeTime.toLowerCase().trim();
-  for (const [key, value] of Object.entries(escudos)) {
-    if (key.toLowerCase() === nomeLower) return value;
-  }
-  for (const [key, value] of Object.entries(escudos)) {
-    if (key.toLowerCase().includes(nomeLower) || nomeLower.includes(key.toLowerCase())) {
-      return value;
-    }
-  }
-  return 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1024px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png';
+  const timeEncontrado = Object.keys(escudos).find(
+    key => key.toLowerCase() === nomeLower || 
+          nomeLower.includes(key.toLowerCase()) ||
+          key.toLowerCase().includes(nomeLower)
+  );
+  
+  return timeEncontrado ? escudos[timeEncontrado] : 
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/1024px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png';
 }
 
 function exibirJogos(jogos, termosFiltro = ["todos"]) {
@@ -646,83 +715,53 @@ function exibirErroJogos() {
 }
 
 function setupFiltrosJogos(jogos) {
-  const filtrosContainer = document.querySelector(".filtros-jogos");
+  const filtrosContainer = document.querySelector(".widget-filters");
   if (!filtrosContainer) return;
 
-  filtrosContainer.innerHTML = `
-    <button class="filtro-ativo" data-filtro="todos">Todos</button>
-    <button data-filtro="Campeonato Brasileiro">Brasileirão</button>
-    <button data-filtro="Sul-Americana">Sul-Americana</button>
-    <button data-filtro="Copa do Brasil">Copa do Brasil</button>
-  `;
-
-  document.querySelectorAll(".filtros-jogos button").forEach((btn) => {
-    btn.addEventListener("click", function () {
-      document.querySelector(".filtros-jogos .filtro-ativo")?.classList.remove("filtro-ativo");
-      this.classList.add("filtro-ativo");
-
-      if (this.dataset.filtro === "Cruzeiro") {
-        exibirJogos(jogos, ["Cruzeiro"]);
-      } else if (this.dataset.filtro === "todos") {
-        exibirJogos(jogos, ["todos"]);
-      } else {
-        const filtroMap = {
-          "Campeonato Brasileiro": ["Campeonato Brasileiro"],
-          "Sul-Americana": ["Sul-Americana", "CONMEBOL Sudamericana"],
-          "Copa do Brasil": ["Copa do Brasil"]
-        };
-        const termos = filtroMap[this.dataset.filtro] || [this.dataset.filtro];
-        exibirJogos(jogos, termos);
-      }
-    });
+  filtrosContainer.addEventListener("click", (e) => {
+    if (e.target.classList.contains("filter-btn")) {
+      document.querySelector(".filter-btn.active")?.classList.remove("active");
+      e.target.classList.add("active");
+      const filtro = e.target.dataset.filter;
+      exibirJogosWidget(jogos, filtro);
+    }
   });
 }
 
 function setupWidgetJogos() {
-  const btnFechar = document.querySelector(".btn-fechar-jogos");
-  const btnAbrir = document.querySelector(".btn-abrir-jogos");
-  const widget = document.querySelector(".proximos-jogos-container");
+  const widgetToggle = document.getElementById("widget-toggle");
+  const widgetClose = document.getElementById("widget-close");
+  const widget = document.getElementById("games-widget");
+  const gamesList = document.getElementById("games-list");
 
-  if (!btnFechar || !btnAbrir || !widget) return;
+  if (!widgetToggle || !widgetClose || !widget || !gamesList) return;
 
-  // Função para verificar tamanho da tela e ajustar o widget
-  function ajustarWidget() {
-    if (window.innerWidth > 768) {
-      // Desktop - widget começa fechado mas pode ser aberto/fechado
-      btnAbrir.style.display = "flex";
-      widget.classList.remove("visible");
-    } else {
-      // Mobile - lógica normal
-      btnAbrir.style.display = "flex";
-      widget.classList.remove("visible");
-    }
-  }
-
-  // Mostrar conteúdo ao abrir
-  btnAbrir.addEventListener("click", () => {
+  // Alternar visibilidade do widget e botão
+  widgetToggle.addEventListener("click", (e) => {
+    e.stopPropagation();
     widget.classList.add("visible");
-    btnAbrir.style.display = "none";
-    // Forçar recarregamento dos jogos com filtro "todos"
-    const filtroAtivo = document.querySelector(".filtros-jogos .filtro-ativo");
-    if (filtroAtivo) {
-      filtroAtivo.click();
-    } else {
-      document.querySelector('.filtros-jogos button[data-filtro="todos"]').click();
-    }
+    widgetToggle.style.display = "none"; // Esconde o botão
   });
 
-  // Fechar widget
-  btnFechar.addEventListener("click", () => {
+  // Fechar pelo botão de fechar
+  widgetClose.addEventListener("click", (e) => {
+    e.stopPropagation();
     widget.classList.remove("visible");
-    if (window.innerWidth > 768) {
-      btnAbrir.style.display = "flex";
+    widgetToggle.style.display = "flex"; // Reexibe o botão
+  });
+
+  // Fechar clicando fora
+  document.addEventListener("click", (e) => {
+    if (!widget.contains(e.target) && e.target !== widgetToggle) {
+      widget.classList.remove("visible");
+      widgetToggle.style.display = "flex";
     }
   });
 
-  // Ajustar inicialmente e ao redimensionar
-  ajustarWidget();
-  window.addEventListener("resize", ajustarWidget);
+  // Impede que o clique dentro do widget feche ele
+  widget.addEventListener("click", (e) => e.stopPropagation());
 }
+
 
 // Funções relacionadas à tabela de classificação
 async function carregarTabela(campeonato = "brasileirao") {
@@ -917,7 +956,8 @@ function getPositionClass(position) {
 
   if (campeonato === "sul-americana") {
     if (posNum === 1) return "pos1-sulamericana";
-    if (posNum >= 2 && posNum <= 4) return "pos2-4-sulamericana";
+    if (posNum === 2) return "pos2-sulamericana";
+    if (posNum >= 3 && posNum <= 4) return "pos3-4-sulamericana";
     return "";
   }
 
@@ -946,24 +986,15 @@ function iniciarAtualizacaoPeriodica() {
   }, 30000);
 }
 
-// Funções para controle de legendas
+// No arquivo script-brasileirao.js, substitua a função atualizarLegendas por:
 function atualizarLegendas(campeonato) {
-  const legenda = document.querySelector(".legenda");
-  const legendaItens = document.querySelectorAll('.legenda-item');
-
-  if (campeonato === "copa-do-brasil") {
-    if (legenda) legenda.style.display = "none";
-    return;
-  }
-
-  if (legenda) legenda.style.display = "flex";
-
-  legendaItens.forEach(item => {
-    const camp = item.getAttribute('data-campeonato');
-    if (camp === campeonato) {
-      item.style.display = 'flex';
+  const legendGroups = document.querySelectorAll('.legend-group');
+  
+  legendGroups.forEach(group => {
+    if (group.dataset.campeonato === campeonato) {
+      group.style.display = 'flex';
     } else {
-      item.style.display = 'none';
+      group.style.display = 'none';
     }
   });
 }

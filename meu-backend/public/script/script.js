@@ -139,7 +139,7 @@ async function fetchTerraNews() {
     </div>
   `;
   try {
-    const response = await fetch("api/noticias-espn");
+    const response = await fetch("http://localhost:4001/api/noticias-espn");
     let noticias = await response.json();
     console.log("Resposta do backend:", noticias);
 
@@ -411,21 +411,13 @@ async function loadMiniResults() {
               row[1].includes("Cruzeiro") ? "cruzeiro" : ""
             }">
               <img src="${getTeamLogo(row[1])}" class="mini-team-logo">
-              <span>${
-                row[1].includes("Cruzeiro")
-                  ? "Cruzeiro"
-                  : row[1].split(" ").slice(-1)[0]
-              }</span>
+              <span>${cleanTeamName(row[1])}</span>
             </div>
             <div class="mini-score">${scoreParts[0].trim()}</div>
             <div class="mini-team ${
               row[3].includes("Cruzeiro") ? "cruzeiro" : ""
             }">
-              <span>${
-                row[3].includes("Cruzeiro")
-                  ? "Cruzeiro"
-                  : row[3].split(" ").slice(-1)[0]
-              }</span>
+              <span>${cleanTeamName(row[3])}</span>
               <img src="${getTeamLogo(row[3])}" class="mini-team-logo">
             </div>
           </div>
@@ -481,21 +473,13 @@ async function loadNextMatches() {
               row[1].includes("Cruzeiro") ? "cruzeiro" : ""
             }">
               <img src="${getTeamLogo(row[1])}" class="match-team-logo">
-              <span>${
-                row[1].includes("Cruzeiro")
-                  ? "Cruzeiro"
-                  : row[1].split(" ").slice(-1)[0]
-              }</span>
+              <span>${cleanTeamName(row[1])}</span>
             </div>
             <span class="match-vs">vs</span>
             <div class="match-team ${
               row[3].includes("Cruzeiro") ? "cruzeiro" : ""
             }">
-              <span>${
-                row[3].includes("Cruzeiro")
-                  ? "Cruzeiro"
-                  : row[3].split(" ").slice(-1)[0]
-              }</span>
+              <span>${cleanTeamName(row[3])}</span>
               <img src="${getTeamLogo(row[3])}" class="match-team-logo">
             </div>
           </div>
@@ -523,23 +507,17 @@ async function loadNextMatches() {
   }
 }
 
+function cleanTeamName(teamName) {
+  if (!teamName) return '';
+  // Remove números no início (como "1° ") e siglas de estado no final (como " MG")
+  return teamName
+    .replace(/^\d+°\s*/, '')
+    .replace(/\s[A-Z]{2,4}$/, '');
+}
+
 // ========== INICIALIZAÇÃO ÚNICA ==========
 document.addEventListener("DOMContentLoaded", function () {
-  // Menu Toggle para dispositivos móveis
-  const menuToggle = document.getElementById("menuToggle");
-  const menu = document.getElementById("menu");
-  if (menuToggle && menu) {
-    menuToggle.addEventListener("click", function () {
-      menu.classList.toggle("active");
-    });
-    // Fechar menu ao clicar em um link
-    const menuLinks = document.querySelectorAll("#menu a");
-    menuLinks.forEach((link) => {
-      link.addEventListener("click", function () {
-        menu.classList.remove("active");
-      });
-    });
-  }
+
 
   // Formulário de Newsletter
   const newsletterForm = document.getElementById("newsletterForm");
@@ -603,3 +581,4 @@ document.addEventListener("DOMContentLoaded", function () {
   // Carrega notícias do Terra automaticamente (scraping)
   fetchTerraNews();
 });
+

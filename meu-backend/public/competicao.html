@@ -4,175 +4,248 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>CABULOSO NEWS | Competições</title>
-    <!-- Simplified loading of external resources -->
+
+    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
+
+    <!-- Fonts -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- Icons -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/logo_m.png" />
-    <link rel="stylesheet" href="style/style-brasileirao.css" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="./style/style-brasileirao.css" />
   </head>
   <body>
-    <nav class="navbar">
-      <div class="container nav-container">
-        <a href="index.html" class="logo">
-          <img
-            src="assets/logo_m.png"
-            alt="Logo do Cabuloso News"
-            class="nav-logo"
-            width="36"
-            height="36"
-          />
-          <span>Cabuloso News | Competições</span>
-        </a>
-        <button
-          class="menu-toggle"
-          aria-label="Abrir menu"
-          aria-expanded="false"
-        >
-          <span class="hamburger"></span>
-        </button>
-        <ul class="nav-menu">
-          <li><a href="index.html" class="nav-link">Início</a></li>
-          <li>
-            <a href="competicao.html" class="nav-link active">Competições</a>
-          </li>
-          <li>
-            <a href="minuto-a-minuto.html" class="nav-link">Resultados</a>
-          </li>
-        </ul>
-      </div>
-    </nav>
 
-    <div class="container">
-      <header class="competicao-header">
-        <div class="header-title">
-          <h1>
+    <header class="header">
+      <nav class="navbar">
+        <div class="nav-container">
+          <div class="nav-logo">
+            <img src="assets/logo_m.png" alt="Cabuloso News" class="logo" />
+            <span class="logo-text">Cabuloso News | Competições</span>
+          </div>
+
+                <ul class="nav-menu" id="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link">
+                            <i class="fas fa-home"></i>
+                            <span>Início</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="competicao.html" class="nav-link">
+                            <i class="fas fa-list-ol"></i>
+                            <span>Tabela</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="resultados.html" class="nav-link">
+                            <i class="fas fa-trophy"></i>
+                            <span>Resultados</span>
+                        </a>
+                    </li>
+                </ul>
+
+          <div class="menu-toggle" id="menuToggle">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+        </div>
+      </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+      <div class="hero-background">
+        <div class="hero-pattern"></div>
+      </div>
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-badge">
             <i class="fas fa-trophy"></i>
-            <span id="campeonato-nome">Brasileirão Série A 2025</span>
-          </h1>
-          <div class="campeonato-select-wrapper">
-            <select id="campeonato-select" class="campeonato-select">
-              <option value="brasileirao">Campeonato Brasileiro</option>
-              <option value="sul-americana">Sul-Americana</option>
-              <option value="copa-do-brasil">Copa do Brasil</option>
-            </select>
+            <span>Temporada 2025</span>
           </div>
-        </div>
-        <div class="header-info">
-          <button class="theme-toggle" aria-label="Alternar tema">
-            <i class="fas fa-circle-half-stroke"></i>
-          </button>
-        </div>
-      </header>
-
-      <div id="btn-minuto-a-minuto-container" class="btn-ao-vivo-container">
-        <a href="minuto-a-minuto.html" class="btn-ao-vivo">
-          <div class="btn-ao-vivo-icon">
-            <i class="fas fa-tv"></i>
-          </div>
-          <div class="btn-ao-vivo-content">
-            <span class="btn-ao-vivo-label">Ao Vivo</span>
-            <span class="btn-ao-vivo-text">Minuto a Minuto</span>
-            <span class="btn-ao-vivo-times" id="btn-ao-vivo-times"></span>
-          </div>
-          <div class="btn-ao-vivo-arrow">
-            <i class="fas fa-chevron-right"></i>
-          </div>
-        </a>
-      </div>
-
-      <div id="tabela-container" class="tabela-container">
-        <div class="loading">
-          <i class="fas fa-spinner"></i>
-          <p>Carregando dados do campeonato...</p>
-        </div>
-      </div>
-
-      <div class="legenda">
-        <div
-          class="legenda-item sulamericana-1"
-          data-campeonato="sul-americana"
-        >
-          <span class="legenda-cor" style="background-color: #4caf50"></span>
-          <span>1º Sul-Americana (Classificado)</span>
-        </div>
-        <div
-          class="legenda-item sulamericana-2-4"
-          data-campeonato="sul-americana"
-        >
-          <span class="legenda-cor" style="background-color: #f44336"></span>
-          <span>2º-4º Sul-Americana (Eliminados)</span>
-        </div>
-
-        <div class="legenda-item" data-campeonato="brasileirao">
-          <span class="legenda-cor pos1-4"></span>
-          <span>Libertadores</span>
-        </div>
-        <div class="legenda-item" data-campeonato="brasileirao">
-          <span class="legenda-cor pos5-6"></span>
-          <span>Pré-Libertadores</span>
-        </div>
-        <div class="legenda-item" data-campeonato="brasileirao">
-          <span class="legenda-cor pos7-12"></span>
-          <span>Sul-Americana</span>
-        </div>
-        <div class="legenda-item" data-campeonato="brasileirao">
-          <span class="legenda-cor pos13-16"></span>
-          <span>Nada</span>
-        </div>
-        <div class="legenda-item" data-campeonato="brasileirao">
-          <span class="legenda-cor pos17-20"></span>
-          <span>Rebaixados</span>
-        </div>
-        <div class="legenda-item" data-campeonato="brasileirao">
-          <span class="legenda-cor cruzeiro"></span>
-          <span>Cruzeiro</span>
-        </div>
-      </div>
-
-      <div class="proximos-jogos-container">
-        <div class="proximos-jogos">
-          <div class="proximos-jogos-header">
-            <h2><i class="fas fa-calendar-alt"></i> Próximos Jogos</h2>
-            <button
-              class="btn-fechar-jogos"
-              aria-label="Fechar painel de jogos"
+          <h1 class="hero-title">
+            <span class="title-main" id="campeonato-nome"
+              >Brasileirão Série A</span
             >
-              &times;
-            </button>
-          </div>
-          <div class="filtros-jogos">
-            <button class="filtro-ativo" data-filtro="todos">Todos</button>
-            <button data-filtro="Campeonato Brasileiro">Brasileirão</button>
-            <button data-filtro="Sul-Americana">Sul-Americana</button>
-            <button data-filtro="Copa do Brasil">Copa do Brasil</button>
-          </div>
-          <div class="lista-jogos">
-            <div class="loading-jogos">
-              <i class="fas fa-spinner fa-spin"></i>
-              <p>Carregando próximos jogos...</p>
+            <span class="title-sub">Acompanhe todas as competições</span>
+          </h1>
+          <div class="hero-selector">
+            <div class="selector-wrapper">
+              <select id="campeonato-select" class="championship-select">
+                <option value="brasileirao">Campeonato Brasileiro</option>
+                <option value="sul-americana">Sul-Americana</option>
+                <option value="copa-do-brasil">Copa do Brasil</option>
+              </select>
+              <i class="fas fa-chevron-down selector-icon"></i>
             </div>
           </div>
         </div>
       </div>
+    </section>
 
-      <button class="btn-abrir-jogos" aria-label="Mostrar próximos jogos">
-        <i class="fas fa-calendar-alt"></i>
-      </button>
+    <!-- Live Match Button -->
+    <div
+      id="btn-minuto-a-minuto-container"
+      class="live-match-container"
+      style="display: none"
+    >
+      <a href="minuto-a-minuto.html" class="live-match-btn">
+        <div class="live-indicator">
+          <div class="live-dot"></div>
+          <span class="live-text">AO VIVO</span>
+        </div>
+        <div class="live-content">
+          <span class="live-title">Minuto a Minuto</span>
+          <span class="live-teams" id="btn-ao-vivo-times"
+            >Jogo em Andamento</span
+          >
+        </div>
+        <div class="live-arrow">
+          <i class="fas fa-chevron-right"></i>
+        </div>
+      </a>
     </div>
 
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="container">
+        <!-- Table Section -->
+        <section class="table-section">
+          <div class="section-header">
+            <div class="header-info">
+              <h2 class="section-title">Classificação</h2>
+              <div class="update-info">
+                <i class="fas fa-clock"></i>
+                <span>Atualizado em tempo real</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="table-wrapper">
+            <div id="tabela-container" class="table-container">
+              <div class="loading-state">
+                <div class="loading-spinner">
+                  <div class="spinner"></div>
+                </div>
+                <p>Carregando dados do campeonato...</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div class="legend-container">
+            <div class="legend" id="legend">
+              <!-- Brasileirão Legend -->
+              <div class="legend-group" data-campeonato="brasileirao">
+                <div class="legend-item">
+                  <span class="legend-color pos1-4"></span>
+                  <span class="legend-text">Libertadores (1º-4º)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color pos5-6"></span>
+                  <span class="legend-text">Pré-Libertadores (5º-6º)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color pos7-12"></span>
+                  <span class="legend-text">Sul-Americana (7º-12º)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color pos17-20"></span>
+                  <span class="legend-text">Rebaixamento (17º-20º)</span>
+                </div>
+                <div class="legend-item special">
+                  <span class="legend-color cruzeiro"></span>
+                  <span class="legend-text">Cruzeiro</span>
+                </div>
+              </div>
+
+              <!-- Sul-Americana Legend -->
+              <div
+                class="legend-group"
+                data-campeonato="sul-americana"
+                style="display: none"
+              >
+                <div class="legend-item">
+                  <span class="legend-color pos1-sulamericana"></span>
+                  <span class="legend-text">Classificado (1º)</span>
+                </div>
+                <div class="legend-item">
+                  <span class="legend-color pos3-4-sulamericana"></span>
+                  <span class="legend-text">Eliminado (3º-4º)</span>
+                </div>
+                                <div class="legend-item">
+                  <span class="legend-color pos2-sulamericana"></span>
+                  <span class="legend-text">Repescagem (2º)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <!-- Games Widget -->
+    <div class="games-widget-container">
+      <button class="widget-toggle" id="widget-toggle">
+        <i class="fas fa-calendar-alt"></i>
+      </button>
+
+      <div class="games-widget" id="games-widget">
+        <div class="widget-header">
+          <h3>
+            <i class="fas fa-calendar-alt"></i>
+            Próximos Jogos
+          </h3>
+          <button class="widget-close" id="widget-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div class="widget-filters">
+          <button class="filter-btn active" data-filter="todos">Todos</button>
+          <button class="filter-btn" data-filter="Campeonato Brasileiro">
+            Brasileirão
+          </button>
+          <button class="filter-btn" data-filter="Sul-Americana">
+            Sul-Americana
+          </button>
+          <button class="filter-btn" data-filter="Copa do Brasil">
+            Copa do Brasil
+          </button>
+        </div>
+
+        <div class="games-list" id="games-list">
+          <div class="loading-games">
+            <div class="spinner"></div>
+            <p>Carregando próximos jogos...</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    
+    <!-- Footer -->
     <footer class="footer">
       <div class="container">
         <div class="footer-bottom">
-            <p>
+          <p>
             &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
             vínculo oficial com o Cruzeiro Esporte Clube.<br />
             Todo conteúdo, imagens e notícias pertencem aos seus respectivos
@@ -184,10 +257,12 @@
       </div>
     </footer>
 
-    <a href="#" class="back-to-top" aria-label="Voltar ao topo">
-      <i class="fas fa-arrow-up"></i>
-    </a>
+    <!-- Back to Top -->
+    <button class="back-to-top" id="back-to-top" aria-label="Voltar ao topo">
+      <i class="fas fa-chevron-up"></i>
+    </button>
 
-    <script type="module" src="script/script-brasileirao.js"></script>
+    <!-- Scripts -->
+    <script src="./script/script-brasileirao.js"></script>
   </body>
 </html>
