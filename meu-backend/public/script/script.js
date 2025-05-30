@@ -396,7 +396,7 @@ async function loadMiniTable() {
 async function loadMiniResults() {
   try {
     const response = await fetch(
-      `https://sheets.googleapis.com/v4/spreadsheets/12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0/values/A1:F6?key=${CONFIG.apiKey}`
+      `https://sheets.googleapis.com/v4/spreadsheets/14r46LGxmQVUilSvimrcbBcUvUmIPaEtp89wblh_8ZU0/values/A1:F6?key=${CONFIG.apiKey}`
     );
     const data = await response.json();
     let html = "";

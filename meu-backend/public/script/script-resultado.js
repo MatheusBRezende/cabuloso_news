@@ -1,5 +1,5 @@
 // Configurações da API do Google Sheets
-const spreadsheetId = "12LrzrOnzSwScp-9PzKrtq13ElgTUpWxo3BDp4Y82Dm0";
+const spreadsheetId = "14r46LGxmQVUilSvimrcbBcUvUmIPaEtp89wblh_8ZU0";
 let apiKey = "";
 
 const range = "A:F";
