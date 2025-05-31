@@ -577,9 +577,29 @@ td {
 
   .menu-toggle {
     display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .menu-toggle i {
+    font-size: 1.5rem;
+    color: white;
+    transition: var(--transition);
+  }
+
+  .menu-toggle span {
+    position: left;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .menu-toggle.active i {
+    transform: rotate(90deg);
   }
   .logo-text {
-    font-size: 1.2rem; /* Ajuste este valor conforme necessário */
+    font-size: 1rem;
   }
 
   .nav-menu {

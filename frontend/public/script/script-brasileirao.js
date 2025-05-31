@@ -118,6 +118,9 @@ async function initApp() {
     setInterval(verificarEAjustarBotaoMinutoAMinuto, 60000);
     setInterval(verificarJogosAoVivo, 300000);
 
+  
+    verificarWidgetAutoAtivacao();
+
     console.log("Aplicação inicializada com sucesso!");
   } catch (error) {
     console.error("Erro na inicialização:", error);
@@ -1276,4 +1279,25 @@ function verificarJogoEncerrado(jogo) {
   }
 
   return false;
+}
+
+/*====ATIVAÇÃO AUTOMÁTICA DO WIDGET====*/
+function verificarWidgetAutoAtivacao() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const widgetParam = urlParams.get('widget');
+  
+  if (widgetParam === 'jogos') {
+    const widgetToggle = document.getElementById('widget-toggle');
+    const widget = document.getElementById('games-widget');
+    
+    if (widgetToggle && widget) {
+      // Simula o clique para abrir o widget
+      widgetToggle.click();
+      
+      // Rola a página até o widget (opcional)
+      setTimeout(() => {
+        widget.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 300);
+    }
+  }
 }

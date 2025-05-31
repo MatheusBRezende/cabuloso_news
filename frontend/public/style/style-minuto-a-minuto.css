@@ -11,7 +11,7 @@
   --gray-dark: #666666;
   --shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
   --shadow-hover: 0 8px 30px rgba(0, 51, 153, 0.15);
-  --transition: all 0.3s ease;
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --border-radius: 12px;
   --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
     sans-serif;
@@ -301,7 +301,6 @@ ul {
   font-family: var(--font-secondary);
 }
 
-
 .separador {
   color: var(--text-light);
   opacity: 0.7;
@@ -334,7 +333,7 @@ ul {
 }
 
 /* Modifique estas regras no CSS */
-.gol-visitante, 
+.gol-visitante,
 .gol-casa,
 .gol-dourado {
   color: inherit !important; /* Herda a cor definida no estilo inline */
@@ -434,15 +433,15 @@ ul {
 }
 
 @keyframes pulseColor {
-  0% { 
+  0% {
     transform: scale(1);
     text-shadow: 0 0 5px currentColor;
   }
-  50% { 
+  50% {
     transform: scale(1.3);
     text-shadow: 0 0 20px currentColor;
   }
-  100% { 
+  100% {
     transform: scale(1);
     text-shadow: 0 0 10px currentColor;
   }
@@ -537,8 +536,6 @@ ul {
 
 /* ================= ANIMAÇÃO DE GOL ================= */
 
-
-
 .goal-lottie-side {
   position: absolute;
   width: 150px;
@@ -573,8 +570,7 @@ ul {
   font-size: 3rem;
   font-weight: 900;
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
-  animation: 
-    textPulse 0.5s ease-out infinite alternate,
+  animation: textPulse 0.5s ease-out infinite alternate,
     textGlow 1.5s ease-in-out infinite alternate;
   position: relative;
   z-index: 10;
@@ -615,45 +611,74 @@ ul {
   width: var(--size);
   height: var(--size);
   opacity: 0;
-  animation: 
-    confettiFade 1s ease-out var(--delay) forwards,
+  animation: confettiFade 1s ease-out var(--delay) forwards,
     confettiMove 1s ease-out var(--delay) forwards;
 }
 
 @keyframes textPulse {
-  from { transform: scale(1); }
-  to { transform: scale(1.2); }
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.2);
+  }
 }
 
 @keyframes textGlow {
-  from { text-shadow: 0 0 10px rgba(255, 255, 255, 0.8); }
-  to { text-shadow: 0 0 20px currentColor, 0 0 30px rgba(255, 255, 255, 0.8); }
+  from {
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+  }
+  to {
+    text-shadow: 0 0 20px currentColor, 0 0 30px rgba(255, 255, 255, 0.8);
+  }
 }
 
 @keyframes explosion {
-  0% { transform: scale(0); opacity: 0.8; }
-  100% { transform: scale(1); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0;
+  }
 }
 
 @keyframes shockwave {
-  0% { transform: scale(0.3); opacity: 0.6; }
-  100% { transform: scale(1.5); opacity: 0; }
+  0% {
+    transform: scale(0.3);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
 }
 
 @keyframes confettiFade {
-  0% { opacity: 0; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.3); }
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
 }
 
 @keyframes confettiMove {
-  0% { transform: translate(0, 0) rotate(0deg); }
-  100% { 
-    transform: 
-      translate(
+  0% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  100% {
+    transform: translate(
         calc(cos(var(--angle)) * var(--distance)),
         calc(sin(var(--angle)) * var(--distance) * -1)
-      ) 
+      )
       rotate(var(--rotate));
   }
 }
@@ -687,38 +712,47 @@ ul {
 .placar-particulas span {
   position: absolute;
   display: block;
-  animation: 
-    particulaFade 1s ease-out var(--delay) forwards,
+  animation: particulaFade 1s ease-out var(--delay) forwards,
     particulaMove 1s ease-out var(--delay) forwards;
 }
 
 @keyframes particulaFade {
-  0% { opacity: 0.8; transform: scale(0.5); }
-  50% { opacity: 1; transform: scale(1); }
-  100% { opacity: 0; transform: scale(0.3); }
+  0% {
+    opacity: 0.8;
+    transform: scale(0.5);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
 }
 
 @keyframes particulaMove {
-  0% { transform: translate(0, 0); }
-  100% { 
-    transform: 
-      translate(
-        calc(cos(var(--angle)) * var(--distance)),
-        calc(sin(var(--angle)) * var(--distance) * -1)
-      ); 
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(
+      calc(cos(var(--angle)) * var(--distance)),
+      calc(sin(var(--angle)) * var(--distance) * -1)
+    );
   }
 }
 
 @keyframes pulseColor {
-  0% { 
+  0% {
     transform: scale(1);
     text-shadow: 0 0 5px currentColor;
   }
-  50% { 
+  50% {
     transform: scale(1.3);
     text-shadow: 0 0 20px currentColor;
   }
-  100% { 
+  100% {
     transform: scale(1);
     text-shadow: 0 0 10px currentColor;
   }
@@ -1124,14 +1158,13 @@ ul {
 }
 
 .footer a {
-  color: inherit; 
-  text-decoration: underline; 
+  color: inherit;
+  text-decoration: underline;
 }
 
 .footer a:hover {
-  color: #ccc; 
+  color: #ccc;
 }
-
 
 .footer-bottom {
   border-top: 1px solid #333;
@@ -1228,6 +1261,29 @@ ul {
 @media (max-width: 768px) {
   .menu-toggle {
     display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+  }
+
+  .menu-toggle i {
+    font-size: 1.5rem;
+    color: white;
+    transition: var(--transition);
+  }
+
+  .menu-toggle span {
+    position: left;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .menu-toggle.active i {
+    transform: rotate(90deg);
+  }
+  .logo-text {
+    font-size: 1rem;
   }
 
   .nav-menu {

@@ -1,3 +1,6 @@
+:root{
+    --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
 /* Reset and Base Styles */
 * {
   margin: 0;
@@ -382,7 +385,7 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
   display: inline-block;
-  margin-bottom: 1rem;
+  margin-top: 1rem;
   width: fit-content;
 }
 
@@ -772,10 +775,32 @@ body.menu-open {
 
 /* ================= RESPONSIVE DESIGN ================= */
 @media (max-width: 768px) {
-  .menu-toggle {
+ .menu-toggle {
     display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
   }
 
+  .menu-toggle i {
+    font-size: 1.5rem;
+    color: white;
+    transition: var(--transition);
+  }
+
+  .menu-toggle span {
+    position: left;
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .menu-toggle.active i {
+    transform: rotate(90deg);
+  }
+  .logo-text {
+    font-size: 1rem;
+  }
   .nav-menu {
     position: fixed;
     left: -100%;

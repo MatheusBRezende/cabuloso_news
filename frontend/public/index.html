@@ -39,54 +39,54 @@
             <span class="logo-text">Cabuloso News | Inicio</span>
           </div>
 
-                <ul class="nav-menu" id="nav-menu">
-                    <li class="nav-item">
-                        <a href="index.html" class="nav-link">
-                            <i class="fas fa-home"></i>
-                            <span>Início</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="competicao.html" class="nav-link">
-                            <i class="fas fa-list-ol"></i>
-                            <span>Tabela</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="resultados.html" class="nav-link">
-                            <i class="fas fa-trophy"></i>
-                            <span>Resultados</span>
-                        </a>
-                    </li>
-                </ul>
+          <ul class="nav-menu" id="nav-menu">
+            <li class="nav-item">
+              <a href="index.html" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="competicao.html" class="nav-link">
+                <i class="fas fa-list-ol"></i>
+                <span>Tabela</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="resultados.html" class="nav-link">
+                <i class="fas fa-trophy"></i>
+                <span>Resultados</span>
+              </a>
+            </li>
+          </ul>
 
           <div class="menu-toggle" id="menuToggle">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
+            <i class="fas fa-cog"></i>
+              <span>Opções</span>
           </div>
         </div>
       </nav>
     </header>
 
-<!-- Hero Section -->
-<section class="hero" id="home">
-  <!-- Ondas como plano de fundo -->
-<div class="waves">
-  <img src="assets/wav_cruzeiro.png" alt="onda de som" />
-</div>
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+      <!-- Ondas como plano de fundo -->
+      <div class="waves">
+        <img src="assets/wav_cruzeiro.png" alt="onda de som" />
+      </div>
 
-
-  <div class="hero-content">
-    <div class="hero-text">
-      <h1>Bem-vindo ao Portal do Cabuloso News</h1>
-      <p>Acompanhe todas as notícias, jogos e novidades do maior de Minas!</p>
-    </div>
-    <div class="hero-image">
-      <img src="assets/logo_m.jpeg" alt="Escudo do Cruzeiro" />
-    </div>
-  </div>
-</section>
+      <div class="hero-content">
+        <div class="hero-text">
+          <h1>Bem-vindo ao Portal do Cabuloso News</h1>
+          <p>
+            Acompanhe todas as notícias, jogos e novidades do maior de Minas!
+          </p>
+        </div>
+        <div class="hero-image">
+          <img src="assets/logo_m.jpeg" alt="Escudo do Cruzeiro" />
+        </div>
+      </div>
+    </section>
 
     <!-- Quick Stats Cards -->
     <section class="quick-stats">
@@ -104,8 +104,8 @@
               <i class="fas fa-chevron-right"></i>
             </div>
           </div>
-
-          <div class="stat-card" onclick="location.href='jogos.html'">
+          <a href="competicao.html?widget=jogos"class="widget-link"style="color: #003399; text-decoration: none;">
+          <div class="stat-card">
             <div class="stat-icon">
               <i class="fas fa-calendar"></i>
             </div>
@@ -114,9 +114,12 @@
               <p>Confira os próximos confrontos</p>
             </div>
             <div class="stat-arrow">
-              <i class="fas fa-chevron-right"></i>
+
+                <i class="fas fa-chevron-right"></i>
+              
             </div>
           </div>
+          </a>
 
           <div class="stat-card" onclick="location.href='resultados.html'">
             <div class="stat-icon">
@@ -142,18 +145,14 @@
         </div>
 
         <!-- Featured Article -->
-         <section class="featured_article">
-         <h1><i class="fas fa-star"></i> Noticia em destaque</h1>
-            <div class="featured-article">
-          
-            </div>
+        <section class="featured_article">
+          <h1><i class="fas fa-star"></i> Noticia em destaque</h1>
+          <div class="featured-article"></div>
         </section>
 
         <!-- News Grid -->
         <section class="news_grid">
-        <div class="news-grid">
-          
-        </div>
+          <div class="news-grid"></div>
         </section>
         <div class="load-more-container">
           <button
@@ -174,7 +173,7 @@
           <!-- Mini Table Widget -->
           <div class="widget-card" onclick="location.href='competicao.html'">
             <div class="widget-header">
-              <h3><i class="fas fa-list-ol"></i> Classificação Serie A</h3>
+              <h3><i class="fas fa-list-ol"></i> Brasileirão Serie A</h3>
               <span class="widget-link"
                 ><i class="fas fa-external-link-alt"></i
               ></span>
@@ -226,9 +225,9 @@
           <div class="widget-card" onclick="location.href='competicao.html'">
             <div class="widget-header">
               <h3><i class="fas fa-calendar-alt"></i> Próximos Jogos</h3>
-              <span class="widget-link"
-                ><i class="fas fa-external-link-alt"></i
-              ></span>
+              <a href="competicao.html?widget=jogos"class="widget-link"style="color: #ffff; text-decoration: none;">
+                <i class="fas fa-external-link-alt"></i>
+              </a>
             </div>
             <div class="widget-content">
               <div id="proximos-jogos">
@@ -249,8 +248,8 @@
           <div class="newsletter-text">
             <h2>Fique por dentro de tudo!</h2>
             <p>
-              Receba as últimas notícias e novidades do Cabuloso News diretamente no
-              seu email.
+              Receba as últimas notícias e novidades do Cabuloso News
+              diretamente no seu email.
             </p>
           </div>
           <form class="newsletter-form" id="newsletterForm">
@@ -266,21 +265,24 @@
       </div>
     </section>
 
-<!-- Footer -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-bottom">
-      <p>
-        &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
-        vínculo oficial com o Cruzeiro Esporte Clube.<br />
-        Todo conteúdo, imagens e notícias pertencem aos seus respectivos
-        autores e portais de origem. Se você é detentor de direitos e deseja
-        remoção de algum conteúdo, entre em contato pelo e-mail:
-        <a href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo">cabulosonews92@gmail.com</a>
-      </p>
-    </div>
-  </div>
-</footer>
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
+            vínculo oficial com o Cruzeiro Esporte Clube.<br />
+            Todo conteúdo, imagens e notícias pertencem aos seus respectivos
+            autores e portais de origem. Se você é detentor de direitos e deseja
+            remoção de algum conteúdo, entre em contato pelo e-mail:
+            <a
+              href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo"
+              >cabulosonews92@gmail.com</a
+            >
+          </p>
+        </div>
+      </div>
+    </footer>
 
     <!-- JavaScript -->
     <script src="./script/script.js"></script>

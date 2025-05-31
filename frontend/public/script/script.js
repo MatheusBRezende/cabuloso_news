@@ -211,15 +211,16 @@ function renderFeaturedNews(article) {
       }" alt="Notícia em destaque do Cruzeiro">
     </div>
     <div class="featured-content">
-      <span class="category">Noticia retirada de: ${
-        article.fonte || ""
-      }.com.br</span>
       <h3>${article.title}</h3>
       <p>${article.description || "Sem descrição disponível."}</p>
       <a href="${
         article.url
       }" class="read-more" target="_blank" rel="noopener"><i class="bi bi-arrow-right-circle"></i> Ler mais</a>
+            <span class="category">Noticia retirada de: ${
+        article.fonte || ""
+      }.com.br</span>
     </div>
+
   `;
 }
 
@@ -245,14 +246,14 @@ function renderNews(articles) {
         }" alt="Notícia do Cruzeiro">
       </div>
       <div class="news-content">
-        <span class="category">Noticia retirada de: ${
-          article.fonte || ""
-        }.com.br</span>
         <h3>${article.title}</h3>
         <p>${article.description || "Sem descrição disponível."}</p>
         <a href="${
           article.url
         }" class="read-more" target="_blank" rel="noopener">Ler mais</a>
+                <span class="category">Noticia retirada de: ${
+          article.fonte || ""
+        }.com.br</span>
       </div>
     `;
     newsGrid.appendChild(newsCard);
@@ -560,23 +561,52 @@ document.addEventListener("DOMContentLoaded", function () {
   initWidgets();
 
   // Script para menu hambúrguer (caso use nav diferente)
-  const menuToggle2 = document.querySelector(".menu-toggle");
-  const navMenu = document.querySelector(".nav-menu");
-  if (menuToggle2 && navMenu) {
-    menuToggle2.addEventListener("click", () => {
-      menuToggle2.classList.toggle("active");
-      navMenu.classList.toggle("active");
-      document.body.classList.toggle("menu-open");
-    });
-    const navLinks = document.querySelectorAll(".nav-link");
-    navLinks.forEach((link) => {
-      link.addEventListener("click", () => {
-        menuToggle2.classList.remove("active");
+  const menuToggle = document.getElementById("menuToggle");
+  const navMenu = document.getElementById("nav-menu");
+
+  if (!menuToggle || !navMenu) return;
+
+  menuToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    menuToggle.classList.toggle("active");
+    navMenu.classList.toggle("active");
+    
+    // Atualiza o ícone
+    const icon = menuToggle.querySelector("i");
+    if (menuToggle.classList.contains("active")) {
+      icon.classList.remove("fa-cog");
+      icon.classList.add("fa-times");
+    } else {
+      icon.classList.remove("fa-times");
+      icon.classList.add("fa-cog");
+    }
+  });
+
+  // Fecha o menu ao clicar em um link
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      if (navMenu.classList.contains("active")) {
         navMenu.classList.remove("active");
-        document.body.classList.remove("menu-open");
-      });
+        menuToggle.classList.remove("active");
+        const icon = menuToggle.querySelector("i");
+        icon.classList.remove("fa-times");
+        icon.classList.add("fa-cog");
+      }
     });
-  }
+  });
+
+  // Fecha o menu ao clicar fora
+  document.addEventListener("click", (e) => {
+    if (!navMenu.contains(e.target)) {
+      navMenu.classList.remove("active");
+      menuToggle.classList.remove("active");
+      const icon = menuToggle.querySelector("i");
+      icon.classList.remove("fa-times");
+      icon.classList.add("fa-cog");
+    }
+  });
 
   // Carrega notícias do Terra automaticamente (scraping)
   fetchTerraNews();
