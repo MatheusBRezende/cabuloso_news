@@ -39,18 +39,21 @@
           </div>
 
           <ul class="nav-menu" id="nav-menu">
+            
             <li class="nav-item">
               <a href="index.html" class="nav-link">
                 <i class="fas fa-home"></i>
                 <span>Início</span>
               </a>
             </li>
+
             <li class="nav-item">
               <a href="competicao.html" class="nav-link">
                 <i class="fas fa-list-ol"></i>
                 <span>Tabela</span>
               </a>
             </li>
+
             <li class="nav-item">
               <a href="resultados.html" class="nav-link">
                 <i class="fas fa-trophy"></i>
@@ -64,11 +67,13 @@
                 <span>Jogos</span>
               </a>
             </li>
+
           </ul>
 
           <!-- Substitua o menu-toggle atual por: -->
           <div class="menu-toggle" id="menuToggle">
             <i class="fas fa-cog"></i>
+              <span>Opções</span>
           </div>
         </div>
       </nav>
@@ -95,7 +100,6 @@
             <div class="selector-wrapper">
               <select id="campeonato-select" class="championship-select">
                 <option value="brasileirao">Campeonato Brasileiro</option>
-                <option value="sul-americana">Sul-Americana</option>
                 <option value="copa-do-brasil">Copa do Brasil</option>
               </select>
               <i class="fas fa-chevron-down selector-icon"></i>
@@ -138,7 +142,7 @@
         </div>
         <div class="widget-filters">
           <button class="filter-btn active" data-filter="todos">Todos</button>
-          <button class="filter-btn" data-filter="Brasileirão">
+          <button class="filter-btn" data-filter="Campeonato Brasileiro">
             Brasileirão
           </button>
           <button class="filter-btn" data-filter="Copa do Brasil">
@@ -204,25 +208,6 @@
                 </div>
               </div>
 
-              <!-- Sul-Americana Legend -->
-              <div
-                class="legend-group"
-                data-campeonato="sul-americana"
-                style="display: none"
-              >
-                <div class="legend-item">
-                  <span class="legend-color pos1-sulamericana"></span>
-                  <span class="legend-text">Classificado (1º)</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-color pos3-4-sulamericana"></span>
-                  <span class="legend-text">Eliminado (3º-4º)</span>
-                </div>
-                <div class="legend-item">
-                  <span class="legend-color pos2-sulamericana"></span>
-                  <span class="legend-text">Repescagem (2º)</span>
-                </div>
-              </div>
             </div>
           </div>
         </section>

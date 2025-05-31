@@ -742,33 +742,6 @@ ul {
   }
 }
 
-/* Sul-Americana specific classes */
-.pos1-sulamericana {
-  background: linear-gradient(
-    90deg,
-    rgba(16, 185, 129, 0.1),
-    rgba(16, 185, 129, 0.05)
-  );
-  border-left: 4px solid var(--success);
-}
-
-.pos3-4-sulamericana {
-  background: linear-gradient(
-    90deg,
-    rgba(239, 68, 68, 0.1),
-    rgba(239, 68, 68, 0.05)
-  );
-  border-left: 4px solid var(--error);
-}
-
-.pos2-sulamericana {
-  background: linear-gradient(
-    90deg,
-    rgba(239, 222, 68, 0.1),
-    rgba(239, 213, 68, 0.05)
-  );
-  border-left: 4px solid var(--warning);
-}
 
 /* ================= LEGEND ================= */
 .legend-container {
@@ -835,15 +808,7 @@ ul {
 .legend-color.cruzeiro {
   background: var(--primary);
 }
-.legend-color.pos1-sulamericana {
-  background: var(--success);
-}
-.legend-color.pos2-sulamericana {
-  background: var(--warning);
-}
-.legend-color.pos3-4-sulamericana {
-  background: var(--error);
-}
+
 
 .legend-text {
   font-size: 0.875rem;
@@ -1145,11 +1110,18 @@ ul {
     transition: var(--transition);
   }
 
+  .menu-toggle span {
+    color: white;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
   .menu-toggle.active i {
     transform: rotate(90deg);
   }
+
   .logo-text {
-    font-size: 1.2rem; 
+    font-size: 1rem;
   }
 
   .nav-menu {
@@ -1178,16 +1150,12 @@ ul {
     margin: 1rem 0;
   }
 
-  .menu-toggle.active .bar:nth-child(2) {
-    opacity: 0;
+  .nav-item i {
+    font-size: 25px;
   }
 
-  .menu-toggle.active .bar:nth-child(1) {
-    transform: translateY(7px) rotate(45deg);
-  }
-
-  .menu-toggle.active .bar:nth-child(3) {
-    transform: translateY(-7px) rotate(-45deg);
+  .nav-link.widget-toggle i {
+    font-size: 25px;
   }
 }
 

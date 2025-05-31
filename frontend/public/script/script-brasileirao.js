@@ -11,13 +11,6 @@ const CONFIG = {
       intervaloDados: "A1:M21",
       cor: "#0033A0",
     },
-    "sul-americana": {
-      nome: "Sul-Americana 2025",
-      sheetId: "196poqvqSo7aRm5P8o0ljNIQvA_mXnCSKfLyG7ic8teE",
-      intervaloDados: "A1:J5",
-      cor: "#0033A0",
-      tipo: "grupos",
-    },
     "copa-do-brasil": {
       nome: "Copa do Brasil 2025",
       sheetId: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
@@ -291,7 +284,7 @@ function exibirJogosWidget(jogos, filtro = "todos") {
             ? "agendado"
             : filtro === "Cruzeiro"
             ? "do Cruzeiro"
-            : `do ${filtro}`
+            : `do(a) ${filtro}`
         }</p>
       </div>
     `;
@@ -505,7 +498,6 @@ function verificarJogoAoVivo(jogos) {
 
 function formatarNomeCampeonato(nome) {
   const mapeamento = {
-    "CONMEBOL Sudamericana": "Sul-Americana",
     "Campeonato Brasileiro": "Campeonato Brasileiro",
     "Copa do Brasil": "Copa do Brasil",
   };
@@ -1114,12 +1106,6 @@ function getPositionClass(position) {
   const campeonatoSelect = document.getElementById("campeonato-select");
   const campeonato = campeonatoSelect?.value || "brasileirao";
 
-  if (campeonato === "sul-americana") {
-    if (posNum === 1) return "pos1-sulamericana";
-    if (posNum === 2) return "pos2-sulamericana";
-    if (posNum >= 3 && posNum <= 4) return "pos3-4-sulamericana";
-    return "";
-  }
 
   if (posNum <= 4) return "pos1-4";
   if (posNum <= 6) return "pos5-6";
