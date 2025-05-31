@@ -61,122 +61,100 @@ img {
 }
 
 /* ================= NAVBAR ================= */
-.navbar {
+.header {
+  background: #003399;
+  box-shadow: 0 2px 10px rgba(0, 51, 153, 0.1);
   position: fixed;
   top: 0;
-  left: 0;
   width: 100%;
-  background-color: var(--primary-dark);
-  box-shadow: var(--shadow);
   z-index: 1000;
-  padding: 10px 0;
+}
+
+.navbar {
+  padding: 0;
 }
 
 .nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 12px;
-  max-width: 1200px;
-  margin: 0 auto;
+  height: 70px;
+}
+
+/* Logo */
+.nav-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  text-decoration: none;
+  z-index: 1001;
 }
 
 .logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--text-light);
-  font-weight: 700;
-  font-size: 1.1rem;
+  height: 40px;
+  width: auto;
+  border-radius: 50%;
 }
 
-.nav-logo {
-  height: 36px;
-  width: auto;
+.logo-text {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: white;
 }
 
 .nav-menu {
   display: flex;
   list-style: none;
-  gap: 18px;
+  gap: 2rem;
+  margin: 0;
 }
 
 .nav-link {
-  color: var(--text-light);
+  color: white;
   text-decoration: none;
-  font-weight: 600;
-  padding: 10px 15px;
-  border-radius: var(--border-radius);
+  font-weight: 500;
+  padding: 0.5rem 0;
+  transition: color 0.3s ease;
   position: relative;
+}
+
+.nav-link:hover {
+  color: #ffd700;
 }
 
 .nav-link::after {
   content: "";
   position: absolute;
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: -5px;
+  left: 0;
   width: 0;
   height: 2px;
-  background-color: var(--accent-color);
+  background: #ffd700;
   transition: width 0.3s ease;
 }
 
-.nav-link:hover,
-.nav-link.active {
-  color: var(--accent-color);
-  background: rgba(255,255,255,0.05);
+.nav-link:hover::after {
+  width: 100%;
 }
 
-.nav-link:hover::after,
-.nav-link.active::after {
-  width: 70%;
-}
-
-/* Enhanced Hamburger Menu */
 .menu-toggle {
   display: none;
-  background: transparent;
-  border: none;
+  flex-direction: column;
   cursor: pointer;
-  padding: 10px;
-  z-index: 1001;
-  width: 44px;
-  height: 44px;
-  position: relative;
-  transition: 0.3s ease;
+  gap: 4px;
 }
 
-.hamburger,
-.hamburger::before,
-.hamburger::after {
-  display: block;
-  position: absolute;
-  width: 28px;
+.bar {
+  width: 25px;
   height: 3px;
-  background-color: var(--text-light);
-  transition: transform 0.3s, top 0.3s, background-color 0.3s;
+  background: white;
+  transition: 0.3s;
+  border-radius: 2px;
 }
-
-.hamburger {
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.hamburger::before,
-.hamburger::after {
-  content: "";
-  left: 0;
-}
-
-.hamburger::before { top: -9px; }
-.hamburger::after { top: 9px; }
-
-.menu-toggle.active .hamburger { background-color: transparent; }
-.menu-toggle.active .hamburger::before { top: 0; transform: rotate(45deg);}
-.menu-toggle.active .hamburger::after { top: 0; transform: rotate(-45deg);}
-
 /* ================= CONTAINER ================= */
 .container {
   width: 96%;
@@ -227,7 +205,7 @@ img {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 1.2rem;
-  background-color: rgba(0, 0, 0, 0.10);
+  background-color: rgba(0, 0, 0, 0.1);
   padding: 0.7rem 1rem;
   border-radius: var(--border-radius);
   border: 1px solid rgba(255, 255, 255, 0.04);
@@ -304,8 +282,12 @@ img {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg);}
-  100% { transform: rotate(360deg);}
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ================= RESULTS TABLE ================= */
@@ -359,7 +341,7 @@ img {
   min-width: 200px;
 }
 
-.filter-select:hover, 
+.filter-select:hover,
 .filter-select:focus {
   background-color: rgba(255, 255, 255, 0.15);
   border-color: var(--accent-color);
@@ -464,9 +446,18 @@ tr:last-child td {
   gap: 0.3rem;
 }
 
-.res-ico.vitoria { color: #2ecc40; font-weight: bold; }
-.res-ico.empate { color: #ff9800; font-weight: bold; }
-.res-ico.derrota { color: #e53935; font-weight: bold; }
+.res-ico.vitoria {
+  color: #2ecc40;
+  font-weight: bold;
+}
+.res-ico.empate {
+  color: #ff9800;
+  font-weight: bold;
+}
+.res-ico.derrota {
+  color: #e53935;
+  font-weight: bold;
+}
 
 .vitoria {
   background-color: rgba(46, 125, 50, 0.13);
@@ -518,110 +509,121 @@ footer {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* ================= STARS BACKGROUND ================= */
-.stars-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  pointer-events: none;
-}
-
 /* ================= RESPONSIVE DESIGN ================= */
 @media (max-width: 768px) {
   /* Enhanced Mobile Menu */
   .menu-toggle {
-    display: block;
+    display: flex;
   }
-  
+
+  .logo-text {
+    font-size: 1.2rem; /* Ajuste este valor conforme necessário */
+  }
   .nav-menu {
     position: fixed;
-    top: 56px;
     left: -100%;
-    width: 100%;
-    height: calc(100vh - 56px);
-    background-color: var(--primary-dark);
+    top: 70px;
     flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    padding-top: 30px;
-    transition: left 0.3s ease;
-    z-index: 1000;
-    overflow-y: auto;
+    background-color: #003399;
+    width: 100%;
+    height: calc(100vh - 70px);
+    text-align: center;
+    transition: 0.3s;
+    box-shadow: 0 10px 27px rgba(0, 0, 0, 0.05);
+    padding: 2rem 0;
     gap: 0;
+    overflow-y: auto;
+    z-index: 999;
+    font-size: 25px;
   }
-  
+
   .nav-menu.active {
     left: 0;
   }
-  
-  .nav-menu li {
-    width: 100%;
+
+  .nav-item {
+    margin: 1rem 0;
+  }
+
+  .menu-toggle.active .bar:nth-child(2) {
+    opacity: 0;
+  }
+
+  .menu-toggle.active .bar:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .menu-toggle.active .bar:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  .hero-content {
+    grid-template-columns: 1fr;
     text-align: center;
-    margin: 7px 0;
+    gap: 2rem;
   }
-  
-  .nav-link {
-    display: block;
-    padding: 12px;
-    font-size: 1.1rem;
-    width: 100%;
+
+  .hero-text h1 {
+    font-size: 2.2rem;
   }
-  
+
+  .hero-buttons {
+    justify-content: center;
+  }
+
   .main-container {
     margin-top: 60px;
     padding: 1rem 0 1.5rem;
   }
-  
+
   .page-header h1 {
     font-size: 1.8rem;
   }
-  
+
   .subtitle {
     font-size: 1rem;
   }
-  
+
   .controls-bar {
     flex-direction: column;
     align-items: flex-start;
     gap: 0.8rem;
   }
-  
+
   .btn-update {
     width: 100%;
     justify-content: center;
   }
-  
+
   .filter-select {
     width: 100%;
   }
-  
+
   .results-table-container {
     margin-top: 1rem;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding: 0.6rem 0.4rem;
     font-size: 0.9rem;
   }
-  
+
   .escudo-time {
     width: 18px;
     height: 18px;
   }
-  
+
   .resultado {
     padding: 0.3rem 0.5rem;
     font-size: 0.9rem;
     min-width: 38px;
   }
-  
+
   .campeonato {
     font-size: 0.85rem;
   }
-  
+
   .tipo-jogo {
     font-size: 0.75rem;
   }
@@ -632,69 +634,70 @@ footer {
     width: 98%;
     padding: 0 5px;
   }
-  
+
   .main-container {
     margin-top: 56px;
     padding: 0.8rem 0 1.2rem;
   }
-  
+
   .page-header {
     margin-bottom: 1.5rem;
   }
-  
+
   .page-header h1 {
     font-size: 1.6rem;
   }
-  
+
   .subtitle {
     font-size: 0.9rem;
   }
-  
+
   .controls-bar {
     padding: 0.6rem 0.8rem;
   }
-  
+
   .update-info {
     font-size: 0.85rem;
   }
-  
+
   .btn-update {
     padding: 0.5rem 0.8rem;
     font-size: 0.9rem;
   }
-  
+
   .results-table-container {
     border-radius: 6px;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding: 0.5rem 0.3rem;
     font-size: 0.85rem;
   }
-  
+
   .escudo-time {
     width: 16px;
     height: 16px;
   }
-  
+
   .resultado {
     padding: 0.25rem 0.4rem;
     font-size: 0.85rem;
     min-width: 34px;
   }
-  
+
   .campeonato {
     font-size: 0.8rem;
   }
-  
+
   .tipo-jogo {
     font-size: 0.7rem;
   }
-  
+
   footer {
     font-size: 0.85rem;
   }
-  
+
   .disclaimer {
     font-size: 0.75rem;
   }
@@ -704,106 +707,108 @@ footer {
   .container {
     padding: 0 4px;
   }
-  
+
   .main-container {
     padding: 0.6rem 0 1rem;
   }
-  
+
   .page-header h1 {
     font-size: 1.4rem;
   }
-  
+
   .subtitle {
     font-size: 0.85rem;
   }
-  
+
   .controls-bar {
     padding: 0.5rem 0.6rem;
   }
-  
+
   .update-info {
     font-size: 0.8rem;
   }
-  
+
   .update-time {
     padding: 0.15rem 0.4rem;
   }
-  
+
   .btn-update {
     padding: 0.4rem 0.6rem;
     font-size: 0.85rem;
   }
-  
-  th, td {
+
+  th,
+  td {
     padding: 0.4rem 0.2rem;
     font-size: 0.8rem;
   }
-  
+
   .escudo-time {
     width: 14px;
     height: 14px;
   }
-  
+
   .resultado {
     padding: 0.2rem 0.3rem;
     font-size: 0.8rem;
     min-width: 30px;
     box-shadow: none;
   }
-  
+
   .campeonato {
     font-size: 0.75rem;
   }
-  
+
   .tipo-jogo {
     font-size: 0.65rem;
   }
-  
+
   /* Optimize for low-end devices */
   .results-table-container,
   .controls-bar {
     box-shadow: none;
   }
-  
+
   .resultado {
     box-shadow: none;
   }
 }
 
 @media (max-width: 400px) {
-  th, td {
+  th,
+  td {
     padding: 0.3rem 0.15rem;
     font-size: 0.75rem;
   }
-  
+
   .escudo-time {
     width: 12px;
     height: 12px;
   }
-  
+
   .resultado {
     padding: 0.15rem 0.25rem;
     font-size: 0.75rem;
     min-width: 28px;
   }
-  
+
   .campeonato {
     font-size: 0.7rem;
   }
-  
+
   .tipo-jogo {
     font-size: 0.6rem;
   }
-  
+
   /* Column optimization for very small screens */
   .col-data {
     width: 60px;
   }
-  
+
   .col-resultado {
     width: 70px;
   }
-  
+
   .col-campeonato {
     width: 80px;
   }

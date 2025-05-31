@@ -1,25 +1,28 @@
-// ===================== VARIÁVEIS GLOBAIS =====================
-let apiKey = null;
-let cache = { ultimoPlacar: { home: 0, visitante: 0 }, ultimaAtualizacao: 0 };
-let intervaloAtualizacao;
-let jogoAoVivo;
-let placarAtual = { home: 0, visitante: 0 };
-let jogoEncerradoGlobal = false;
+// ===================== CONFIGURAÇÕES GLOBAIS =====================
+const CONFIG = {
+  planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
+  nomeAba: "minutoaminuto",
+  intervaloPadrao: window.innerWidth <= 600 ? 60000 : 30000,
+  coresPadrao: {
+    casa: { primary: '#003399', secondary: '#ffffff' },
+    visitante: { primary: '#cc0000', secondary: '#ffffff' }
+  }
+};
 
-// ===================== FUNÇÃO PARA BUSCAR API KEY =====================
-async function fetchAPIKey() {
-  try {
-    const response = await fetch("/api/chave-google");
-    if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
-    const data = await response.json();
-    if (!data.apiKey) throw new Error("Chave da API não encontrada na resposta");
-    apiKey = data.apiKey;
-    return true;
-  } catch (error) {
-    console.error("Falha ao carregar chave:", error);
-    return false;
+async function loadColorThief() {
+  if (typeof ColorThief === 'undefined') {
+    await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js');
+    colorThiefLoaded = true;
   }
 }
+// ===================== VARIÁVEIS GLOBAIS =====================
+let apiKey = null;
+let jogoAoVivo = {};
+let placarAtual = { casa: 0, visitante: 0 };
+let jogoEncerradoGlobal = false;
+let intervaloAtualizacao;
+let coresTimes = {};
+let colorThiefLoaded = false;
 
 // ===================== INICIALIZAÇÃO =====================
 document.addEventListener("DOMContentLoaded", async () => {
@@ -90,16 +93,57 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  async function atualizarTudo() {
-    if (jogoEncerradoGlobal) return;
-    await Promise.all([
-      carregarDadosDaPlanilha(config.planilhaId, apiKey, config.nomeAba, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
-      carregarEstatisticas(config.planilhaId, apiKey, config.nomeAbaEstatisticas, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante),
-    ]);
+  // Painel de teste (apenas em desenvolvimento)
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    criarPainelTeste();
+  }
+
+    if (jogoAoVivo.escudoCasa) {
+    coresTimes.timeCasa = await extrairCoresDoEscudo(jogoAoVivo.escudoCasa, 'casa');
+  }
+  if (jogoAoVivo.escudoVisitante) {
+    coresTimes.timeVisitante = await extrairCoresDoEscudo(jogoAoVivo.escudoVisitante, 'visitante');
   }
 });
 
+async function atualizarTudo() {
+  if (jogoEncerradoGlobal) return;
+  await Promise.all([
+    carregarDadosDaPlanilha(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
+    carregarEstatisticas(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante)
+  ]);
+}
+
 // ===================== FUNÇÕES AUXILIARES =====================
+function carregarScript(url) {
+  return new Promise((resolve, reject) => {
+    if (document.querySelector(`script[src="${url}"]`)) {
+      resolve();
+      return;
+    }
+    
+    const script = document.createElement('script');
+    script.src = url;
+    script.onload = resolve;
+    script.onerror = reject;
+    document.head.appendChild(script);
+  });
+}
+
+async function fetchAPIKey() {
+  try {
+    const response = await fetch("/api/chave-google");
+    if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
+    const data = await response.json();
+    if (!data.apiKey) throw new Error("Chave da API não encontrada");
+    apiKey = data.apiKey;
+    return true;
+  } catch (error) {
+    console.error("Falha ao carregar chave:", error);
+    return false;
+  }
+}
+
 function atualizarInformacoesJogo(jogo) {
   const escudoCasa = document.getElementById("escudo-casa");
   const escudoVisitante = document.getElementById("escudo-visitante");
@@ -219,26 +263,6 @@ function processarEventos(dados, timeCasa, timeVisitante) {
   jogoEncerradoGlobal = jogoEncerrado;
   atualizarStatusJogo(jogoEncerrado);
   return Object.values(eventosAgrupados);
-
-  function mostrarAnimacaoGol(timeFezGol) {
-    // timeFezGol: "casa" ou "visitante"
-    const lottieId = timeFezGol === "casa" ? "goal-lottie-casa" : "goal-lottie-visitante";
-    const container = document.getElementById(lottieId);
-    if (!container) return;
-    container.style.display = "block";
-    if (container.lottieInstance) container.lottieInstance.destroy();
-    container.lottieInstance = lottie.loadAnimation({
-      container: container,
-      renderer: "svg",
-      loop: false,
-      autoplay: true,
-      path: "/assets/goal.json",
-    });
-    setTimeout(() => {
-      container.style.display = "none";
-      if (container.lottieInstance) container.lottieInstance.destroy();
-    }, 2000);
-  }
 }
 
 function atualizarStatusJogo(encerrado, emIntervalo = false) {
@@ -283,33 +307,238 @@ function determinarTipoEvento(descricao) {
 
 function atualizarPlacar(golsCasa, golsVisitante) {
   if (golsCasa < 0 || golsVisitante < 0) return;
+  
   const casaElement = document.getElementById("gols-casa");
   const visitanteElement = document.getElementById("gols-visitante");
+  
   if (casaElement && visitanteElement) {
-    if (casaElement.textContent != golsCasa || visitanteElement.textContent != golsVisitante) {
-      casaElement.textContent = golsCasa;
-      visitanteElement.textContent = golsVisitante;
-      casaElement.style.transform = visitanteElement.style.transform = "scale(1.2)";
-      setTimeout(() => {
-        casaElement.style.transform = visitanteElement.style.transform = "scale(1)";
-      }, 500);
+    // Remove classes de cor padrão para priorizar as cores dinâmicas
+    casaElement.className = "";
+    visitanteElement.className = "";
+    
+    const golCasa = golsCasa > parseInt(casaElement.textContent);
+    const golVisitante = golsVisitante > parseInt(visitanteElement.textContent);
+    
+    casaElement.textContent = golsCasa;
+    visitanteElement.textContent = golsVisitante;
+    
+    if (golCasa && coresTimes.timeCasa) {
+      casaElement.style.color = coresTimes.timeCasa.primary;
+      animarPlacar(casaElement, 'casa');
+    }
+    
+    if (golVisitante && coresTimes.timeVisitante) {
+      visitanteElement.style.color = coresTimes.timeVisitante.primary;
+      animarPlacar(visitanteElement, 'visitante');
     }
   }
 }
 
-// ===================== EXIBIÇÃO DOS EVENTOS (OTIMIZADO) =====================
+// ===================== FUNÇÕES DE CORES DINÂMICAS =====================
+
+async function extrairCoresDominantes(imagemUrl) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.src = imagemUrl;
+
+    img.onload = function() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      ctx.drawImage(img, 0, 0);
+      
+      // Analisa apenas 9 pontos estratégicos da imagem para melhor performance
+      const pontos = [
+        {x: 10, y: 10},           // Canto superior esquerdo
+        {x: img.width/2, y: 10},   // Topo centro
+        {x: img.width-10, y: 10},  // Canto superior direito
+        {x: 10, y: img.height/2},  // Meio esquerdo
+        {x: img.width/2, y: img.height/2}, // Centro
+        {x: img.width-10, y: img.height/2}, // Meio direito
+        {x: 10, y: img.height-10}, // Canto inferior esquerdo
+        {x: img.width/2, y: img.height-10}, // Fundo centro
+        {x: img.width-10, y: img.height-10} // Canto inferior direito
+      ];
+
+      const cores = pontos.map(ponto => {
+        const pixel = ctx.getImageData(ponto.x, ponto.y, 1, 1).data;
+        return `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
+      });
+
+      // Filtra cores muito claras ou muito escuras (fundo branco/preto)
+      const coresFiltradas = cores.filter(cor => {
+        const [r, g, b] = cor.match(/\d+/g).map(Number);
+        const luminosidade = (r * 299 + g * 587 + b * 114) / 1000;
+        return luminosidade > 30 && luminosidade < 230;
+      });
+
+      // Se não encontrou cores válidas, usa as primeiras
+      const coresParaAnalise = coresFiltradas.length > 0 ? coresFiltradas : cores;
+      
+      // Conta a frequência de cada cor
+      const contagem = {};
+      coresParaAnalise.forEach(cor => {
+        contagem[cor] = (contagem[cor] || 0) + 1;
+      });
+
+      // Ordena por frequência
+      const coresOrdenadas = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
+      
+      // Pega as 2 cores mais frequentes
+      const primary = coresOrdenadas[0] || '#003399'; // Fallback
+      const secondary = coresOrdenadas[1] || '#FFFFFF'; // Fallback
+
+      resolve({ primary, secondary });
+    };
+
+    img.onerror = function() {
+      resolve({ primary: '#003399', secondary: '#FFFFFF' }); // Fallback
+    };
+  });
+}
+
+async function extrairCoresDoEscudo(imagemUrl, time) {
+  
+  const nomeTime = time === 'casa' ? jogoAoVivo.timeCasa : jogoAoVivo.timeVisitante;
+  
+  
+  if (!nomeTime) {
+    return time === 'casa' ? CONFIG.coresPadrao.casa : CONFIG.coresPadrao.visitante;
+  }
+
+  // Tratamento especial para times conhecidos
+  const timeLower = nomeTime.toLowerCase();
+  
+  if (timeLower.includes('cruzeiro')) {
+    return { primary: '#0055A8', secondary: '#FFFFFF' };
+  }
+
+  
+  if (!document.getElementById('auto-colors')?.checked) {
+    return time === 'casa' ? CONFIG.coresPadrao.casa : CONFIG.coresPadrao.visitante;
+  }
+
+  // Extração de cores da imagem
+  return await extrairCoresDominantes(imagemUrl);
+}
+
+function getColorBrightness(hexColor) {
+  const r = parseInt(hexColor.substr(1, 2), 16);
+  const g = parseInt(hexColor.substr(3, 2), 16);
+  const b = parseInt(hexColor.substr(5, 2), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000; // Fórmula de luminosidade
+}
+
+async function mostrarAnimacaoGol(time) {
+  const timeKey = time === "casa" ? "timeCasa" : "timeVisitante";
+  const escudoKey = time === "casa" ? "escudoCasa" : "escudoVisitante";
+  
+  if (!coresTimes[timeKey]) {
+    coresTimes[timeKey] = await extrairCoresDoEscudo(jogoAoVivo[escudoKey], time);
+  }
+
+  const { primary, secondary } = coresTimes[timeKey];
+  const animationId = `goal-lottie-${time}`;
+  const container = document.getElementById(animationId);
+
+  if (!container) {
+    console.error("Container de animação não encontrado:", animationId);
+    return;
+  }
+
+  container.innerHTML = '';
+  container.style.display = "block";
+
+  // Animação de gol
+  container.innerHTML = `
+    <div class="goal-celebration">
+      <div class="goal-text" style="color:${secondary}">GOL!</div>
+      <div class="goal-explosion" style="
+        background:radial-gradient(circle, ${primary} 0%, transparent 70%);
+      "></div>
+      <div class="confetti-container">
+        ${Array(25).fill().map((_, i) => 
+          `<div class="confetti" style="
+            --rotate: ${Math.random() * 360}deg;
+            --x: ${Math.random() * 100}vw;
+            --delay: ${Math.random() * 0.5}s;
+            --duration: ${0.5 + Math.random() * 1}s;
+            background: ${i % 2 === 0 ? primary : secondary};
+          "></div>`
+        ).join('')}
+      </div>
+      <div class="shockwave" style="
+        background:radial-gradient(circle, transparent 0%, ${primary} 30%, transparent 60%);
+      "></div>
+    </div>
+  `;
+
+  // Remove após 3 segundos
+  setTimeout(() => {
+    container.style.display = "none";
+    container.innerHTML = "";
+  }, 3000);
+}
+
+async function animarPlacar(elemento, time) {
+  const timeKey = time === "casa" ? "timeCasa" : "timeVisitante";
+  const escudoKey = time === "casa" ? "escudoCasa" : "escudoVisitante";
+  
+  if (!coresTimes[timeKey]) {
+    coresTimes[timeKey] = await extrairCoresDoEscudo(jogoAoVivo[escudoKey], time);
+  }
+
+  const { primary, secondary } = coresTimes[timeKey];
+  
+  // Efeito de pulso
+  elemento.style.animation = 'none';
+  void elemento.offsetWidth;
+  elemento.style.animation = `pulseColor 0.8s ease-out`;
+  elemento.style.color = primary;
+  
+  // Cria partículas
+  criarParticulas(elemento, primary, secondary);
+}
+
+function criarParticulas(elemento, cor1, cor2) {
+  const particulas = document.createElement('div');
+  particulas.className = 'placar-particulas';
+  
+  particulas.innerHTML = Array(15).fill().map((_, i) => {
+    const cor = i % 2 === 0 ? cor1 : cor2;
+    const size = Math.random() * 8 + 4;
+    return `<span style="
+      --size: ${size}px;
+      --delay: ${Math.random() * 0.5}s;
+      --distance: ${Math.random() * 40 + 20}px;
+      --angle: ${Math.random() * 360}deg;
+      background: ${cor};
+      box-shadow: 0 0 ${size}px ${cor};
+    "></span>`;
+  }).join('');
+  
+  elemento.appendChild(particulas);
+  
+  setTimeout(() => particulas.remove(), 1000);
+}
+
+// ===================== EXIBIÇÃO DOS EVENTOS =====================
 function exibirEventos(eventosAgrupados) {
   const container = document.getElementById("narrativa-jogo");
   if (!container) return;
+  
+  // Verifica se já existem eventos carregados
   const isUpdate = container.querySelector(".grupo-tempo") !== null;
   const eventosOrdenados = [...eventosAgrupados].reverse();
   const eventosAnteriores = container.querySelectorAll(".grupo-tempo").length;
 
-  // Limpa o conteúdo de carregamento
+  // Oculta o loading
   const loadingElement = container.querySelector(".loading-narrativa");
   if (loadingElement) loadingElement.style.display = "none";
 
-  // Adiciona o título se não existir
+  // Garante que o título exista
   if (!container.querySelector(".narrativa-titulo")) {
     const titulo = document.createElement("h2");
     titulo.className = "narrativa-titulo";
@@ -317,62 +546,29 @@ function exibirEventos(eventosAgrupados) {
     container.prepend(titulo);
   }
 
-  const btnDescer = document.getElementById("btn-descer");
-if (btnDescer) {
-  // Mostra o botão se não está no final do scroll
-  const isAtBottom = Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 10;
-  if (!isAtBottom && eventosNovos > eventosAnteriores) {
-    btnDescer.style.display = "flex";
-    btnDescer.classList.add("pulse");
-  } else {
-    btnDescer.style.display = "none";
-    btnDescer.classList.remove("pulse");
-  }
-  btnDescer.onclick = () => {
-    container.scrollTop = container.scrollHeight;
-    btnDescer.style.display = "none";
-    btnDescer.classList.remove("pulse");
-  };
-}
-
-  if (isUpdate && eventosNovos > eventosAnteriores) {
-  const novosEventos = eventosNovos - eventosAnteriores;
-  const indicador = document.createElement("div");
-  indicador.className = "novo-indicador";
-  indicador.textContent = `${novosEventos} ${novosEventos > 1 ? "novos eventos" : "novo evento"} adicionado${novosEventos > 1 ? "s" : ""}`;
-  container.appendChild(indicador);
-  container.scrollTop = container.scrollHeight; // <-- Aqui faz o scroll automático
-  setTimeout(() => indicador.remove(), 5000);
-}
-  // Cria o conteúdo HTML para os eventos
-  const eventosHTML = eventosOrdenados
-    .map(
-      (grupo) => `
-    <div class="grupo-tempo">
-      <span class="tempo-evento" data-tempo="${grupo.tempo}">${grupo.tempo}</span>
+  // Cria o HTML dos eventos
+  const eventosHTML = eventosOrdenados.map(grupo => `
+    <div class="grupo-tempo" data-tempo="${grupo.tempo}">
+      <span class="tempo-evento">${grupo.tempo}</span>
       <div class="eventos-container">
-        ${grupo.eventos
-          .map(
-            (evento) => `
+        ${grupo.eventos.map(evento => `
           <div class="evento-jogo">
             <div class="evento-content ${evento.tipoEvento !== "padrao" ? "evento-" + evento.tipoEvento : ""}">
               <div class="evento-header">
                 ${getEventIcon(evento.tipoEvento)}
                 <p class="evento-descricao">${formatarDescricao(evento.descricao) || ""}</p>
               </div>
-              <div class="evento-footer">
-                ${evento.times.map((time) => `<span class="time-badge">${time}</span>`).join("")}
-              </div>
+              ${evento.times.length > 0 ? `
+                <div class="evento-footer">
+                  ${evento.times.map(time => `<span class="time-badge">${time}</span>`).join("")}
+                </div>
+              ` : ""}
             </div>
           </div>
-        `
-          )
-          .join("")}
+        `).join("")}
       </div>
     </div>
-  `
-    )
-    .join("");
+  `).join("");
 
   // Só atualiza se mudou
   if (container._ultimoEventosHTML === eventosHTML) return;
@@ -383,7 +579,7 @@ if (btnDescer) {
   eventosContainer.className = "eventos-wrapper";
   eventosContainer.innerHTML = eventosHTML;
 
-  // Substitui o conteúdo existente ou adiciona após o título
+  // Substitui o conteúdo existente
   const existingWrapper = container.querySelector(".eventos-wrapper");
   if (existingWrapper) {
     container.replaceChild(eventosContainer, existingWrapper);
@@ -391,36 +587,28 @@ if (btnDescer) {
     container.appendChild(eventosContainer);
   }
 
-  // Verifica se há novos eventos e rola para o final
-  const eventosNovos = container.querySelectorAll(".grupo-tempo").length;
-  if (isUpdate && eventosNovos > eventosAnteriores) {
-    const novosEventos = eventosNovos - eventosAnteriores;
-    const indicador = document.createElement("div");
-    indicador.className = "novo-indicador";
-    indicador.textContent = `${novosEventos} ${novosEventos > 1 ? "novos eventos" : "novo evento"} adicionado${novosEventos > 1 ? "s" : ""}`;
-    container.appendChild(indicador);
-    container.scrollTop = container.scrollHeight;
-    setTimeout(() => indicador.remove(), 5000);
+  // Verifica se há novos eventos
+  const eventosAtuais = container.querySelectorAll(".grupo-tempo");
+  const eventosNovos = eventosAtuais.length - eventosAnteriores;
+
+  // Scroll para o final se houver novos eventos
+  if (isUpdate && eventosNovos > 0) {
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+      
+      // Mostra notificação de novos eventos (opcional)
+      if (eventosNovos > 0 && !document.querySelector(".novo-indicador")) {
+        const indicador = document.createElement("div");
+        indicador.className = "novo-indicador";
+        indicador.textContent = `${eventosNovos} novo${eventosNovos > 1 ? "s" : ""} lance${eventosNovos > 1 ? "s" : ""}`;
+        container.appendChild(indicador);
+        setTimeout(() => indicador.remove(), 5000);
+      }
+    }, 100);
   }
 
-  // Animação só em desktop (mobile = sem animação)
-  const isMobile = window.innerWidth <= 600;
-  const eventosElements = eventosContainer.querySelectorAll(".evento-jogo");
-  eventosElements.forEach((evento, index) => {
-    if (isMobile) {
-      evento.style.opacity = "1";
-      evento.style.transform = "none";
-      evento.style.transition = "none";
-    } else {
-      evento.style.opacity = "0";
-      evento.style.transform = "translateY(10px)";
-      evento.style.transition = "opacity 0.2s ease-out, transform 0.2s ease-out";
-      setTimeout(() => {
-        evento.style.opacity = "1";
-        evento.style.transform = "translateY(0)";
-      }, index * 50);
-    }
-  });
+  // Atualiza o botão de descer
+  atualizarBotaoDescer(container);
 }
 
 function formatarDescricao(descricao) {
@@ -534,9 +722,7 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
           <img src="${jogoAoVivo?.escudoCasa || obterEscudoTime(timeCasa)}" alt="${timeCasa}" width="60" height="60">
           <h2>${timeCasa}</h2>
         </div>
-        <div class="match-info">
-          <p>Estatísticas da Partida</p>
-        </div>
+
         <div class="team away-team">
           <img src="${jogoAoVivo?.escudoVisitante || obterEscudoTime(timeVisitante)}" alt="${timeVisitante}" width="60" height="60">
           <h2>${timeVisitante}</h2>
@@ -592,10 +778,106 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
   }
 }
 
+// ===================== FUNÇÕES DE TESTE =====================
+/*function criarPainelTeste() {
+  const painel = document.createElement('div');
+  painel.id = 'painel-teste';
+  painel.style.position = 'fixed';
+  painel.style.bottom = '20px';
+  painel.style.left = '20px';
+  painel.style.zIndex = '1000';
+  painel.style.background = 'rgba(0,0,0,0.8)';
+  painel.style.padding = '10px';
+  painel.style.borderRadius = '8px';
+  painel.style.color = 'white';
+  painel.style.fontFamily = 'Arial, sans-serif';
+  painel.style.fontSize = '14px';
+
+  painel.innerHTML = `
+    <h3 style="margin-top:0;border-bottom:1px solid #555;padding-bottom:5px;">Painel de Teste</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="testarGol('casa')" style="background:#003399;color:white;border:none;padding:8px;border-radius:4px;">Gol Casa</button>
+      <button onclick="testarGol('visitante')" style="background:#cc0000;color:white;border:none;padding:8px;border-radius:4px;">Gol Visitante</button>
+      <button onclick="testarAnimacaoPlacar('casa')" style="background:#003399;color:white;border:none;padding:8px;border-radius:4px;">Animar Placar Casa</button>
+      <button onclick="testarAnimacaoPlacar('visitante')" style="background:#cc0000;color:white;border:none;padding:8px;border-radius:4px;">Animar Placar Visitante</button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:#aaa;">
+      <label><input type="checkbox" id="auto-colors" checked> Usar cores do escudo</label>
+    </div>
+  `;
+
+  document.body.appendChild(painel);
+}
+
+// Funções de teste globais (acessíveis via console também)
+window.testarGol = async function(time) {
+  if (time === 'casa') {
+    placarAtual.casa++;
+    document.getElementById("gols-casa").textContent = placarAtual.casa;
+  } else {
+    placarAtual.visitante++;
+    document.getElementById("gols-visitante").textContent = placarAtual.visitante;
+  }
+  
+  await mostrarAnimacaoGol(time);
+  adicionarEventoTeste(time);
+};
+
+window.testarAnimacaoPlacar = async function(time) {
+  const elemento = time === 'casa' 
+    ? document.getElementById("gols-casa")
+    : document.getElementById("gols-visitante");
+  
+  await animarPlacar(elemento, time);
+};
+
+function adicionarEventoTeste(time) {
+  const timeNome = time === 'casa' 
+    ? document.getElementById("nome-time-casa").textContent
+    : document.getElementById("nome-time-visitante").textContent;
+  
+  const minuto = `${Math.floor(Math.random() * 90) + 1}'`;
+  const evento = {
+    tempo: minuto,
+    descricao: `Gol! ${timeNome} (TESTE)`,
+    tipoEvento: "gol",
+    times: [timeNome]
+  };
+  
+  adicionarEventoSimulado(evento);
+}
+
+function adicionarEventoSimulado(evento) {
+  const container = document.getElementById("narrativa-jogo");
+  if (!container) return;
+  
+  const eventoHTML = `
+    <div class="grupo-tempo" data-tempo="${evento.tempo}">
+      <span class="tempo-evento">${evento.tempo}</span>
+      <div class="eventos-container">
+        <div class="evento-jogo">
+          <div class="evento-content evento-gol">
+            <div class="evento-header">
+              <i class="fas fa-futbol evento-icone"></i>
+              <p class="evento-descricao">${evento.descricao}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const wrapper = container.querySelector(".eventos-wrapper") || container;
+  wrapper.insertAdjacentHTML("beforeend", eventoHTML);
+  
+  // Scroll para o novo evento
+  container.scrollTop = container.scrollHeight;
+}*/
+
 // ===================== ESCUDOS DOS TIMES =====================
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "")
-    return "https://via.placeholder.com/50";
+    return "https://via.placeholder.com/80x80";
   const escudos = {
     Flamengo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
     Palmeiras: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
@@ -634,10 +916,16 @@ function obterEscudoTime(nomeTime) {
   return "https://via.placeholder.com/50";
 }
 
+// ===================== EVENTOS DO DOM =====================
 document.addEventListener('DOMContentLoaded', function() {
   const menuToggle = document.querySelector('.menu-toggle');
   const navMenu = document.querySelector('.nav-menu');
-  
+  const container = document.getElementById("narrativa-jogo");
+  if (container) {
+    container.addEventListener("scroll", () => {
+      atualizarBotaoDescer(container);
+    });
+  }
   if (menuToggle && navMenu) {
     menuToggle.addEventListener('click', () => {
       menuToggle.classList.toggle('active');
@@ -653,3 +941,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 });
+
+function atualizarBotaoDescer(container) {
+  const btnDescer = document.getElementById("btn-descer");
+  if (!btnDescer) return;
+
+  const isAtBottom = Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 10;
+  
+  if (!isAtBottom) {
+    btnDescer.style.display = "flex";
+    btnDescer.classList.add("pulse");
+  } else {
+    btnDescer.style.display = "none";
+    btnDescer.classList.remove("pulse");
+  }
+
+  btnDescer.onclick = () => {
+    container.scrollTop = container.scrollHeight;
+    btnDescer.style.display = "none";
+    btnDescer.classList.remove("pulse");
+  };
+}
