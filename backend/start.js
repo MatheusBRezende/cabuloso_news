@@ -11,7 +11,7 @@ app.get('/api/chave-google', (req, res) => {
   res.json({ apiKey });
 });
 
-app.use(express.static('../frontend/public'));
+app.use(express.static('../frontend/public/index.html'));
 
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
