@@ -108,7 +108,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function initApp() {
   try {
     setupWidgetJogos();
-    setupMobileWidget();
     setupMobileNavigation();
     await carregarProximosJogos();
 
@@ -220,28 +219,6 @@ function setupScrollEffects() {
   });
 }
 
-function setupMobileNavigation() {
-  const menuToggle = document.querySelector(".menu-toggle");
-  const navMenu = document.querySelector(".nav-menu");
-  if (!menuToggle || !navMenu) return;
-  menuToggle.addEventListener("click", () => {
-    menuToggle.classList.toggle("active");
-    navMenu.classList.toggle("active");
-    menuToggle.setAttribute(
-      "aria-expanded",
-      menuToggle.classList.contains("active")
-    );
-  });
-  document.querySelectorAll(".nav-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      if (menuToggle.classList.contains("active")) {
-        menuToggle.classList.remove("active");
-        navMenu.classList.remove("active");
-        menuToggle.setAttribute("aria-expanded", "false");
-      }
-    });
-  });
-}
 
 function setupBackToTop() {
   const backToTopBtn = document.querySelector(".back-to-top");
@@ -862,38 +839,94 @@ function setupFiltrosJogos(jogos) {
   });
 }
 
+/*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
   const widgetToggle = document.getElementById("widget-toggle");
   const widgetClose = document.getElementById("widget-close");
   const widget = document.getElementById("games-widget");
-  const gamesList = document.getElementById("games-list");
+  const widgetSpan = widgetToggle ? widgetToggle.querySelector("span") : null;
 
-  if (!widgetToggle || !widgetClose || !widget || !gamesList) return;
+  if (!widgetToggle || !widgetClose || !widget) return;
 
-  // Alternar visibilidade do widget e botão
-  widgetToggle.addEventListener("click", (e) => {
-    e.stopPropagation();
-    widget.classList.add("visible");
-    widgetToggle.style.display = "none"; // Esconde o botão
-  });
+  const toggleWidget = (e) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    widget.classList.toggle("visible");
+    
+    // Atualiza o texto do botão
+    if (widgetSpan) {
+      widgetSpan.textContent = widget.classList.contains("visible") ? "Fechar" : "Jogos";
+    }
+  };
 
-  // Fechar pelo botão de fechar
-  widgetClose.addEventListener("click", (e) => {
-    e.stopPropagation();
-    widget.classList.remove("visible");
-    widgetToggle.style.display = "flex"; // Reexibe o botão
-  });
+  // Adiciona eventos
+  widgetToggle.addEventListener("click", toggleWidget);
+  widgetClose.addEventListener("click", toggleWidget);
 
-  // Fechar clicando fora
+  // Fecha ao clicar fora
   document.addEventListener("click", (e) => {
-    if (!widget.contains(e.target) && e.target !== widgetToggle) {
+    if (!widget.contains(e.target) ){
       widget.classList.remove("visible");
-      widgetToggle.style.display = "flex";
+      if (widgetSpan) {
+        widgetSpan.textContent = "Jogos";
+      }
     }
   });
 
-  // Impede que o clique dentro do widget feche ele
+  // Impede que cliques dentro do widget fechem ele
   widget.addEventListener("click", (e) => e.stopPropagation());
+}
+
+
+function setupMobileNavigation() {
+  const menuToggle = document.getElementById("menuToggle");
+  const navMenu = document.getElementById("nav-menu");
+
+  if (!menuToggle || !navMenu) return;
+
+  menuToggle.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    menuToggle.classList.toggle("active");
+    navMenu.classList.toggle("active");
+    
+    // Atualiza o ícone
+    const icon = menuToggle.querySelector("i");
+    if (menuToggle.classList.contains("active")) {
+      icon.classList.remove("fa-cog");
+      icon.classList.add("fa-times");
+    } else {
+      icon.classList.remove("fa-times");
+      icon.classList.add("fa-cog");
+    }
+  });
+
+  // Fecha o menu ao clicar em um link
+  document.querySelectorAll(".nav-link").forEach(link => {
+    link.addEventListener("click", () => {
+      if (navMenu.classList.contains("active")) {
+        navMenu.classList.remove("active");
+        menuToggle.classList.remove("active");
+        const icon = menuToggle.querySelector("i");
+        icon.classList.remove("fa-times");
+        icon.classList.add("fa-cog");
+      }
+    });
+  });
+
+  // Fecha o menu ao clicar fora
+  document.addEventListener("click", (e) => {
+    if (!navMenu.contains(e.target)) {
+      navMenu.classList.remove("active");
+      menuToggle.classList.remove("active");
+      const icon = menuToggle.querySelector("i");
+      icon.classList.remove("fa-times");
+      icon.classList.add("fa-cog");
+    }
+  });
 }
 
 // Funções relacionadas à tabela de classificação

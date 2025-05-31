@@ -30,7 +30,6 @@
     <link rel="icon" type="image/png" href="assets/logo_m.jpeg" />
   </head>
   <body>
-
     <header class="header">
       <nav class="navbar">
         <div class="nav-container">
@@ -39,31 +38,37 @@
             <span class="logo-text">Cabuloso News | Competições</span>
           </div>
 
-                <ul class="nav-menu" id="nav-menu">
-                    <li class="nav-item">
-                        <a href="index.html" class="nav-link">
-                            <i class="fas fa-home"></i>
-                            <span>Início</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="competicao.html" class="nav-link">
-                            <i class="fas fa-list-ol"></i>
-                            <span>Tabela</span>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="resultados.html" class="nav-link">
-                            <i class="fas fa-trophy"></i>
-                            <span>Resultados</span>
-                        </a>
-                    </li>
-                </ul>
+          <ul class="nav-menu" id="nav-menu">
+            <li class="nav-item">
+              <a href="index.html" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="competicao.html" class="nav-link">
+                <i class="fas fa-list-ol"></i>
+                <span>Tabela</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="resultados.html" class="nav-link">
+                <i class="fas fa-trophy"></i>
+                <span>Resultados</span>
+              </a>
+            </li>
 
+            <li class="nav-item">
+              <a href="#" class="nav-link widget-toggle" id="widget-toggle">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Jogos</span>
+              </a>
+            </li>
+          </ul>
+
+          <!-- Substitua o menu-toggle atual por: -->
           <div class="menu-toggle" id="menuToggle">
-            <span class="bar"></span>
-            <span class="bar"></span>
-            <span class="bar"></span>
+            <i class="fas fa-cog"></i>
           </div>
         </div>
       </nav>
@@ -121,6 +126,29 @@
           <i class="fas fa-chevron-right"></i>
         </div>
       </a>
+    </div>
+
+    <div class="games-widget-container">
+      <div class="games-widget" id="games-widget">
+        <div class="widget-header">
+          <h3><i class="fas fa-calendar-alt"></i> Próximos Jogos</h3>
+          <button class="widget-close" id="widget-close">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="widget-filters">
+          <button class="filter-btn active" data-filter="todos">Todos</button>
+          <button class="filter-btn" data-filter="Brasileirão">
+            Brasileirão
+          </button>
+          <button class="filter-btn" data-filter="Copa do Brasil">
+            Copa Do Brasil
+          </button>
+        </div>
+        <div class="games-list">
+          <!-- Os jogos serão carregados aqui -->
+        </div>
+      </div>
     </div>
 
     <!-- Main Content -->
@@ -190,7 +218,7 @@
                   <span class="legend-color pos3-4-sulamericana"></span>
                   <span class="legend-text">Eliminado (3º-4º)</span>
                 </div>
-                                <div class="legend-item">
+                <div class="legend-item">
                   <span class="legend-color pos2-sulamericana"></span>
                   <span class="legend-text">Repescagem (2º)</span>
                 </div>
@@ -201,67 +229,24 @@
       </div>
     </main>
 
-    <!-- Games Widget -->
-    <div class="games-widget-container">
-      <button class="widget-toggle" id="widget-toggle">
-        <i class="fas fa-calendar-alt"></i>
-      </button>
-
-      <div class="games-widget" id="games-widget">
-        <div class="widget-header">
-          <h3>
-            <i class="fas fa-calendar-alt"></i>
-            Próximos Jogos
-          </h3>
-          <button class="widget-close" id="widget-close">
-            <i class="fas fa-times"></i>
-          </button>
-        </div>
-
-        <div class="widget-filters">
-          <button class="filter-btn active" data-filter="todos">Todos</button>
-          <button class="filter-btn" data-filter="Campeonato Brasileiro">
-            Brasileirão
-          </button>
-          <button class="filter-btn" data-filter="Sul-Americana">
-            Sul-Americana
-          </button>
-          <button class="filter-btn" data-filter="Copa do Brasil">
-            Copa do Brasil
-          </button>
-        </div>
-
-        <div class="games-list" id="games-list">
-          <div class="loading-games">
-            <div class="spinner"></div>
-            <p>Carregando próximos jogos...</p>
-          </div>
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-bottom">
+          <p>
+            &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
+            vínculo oficial com o Cruzeiro Esporte Clube.<br />
+            Todo conteúdo, imagens e notícias pertencem aos seus respectivos
+            autores e portais de origem. Se você é detentor de direitos e deseja
+            remoção de algum conteúdo, entre em contato pelo e-mail:
+            <a
+              href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo"
+              >cabulosonews92@gmail.com</a
+            >
+          </p>
         </div>
       </div>
-    </div>
-
-
-    
-<!-- Footer -->
-<footer class="footer">
-  <div class="container">
-    <div class="footer-bottom">
-      <p>
-        &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
-        vínculo oficial com o Cruzeiro Esporte Clube.<br />
-        Todo conteúdo, imagens e notícias pertencem aos seus respectivos
-        autores e portais de origem. Se você é detentor de direitos e deseja
-        remoção de algum conteúdo, entre em contato pelo e-mail:
-        <a href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo">cabulosonews92@gmail.com</a>
-      </p>
-    </div>
-  </div>
-</footer>
-
-    <!-- Back to Top -->
-    <button class="back-to-top" id="back-to-top" aria-label="Voltar ao topo">
-      <i class="fas fa-chevron-up"></i>
-    </button>
+    </footer>
 
     <!-- Scripts -->
     <script src="./script/script-brasileirao.js"></script>
