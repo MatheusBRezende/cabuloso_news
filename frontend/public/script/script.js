@@ -141,7 +141,7 @@ async function fetchTerraNews() {
   try {
     const response = await fetch("api/noticias-espn");
     let noticias = await response.json();
-    console.log("Resposta do backend:", noticias);
+
 
     if (!Array.isArray(noticias)) {
       console.error("A resposta não é um array!", noticias);

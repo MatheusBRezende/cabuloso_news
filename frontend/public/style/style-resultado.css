@@ -60,11 +60,6 @@
   /* Transições */
   --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-slow: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* Cores específicas para resultados */
-  --verde-classificado: var(--success);
-  --vermelho-eliminado: var(--error);
-  --amarelo-empate: var(--warning);
 }
 
 /* Reset e estilos base (do style-brasileirao) */
@@ -470,9 +465,10 @@ td {
   min-width: 44px;
   box-shadow: var(--shadow-sm);
   transition: var(--transition);
-  font-size: 0.95rem;
+  font-size: 1rem;
   gap: var(--space-1);
 }
+
 
 .vitoria {
   background-color: rgba(16, 185, 129, 0.1);
@@ -487,9 +483,10 @@ td {
 }
 
 .derrota {
+  border-radius: 10px;
   background-color: rgba(239, 68, 68, 0.1);
   color: var(--error);
-  border-left: 3px solid var(--error);
+   border-left: 3px solid var(--error);
 }
 
 .campeonato {
