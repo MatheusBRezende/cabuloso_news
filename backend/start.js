@@ -14,8 +14,8 @@ app.get('/api/chave-google', (req, res) => {
   res.json({ apiKey });
 });
 
-// Servir arquivos estáticos do frontend
-const frontendPath = path.join(__dirname, '../frontend/public'); 
+
+const frontendPath = path.join(__dirname, '/frontend/public'); 
 app.use(express.static(frontendPath));
 
 
