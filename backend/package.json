@@ -1,5 +1,5 @@
 {
-  "name": "meu-backend",
+  "name": "backend",
   "version": "1.0.0",
   "main": "scraper.js",
   "scripts": {

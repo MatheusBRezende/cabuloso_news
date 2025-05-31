@@ -509,19 +509,40 @@ td {
 }
 
 /* ================= FOOTER ================= */
-footer {
-  text-align: center;
-  margin-top: var(--space-8);
-  padding-top: var(--space-4);
-  border-top: 1px solid var(--gray-200);
-  color: var(--gray-600);
-  font-size: 0.9rem;
+
+.footer {
+  background: #1a1a1a;
+  color: white;
+  padding: 60px 0 20px;
 }
 
-.disclaimer {
-  margin-top: var(--space-2);
-  font-size: 0.8rem;
-  color: var(--gray-500);
+.footer-content {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.footer-section p {
+  margin-bottom: 1.5rem;
+  opacity: 0.8;
+}
+
+.footer a {
+  color: inherit; 
+  text-decoration: underline; 
+}
+
+.footer a:hover {
+  color: #ccc; 
+}
+
+
+.footer-bottom {
+  border-top: 1px solid #333;
+  padding-top: 2rem;
+  text-align: center;
+  opacity: 0.6;
 }
 
 /* ================= RESPONSIVE DESIGN ================= */
