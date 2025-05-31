@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "main": "scraper.js",
   "scripts": {
-    "start": "node scraper.js && node start.js",
-    "netlify-start": "node scraper.js && node start.js",
+    "start": "node scraper.js",
     "postinstall": "npx puppeteer browsers install chrome"
   },
   "dependencies": {

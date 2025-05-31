@@ -1,7 +1,0 @@
-[build]
-  command = "npm install && npm run build"  # Instala dependências e roda build (se necessário)
-  publish = "meu-backend/"  # Diretório de publicação (pode ser irrelevante para backend)
-  functions = "meu-backend/functions"  # Se usar Netlify Functions
-
-[dev]
-  command = "node scraper.js && node start.js"  # Comando para desenvolvimento local (netlify dev)
