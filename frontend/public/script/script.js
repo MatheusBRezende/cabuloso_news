@@ -139,7 +139,7 @@ async function fetchTerraNews() {
     </div>
   `;
   try {
-    const response = await fetch("api/noticias-espn");
+    const response = await fetch("/api/noticias-espn");
     let noticias = await response.json();
 
 
@@ -611,4 +611,3 @@ document.addEventListener("DOMContentLoaded", function () {
   // Carrega notícias do Terra automaticamente (scraping)
   fetchTerraNews();
 });
-

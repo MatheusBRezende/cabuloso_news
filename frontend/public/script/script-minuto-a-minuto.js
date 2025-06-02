@@ -1,4 +1,13 @@
 // ===================== CONFIGURAÇÕES GLOBAIS =====================
+const CONFIG = {
+  planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
+  nomeAba: "minutoaminuto",
+  intervaloPadrao: window.innerWidth <= 600 ? 60000 : 30000,
+  coresPadrao: {
+    casa: { primary: '#003399', secondary: '#ffffff' },
+    visitante: { primary: '#cc0000', secondary: '#ffffff' }
+  }
+};
 
 async function loadColorThief() {
   if (typeof ColorThief === 'undefined') {
@@ -7,7 +16,6 @@ async function loadColorThief() {
   }
 }
 // ===================== VARIÁVEIS GLOBAIS =====================
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutos
 let apiKey = null;
 let jogoAoVivo = {};
 let placarAtual = { casa: 0, visitante: 0 };
@@ -19,18 +27,58 @@ let colorThiefLoaded = false;
 // ===================== INICIALIZAÇÃO =====================
 document.addEventListener("DOMContentLoaded", async () => {
   await fetchAPIKey();
+  const config = {
+    planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
+    nomeAba: "minutoaminuto",
+    nomeAbaEstatisticas: "minutoaminuto",
+  };
 
-  // Recupera dados do jogo primeiro
+  // Recupera dados do jogo
   const urlParams = new URLSearchParams(window.location.search);
   const jogoSalvo = localStorage.getItem("jogoAoVivo");
   jogoAoVivo = {
-    timeCasa: urlParams.get("timeCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).timeCasa : "Time Casa"),
-    timeVisitante: urlParams.get("timeVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).timeVisitante : "Time Visitante"),
+    timeCasa: urlParams.get("timeCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).timeCasa : ""),
+    timeVisitante: urlParams.get("timeVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).timeVisitante : ""),
     escudoCasa: urlParams.get("escudoCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).escudoCasa : ""),
     escudoVisitante: urlParams.get("escudoVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).escudoVisitante : ""),
     campeonato: urlParams.get("campeonato") || (jogoSalvo ? JSON.parse(jogoSalvo).campeonato : ""),
+    planilhaId: config.planilhaId,
   };
+  Object.keys(jogoAoVivo).forEach((key) => {
+    if (jogoAoVivo[key] === null || jogoAoVivo[key] === undefined) jogoAoVivo[key] = "";
+  });
+  localStorage.setItem("jogoAoVivo", JSON.stringify(jogoAoVivo));
+  atualizarInformacoesJogo(jogoAoVivo);
 
+  // Botão de atualização manual
+  const btnAtualizar = document.getElementById("atualizar-dados");
+  if (btnAtualizar) {
+    btnAtualizar.addEventListener("click", async () => {
+      btnAtualizar.classList.add("pulsing");
+      btnAtualizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
+      try {
+        await Promise.all([
+          carregarDadosDaPlanilha(config.planilhaId, apiKey, config.nomeAba, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
+          carregarEstatisticas(config.planilhaId, apiKey, config.nomeAbaEstatisticas, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante),
+        ]);
+      } catch (error) {
+        console.error("Erro ao atualizar:", error);
+      } finally {
+        btnAtualizar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Dados';
+        setTimeout(() => btnAtualizar.classList.remove("pulsing"), 1000);
+      }
+    });
+  }
+
+  // Carrega dados inicialmente
+  try {
+    await Promise.all([
+      carregarDadosDaPlanilha(config.planilhaId, apiKey, config.nomeAba, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
+      carregarEstatisticas(config.planilhaId, apiKey, config.nomeAbaEstatisticas, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante),
+    ]);
+  } catch (error) {
+    console.error("Erro no carregamento inicial:", error);
+  }
 
   // Atualização automática (mais lenta em mobile)
   const INTERVALO_PADRAO = window.innerWidth <= 600 ? 60000 : 30000;
@@ -45,6 +93,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
+  // Painel de teste (apenas em desenvolvimento)
+  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
+    criarPainelTeste();
+  }
+
     if (jogoAoVivo.escudoCasa) {
     coresTimes.timeCasa = await extrairCoresDoEscudo(jogoAoVivo.escudoCasa, 'casa');
   }
@@ -56,8 +109,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 async function atualizarTudo() {
   if (jogoEncerradoGlobal) return;
   await Promise.all([
-    carregarDadosDaESPN(jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
-    carregarEstatisticasESPN(jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante)
+    carregarDadosDaPlanilha(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
+    carregarEstatisticas(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante)
   ]);
 }
 
@@ -215,38 +268,18 @@ function processarEventos(dados, timeCasa, timeVisitante) {
 function atualizarStatusJogo(encerrado, emIntervalo = false) {
   const statusElement = document.getElementById("status-jogo");
   if (!statusElement) return;
-  
-  // Limpa classes anteriores
-  statusElement.className = "status-badge";
-  
   if (encerrado) {
     statusElement.textContent = "Encerrado";
-    statusElement.classList.add("status-encerrado");
-    jogoEncerradoGlobal = true;
-    
-    // Atualiza o botão de atualização
+    statusElement.className = "status-badge status-encerrado";
     const btnAtualizar = document.getElementById("atualizar-dados");
-    if (btnAtualizar) {
-      btnAtualizar.textContent = "Ver Resumo";
-      btnAtualizar.onclick = () => {
-        window.location.href = `resultados.html?timeCasa=${jogoAoVivo.timeCasa}&timeVisitante=${jogoAoVivo.timeVisitante}`;
-      };
-    }
-    
-    // Para a atualização automática
-    if (intervaloAtualizacao) {
-      clearInterval(intervaloAtualizacao);
-      intervaloAtualizacao = null;
-    }
+    if (btnAtualizar) btnAtualizar.style.display = "none";
+    if (intervaloAtualizacao) clearInterval(intervaloAtualizacao);
   } else if (emIntervalo) {
     statusElement.textContent = "Intervalo";
-    statusElement.classList.add("status-intervalo");
+    statusElement.className = "status-badge status-intervalo";
   } else {
-    // Só mostra "Ao vivo" se o jogo não estiver encerrado
-    if (!jogoEncerradoGlobal) {
-      statusElement.textContent = "Ao vivo";
-      statusElement.classList.add("status-ao-vivo");
-    }
+    statusElement.textContent = "Ao vivo";
+    statusElement.className = "status-badge status-ao-vivo";
   }
 }
 
@@ -366,30 +399,29 @@ async function extrairCoresDominantes(imagemUrl) {
   });
 }
 
-// Modifique a função extrairCoresDoEscudo
 async function extrairCoresDoEscudo(imagemUrl, time) {
-  const nomeTime = time === 'casa' ? jogoAoVivo.timeCasa : jogoAoVivo.timeVisitante;
-  const storageKey = `coresTimes_${nomeTime}`;
   
-  // Verifica se já temos as cores salvas
-  const coresSalvas = localStorage.getItem(storageKey);
-  if (coresSalvas) {
-    return JSON.parse(coresSalvas);
+  const nomeTime = time === 'casa' ? jogoAoVivo.timeCasa : jogoAoVivo.timeVisitante;
+  
+  
+  if (!nomeTime) {
+    return time === 'casa' ? CONFIG.coresPadrao.casa : CONFIG.coresPadrao.visitante;
   }
 
   // Tratamento especial para times conhecidos
-  const timeLower = nomeTime?.toLowerCase() || '';
+  const timeLower = nomeTime.toLowerCase();
   
   if (timeLower.includes('cruzeiro')) {
-    const cores = { primary: '#0055A8', secondary: '#FFFFFF' };
-    localStorage.setItem(storageKey, JSON.stringify(cores));
-    return cores;
+    return { primary: '#0055A8', secondary: '#FFFFFF' };
+  }
+
+  
+  if (!document.getElementById('auto-colors')?.checked) {
+    return time === 'casa' ? CONFIG.coresPadrao.casa : CONFIG.coresPadrao.visitante;
   }
 
   // Extração de cores da imagem
-  const cores = await extrairCoresDominantes(imagemUrl);
-  localStorage.setItem(storageKey, JSON.stringify(cores));
-  return cores;
+  return await extrairCoresDominantes(imagemUrl);
 }
 
 function getColorBrightness(hexColor) {
@@ -402,10 +434,6 @@ function getColorBrightness(hexColor) {
 async function mostrarAnimacaoGol(time) {
   const timeKey = time === "casa" ? "timeCasa" : "timeVisitante";
   const escudoKey = time === "casa" ? "escudoCasa" : "escudoVisitante";
-  const golKey = `gol_${time}_${placarAtual[time]}`;
-  if (localStorage.getItem(golKey)) return;
-  
-  localStorage.setItem(golKey, "true");
   
   if (!coresTimes[timeKey]) {
     coresTimes[timeKey] = await extrairCoresDoEscudo(jogoAoVivo[escudoKey], time);
@@ -500,11 +528,11 @@ function criarParticulas(elemento, cor1, cor2) {
 function exibirEventos(eventosAgrupados) {
   const container = document.getElementById("narrativa-jogo");
   if (!container) return;
-
-  // Verificar se os eventos são os mesmos para evitar renderização desnecessária
-  const eventosStr = JSON.stringify(eventosAgrupados);
-  if (container._ultimosEventos === eventosStr) return;
-  container._ultimosEventos = eventosStr;
+  
+  // Verifica se já existem eventos carregados
+  const isUpdate = container.querySelector(".grupo-tempo") !== null;
+  const eventosOrdenados = [...eventosAgrupados].reverse();
+  const eventosAnteriores = container.querySelectorAll(".grupo-tempo").length;
 
   // Oculta o loading
   const loadingElement = container.querySelector(".loading-narrativa");
@@ -518,11 +546,8 @@ function exibirEventos(eventosAgrupados) {
     container.prepend(titulo);
   }
 
-  // Renderizar apenas os últimos 20 eventos para performance
-  const eventosParaRenderizar = eventosAgrupados.slice(-20);
-  
   // Cria o HTML dos eventos
-  const eventosHTML = eventosParaRenderizar.map(grupo => `
+  const eventosHTML = eventosOrdenados.map(grupo => `
     <div class="grupo-tempo" data-tempo="${grupo.tempo}">
       <span class="tempo-evento">${grupo.tempo}</span>
       <div class="eventos-container">
@@ -545,6 +570,10 @@ function exibirEventos(eventosAgrupados) {
     </div>
   `).join("");
 
+  // Só atualiza se mudou
+  if (container._ultimoEventosHTML === eventosHTML) return;
+  container._ultimoEventosHTML = eventosHTML;
+
   // Adiciona os eventos ao container
   const eventosContainer = document.createElement("div");
   eventosContainer.className = "eventos-wrapper";
@@ -558,10 +587,28 @@ function exibirEventos(eventosAgrupados) {
     container.appendChild(eventosContainer);
   }
 
-  // Scroll para o final
-  setTimeout(() => {
-    container.scrollTop = container.scrollHeight;
-  }, 50);
+  // Verifica se há novos eventos
+  const eventosAtuais = container.querySelectorAll(".grupo-tempo");
+  const eventosNovos = eventosAtuais.length - eventosAnteriores;
+
+  // Scroll para o final se houver novos eventos
+  if (isUpdate && eventosNovos > 0) {
+    setTimeout(() => {
+      container.scrollTop = container.scrollHeight;
+      
+      // Mostra notificação de novos eventos (opcional)
+      if (eventosNovos > 0 && !document.querySelector(".novo-indicador")) {
+        const indicador = document.createElement("div");
+        indicador.className = "novo-indicador";
+        indicador.textContent = `${eventosNovos} novo${eventosNovos > 1 ? "s" : ""} lance${eventosNovos > 1 ? "s" : ""}`;
+        container.appendChild(indicador);
+        setTimeout(() => indicador.remove(), 5000);
+      }
+    }, 100);
+  }
+
+  // Atualiza o botão de descer
+  atualizarBotaoDescer(container);
 }
 
 function formatarDescricao(descricao) {
@@ -586,56 +633,35 @@ function getEventIcon(tipoEvento) {
 }
 
 // ===================== CARREGAMENTO DE DADOS =====================
-
-async function carregarDadosDaESPN(timeCasa, timeVisitante, escudoCasa, escudoVisitante) {
-  if (jogoEncerradoGlobal) return;
-
+async function carregarDadosDaPlanilha(planilhaId, apiKey, nomeAba, timeCasa, timeVisitante, escudoCasa, escudoVisitante) {
   const loadingNarrativa = document.querySelector(".loading-narrativa");
   const containerNarrativa = document.getElementById("narrativa-jogo");
-  
+  if (jogoEncerradoGlobal) {
+    if (loadingNarrativa) loadingNarrativa.style.display = "none";
+    if (containerNarrativa) containerNarrativa.style.opacity = "1";
+    return;
+  }
   try {
-    // Mostrar loading apenas se não houver dados ainda
-    if (!containerNarrativa.querySelector(".grupo-tempo") && loadingNarrativa) {
-      loadingNarrativa.style.display = "flex";
-    }
+    if (loadingNarrativa) loadingNarrativa.style.display = "flex";
     if (containerNarrativa) containerNarrativa.style.opacity = "0.7";
-
-    // Usar jogoID fixo para testes
-    const jogoId = '732696';
-    
-    // Verificar cache em memória primeiro
-    if (window._cachedComentarios && window._cachedComentarios.timestamp > Date.now() - CACHE_DURATION) {
-      const eventos = processarComentariosESPN(window._cachedComentarios.data, timeCasa, timeVisitante);
-      exibirEventos(eventos);
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}?key=${apiKey}`
+    );
+    if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
+    const data = await response.json();
+    if (!data.values || data.values.length === 0) throw new Error("Planilha vazia ou sem dados");
+    const dadosString = JSON.stringify(data.values);
+    if (carregarDadosDaPlanilha._ultimoDados === dadosString) {
+      if (containerNarrativa) containerNarrativa.style.opacity = "1";
+      if (loadingNarrativa) loadingNarrativa.style.display = "none";
       return;
     }
-
-    // Carregar minuto a minuto
-    const response = await fetch(`/api/espn/minuto-a-minuto/${jogoId}`, {
-      headers: {
-        'Cache-Control': 'no-cache' // Força verificação com servidor
-      }
-    });
-
-    const comentarios = await response.json();
-
-    if (!comentarios || comentarios.length === 0) {
-      throw new Error("Nenhum comentário encontrado para este jogo");
-    }
-
-    // Armazenar em cache em memória
-    window._cachedComentarios = {
-      data: comentarios,
-      timestamp: Date.now()
-    };
-
-    // Processar os comentários para o formato esperado
-    const eventos = processarComentariosESPN(comentarios, timeCasa, timeVisitante);
+    carregarDadosDaPlanilha._ultimoDados = dadosString;
+    const eventos = processarEventos(data.values, timeCasa, timeVisitante);
     exibirEventos(eventos);
-
     if (containerNarrativa) containerNarrativa.style.opacity = "1";
   } catch (error) {
-    console.error("Falha ao carregar dados da ESPN:", error);
+    console.error("Falha ao carregar dados:", error);
     if (containerNarrativa) {
       containerNarrativa.innerHTML = `
         <div class="error">
@@ -652,84 +678,24 @@ async function carregarDadosDaESPN(timeCasa, timeVisitante, escudoCasa, escudoVi
   }
 }
 
-function processarComentariosESPN(comentarios, timeCasa, timeVisitante) {
-  const eventosAgrupados = {};
-  const regexTempo = /^(\d{1,3}'\+\d+'|\d{1,3}')/;
-  let jogoEncerrado = false;
-  let encontrouFimDoJogo = false;
-
-  // Pré-compilar regex para melhor performance
-  const regexTimeCasa = new RegExp(timeCasa, "i");
-  const regexTimeVisitante = new RegExp(timeVisitante, "i");
-  const regexFimJogo = /Fim do Jogo|Fim do segundo tempo/i;
-
-  // Processa todos os comentários
-  for (let i = 0; i < comentarios.length; i++) {
-    const comentario = comentarios[i];
-    
-    // Verifica se é o fim do jogo
-    if (regexFimJogo.test(comentario)) {
-      jogoEncerrado = true;
-      encontrouFimDoJogo = true;
-    }
-
-    // Ignora todos os comentários após encontrar "Fim do Jogo"
-    if (encontrouFimDoJogo) break;
-
-    // Extrai o tempo do comentário
-    const tempoMatch = comentario.match(regexTempo);
-    const tempo = tempoMatch ? tempoMatch[0] : "-";
-    const descricao = tempoMatch ? comentario.replace(tempoMatch[0], "").trim() : comentario;
-
-    // Determina o tipo de evento
-    const tipoEvento = determinarTipoEvento(descricao);
-
-    // Identifica times mencionados
-    const times = [];
-    if (regexTimeCasa.test(descricao)) times.push(timeCasa);
-    if (regexTimeVisitante.test(descricao)) times.push(timeVisitante);
-
-    // Agrupa por tempo
-    if (!eventosAgrupados[tempo]) {
-      eventosAgrupados[tempo] = { tempo, eventos: [] };
-    }
-
-    eventosAgrupados[tempo].eventos.push({
-      descricao,
-      times,
-      tipoEvento
-    });
-  }
-
-  // Atualiza o status global do jogo
-  if (jogoEncerrado) {
-    jogoEncerradoGlobal = true;
-    atualizarStatusJogo(true);
-  }
-
-  return Object.values(eventosAgrupados);
-}
-
-async function carregarEstatisticasESPN(timeCasa, timeVisitante) {
+async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeVisitante) {
   const loadingEstatisticas = document.querySelector(".loading-estatisticas");
   const containerEstatisticas = document.getElementById("match-container");
-
   try {
     if (loadingEstatisticas) loadingEstatisticas.style.display = "flex";
     if (containerEstatisticas) containerEstatisticas.style.opacity = "0.7";
-
-    // Usar jogoID fixo para testes (substitua pelo ID real quando necessário)
-    const jogoId = '732696';
-    
-    // Carregar estatísticas do endpoint de teste
-    const response = await fetch(`/api/espn/estatisticas/${jogoId}`);
-    const estatisticas = await response.json();
-
-    if (!estatisticas) {
-      throw new Error("Não foi possível carregar as estatísticas");
-    }
-
-    // Mapeamento de ícones para estatísticas
+    const response = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}!C2:J3?key=${apiKey}`
+    );
+    if (!response.ok) throw new Error(`Erro ao buscar dados: ${response.status}`);
+    const data = await response.json();
+    const statsData = data.values;
+    if (!statsData || statsData.length <= 1) throw new Error("Dados insuficientes na planilha de estatísticas");
+    const getValue = (row, col) => statsData[row]?.[col] || "0";
+    const getNumericValue = (row, col) => {
+      const raw = getValue(row, col).replace(",", ".").replace(/[^\d.]/g, "");
+      return parseFloat(raw) || 0;
+    };
     const statIcons = {
       "Cartões Amarelos": '<i class="fas fa-square yellow-card"></i>',
       "Cartões Vermelhos": '<i class="fas fa-square red-card"></i>',
@@ -740,8 +706,16 @@ async function carregarEstatisticasESPN(timeCasa, timeVisitante) {
       Defesas: '<i class="fas fa-hand-paper"></i>',
       Faltas: '<i class="fas fa-exclamation-triangle"></i>',
     };
-
-    // Renderizar estatísticas
+    const stats = {
+      posse: { home: getNumericValue(0, 0), away: getNumericValue(1, 0) },
+      chutesNoGol: { home: getNumericValue(0, 1), away: getNumericValue(1, 1) },
+      chutes: { home: getNumericValue(0, 2), away: getNumericValue(1, 2) },
+      faltas: { home: getNumericValue(0, 3), away: getNumericValue(1, 3) },
+      cartoesAmarelos: { home: getNumericValue(0, 4), away: getNumericValue(1, 4) },
+      cartoesVermelhos: { home: getNumericValue(0, 5), away: getNumericValue(1, 5) },
+      escanteios: { home: getNumericValue(0, 6), away: getNumericValue(1, 6) },
+      defesas: { home: getNumericValue(0, 7), away: getNumericValue(1, 7) },
+    };
     containerEstatisticas.innerHTML = `
       <div class="match-header">
         <div class="team home-team">
@@ -764,21 +738,21 @@ async function carregarEstatisticasESPN(timeCasa, timeVisitante) {
         </thead>
         <tbody>
           ${Object.entries({
-            "Cartões Amarelos": estatisticas.cartoesAmarelos || { casa: 0, visitante: 0 },
-            "Cartões Vermelhos": estatisticas.cartoesVermelhos || { casa: 0, visitante: 0 },
-            Escanteios: estatisticas.escanteios || { casa: 0, visitante: 0 },
-            "Posse de Bola (%)": estatisticas.posse || { casa: 0, visitante: 0 },
-            "Chutes a Gol": estatisticas.chutesNoGol || { casa: 0, visitante: 0 },
-            "Chutes para Fora": estatisticas.chutes || { casa: 0, visitante: 0 },
-            Defesas: estatisticas.defesas || { casa: 0, visitante: 0 },
-            Faltas: estatisticas.faltas || { casa: 0, visitante: 0 },
+            "Cartões Amarelos": stats.cartoesAmarelos,
+            "Cartões Vermelhos": stats.cartoesVermelhos,
+            Escanteios: stats.escanteios,
+            "Posse de Bola (%)": stats.posse,
+            "Chutes a Gol": stats.chutesNoGol,
+            "Chutes para Fora": stats.chutes,
+            Defesas: stats.defesas,
+            Faltas: stats.faltas,
           })
             .map(
               ([name, values]) => `
             <tr>
               <td>${statIcons[name] || ""} ${name}</td>
-              <td class="home-stat">${values.casa}</td>
-              <td class="away-stat">${values.visitante}</td>
+              <td class="home-stat">${values.home}</td>
+              <td class="away-stat">${values.away}</td>
             </tr>
           `
             )
@@ -786,7 +760,6 @@ async function carregarEstatisticasESPN(timeCasa, timeVisitante) {
         </tbody>
       </table>
     `;
-
     if (loadingEstatisticas) loadingEstatisticas.style.display = "none";
     if (containerEstatisticas) containerEstatisticas.style.opacity = "1";
   } catch (error) {
@@ -805,41 +778,106 @@ async function carregarEstatisticasESPN(timeCasa, timeVisitante) {
   }
 }
 
-function mostrarMensagemSemJogo() {
-  const container = document.getElementById("narrativa-jogo");
-  if (!container) return;
+// ===================== FUNÇÕES DE TESTE =====================
+/*function criarPainelTeste() {
+  const painel = document.createElement('div');
+  painel.id = 'painel-teste';
+  painel.style.position = 'fixed';
+  painel.style.bottom = '20px';
+  painel.style.left = '20px';
+  painel.style.zIndex = '1000';
+  painel.style.background = 'rgba(0,0,0,0.8)';
+  painel.style.padding = '10px';
+  painel.style.borderRadius = '8px';
+  painel.style.color = 'white';
+  painel.style.fontFamily = 'Arial, sans-serif';
+  painel.style.fontSize = '14px';
 
-  container.innerHTML = `
-    <div class="nenhum-jogo">
-      <i class="fas fa-futbol"></i>
-      <h3>Nenhum jogo ao vivo no momento</h3>
-      <p>Quando houver uma partida em andamento, você poderá acompanhar aqui minuto a minuto.</p>
-      <button id="btn-atualizar-jogo" class="btn-atualizar">
-        <i class="fas fa-sync-alt"></i> Verificar novamente
-      </button>
+  painel.innerHTML = `
+    <h3 style="margin-top:0;border-bottom:1px solid #555;padding-bottom:5px;">Painel de Teste</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <button onclick="testarGol('casa')" style="background:#003399;color:white;border:none;padding:8px;border-radius:4px;">Gol Casa</button>
+      <button onclick="testarGol('visitante')" style="background:#cc0000;color:white;border:none;padding:8px;border-radius:4px;">Gol Visitante</button>
+      <button onclick="testarAnimacaoPlacar('casa')" style="background:#003399;color:white;border:none;padding:8px;border-radius:4px;">Animar Placar Casa</button>
+      <button onclick="testarAnimacaoPlacar('visitante')" style="background:#cc0000;color:white;border:none;padding:8px;border-radius:4px;">Animar Placar Visitante</button>
+    </div>
+    <div style="margin-top:10px;font-size:12px;color:#aaa;">
+      <label><input type="checkbox" id="auto-colors" checked> Usar cores do escudo</label>
     </div>
   `;
 
-  document.getElementById("btn-atualizar-jogo")?.addEventListener("click", async () => {
-    try {
-      const response = await fetch('/api/espn/jogo-ao-vivo');
-      const data = await response.json();
-      
-      if (data.jogoId) {
-        await atualizarTudo();
-      } else {
-        mostrarMensagemSemJogo();
-      }
-    } catch (error) {
-      console.error("Erro ao verificar jogo:", error);
-      mostrarMensagemSemJogo();
-    }
-  });
+  document.body.appendChild(painel);
 }
+
+// Funções de teste globais (acessíveis via console também)
+window.testarGol = async function(time) {
+  if (time === 'casa') {
+    placarAtual.casa++;
+    document.getElementById("gols-casa").textContent = placarAtual.casa;
+  } else {
+    placarAtual.visitante++;
+    document.getElementById("gols-visitante").textContent = placarAtual.visitante;
+  }
+  
+  await mostrarAnimacaoGol(time);
+  adicionarEventoTeste(time);
+};
+
+window.testarAnimacaoPlacar = async function(time) {
+  const elemento = time === 'casa' 
+    ? document.getElementById("gols-casa")
+    : document.getElementById("gols-visitante");
+  
+  await animarPlacar(elemento, time);
+};
+
+function adicionarEventoTeste(time) {
+  const timeNome = time === 'casa' 
+    ? document.getElementById("nome-time-casa").textContent
+    : document.getElementById("nome-time-visitante").textContent;
+  
+  const minuto = `${Math.floor(Math.random() * 90) + 1}'`;
+  const evento = {
+    tempo: minuto,
+    descricao: `Gol! ${timeNome} (TESTE)`,
+    tipoEvento: "gol",
+    times: [timeNome]
+  };
+  
+  adicionarEventoSimulado(evento);
+}
+
+function adicionarEventoSimulado(evento) {
+  const container = document.getElementById("narrativa-jogo");
+  if (!container) return;
+  
+  const eventoHTML = `
+    <div class="grupo-tempo" data-tempo="${evento.tempo}">
+      <span class="tempo-evento">${evento.tempo}</span>
+      <div class="eventos-container">
+        <div class="evento-jogo">
+          <div class="evento-content evento-gol">
+            <div class="evento-header">
+              <i class="fas fa-futbol evento-icone"></i>
+              <p class="evento-descricao">${evento.descricao}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  const wrapper = container.querySelector(".eventos-wrapper") || container;
+  wrapper.insertAdjacentHTML("beforeend", eventoHTML);
+  
+  // Scroll para o novo evento
+  container.scrollTop = container.scrollHeight;
+}*/
+
 // ===================== ESCUDOS DOS TIMES =====================
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "")
-    return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
+    return "https://via.placeholder.com/80x80";
   const escudos = {
     Flamengo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
     Palmeiras: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
@@ -875,7 +913,7 @@ function obterEscudoTime(nomeTime) {
       return value;
     }
   }
-  return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
+  return "https://via.placeholder.com/50";
 }
 
 // ===================== EVENTOS DO DOM =====================
