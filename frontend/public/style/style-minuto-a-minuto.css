@@ -1109,6 +1109,48 @@ ul {
 .posse-progress-away {
   background: var(--info-color);
 }
+.status-encerrado {
+  background-color: #666 !important;
+}
+
+.status-encerrado::before {
+  display: none !important;
+}
+
+.nenhum-jogo {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-light);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--border-radius);
+}
+
+.nenhum-jogo i {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  color: var(--accent-color);
+}
+
+.nenhum-jogo h3 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.nenhum-jogo p {
+  font-size: 1rem;
+  opacity: 0.8;
+  margin-bottom: 20px;
+}
+
+#btn-atualizar-jogo {
+  margin-top: 20px;
+  max-width: 250px;
+}
 
 /* ================= LOADING STATES ================= */
 .loading-narrativa,
