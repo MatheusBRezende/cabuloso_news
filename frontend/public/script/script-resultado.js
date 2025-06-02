@@ -2,7 +2,7 @@
 const spreadsheetId = "14r46LGxmQVUilSvimrcbBcUvUmIPaEtp89wblh_8ZU0";
 let apiKey = "";
 
-const range = "A2:F";
+const range = "A:F";
 
 // Escudos dos times
 var escudos = {
