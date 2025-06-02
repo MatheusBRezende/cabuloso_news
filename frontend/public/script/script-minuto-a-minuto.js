@@ -611,7 +611,7 @@ async function carregarDadosDaESPN(timeCasa, timeVisitante, escudoCasa, escudoVi
     }
 
     // Carregar minuto a minuto
-    const response = await fetch(`http://localhost:4001/api/espn/minuto-a-minuto/${jogoId}`, {
+    const response = await fetch(`/api/espn/minuto-a-minuto/${jogoId}`, {
       headers: {
         'Cache-Control': 'no-cache' // Força verificação com servidor
       }
@@ -722,7 +722,7 @@ async function carregarEstatisticasESPN(timeCasa, timeVisitante) {
     const jogoId = '732696';
     
     // Carregar estatísticas do endpoint de teste
-    const response = await fetch(`http://localhost:4001/api/espn/estatisticas/${jogoId}`);
+    const response = await fetch(`/api/espn/estatisticas/${jogoId}`);
     const estatisticas = await response.json();
 
     if (!estatisticas) {
@@ -822,7 +822,7 @@ function mostrarMensagemSemJogo() {
 
   document.getElementById("btn-atualizar-jogo")?.addEventListener("click", async () => {
     try {
-      const response = await fetch('http://localhost:4001/api/espn/jogo-ao-vivo');
+      const response = await fetch('/api/espn/jogo-ao-vivo');
       const data = await response.json();
       
       if (data.jogoId) {
