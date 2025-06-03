@@ -2,7 +2,7 @@
 const CONFIG = {
   planilhaId: "1Gb4nJXfxEDPFhseyZtKs1X3--lTsti1_ZTwPLk9MnBs",
   nomeAba: "minutoaminuto",
-  intervaloPadrao: window.innerWidth <= 600 ? 60000 : 30000,
+  intervaloPadrao: window.innerWidth <= 10000,
   coresPadrao: {
     casa: { primary: '#003399', secondary: '#ffffff' },
     visitante: { primary: '#cc0000', secondary: '#ffffff' }
@@ -33,6 +33,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     nomeAbaEstatisticas: "minutoaminuto",
   };
 
+  
   // Recupera dados do jogo
   const urlParams = new URLSearchParams(window.location.search);
   const jogoSalvo = localStorage.getItem("jogoAoVivo");
@@ -81,7 +82,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   // Atualização automática (mais lenta em mobile)
-  const INTERVALO_PADRAO = window.innerWidth <= 600 ? 60000 : 30000;
+  const INTERVALO_PADRAO = 10000; // 1 minuto para todos os dispositivos
   intervaloAtualizacao = setInterval(atualizarTudo, INTERVALO_PADRAO);
 
   document.addEventListener("visibilitychange", () => {
@@ -93,10 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
   });
 
-  // Painel de teste (apenas em desenvolvimento)
-  if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-    criarPainelTeste();
-  }
+
 
     if (jogoAoVivo.escudoCasa) {
     coresTimes.timeCasa = await extrairCoresDoEscudo(jogoAoVivo.escudoCasa, 'casa');
@@ -107,11 +105,33 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 async function atualizarTudo() {
-  if (jogoEncerradoGlobal) return;
-  await Promise.all([
-    carregarDadosDaPlanilha(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
-    carregarEstatisticas(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante)
-  ]);
+  if (jogoEncerradoGlobal) {
+    clearInterval(intervaloAtualizacao);
+    return;
+  }
+
+  // Verificar conexão antes de atualizar
+  if (!navigator.onLine) {
+    console.log("Sem conexão - pulando atualização");
+    return;
+  }
+
+  try {
+    console.log("Iniciando atualização automática...");
+    await Promise.all([
+      carregarDadosDaPlanilha(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", 
+                             jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, 
+                             jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
+      carregarEstatisticas(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", 
+                         jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante)
+    ]);
+    console.log("Atualização automática concluída com sucesso");
+  } catch (error) {
+    console.error("Erro na atualização automática:", error);
+    // Se falhar, tentar novamente em 30 segundos
+    clearInterval(intervaloAtualizacao);
+    intervaloAtualizacao = setInterval(atualizarTudo, 30000);
+  }
 }
 
 // ===================== FUNÇÕES AUXILIARES =====================
@@ -778,106 +798,10 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
   }
 }
 
-// ===================== FUNÇÕES DE TESTE =====================
-/*function criarPainelTeste() {
-  const painel = document.createElement('div');
-  painel.id = 'painel-teste';
-  painel.style.position = 'fixed';
-  painel.style.bottom = '20px';
-  painel.style.left = '20px';
-  painel.style.zIndex = '1000';
-  painel.style.background = 'rgba(0,0,0,0.8)';
-  painel.style.padding = '10px';
-  painel.style.borderRadius = '8px';
-  painel.style.color = 'white';
-  painel.style.fontFamily = 'Arial, sans-serif';
-  painel.style.fontSize = '14px';
-
-  painel.innerHTML = `
-    <h3 style="margin-top:0;border-bottom:1px solid #555;padding-bottom:5px;">Painel de Teste</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-      <button onclick="testarGol('casa')" style="background:#003399;color:white;border:none;padding:8px;border-radius:4px;">Gol Casa</button>
-      <button onclick="testarGol('visitante')" style="background:#cc0000;color:white;border:none;padding:8px;border-radius:4px;">Gol Visitante</button>
-      <button onclick="testarAnimacaoPlacar('casa')" style="background:#003399;color:white;border:none;padding:8px;border-radius:4px;">Animar Placar Casa</button>
-      <button onclick="testarAnimacaoPlacar('visitante')" style="background:#cc0000;color:white;border:none;padding:8px;border-radius:4px;">Animar Placar Visitante</button>
-    </div>
-    <div style="margin-top:10px;font-size:12px;color:#aaa;">
-      <label><input type="checkbox" id="auto-colors" checked> Usar cores do escudo</label>
-    </div>
-  `;
-
-  document.body.appendChild(painel);
-}
-
-// Funções de teste globais (acessíveis via console também)
-window.testarGol = async function(time) {
-  if (time === 'casa') {
-    placarAtual.casa++;
-    document.getElementById("gols-casa").textContent = placarAtual.casa;
-  } else {
-    placarAtual.visitante++;
-    document.getElementById("gols-visitante").textContent = placarAtual.visitante;
-  }
-  
-  await mostrarAnimacaoGol(time);
-  adicionarEventoTeste(time);
-};
-
-window.testarAnimacaoPlacar = async function(time) {
-  const elemento = time === 'casa' 
-    ? document.getElementById("gols-casa")
-    : document.getElementById("gols-visitante");
-  
-  await animarPlacar(elemento, time);
-};
-
-function adicionarEventoTeste(time) {
-  const timeNome = time === 'casa' 
-    ? document.getElementById("nome-time-casa").textContent
-    : document.getElementById("nome-time-visitante").textContent;
-  
-  const minuto = `${Math.floor(Math.random() * 90) + 1}'`;
-  const evento = {
-    tempo: minuto,
-    descricao: `Gol! ${timeNome} (TESTE)`,
-    tipoEvento: "gol",
-    times: [timeNome]
-  };
-  
-  adicionarEventoSimulado(evento);
-}
-
-function adicionarEventoSimulado(evento) {
-  const container = document.getElementById("narrativa-jogo");
-  if (!container) return;
-  
-  const eventoHTML = `
-    <div class="grupo-tempo" data-tempo="${evento.tempo}">
-      <span class="tempo-evento">${evento.tempo}</span>
-      <div class="eventos-container">
-        <div class="evento-jogo">
-          <div class="evento-content evento-gol">
-            <div class="evento-header">
-              <i class="fas fa-futbol evento-icone"></i>
-              <p class="evento-descricao">${evento.descricao}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  const wrapper = container.querySelector(".eventos-wrapper") || container;
-  wrapper.insertAdjacentHTML("beforeend", eventoHTML);
-  
-  // Scroll para o novo evento
-  container.scrollTop = container.scrollHeight;
-}*/
-
 // ===================== ESCUDOS DOS TIMES =====================
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "")
-    return "https://via.placeholder.com/80x80";
+    return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
   const escudos = {
     Flamengo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
     Palmeiras: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
@@ -913,7 +837,7 @@ function obterEscudoTime(nomeTime) {
       return value;
     }
   }
-  return "https://via.placeholder.com/50";
+  return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
 }
 
 // ===================== EVENTOS DO DOM =====================
