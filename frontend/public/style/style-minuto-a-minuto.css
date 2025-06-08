@@ -256,6 +256,72 @@ ul {
   }
 }
 
+/* ================= INTRO CONTENT ================= */
+.intro-content {
+  background: rgba(0, 34, 119, 0.3);
+  border-radius: var(--border-radius);
+  padding: 30px;
+  margin: 90px auto 40px;
+  max-width: 1200px;
+  backdrop-filter: blur(5px);
+  border: 1px solid rgba(255, 215, 0, 0.2);
+  box-shadow: var(--shadow);
+}
+
+.intro-content h2 {
+  color: var(--accent-color);
+  font-size: 2rem;
+  margin-bottom: 20px;
+  text-align: center;
+  font-family: var(--font-secondary);
+}
+
+.intro-content p {
+  margin-bottom: 15px;
+  line-height: 1.7;
+  text-align: center;
+}
+
+.features-list {
+  margin: 25px auto;
+  max-width: 800px;
+  list-style: none;
+}
+
+.features-list li {
+  padding: 10px 15px;
+  margin-bottom: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.features-list i {
+  color: var(--accent-color);
+  font-size: 1.2rem;
+}
+
+.call-to-action {
+  font-weight: 600;
+  color: var(--accent-color);
+  text-align: center;
+  font-size: 1.1rem;
+  margin-top: 25px !important;
+}
+
+@media (max-width: 768px) {
+  .intro-content {
+    padding: 20px 15px;
+    margin: 15px auto 30px;
+  }
+  
+  .intro-content h2 {
+    font-size: 1.6rem;
+  }
+}
+
 /* ================= PLACAR ================= */
 .placar-container {
   display: flex;

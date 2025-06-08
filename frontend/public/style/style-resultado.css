@@ -72,6 +72,7 @@
 }
 
 html {
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
   scroll-behavior: smooth;
   font-size: 16px;
 }
@@ -83,6 +84,7 @@ body {
   background-color: var(--gray-50);
   overflow-x: hidden;
 }
+
 
 /* ================= CONTAINER ================= */
 .container {
@@ -208,30 +210,88 @@ body {
 /* ================= HEADER ================= */
 .page-header {
   text-align: center;
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-10);
   padding-bottom: var(--space-4);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.06);
   position: relative;
+  animation: fadeIn 0.6s ease-in-out;
 }
 
 .page-header h1 {
-  font-size: 2.5rem;
-  margin-bottom: var(--space-2);
+  font-size: clamp(2rem, 5vw, 3rem);
+  margin-bottom: var(--space-3);
   color: var(--primary);
   font-weight: 800;
-  font-family: var(--font-display);
-  line-height: 1.2;
+  font-family: var(--font-display, 'Segoe UI', sans-serif);
+  line-height: 1.1;
 }
 
 .subtitle {
-  color: var(--accent);
-  font-size: 1.25rem;
-  font-weight: 500;
-  opacity: 0.9;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
+  padding: 0.4em 1.2em;
+  font-size: 1.125rem;
+  font-weight: 600;
+  background-color: var(--gray-100);
+  color: var(--info, #007bff);
+  border-radius: var(--radius-full, 999px);
+  opacity: 0.95;
   gap: var(--space-2);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  transition: background-color 0.3s ease;
+}
+
+.subtitle:hover {
+  background-color: var(--gray-200);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+
+.intro-content {
+  background-color: var(--white);
+  padding: var(--space-8);
+  margin: var(--space-8) auto;
+  border-radius: var(--radius-xl);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+  text-align: center;
+  max-width: 900px;
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.intro-content h2 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: var(--space-4);
+}
+
+.intro-content p {
+  font-size: 1.05rem;
+  color: var(--gray-700);
+  margin-bottom: var(--space-3);
+  line-height: 1.7;
+}
+
+
+@media (max-width: 768px) {
+  .intro-content {
+    padding: var(--space-6) var(--space-4);
+    margin: var(--space-6) auto;
+  }
+
+  .intro-content h2 {
+    font-size: 1.6rem;
+  }
+
+  .intro-content p {
+    font-size: 1rem;
+  }
 }
 
 /* ================= CONTROLS ================= */
@@ -316,6 +376,86 @@ body {
 }
 
 /* ================= RESULTS TABLE ================= */
+.stats-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+  background: var(--gray-300);
+  padding: 20px;
+  border-radius: 12px;
+  border-left: 6px solid #0d6e0d;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--gray-100);
+  border-radius: 10px;
+  padding: 16px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card i {
+  font-size: 2.2rem;
+  color: #0d6e0d;
+  margin-bottom: 10px;
+}
+
+.stat-card h3 {
+  margin: 8px 0 4px;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.stat-card p {
+  margin: 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.positive {
+  color: #27ae60;
+  font-weight: 600;
+}
+
+.negative {
+  color: #e74c3c;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .stats-summary {
+    grid-template-columns: 1fr;
+    padding: 15px;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
+
+  .stat-card i {
+    font-size: 2rem;
+  }
+
+  .stat-card h3 {
+    font-size: 1.1rem;
+  }
+
+  .stat-card p {
+    font-size: 0.95rem;
+  }
+}
+
+
 .results-container {
   background-color: var(--white);
   border-radius: var(--radius-xl);

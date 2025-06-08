@@ -163,7 +163,53 @@ function isCruzeiro(teamName) {
   return teamName && teamName.toLowerCase().includes("cruzeiro");
 }
 
+function calculateStatistics(results) {
+  const stats = {
+    totalJogos: 0,
+    vitorias: 0,
+    empates: 0,
+    derrotas: 0,
+    golsMarcados: 0,
+    golsSofridos: 0,
+    saldo: 0,
+    aproveitamento: 0
+  };
+
+  results.forEach(result => {
+    const isCruzeiroHome = isCruzeiro(result.team1);
+    const isCruzeiroAway = isCruzeiro(result.team2);
+    
+    // Só processa se o Cruzeiro estiver em um dos times
+    if (!isCruzeiroHome && !isCruzeiroAway) return;
+
+    stats.totalJogos++;
+    
+    const [gols1, gols2] = result.score.split('-').map(Number);
+    
+    if (isCruzeiroHome) {
+      stats.golsMarcados += gols1;
+      stats.golsSofridos += gols2;
+      stats.saldo += (gols1 - gols2);
+    } else {
+      stats.golsMarcados += gols2;
+      stats.golsSofridos += gols1;
+      stats.saldo += (gols2 - gols1);
+    }
+
+    const matchResult = getMatchResult(result);
+    if (matchResult === 'vitoria') stats.vitorias++;
+    else if (matchResult === 'empate') stats.empates++;
+    else stats.derrotas++;
+  });
+
+  // Cálculo do aproveitamento (pontos possíveis / pontos conquistados)
+  stats.aproveitamento = ((stats.vitorias * 3 + stats.empates) / (stats.totalJogos * 3) * 100).toFixed(1);
+  
+  return stats;
+}
+
 function displayResults(results, selectedCompetition, competitions) {
+  const stats = calculateStatistics(results.filter(r => isCruzeiro(r.team1) || isCruzeiro(r.team2)));
   var resultadosDiv = document.getElementById("resultados");
   selectedCompetition = selectedCompetition || "";
 
@@ -173,6 +219,28 @@ function displayResults(results, selectedCompetition, competitions) {
 
   var html = `
     <div class="results-content">
+    <div class="stats-summary">
+        <div class="stat-card">
+          <i class="fas fa-futbol"></i>
+          <h3>Jogos</h3>
+          <p>${stats.totalJogos} (${stats.vitorias}V ${stats.empates}E ${stats.derrotas}D)</p>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-bullseye"></i>
+          <h3>Gols</h3>
+          <p>${stats.golsMarcados} (Pró) / ${stats.golsSofridos} (Contra)</p>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-calculator"></i>
+          <h3>Saldo</h3>
+          <p class="${stats.saldo >= 0 ? 'positive' : 'negative'}">${stats.saldo >= 0 ? '+' : ''}${stats.saldo}</p>
+        </div>
+        <div class="stat-card">
+          <i class="fas fa-chart-line"></i>
+          <h3>Aproveitamento</h3>
+          <p>${stats.aproveitamento}%</p>
+        </div>
+      </div>
       <div class="filters-container">
         <div class="filter-group">
           <label for="competition-filter">Filtrar por Competição:</label>

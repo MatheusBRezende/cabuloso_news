@@ -567,6 +567,55 @@ ul {
   box-shadow: var(--shadow-sm);
 }
 
+.intro-content {
+  max-width: 800px;
+  margin: 0 auto var(--space-16);
+  margin-top: 10px;
+  padding: var(--space-12) var(--space-4);
+  text-align: center;
+  font-family: var(--font-primary);
+  color: var(--gray-800);
+  background-color: var(--gray-200);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.intro-content h2 {
+  font-family: var(--font-display);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: var(--space-4);
+}
+
+.intro-content p {
+  margin-bottom: var(--space-4);
+  font-size: 1rem;
+  color: var(--gray-700);
+}
+
+.intro-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0 auto var(--space-6);
+  display: inline-block;
+  text-align: left;
+}
+
+.intro-content li {
+  margin-bottom: var(--space-2);
+  font-size: 1rem;
+  color: var(--gray-700);
+}
+
+.intro-content i {
+  margin-right: var(--space-2);
+  color: var(--primary);
+}
+
+
+
 /* ================= AVISO COPA DO BRASIL ================= */
 .aviso-sem-jogos-copa {
   width: 100%;
