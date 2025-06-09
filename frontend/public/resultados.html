@@ -51,6 +51,20 @@
         }
       }
     </script>
+    <style>
+      /* Estilo temporário para visualização */
+      .tabela-estatica {
+        margin-bottom: 40px;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      }
+      .tabela-dinamica {
+        display: none; /* Inicialmente escondida */
+        margin-top: 30px;
+      }
+    </style>
   </head>
 
   <body>
@@ -86,7 +100,6 @@
             </li>
           </ul>
 
-          <!-- Substitua o menu-toggle atual por: -->
           <div class="menu-toggle" id="menuToggle">
             <i class="fas fa-cog"></i>
             <span>Opções</span>
@@ -155,88 +168,92 @@
         </button>
       </div>
 
-      <div class="results-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Jogo</th>
-              <th>Resultado</th>
-              <th>Competição</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>01/06/2025</td>
-              <td>Cruzeiro x Palmeiras</td>
-              <td><span class="resultado vitoria">2-1</span></td>
-              <td>Campeonato Brasileiro</td>
-            </tr>
-            <tr>
-              <td>28/05/2025</td>
-              <td>Cruzeiro x Unión (Santa Fe)</td>
-              <td><span class="resultado empate">0-0</span></td>
-              <td>CONMEBOL Sudamericana</td>
-            </tr>
-            <tr>
-              <td>25/05/2025</td>
-              <td>Fortaleza x Cruzeiro</td>
-              <td><span class="resultado vitoria">0-2</span></td>
-              <td>Campeonato Brasileiro</td>
-            </tr>
-            <tr>
-              <td>22/05/2025</td>
-              <td>Vila Nova x Cruzeiro</td>
-              <td><span class="resultado vitoria">0-3</span></td>
-              <td>Copa do Brasil Volta</td>
-            </tr>
-            <tr>
-              <td>18/05/2025</td>
-              <td>Cruzeiro x Atlético-MG</td>
-              <td><span class="resultado empate">0-0</span></td>
-              <td>Campeonato Brasileiro</td>
-            </tr>
-            <tr>
-              <td>14/05/2025</td>
-              <td>Cruzeiro x Palestino</td>
-              <td><span class="resultado vitoria">2-1</span></td>
-              <td>CONMEBOL Sudamericana</td>
-            </tr>
-            <tr>
-              <td>11/05/2025</td>
-              <td>Sport x Cruzeiro</td>
-              <td><span class="resultado vitoria">0-4</span></td>
-              <td>Campeonato Brasileiro</td>
-            </tr>
-            <tr>
-              <td>07/05/2025</td>
-              <td>Mushuc Runa x Cruzeiro</td>
-              <td><span class="resultado empate">1-1</span></td>
-              <td>CONMEBOL Sudamericana</td>
-            </tr>
-            <tr>
-              <td>04/05/2025</td>
-              <td>Cruzeiro x Flamengo</td>
-              <td><span class="resultado vitoria">2-1</span></td>
-              <td>Campeonato Brasileiro</td>
-            </tr>
-            <tr>
-              <td>01/05/2025</td>
-              <td>Cruzeiro x Vila Nova</td>
-              <td><span class="resultado vitoria">2-0</span></td>
-              <td>Copa do Brasil Ida</td>
-            </tr>
-          </tbody>
-        </table>
+      <!-- Tabela estática (para AdSense) -->
+      <div class="tabela-estatica">
+        <div class="results-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Jogo</th>
+                <th>Resultado</th>
+                <th>Competição</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>01/06/2025</td>
+                <td>Cruzeiro x Palmeiras</td>
+                <td><span class="resultado vitoria">2-1</span></td>
+                <td>Campeonato Brasileiro</td>
+              </tr>
+              <tr>
+                <td>28/05/2025</td>
+                <td>Cruzeiro x Unión (Santa Fe)</td>
+                <td><span class="resultado empate">0-0</span></td>
+                <td>CONMEBOL Sudamericana</td>
+              </tr>
+              <tr>
+                <td>25/05/2025</td>
+                <td>Fortaleza x Cruzeiro</td>
+                <td><span class="resultado vitoria">0-2</span></td>
+                <td>Campeonato Brasileiro</td>
+              </tr>
+              <tr>
+                <td>22/05/2025</td>
+                <td>Vila Nova x Cruzeiro</td>
+                <td><span class="resultado vitoria">0-3</span></td>
+                <td>Copa do Brasil Volta</td>
+              </tr>
+              <tr>
+                <td>18/05/2025</td>
+                <td>Cruzeiro x Atlético-MG</td>
+                <td><span class="resultado empate">0-0</span></td>
+                <td>Campeonato Brasileiro</td>
+              </tr>
+              <tr>
+                <td>14/05/2025</td>
+                <td>Cruzeiro x Palestino</td>
+                <td><span class="resultado vitoria">2-1</span></td>
+                <td>CONMEBOL Sudamericana</td>
+              </tr>
+              <tr>
+                <td>11/05/2025</td>
+                <td>Sport x Cruzeiro</td>
+                <td><span class="resultado vitoria">0-4</span></td>
+                <td>Campeonato Brasileiro</td>
+              </tr>
+              <tr>
+                <td>07/05/2025</td>
+                <td>Mushuc Runa x Cruzeiro</td>
+                <td><span class="resultado empate">1-1</span></td>
+                <td>CONMEBOL Sudamericana</td>
+              </tr>
+              <tr>
+                <td>04/05/2025</td>
+                <td>Cruzeiro x Flamengo</td>
+                <td><span class="resultado vitoria">2-1</span></td>
+                <td>Campeonato Brasileiro</td>
+              </tr>
+              <tr>
+                <td>01/05/2025</td>
+                <td>Cruzeiro x Vila Nova</td>
+                <td><span class="resultado vitoria">2-0</span></td>
+                <td>Copa do Brasil Ida</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </div>
 
+      <!-- Container para a tabela dinâmica -->
       <div id="resultados" class="results-container">
         <div class="loading">
           <div class="loading-spinner"></div>
           <p>Carregando resultados...</p>
         </div>
 
-        <div class="espn-style-results">
+        <div class="espn-style-results tabela-dinamica">
           <div class="month-group">
             <table>
               <thead>
