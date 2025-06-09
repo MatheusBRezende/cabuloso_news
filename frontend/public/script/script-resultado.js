@@ -129,6 +129,7 @@ async function loadData() {
       ...new Set(allResults.map((r) => r.competition).filter(Boolean)),
     ];
 
+     displayResults(allResults, "", competitions);
     if (resultadosDiv) resultadosDiv.style.display = "block";
     var dataAtualizacao = document.getElementById("data-atualizacao");
     if (dataAtualizacao) dataAtualizacao.textContent = getFormattedDate();
@@ -156,7 +157,7 @@ async function loadData() {
       btnAtualizar.disabled = false;
     }
 
-    // Mostra a tabela dinâmica após carregamento
+    
     if (resultadosDiv) resultadosDiv.style.display = "block";
   }
 }
@@ -204,7 +205,7 @@ function calculateStatistics(results) {
     else stats.derrotas++;
   });
 
-  // Cálculo do aproveitamento (pontos possíveis / pontos conquistados)
+  
   stats.aproveitamento = (
     ((stats.vitorias * 3 + stats.empates) / (stats.totalJogos * 3)) *
     100
@@ -228,10 +229,9 @@ function displayResults(results, selectedCompetition, competitions) {
 
   if (!resultadosDiv) return;
 
-  // Limpa a tabela antes de adicionar novos resultados
   resultadosDiv.innerHTML = "";
 
-  // Adiciona estatísticas como primeira linha
+
   var statsRow = document.createElement("tr");
   statsRow.className = "stats-row";
   statsRow.innerHTML = `
