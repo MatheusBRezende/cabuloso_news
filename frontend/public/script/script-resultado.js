@@ -84,7 +84,7 @@ async function loadData() {
   var resultadosDiv = document.querySelector(".espn-style-results");
   var loadingDiv = document.querySelector(".loading");
   var btnAtualizar = document.getElementById("btn-atualizar");
-  var staticTable = document.querySelector(".fallback-table");
+  var staticTable = document.querySelector(".tabela-estatica.fallback-table");
 
   if (loadingDiv) loadingDiv.style.display = "flex";
   if (btnAtualizar) {
