@@ -1,7 +1,6 @@
 // Configurações da API do Google Sheets
 const spreadsheetId = "14r46LGxmQVUilSvimrcbBcUvUmIPaEtp89wblh_8ZU0";
 let apiKey = "";
-
 const range = "A:F";
 
 // Escudos dos times
@@ -82,17 +81,20 @@ function getFormattedDate() {
 }
 
 async function loadData() {
-  var resultadosDiv = document.getElementById("resultados");
+  var resultadosDiv = document.querySelector(".espn-style-results");
+  var loadingDiv = document.querySelector(".loading");
   var btnAtualizar = document.getElementById("btn-atualizar");
-  resultadosDiv.innerHTML =
-    '<div class="loading"><div class="loading-spinner"></div><p>Carregando resultados...</p></div>';
+  var staticTable = document.querySelector(".tabela-estatica.fallback-table");
 
+  if (loadingDiv) loadingDiv.style.display = "flex";
   if (btnAtualizar) {
     btnAtualizar.classList.add("loading");
     btnAtualizar.disabled = true;
   }
 
   try {
+    if (staticTable) staticTable.style.display = "none";
+
     var response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${range}?key=${apiKey}&majorDimension=ROWS`
     );
@@ -100,7 +102,6 @@ async function loadData() {
     if (!response.ok) throw new Error("Erro HTTP: " + response.status);
 
     var data = await response.json();
-   
 
     if (!data.values || data.values.length === 0)
       throw new Error("Planilha vazia");
@@ -108,7 +109,6 @@ async function loadData() {
     allResults = [];
     for (var i = 1; i < data.values.length; i++) {
       var row = data.values[i];
-
       if (!row || row.length < 4) continue;
 
       var scoreParts = row[2] ? row[2].split(/(?=[A-Za-z])/) : [""];
@@ -125,37 +125,39 @@ async function loadData() {
     }
 
     console.log("Total de jogos carregados:", allResults.length);
-
     var competitions = [
       ...new Set(allResults.map((r) => r.competition).filter(Boolean)),
     ];
 
-    displayResults(allResults, "", competitions);
-
+    if (resultadosDiv) resultadosDiv.style.display = "block";
     var dataAtualizacao = document.getElementById("data-atualizacao");
     if (dataAtualizacao) dataAtualizacao.textContent = getFormattedDate();
 
-    resultadosDiv.classList.add("updated");
-    setTimeout(function () {
-      resultadosDiv.classList.remove("updated");
-    }, 1000);
   } catch (error) {
     console.error("Erro ao carregar dados:", error);
-    resultadosDiv.innerHTML =
-      '<div class="error-message">' +
-      "<h3>Erro ao carregar os resultados</h3>" +
-      "<p>" +
-      error.message +
-      "</p>" +
-      '<button id="btn-retry" class="btn-update">Tentar novamente</button>' +
-      "</div>";
-    var btnRetry = document.getElementById("btn-retry");
-    if (btnRetry) btnRetry.addEventListener("click", loadData);
+
+    if (resultadosDiv) {
+      resultadosDiv.innerHTML = `
+        <div class="error-message">
+          <h3>Erro ao carregar os resultados</h3>
+          <p>${error.message}</p>
+          <button id="btn-retry" class="btn-update">Tentar novamente</button>
+        </div>
+      `;
+
+      document.getElementById("btn-retry")?.addEventListener("click", loadData);
+    }
+     if (staticTable) staticTable.style.display = "block";
   } finally {
+    // Esconde o loader e reativa o botão
+    if (loadingDiv) loadingDiv.style.display = "none";
     if (btnAtualizar) {
       btnAtualizar.classList.remove("loading");
       btnAtualizar.disabled = false;
     }
+
+    // Mostra a tabela dinâmica após carregamento
+    if (resultadosDiv) resultadosDiv.style.display = "block";
   }
 }
 
@@ -172,58 +174,75 @@ function calculateStatistics(results) {
     golsMarcados: 0,
     golsSofridos: 0,
     saldo: 0,
-    aproveitamento: 0
+    aproveitamento: 0,
   };
 
-  results.forEach(result => {
+  results.forEach((result) => {
     const isCruzeiroHome = isCruzeiro(result.team1);
     const isCruzeiroAway = isCruzeiro(result.team2);
-    
+
     // Só processa se o Cruzeiro estiver em um dos times
     if (!isCruzeiroHome && !isCruzeiroAway) return;
 
     stats.totalJogos++;
-    
-    const [gols1, gols2] = result.score.split('-').map(Number);
-    
+
+    const [gols1, gols2] = result.score.split("-").map(Number);
+
     if (isCruzeiroHome) {
       stats.golsMarcados += gols1;
       stats.golsSofridos += gols2;
-      stats.saldo += (gols1 - gols2);
+      stats.saldo += gols1 - gols2;
     } else {
       stats.golsMarcados += gols2;
       stats.golsSofridos += gols1;
-      stats.saldo += (gols2 - gols1);
+      stats.saldo += gols2 - gols1;
     }
 
     const matchResult = getMatchResult(result);
-    if (matchResult === 'vitoria') stats.vitorias++;
-    else if (matchResult === 'empate') stats.empates++;
+    if (matchResult === "vitoria") stats.vitorias++;
+    else if (matchResult === "empate") stats.empates++;
     else stats.derrotas++;
   });
 
   // Cálculo do aproveitamento (pontos possíveis / pontos conquistados)
-  stats.aproveitamento = ((stats.vitorias * 3 + stats.empates) / (stats.totalJogos * 3) * 100).toFixed(1);
-  
+  stats.aproveitamento = (
+    ((stats.vitorias * 3 + stats.empates) / (stats.totalJogos * 3)) *
+    100
+  ).toFixed(1);
+
   return stats;
 }
 
 function displayResults(results, selectedCompetition, competitions) {
-  const stats = calculateStatistics(results.filter(r => isCruzeiro(r.team1) || isCruzeiro(r.team2)));
-  var resultadosDiv = document.getElementById("resultados");
+  const stats = calculateStatistics(
+    results.filter((r) => isCruzeiro(r.team1) || isCruzeiro(r.team2))
+  );
+  var resultadosDiv = document.querySelector(
+    ".espn-style-results .month-group tbody"
+  );
   selectedCompetition = selectedCompetition || "";
 
   var filteredResults = selectedCompetition
     ? results.filter((r) => r.competition === selectedCompetition)
     : results.filter((r) => isCruzeiro(r.team1) || isCruzeiro(r.team2));
 
-  var html = `
-    <div class="results-content">
-    <div class="stats-summary">
+  if (!resultadosDiv) return;
+
+  // Limpa a tabela antes de adicionar novos resultados
+  resultadosDiv.innerHTML = "";
+
+  // Adiciona estatísticas como primeira linha
+  var statsRow = document.createElement("tr");
+  statsRow.className = "stats-row";
+  statsRow.innerHTML = `
+    <td colspan="4">
+      <div class="stats-summary">
         <div class="stat-card">
           <i class="fas fa-futbol"></i>
           <h3>Jogos</h3>
-          <p>${stats.totalJogos} (${stats.vitorias}V ${stats.empates}E ${stats.derrotas}D)</p>
+          <p>${stats.totalJogos} (${stats.vitorias}V ${stats.empates}E ${
+    stats.derrotas
+  }D)</p>
         </div>
         <div class="stat-card">
           <i class="fas fa-bullseye"></i>
@@ -233,7 +252,9 @@ function displayResults(results, selectedCompetition, competitions) {
         <div class="stat-card">
           <i class="fas fa-calculator"></i>
           <h3>Saldo</h3>
-          <p class="${stats.saldo >= 0 ? 'positive' : 'negative'}">${stats.saldo >= 0 ? '+' : ''}${stats.saldo}</p>
+          <p class="${stats.saldo >= 0 ? "positive" : "negative"}">${
+    stats.saldo >= 0 ? "+" : ""
+  }${stats.saldo}</p>
         </div>
         <div class="stat-card">
           <i class="fas fa-chart-line"></i>
@@ -241,103 +262,85 @@ function displayResults(results, selectedCompetition, competitions) {
           <p>${stats.aproveitamento}%</p>
         </div>
       </div>
-      <div class="filters-container">
-        <div class="filter-group">
-          <label for="competition-filter">Filtrar por Competição:</label>
-          <select id="competition-filter" class="filter-select">
-            <option value="">Todas as Competições</option>
-            ${competitions
-              .map(
-                (comp) =>
-                  `<option value="${comp}" ${
-                    selectedCompetition === comp ? "selected" : ""
-                  }>${comp}</option>`
-              )
-              .join("")}
-          </select>
-        </div>
-      </div>
-      <div class="results-table-container">
-        <table>
-          <thead>
-            <tr>
-              <th>Data</th>
-              <th>Jogo</th>
-              <th>Resultado</th>
-              <th>Competição</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${
-              filteredResults.length === 0
-                ? `
-              <tr>
-                <td colspan="4" style="text-align: center; padding: 2rem;">
-                  Nenhum resultado encontrado
-                </td>
-              </tr>
-            `
-                : filteredResults
-                    .map((result) => {
-                      var matchResult = getMatchResult(result);
-                      var isHome = isCruzeiro(result.team1);
-                      var resultIcon = "";
-
-                      if (matchResult === "vitoria")
-                        resultIcon =
-                          '<i class="fas fa-check-circle" style="color:green"></i>';
-                      else if (matchResult === "empate")
-                        resultIcon =
-                          '<i class="fas fa-equals" style="color:orange"></i>';
-                      else if (matchResult === "derrota")
-                        resultIcon =
-                          '<i class="fas fa-times-circle" style="color:red"></i>';
-
-                      return `
-                <tr class="result-row">
-                  <td class="data">${formatDate(result.date)}</td>
-                  <td>
-                    <div class="jogo">
-                      <img src="${getEscudo(result.team1)}" alt="${
-                        result.team1
-                      }" class="escudo-time">
-                      <span class="${isHome ? "time-casa" : ""}">${
-                        result.team1
-                      }</span>
-                      x
-                      <img src="${getEscudo(result.team2)}" alt="${
-                        result.team2
-                      }" class="escudo-time">
-                      <span class="${!isHome ? "time-casa" : ""}">${
-                        result.team2
-                      }</span>
-                    </div>
-                  </td>
-                  <td>
-                    <span class="resultado ${matchResult}">
-                      ${resultIcon} ${result.score}
-                    </span>
-                  </td>
-                  <td class="campeonato">
-                    ${result.competition}
-                    ${
-                      result.gameType
-                        ? `<span class="tipo-jogo">${result.gameType}</span>`
-                        : ""
-                    }
-                  </td>
-                </tr>
-              `;
-                    })
-                    .join("")
-            }
-          </tbody>
-        </table>
-      </div>
-    </div>
+    </td>
   `;
+  resultadosDiv.appendChild(statsRow);
 
-  resultadosDiv.innerHTML = html;
+  // Adiciona os resultados
+  if (filteredResults.length === 0) {
+    var emptyRow = document.createElement("tr");
+    emptyRow.innerHTML = `
+      <td colspan="4" style="text-align: center; padding: 2rem;">
+        Nenhum resultado encontrado
+      </td>
+    `;
+    resultadosDiv.appendChild(emptyRow);
+  } else {
+    filteredResults.forEach((result) => {
+      var matchResult = getMatchResult(result);
+      var isHome = isCruzeiro(result.team1);
+      var resultIcon = "";
+
+      if (matchResult === "vitoria")
+        resultIcon = '<i class="fas fa-check-circle" style="color:green"></i>';
+      else if (matchResult === "empate")
+        resultIcon = '<i class="fas fa-equals" style="color:orange"></i>';
+      else if (matchResult === "derrota")
+        resultIcon = '<i class="fas fa-times-circle" style="color:red"></i>';
+
+      var row = document.createElement("tr");
+      row.className = "result-row";
+      row.innerHTML = `
+        <td class="data">${formatDate(result.date)}</td>
+        <td>
+          <div class="jogo">
+            <img src="${getEscudo(result.team1)}" alt="${
+        result.team1
+      }" class="escudo-time">
+            <span class="${isHome ? "time-casa" : ""}">${result.team1}</span>
+            x
+            <img src="${getEscudo(result.team2)}" alt="${
+        result.team2
+      }" class="escudo-time">
+            <span class="${!isHome ? "time-casa" : ""}">${result.team2}</span>
+          </div>
+        </td>
+        <td>
+          <span class="resultado ${matchResult}">
+            ${resultIcon} ${result.score}
+          </span>
+        </td>
+        <td class="campeonato">
+          ${result.competition}
+          ${
+            result.gameType
+              ? `<span class="tipo-jogo">${result.gameType}</span>`
+              : ""
+          }
+        </td>
+      `;
+      resultadosDiv.appendChild(row);
+    });
+  }
+
+  // Adiciona o seletor de competição
+  var filterContainer = document.querySelector(".filters-container");
+  if (!filterContainer) {
+    filterContainer = document.createElement("div");
+    filterContainer.className = "filters-container";
+    filterContainer.innerHTML = `
+      <div class="filter-group">
+        <label for="competition-filter">Filtrar por Competição:</label>
+        <select id="competition-filter" class="filter-select">
+          <option value="">Todas as Competições</option>
+          ${competitions
+            .map((comp) => `<option value="${comp}">${comp}</option>`)
+            .join("")}
+        </select>
+      </div>
+    `;
+    document.querySelector(".espn-style-results")?.prepend(filterContainer);
+  }
 
   document
     .getElementById("competition-filter")
@@ -365,7 +368,10 @@ function getMatchResult(result) {
 
 // Evento principal
 document.addEventListener("DOMContentLoaded", function () {
+  // Carrega os dados
   fetchAPIKey().then(loadData);
+
+  // Configura o menu toggle (mantido igual)
   var menuToggle = document.querySelector(".menu-toggle");
   var navMenu = document.querySelector(".nav-menu");
   if (menuToggle && navMenu) {
@@ -377,6 +383,7 @@ document.addEventListener("DOMContentLoaded", function () {
         navMenu.classList.contains("active")
       );
     });
+
     var navLinks = navMenu.querySelectorAll(".nav-link");
     for (var i = 0; i < navLinks.length; i++) {
       navLinks[i].addEventListener("click", function () {
@@ -386,6 +393,8 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     }
   }
+
+  // Configura o botão de atualizar
   var btnAtualizar = document.getElementById("btn-atualizar");
   if (btnAtualizar) {
     btnAtualizar.addEventListener("click", loadData);
