@@ -135,6 +135,7 @@ function mostrarErroGeral(mensagem) {
   const container = document.createElement("div");
   container.className = "erro-geral";
   container.innerHTML = `
+    <button class="fechar" onclick="this.parentElement.remove()">×</button>
     <div class="alert alert-danger">
       <i class="fas fa-exclamation-triangle"></i>
       <p>${mensagem}</p>
@@ -143,6 +144,8 @@ function mostrarErroGeral(mensagem) {
   `;
   document.body.prepend(container);
 }
+
+
 
 function formatarData() {
   return new Date()
