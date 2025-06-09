@@ -219,6 +219,7 @@ function calculateStatistics(results, competition = null) {
   return stats;
 }
 
+
 function displayResults(results, selectedCompetition, competitions) {
   const stats = calculateStatistics(
     results.filter((r) => isCruzeiro(r.team1) || isCruzeiro(r.team2)),
