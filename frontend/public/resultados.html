@@ -51,20 +51,6 @@
         }
       }
     </script>
-    <style>
-      /* Estilo temporário para visualização */
-      .tabela-estatica {
-        margin-bottom: 40px;
-        border: 1px solid #e0e0e0;
-        border-radius: 8px;
-        overflow: hidden;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      }
-      .tabela-dinamica {
-        display: none; /* Inicialmente escondida */
-        margin-top: 30px;
-      }
-    </style>
   </head>
 
   <body>
@@ -251,11 +237,12 @@
           <div class="loading-spinner"></div>
           <p>Carregando resultados...</p>
         </div>
+        
 
         <div class="espn-style-results tabela-dinamica">
           <div class="month-group">
             <table>
-              <thead>
+              <thead style="display: none;">
                 <tr>
                   <th class="col-data">
                     <i class="bi bi-calendar-event"></i> DATA

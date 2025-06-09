@@ -166,7 +166,11 @@ function isCruzeiro(teamName) {
   return teamName && teamName.toLowerCase().includes("cruzeiro");
 }
 
-function calculateStatistics(results) {
+function calculateStatistics(results, competition = null) {
+  const filtered = competition 
+    ? results.filter(r => r.competition === competition)
+    : results.filter(r => isCruzeiro(r.team1) || isCruzeiro(r.team2));
+    
   const stats = {
     totalJogos: 0,
     vitorias: 0,
@@ -178,7 +182,7 @@ function calculateStatistics(results) {
     aproveitamento: 0,
   };
 
-  results.forEach((result) => {
+  filtered.forEach((result) => {
     const isCruzeiroHome = isCruzeiro(result.team1);
     const isCruzeiroAway = isCruzeiro(result.team2);
 
@@ -205,22 +209,23 @@ function calculateStatistics(results) {
     else stats.derrotas++;
   });
 
-  
-  stats.aproveitamento = (
-    ((stats.vitorias * 3 + stats.empates) / (stats.totalJogos * 3)) *
-    100
-  ).toFixed(1);
+  if (stats.totalJogos > 0) {
+    stats.aproveitamento = (
+      ((stats.vitorias * 3 + stats.empates) / (stats.totalJogos * 3)) *
+      100
+    ).toFixed(1);
+  }
 
   return stats;
 }
 
 function displayResults(results, selectedCompetition, competitions) {
   const stats = calculateStatistics(
-    results.filter((r) => isCruzeiro(r.team1) || isCruzeiro(r.team2))
+    results.filter((r) => isCruzeiro(r.team1) || isCruzeiro(r.team2)),
+    selectedCompetition
   );
-  var resultadosDiv = document.querySelector(
-    ".espn-style-results .month-group tbody"
-  );
+  
+  var resultadosDiv = document.querySelector(".espn-style-results .month-group tbody");
   selectedCompetition = selectedCompetition || "";
 
   var filteredResults = selectedCompetition
@@ -231,18 +236,17 @@ function displayResults(results, selectedCompetition, competitions) {
 
   resultadosDiv.innerHTML = "";
 
-
+  // Adiciona linha de estatísticas
   var statsRow = document.createElement("tr");
   statsRow.className = "stats-row";
   statsRow.innerHTML = `
     <td colspan="4">
+      <h3 class="stats-title">${selectedCompetition || "Estatísticas Gerais"}</h3>
       <div class="stats-summary">
         <div class="stat-card">
           <i class="fas fa-futbol"></i>
           <h3>Jogos</h3>
-          <p>${stats.totalJogos} (${stats.vitorias}V ${stats.empates}E ${
-    stats.derrotas
-  }D)</p>
+          <p>${stats.totalJogos} (${stats.vitorias}V ${stats.empates}E ${stats.derrotas}D)</p>
         </div>
         <div class="stat-card">
           <i class="fas fa-bullseye"></i>
@@ -266,7 +270,16 @@ function displayResults(results, selectedCompetition, competitions) {
   `;
   resultadosDiv.appendChild(statsRow);
 
-  // Adiciona os resultados
+   var headerRow = document.createElement("tr");
+  headerRow.className = "table-header";
+  headerRow.innerHTML = `
+    <th class="col-data"><i class="bi bi-calendar-event"></i> DATA</th>
+    <th class="col-jogo"><i class="bi bi-people"></i> JOGO</th>
+    <th class="col-resultado"><i class="bi bi-check2-square"></i> RESULTADO</th>
+    <th class="col-campeonato"><i class="bi bi-trophy"></i> CAMPEONATO</th>
+  `;
+  resultadosDiv.appendChild(headerRow);
+
   if (filteredResults.length === 0) {
     var emptyRow = document.createElement("tr");
     emptyRow.innerHTML = `
