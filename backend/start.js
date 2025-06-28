@@ -1,4 +1,4 @@
-require('dotenv').config({ path: 'api.env' }); // localmente, carrega o api.env
+require('dotenv').config({ path: 'api.env' }); 
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;

@@ -1,291 +1,426 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description"content="Cabuloso News - Tudo sobre o Maior de Minas. Notícias, tabelas do campeonato, resultados e minuto a minuto dos jogos do Cruzeiro."/>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <title>Cabuloso News | Início</title>
-    <link rel="stylesheet" href="./style/styles.css" />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"rel="stylesheet"/>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"rel="stylesheet"/>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet"/>
-    <link rel="icon" type="image/png" href="assets/logo_m.jpeg" />
-<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6313205148679744" crossorigin="anonymous"></script>
-  </head>
-  <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cabuloso News - Tudo sobre o Maior de Minas. Notícias, tabelas do campeonato, resultados e minuto a minuto dos jogos do Cruzeiro.">
+    <title>Cabuloso News | Portal do Maior de Minas</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="./style/styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/logo_m.jpeg">
+    
+    <!-- AdSense -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6313205148679744" crossorigin="anonymous"></script>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <h3>Carregando Cabuloso News...</h3>
+            <p>Preparando as melhores notícias do Maior de Minas</p>
+        </div>
+    </div>
+
     <!-- Header -->
     <header class="header">
-      <nav class="navbar">
-        <div class="nav-container">
-          <a href="index.html" style="text-decoration: none">
-          <div class="nav-logo">
-            <img src="assets/logo_m.jpeg" alt="Cabuloso News" class="logo" />
-            <span class="logo-text">Cabuloso News | Inicio</span>
-          </div>
-          </a>
+        <nav class="navbar">
+            <div class="nav-container">
+                <a href="index.html" class="nav-logo">
+                    <div class="logo-container">
+                        <img src="assets/logo_m.jpeg" alt="Cabuloso News" class="logo">
+                    </div>
+                    <div class="logo-text-container">
+                        <span class="logo-text">Cabuloso News</span>
+                        <span class="logo-subtitle">Portal do Maior de Minas</span>
+                    </div>
+                </a>
 
-          <ul class="nav-menu" id="nav-menu">
-            <li class="nav-item">
-              <a href="index.html" class="nav-link">
-                <i class="fas fa-home"></i>
-                <span>Início</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="competicao.html" class="nav-link">
-                <i class="fas fa-list-ol"></i>
-                <span>Tabela</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="resultados.html" class="nav-link">
-                <i class="fas fa-trophy"></i>
-                <span>Resultados</span>
-              </a>
-            </li>
-          </ul>
+                <ul class="nav-menu" id="nav-menu">
+                    <li class="nav-item">
+                        <a href="index.html" class="nav-link active">
+                            <i class="fas fa-home"></i>
+                            <span>Início</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="competicao.html" class="nav-link">
+                            <i class="fas fa-list-ol"></i>
+                            <span>Tabela</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="resultados.html" class="nav-link">
+                            <i class="fas fa-trophy"></i>
+                            <span>Resultados</span>
+                        </a>
+                    </li>
+                </ul>
 
-          <div class="menu-toggle" id="menuToggle">
-            <i class="fas fa-cog"></i>
-            <span>Opções</span>
-          </div>
-        </div>
-      </nav>
+                <div class="menu-toggle" id="menuToggle">
+                    <span class="menu-text">Menu</span>
+                    <div class="hamburger">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </nav>
     </header>
 
     <!-- Hero Section -->
     <section class="hero" id="home">
-      <div class="waves">
-        <img src="assets/wav_cruzeiro.png" alt="onda de som" />
-      </div>
-
-      <div class="hero-content">
-        <div class="hero-text">
-          <h1>Bem-vindo ao Portal do Cabuloso News</h1>
-          <h2>Notícias, Jogos e Tabela do Maior de Minas</h2>
-          <p>
-            O <strong>Cabuloso News</strong> é um portal feito para torcedores
-            apaixonados pelo <strong>Cruzeiro Esporte Clube</strong>. Aqui você
-            encontra notícias, tabela do campeonato e cobertura completa dos
-            jogos.
-          </p>
-          <p>
-            Nosso objetivo é informar com agilidade, qualidade e
-            responsabilidade. Atualizamos os dados em tempo real para que você
-            não perca nenhum lance do Maior de Minas!
-          </p>
+        <div class="hero-background">
+            <div class="hero-pattern"></div>
+            <div class="hero-shapes">
+                <div class="shape shape-1"></div>
+                <div class="shape shape-2"></div>
+                <div class="shape shape-3"></div>
+            </div>
         </div>
-        <div class="hero-image">
-          <img src="assets/logo_m.jpeg" alt="Escudo do Cruzeiro" />
+        
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-badge">
+                    <i class="fas fa-star"></i>
+                    <span>Portal Oficial dos Torcedores</span>
+                </div>
+                <h1>
+                    <span class="title-main">Bem-vindo ao Portal do</span>
+                    <span class="title-highlight">Cabuloso News</span>
+                </h1>
+                <h2 class="hero-subtitle">Notícias, Jogos e Tabela do Maior de Minas</h2>
+                <p class="hero-description">
+                    O <strong>Cabuloso News</strong> é um portal feito para torcedores apaixonados pelo 
+                    <strong>Cruzeiro Esporte Clube</strong>. Aqui você encontra notícias em tempo real, 
+                    tabela do campeonato e cobertura completa dos jogos.
+                </p>
+                <p class="hero-description">
+                    Nosso objetivo é informar com agilidade, qualidade e responsabilidade. 
+                    Atualizamos os dados constantemente para que você não perca nenhum lance do Maior de Minas!
+                </p>
+                <div class="hero-buttons">
+                    <button class="btn btn-primary" onclick="scrollToSection('news-section')">
+                        <i class="fas fa-newspaper"></i>
+                        Ver Notícias
+                    </button>
+                    <button class="btn btn-secondary" onclick="scrollToSection('widgets-section')">
+                        <i class="fas fa-chart-line"></i>
+                        Estatísticas
+                    </button>
+                </div>
+            </div>
+            <div class="hero-image">
+                <div class="hero-image-container">
+                    <img src="assets/logo_m.jpeg" alt="Escudo do Cruzeiro">
+                    <div class="hero-image-glow"></div>
+                </div>
+            </div>
         </div>
-      </div>
     </section>
 
     <!-- Quick Stats Cards -->
     <section class="quick-stats">
-      <div class="container">
-        <div class="stats-grid">
-          <div class="stat-card" onclick="location.href='competicao.html'">
-            <div class="stat-icon">
-              <i class="fas fa-trophy"></i>
-            </div>
-            <div class="stat-content">
-              <h3>Classificação</h3>
-              <p>Veja nossa posição no campeonato</p>
-            </div>
-            <div class="stat-arrow">
-              <i class="fas fa-chevron-right"></i>
-            </div>
-          </div>
-          <a
-            href="competicao.html?widget=jogos"
-            class="widget-link"
-            style="color: #003399; text-decoration: none"
-          >
-            <div class="stat-card">
-              <div class="stat-icon">
-                <i class="fas fa-calendar"></i>
-              </div>
-              <div class="stat-content">
-                <h3>Próximos Jogos</h3>
-                <p>Confira os próximos confrontos</p>
-              </div>
-              <div class="stat-arrow">
-                <i class="fas fa-chevron-right"></i>
-              </div>
-            </div>
-          </a>
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card" onclick="location.href='competicao.html'">
+                    <div class="stat-icon">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Classificação</h3>
+                        <p>Veja nossa posição no campeonato</p>
+                        <span class="stat-value" id="position-stat">3º lugar</span>
+                    </div>
+                    <div class="stat-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
 
-          <div class="stat-card" onclick="location.href='resultados.html'">
-            <div class="stat-icon">
-              <i class="fas fa-futbol"></i>
+                <div class="stat-card" onclick="location.href='competicao.html?widget=jogos'">
+                    <div class="stat-icon calendar">
+                        <i class="fas fa-calendar"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Próximos Jogos</h3>
+                        <p>Confira os próximos confrontos</p>
+                        <span class="stat-value" id="next-game-stat">20/01 vs América-MG</span>
+                    </div>
+                    <div class="stat-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card" onclick="location.href='resultados.html'">
+                    <div class="stat-icon results">
+                        <i class="fas fa-futbol"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3>Últimos Resultados</h3>
+                        <p>Veja como foi nosso desempenho</p>
+                        <span class="stat-value" id="last-result-stat">Cruzeiro 2x1 Atlético-MG</span>
+                    </div>
+                    <div class="stat-arrow">
+                        <i class="fas fa-chevron-right"></i>
+                    </div>
+                </div>
             </div>
-            <div class="stat-content">
-              <h3>Últimos Resultados</h3>
-              <p>Veja como foi nosso desempenho</p>
-            </div>
-            <div class="stat-arrow">
-              <i class="fas fa-chevron-right"></i>
-            </div>
-          </div>
         </div>
-      </div>
     </section>
 
     <!-- News Section -->
-    <section class="news-section">
-      <div class="container">
-        <div class="section-header">
-          <h2><i class="fas fa-newspaper"></i> Últimas Notícias</h2>
-        </div>
+    <section class="news-section" id="news-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-newspaper"></i>
+                    Últimas Notícias
+                </h2>
+                <div class="section-actions">
+                    <button class="btn btn-outline" id="refreshNews">
+                        <i class="fas fa-sync-alt"></i>
+                        Atualizar
+                    </button>
+                </div>
+            </div>
 
-        <!-- Featured Article -->
-        <section class="featured_article">
-          <h1><i class="fas fa-star"></i> Noticia em destaque</h1>
-          <div class="featured-article"></div>
-        </section>
+            <!-- Featured Article -->
+            <div class="featured-section">
+                <div class="featured-header">
+                    <h3>
+                        <i class="fas fa-star"></i>
+                        Notícia em Destaque
+                    </h3>
+                </div>
+                <div class="featured-article" id="featured-article">
+                    <div class="featured-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Carregando notícia em destaque...</p>
+                    </div>
+                </div>
+            </div>
 
-        <!-- News Grid -->
-        <section class="news_grid">
-          <div class="news-grid"></div>
-        </section>
-        <div class="load-more-container">
-          <button
-            id="loadMoreBtn"
-            class="btn btn-outline"
-            style="display: none"
-          >
-            Carregar mais notícias
-          </button>
+            <!-- News Grid -->
+            <div class="news-grid-section">
+                <div class="news-grid" id="news-grid">
+                    <div class="news-loading">
+                        <div class="loading-spinner"></div>
+                        <p>Carregando notícias...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="load-more-container">
+                <button id="loadMoreBtn" class="btn btn-outline" style="display: none;">
+                    <i class="fas fa-plus"></i>
+                    Carregar mais notícias
+                </button>
+            </div>
         </div>
-      </div>
     </section>
 
     <!-- Widgets Section -->
-    <section class="widgets-section">
-      <div class="container">
-        <div class="widgets-grid">
-          <!-- Mini Table Widget -->
-          <div class="widget-card" onclick="location.href='competicao.html'">
-            <div class="widget-header">
-              <h3><i class="fas fa-list-ol"></i> Brasileirão Serie A</h3>
-              <span class="widget-link"
-                ><i class="fas fa-external-link-alt"></i
-              ></span>
+    <section class="widgets-section" id="widgets-section">
+        <div class="container">
+            <div class="section-header">
+                <h2>
+                    <i class="fas fa-chart-line"></i>
+                    Estatísticas em Tempo Real
+                </h2>
             </div>
-            <div class="widget-content">
-              <table class="mini-table">
-                <thead>
-                  <tr>
-                    <th>Pos</th>
-                    <th>Time</th>
-                    <th>Pts</th>
-                  </tr>
-                </thead>
-                <tbody id="mini-tabela">
-                  <tr>
-                    <td
-                      colspan="3"
-                      style="text-align: center; padding: 20px 0; color: #666"
-                    >
-                      <i class="fas fa-spinner fa-spin"></i> Carregando...
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
 
-          <!-- Results Widget -->
-          <div class="widget-card" onclick="location.href='resultados.html'">
-            <div class="widget-header">
-              <h3><i class="fas fa-history"></i> Últimos Resultados</h3>
-              <span class="widget-link"
-                ><i class="fas fa-external-link-alt"></i
-              ></span>
-            </div>
-            <div class="widget-content">
-              <div id="mini-resultados">
-                <div
-                  class="mini-result"
-                  style="color: #666; text-align: center"
-                >
-                  <i class="fas fa-spinner fa-spin"></i> Carregando...
+            <div class="widgets-grid">
+                <!-- Mini Table Widget -->
+                <div class="widget-card" onclick="location.href='competicao.html'">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-list-ol"></i>
+                            <h3>Brasileirão Série A</h3>
+                        </div>
+                        <div class="widget-actions">
+                            <span class="update-indicator" id="table-update">
+                                <i class="fas fa-circle"></i>
+                            </span>
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <table class="mini-table">
+                            <thead>
+                                <tr>
+                                    <th>Pos</th>
+                                    <th>Time</th>
+                                    <th>Pts</th>
+                                </tr>
+                            </thead>
+                            <tbody id="mini-tabela">
+                                <tr>
+                                    <td colspan="3" class="loading-cell">
+                                        <div class="loading-spinner small"></div>
+                                        <span>Carregando...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-              </div>
-            </div>
-          </div>
 
-          <!-- Next Matches Widget -->
-          <div class="widget-card" onclick="location.href='competicao.html'">
-            <div class="widget-header">
-              <h3><i class="fas fa-calendar-alt"></i> Próximos Jogos</h3>
-              <a
-                href="competicao.html?widget=jogos"
-                class="widget-link"
-                style="color: #ffff; text-decoration: none"
-              >
-                <i class="fas fa-external-link-alt"></i>
-              </a>
-            </div>
-            <div class="widget-content">
-              <div id="proximos-jogos">
-                <div class="next-match" style="color: #666; text-align: center">
-                  <i class="fas fa-spinner fa-spin"></i> Carregando...
+                <!-- Results Widget -->
+                <div class="widget-card" onclick="location.href='resultados.html'">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-history"></i>
+                            <h3>Últimos Resultados</h3>
+                        </div>
+                        <div class="widget-actions">
+                            <span class="update-indicator" id="results-update">
+                                <i class="fas fa-circle"></i>
+                            </span>
+                            <i class="fas fa-external-link-alt"></i>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <div id="mini-resultados">
+                            <div class="mini-result loading">
+                                <div class="loading-spinner small"></div>
+                                <span>Carregando...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
+
+                <!-- Next Matches Widget -->
+                <div class="widget-card" onclick="location.href='competicao.html'">
+                    <div class="widget-header">
+                        <div class="widget-title">
+                            <i class="fas fa-calendar-alt"></i>
+                            <h3>Próximos Jogos</h3>
+                        </div>
+                        <div class="widget-actions">
+                            <span class="update-indicator" id="matches-update">
+                                <i class="fas fa-circle"></i>
+                            </span>
+                            <a href="competicao.html?widget=jogos" class="widget-link">
+                                <i class="fas fa-external-link-alt"></i>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="widget-content">
+                        <div id="proximos-jogos">
+                            <div class="next-match loading">
+                                <div class="loading-spinner small"></div>
+                                <span>Carregando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-          </div>
         </div>
-      </div>
     </section>
 
     <!-- Newsletter Section -->
     <section class="newsletter-section">
-      <div class="container">
-        <div class="newsletter-content">
-          <div class="newsletter-text">
-            <h2>Fique por dentro de tudo!</h2>
-            <p>
-              Receba as últimas notícias e novidades do Cabuloso News
-              diretamente no seu email.
-            </p>
-          </div>
-          <form class="newsletter-form" id="newsletterForm">
-            <div class="form-group">
-              <input type="email" placeholder="Seu melhor email" required />
-              <button type="submit" class="btn btn-primary">
-                <i class="fas fa-paper-plane"></i>
-                Inscrever-se
-              </button>
+        <div class="container">
+            <div class="newsletter-content">
+                <div class="newsletter-text">
+                    <h2>Fique por dentro de tudo!</h2>
+                    <p>
+                        Receba as últimas notícias e novidades do Cabuloso News 
+                        diretamente no seu email. Seja o primeiro a saber sobre 
+                        contratações, resultados e bastidores do Maior de Minas.
+                    </p>
+                    <div class="newsletter-features">
+                        <div class="feature">
+                            <i class="fas fa-bolt"></i>
+                            <span>Notícias em tempo real</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span>Resumos dos jogos</span>
+                        </div>
+                        <div class="feature">
+                            <i class="fas fa-star"></i>
+                            <span>Conteúdo exclusivo</span>
+                        </div>
+                    </div>
+                </div>
+                <form class="newsletter-form" id="newsletterForm">
+                    <div class="form-group">
+                        <div class="input-container">
+                            <i class="fas fa-envelope"></i>
+                            <input type="email" placeholder="Seu melhor email" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i>
+                            Inscrever-se
+                        </button>
+                    </div>
+                    <p class="form-disclaimer">
+                        <i class="fas fa-shield-alt"></i>
+                        Seus dados estão seguros. Não enviamos spam.
+                    </p>
+                </form>
             </div>
-          </form>
         </div>
-      </div>
     </section>
 
     <!-- Footer -->
     <footer class="footer">
-      <div class="container">
-        <div class="footer-bottom">
-          <p>
-            &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
-            vínculo oficial com o Cruzeiro Esporte Clube.<br />
-            Todo conteúdo, imagens e notícias pertencem aos seus respectivos
-            autores e portais de origem. Se você é detentor de direitos e deseja
-            remoção de algum conteúdo, entre em contato pelo e-mail:
-            <a
-              href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo"
-              >cabulosonews92@gmail.com</a
-            >
-          </p>
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="assets/logo_m.jpeg" alt="Cabuloso News">
+                        <span>Cabuloso News</span>
+                    </div>
+                    <p>Portal dedicado aos torcedores apaixonados pelo Cruzeiro Esporte Clube.</p>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Links Rápidos</h4>
+                    <ul>
+                        <li><a href="index.html">Início</a></li>
+                        <li><a href="competicao.html">Tabela</a></li>
+                        <li><a href="resultados.html">Resultados</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contato</h4>
+                    <p>
+                        <i class="fas fa-envelope"></i>
+                        <a href="mailto:cabulosonews92@gmail.com">cabulosonews92@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>
+                    &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos vínculo oficial com o Cruzeiro Esporte Clube.<br>
+                    Todo conteúdo, imagens e notícias pertencem aos seus respectivos autores e portais de origem. 
+                    Se você é detentor de direitos e deseja remoção de algum conteúdo, entre em contato pelo e-mail: 
+                    <a href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo">cabulosonews92@gmail.com</a>
+                </p>
+            </div>
         </div>
-      </div>
     </footer>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- JavaScript -->
     <script src="./script/script.js"></script>
-  </body>
+</body>
 </html>

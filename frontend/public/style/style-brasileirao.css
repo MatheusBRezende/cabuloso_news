@@ -28,50 +28,19 @@
   --info: #3b82f6;
 
   /* Gradients */
-<<<<<<< HEAD
-  --gradient-primary: linear-gradient(
-    135deg,
-    var(--primary) 0%,
-    var(--primary-light) 100%
-  );
-  --gradient-accent: linear-gradient(
-    135deg,
-    var(--accent) 0%,
-    var(--accent-dark) 100%
-  );
-  --gradient-hero: linear-gradient(
-    135deg,
-    rgba(0, 51, 160, 0.95) 0%,
-    rgba(26, 77, 184, 0.9) 100%
-  );
-=======
   --gradient-primary: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
   --gradient-accent: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
   --gradient-hero: linear-gradient(135deg, rgba(0, 51, 160, 0.95) 0%, rgba(26, 77, 184, 0.9) 100%);
->>>>>>> 59feaf8 (.)
 
   /* Shadows */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-<<<<<<< HEAD
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
-    0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1),
-    0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-  /* Typography */
-  --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    sans-serif;
-=======
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
 
   /* Typography */
   --font-primary: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
->>>>>>> 59feaf8 (.)
   --font-display: "Poppins", var(--font-primary);
 
   /* Spacing */
@@ -193,10 +162,6 @@ ul {
 }
 
 /* ================= NAVIGATION ================= */
-<<<<<<< HEAD
-/* Header Styles */
-=======
->>>>>>> 59feaf8 (.)
 .header {
   background: #003399;
   box-shadow: 0 2px 10px rgba(0, 51, 153, 0.1);
@@ -220,10 +185,6 @@ ul {
   height: 70px;
 }
 
-<<<<<<< HEAD
-/* Logo */
-=======
->>>>>>> 59feaf8 (.)
 .nav-logo {
   display: flex;
   align-items: center;
@@ -313,21 +274,8 @@ ul {
 .hero-pattern {
   position: absolute;
   inset: 0;
-<<<<<<< HEAD
-  background-image: radial-gradient(
-      circle at 25% 25%,
-      rgba(255, 255, 255, 0.1) 0%,
-      transparent 50%
-    ),
-    radial-gradient(
-      circle at 75% 75%,
-      rgba(255, 255, 255, 0.1) 0%,
-      transparent 50%
-    );
-=======
   background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
->>>>>>> 59feaf8 (.)
   background-size: 100px 100px;
   animation: float 20s ease-in-out infinite;
 }
@@ -472,16 +420,7 @@ ul {
   left: -50%;
   width: 200%;
   height: 200%;
-<<<<<<< HEAD
-  background: linear-gradient(
-    45deg,
-    transparent,
-    rgba(255, 255, 255, 0.1),
-    transparent
-  );
-=======
   background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.1), transparent);
->>>>>>> 59feaf8 (.)
   transform: rotate(45deg);
   animation: shine 3s infinite;
 }
@@ -592,10 +531,6 @@ ul {
   font-weight: bold;
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 59feaf8 (.)
 .erro-geral i {
   margin-right: 8px;
   color: #ff4d4d;
@@ -624,10 +559,6 @@ ul {
   background-color: #e60000;
 }
 
-<<<<<<< HEAD
-/* Animação de entrada */
-=======
->>>>>>> 59feaf8 (.)
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -639,11 +570,6 @@ ul {
   }
 }
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 59feaf8 (.)
 .main-content {
   padding: var(--space-16) 0;
 }
@@ -727,11 +653,6 @@ ul {
   color: var(--primary);
 }
 
-<<<<<<< HEAD
-
-
-=======
->>>>>>> 59feaf8 (.)
 /* ================= AVISO COPA DO BRASIL ================= */
 .aviso-sem-jogos-copa {
   width: 100%;
@@ -767,21 +688,6 @@ ul {
   font-size: 0.95rem;
 }
 
-<<<<<<< HEAD
-@media (max-width: 768px) {
-  .aviso-sem-jogos-copa {
-    flex-direction: column;
-    text-align: center;
-    padding: var(--space-4);
-  }
-
-  .aviso-icon {
-    margin-bottom: var(--space-2);
-  }
-}
-
-=======
->>>>>>> 59feaf8 (.)
 /* ================= TABLE SECTION ================= */
 .table-wrapper {
   margin-bottom: var(--space-8);
@@ -853,87 +759,31 @@ ul {
 
 /* Position Classes */
 .pos1-4 {
-<<<<<<< HEAD
-  background: linear-gradient(
-    90deg,
-    rgba(16, 185, 129, 0.1),
-    rgba(16, 185, 129, 0.05)
-  );
-=======
   background: linear-gradient(90deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
->>>>>>> 59feaf8 (.)
   border-left: 4px solid var(--success);
 }
 
 .pos5-6 {
-<<<<<<< HEAD
-  background: linear-gradient(
-    90deg,
-    rgba(245, 158, 11, 0.1),
-    rgba(245, 158, 11, 0.05)
-  );
-=======
   background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), rgba(245, 158, 11, 0.05));
->>>>>>> 59feaf8 (.)
   border-left: 4px solid var(--warning);
 }
 
 .pos7-12 {
-<<<<<<< HEAD
-  background: linear-gradient(
-    90deg,
-    rgba(59, 130, 246, 0.1),
-    rgba(59, 130, 246, 0.05)
-  );
-=======
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
->>>>>>> 59feaf8 (.)
   border-left: 4px solid var(--info);
 }
 
 .pos17-20 {
-<<<<<<< HEAD
-  background: linear-gradient(
-    90deg,
-    rgba(239, 68, 68, 0.1),
-    rgba(239, 68, 68, 0.05)
-  );
-=======
   background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
->>>>>>> 59feaf8 (.)
   border-left: 4px solid var(--error);
 }
 
 .cruzeiro {
-<<<<<<< HEAD
-  background: linear-gradient(
-    90deg,
-    rgba(0, 51, 160, 0.15),
-    rgba(0, 51, 160, 0.05)
-  ) !important;
-=======
   background: linear-gradient(90deg, rgba(0, 51, 160, 0.15), rgba(0, 51, 160, 0.05)) !important;
->>>>>>> 59feaf8 (.)
   border-left: 4px solid var(--primary) !important;
   position: relative;
 }
 
-<<<<<<< HEAD
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translateY(-50%) scale(1.2);
-  }
-}
-
-
-=======
->>>>>>> 59feaf8 (.)
 /* ================= LEGEND ================= */
 .legend-container {
   margin-top: var(--space-8);
@@ -969,15 +819,7 @@ ul {
 }
 
 .legend-item.special {
-<<<<<<< HEAD
-  background: linear-gradient(
-    135deg,
-    rgba(0, 51, 160, 0.1),
-    rgba(255, 215, 0, 0.1)
-  );
-=======
   background: linear-gradient(135deg, rgba(0, 51, 160, 0.1), rgba(255, 215, 0, 0.1));
->>>>>>> 59feaf8 (.)
   border: 1px solid var(--accent);
 }
 
@@ -1004,10 +846,6 @@ ul {
   background: var(--primary);
 }
 
-<<<<<<< HEAD
-
-=======
->>>>>>> 59feaf8 (.)
 .legend-text {
   font-size: 0.875rem;
   font-weight: 500;
@@ -1021,11 +859,7 @@ ul {
   bottom: 20px;
   z-index: 1000;
 }
-<<<<<<< HEAD
-/* Estilo do toggle do widget na navbar */
-=======
 
->>>>>>> 59feaf8 (.)
 .nav-link.widget-toggle {
   cursor: pointer;
 }
@@ -1034,10 +868,6 @@ ul {
   font-size: 1rem;
 }
 
-<<<<<<< HEAD
-/* Caixa principal do widget */
-=======
->>>>>>> 59feaf8 (.)
 .games-widget {
   position: fixed;
   right: 20px;
@@ -1063,10 +893,6 @@ ul {
   transform: translateY(0);
 }
 
-<<<<<<< HEAD
-/* Cabeçalho do widget */
-=======
->>>>>>> 59feaf8 (.)
 .widget-header {
   background: var(--primary);
   color: white;
@@ -1084,10 +910,6 @@ ul {
   gap: 8px;
 }
 
-<<<<<<< HEAD
-/* Botão de fechar */
-=======
->>>>>>> 59feaf8 (.)
 .widget-close {
   background: transparent;
   border: none;
@@ -1108,10 +930,6 @@ ul {
   transform: rotate(90deg);
 }
 
-<<<<<<< HEAD
-/* Filtros */
-=======
->>>>>>> 59feaf8 (.)
 .widget-filters {
   display: flex;
   gap: 8px;
@@ -1120,10 +938,7 @@ ul {
   overflow-x: auto;
   scrollbar-width: none;
 }
-<<<<<<< HEAD
-=======
 
->>>>>>> 59feaf8 (.)
 .widget-filters::-webkit-scrollbar {
   display: none;
 }
@@ -1147,10 +962,6 @@ ul {
   border-color: var(--primary);
 }
 
-<<<<<<< HEAD
-/* Lista de jogos */
-=======
->>>>>>> 59feaf8 (.)
 .games-list {
   flex: 1;
   overflow-y: auto;
@@ -1164,11 +975,7 @@ ul {
   transition: all 0.3s ease;
   margin-bottom: 12px;
   border-radius: 12px;
-<<<<<<< HEAD
-  margin-bottom: 12px;
-=======
   padding: 12px;
->>>>>>> 59feaf8 (.)
   border-left: 4px solid transparent;
 }
 
@@ -1191,10 +998,7 @@ ul {
   font-weight: 600;
   color: var(--primary);
   margin-bottom: 8px;
-<<<<<<< HEAD
-=======
   font-size: 0.875rem;
->>>>>>> 59feaf8 (.)
 }
 
 .jogo-times {
@@ -1209,10 +1013,7 @@ ul {
   display: flex;
   align-items: center;
   gap: 8px;
-<<<<<<< HEAD
-=======
   font-size: 0.875rem;
->>>>>>> 59feaf8 (.)
 }
 
 .jogo-times .time.destaque {
@@ -1223,10 +1024,7 @@ ul {
 .jogo-times .vs {
   font-weight: 600;
   color: var(--gray-500);
-<<<<<<< HEAD
-=======
   font-size: 0.75rem;
->>>>>>> 59feaf8 (.)
 }
 
 .jogo-times img {
@@ -1236,16 +1034,6 @@ ul {
 }
 
 .jogo-campeonato {
-<<<<<<< HEAD
-  font-size: 0.8rem;
-  color: var(--gray-600);
-  text-align: center;
-  padding-top: 4px;
-  border-top: 1px dashed var(--gray-200);
-}
-
-/* Estados */
-=======
   font-size: 0.75rem;
   color: var(--gray-600);
   text-align: center;
@@ -1253,7 +1041,6 @@ ul {
   border-top: 1px dashed var(--gray-200);
 }
 
->>>>>>> 59feaf8 (.)
 .loading-jogos,
 .error-jogos,
 .sem-jogos {
@@ -1290,26 +1077,6 @@ ul {
   color: var(--gray-400);
 }
 
-<<<<<<< HEAD
-/* Responsividade */
-@media (max-width: 768px) {
-  .games-widget {
-    width: calc(100% - 40px);
-    left: 20px;
-    right: 20px;
-  }
-}
-
-/* Animação spinner */
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* ================= FOOTER ================= */
-
-=======
 /* ================= COPA DO BRASIL STYLES ================= */
 .fase-copa {
   margin-bottom: var(--space-8);
@@ -1416,7 +1183,6 @@ ul {
 }
 
 /* ================= FOOTER ================= */
->>>>>>> 59feaf8 (.)
 .footer {
   background: #1a1a1a;
   color: white;
@@ -1513,23 +1279,6 @@ ul {
   .nav-link.widget-toggle i {
     font-size: 25px;
   }
-<<<<<<< HEAD
-}
-
-@media (max-width: 1024px) {
-  .games-widget {
-    left: var(--space-4);
-    width: 320px;
-  }
-
-  .live-match-container {
-    bottom: var(--space-4);
-    right: var(--space-4);
-  }
-}
-
-@media (max-width: 768px) {
-=======
 
   .aviso-sem-jogos-copa {
     flex-direction: column;
@@ -1541,7 +1290,6 @@ ul {
     margin-bottom: var(--space-2);
   }
 
->>>>>>> 59feaf8 (.)
   .games-widget {
     width: 90vw !important;
     max-width: 400px !important;
@@ -1557,20 +1305,7 @@ ul {
     bottom: 20px;
     z-index: 1000;
   }
-<<<<<<< HEAD
-  .games-widget {
-    display: none;
-  }
 
-  .games-widget.visible {
-    display: block;
-  }
-}
-
-@media (max-width: 768px) {
-=======
-
->>>>>>> 59feaf8 (.)
   .hero {
     padding: 100px 0 60px;
   }
@@ -1620,8 +1355,6 @@ ul {
     width: 100%;
     max-width: none;
   }
-<<<<<<< HEAD
-=======
 
   .times-jogo-copa {
     grid-template-columns: 1fr;
@@ -1641,7 +1374,6 @@ ul {
   .time-visitante {
     order: 3;
   }
->>>>>>> 59feaf8 (.)
 }
 
 @media (max-width: 480px) {
@@ -1699,16 +1431,6 @@ ul {
     width: 12px;
     height: 12px;
   }
-<<<<<<< HEAD
-
-  .back-to-top {
-    width: 44px;
-    height: 44px;
-    bottom: var(--space-4);
-    right: var(--space-4);
-  }
-=======
->>>>>>> 59feaf8 (.)
 }
 
 /* ================= ANIMATIONS ================= */
@@ -1753,10 +1475,6 @@ ul {
   }
 }
 
-<<<<<<< HEAD
-/* Focus styles */
-=======
->>>>>>> 59feaf8 (.)
 button:focus-visible,
 select:focus-visible,
 a:focus-visible {
@@ -1764,10 +1482,6 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-<<<<<<< HEAD
-/* High contrast mode */
-=======
->>>>>>> 59feaf8 (.)
 @media (prefers-contrast: high) {
   .nav-link,
   .filter-btn,
