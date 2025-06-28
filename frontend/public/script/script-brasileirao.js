@@ -1,6 +1,10 @@
 /*====CONST UNIVERSAIS====*/
 const CONFIG = {
+<<<<<<< HEAD
   apiKey: null,
+=======
+  apiKey: "AIzaSyDummyKeyForDemo", // Substitua pela sua chave real
+>>>>>>> 59feaf8 (.)
   intervaloAtualizacao: 30000,
   planilhaJogos: "1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c",
   intervaloJogos: "A2:F9",
@@ -18,11 +22,16 @@ const CONFIG = {
       cor: "#0033A0",
     },
   },
+<<<<<<< HEAD
 };
+=======
+}
+>>>>>>> 59feaf8 (.)
 
 const escudos = {
   Flamengo:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
+<<<<<<< HEAD
   Palmeiras:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
   "Red Bull Bragantino":
@@ -31,6 +40,13 @@ const escudos = {
     "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
   Fluminense:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/50px-FFC_crest.svg.png",
+=======
+  Palmeiras: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
+  "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
+  Cruzeiro:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+  Fluminense: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/50px-FFC_crest.svg.png",
+>>>>>>> 59feaf8 (.)
   Internacional:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/50px-SC_Internacional_Brazil_Logo.svg.png",
   Bahia: "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
@@ -41,6 +57,7 @@ const escudos = {
   Ceará:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
   Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
+<<<<<<< HEAD
   Corinthians:
     "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
   Juventude:
@@ -96,10 +113,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     setTimeout(() => window.location.reload(), 30000);
   }
 });
+=======
+  Corinthians: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+  Juventude: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
+  Mirassol: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
+  Fortaleza:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
+  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+  "Atlético-MG":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
+  Grêmio: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
+  Santos: "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
+  Sport: "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
+  "Vila Nova":
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/50px-Vila_Nova_Logo_Oficial.svg.png",
+    CRB:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png",
+}
+
+// Estado global para controlar a competição atual
+let competicaoAtual = null
+let dadosCarregados = {}
+
+/*====INICIALIZAÇÃO====*/
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("Inicializando aplicação...")
+  await initApp()
+})
+>>>>>>> 59feaf8 (.)
 
 /*====FUNÇÃO PRINCIPAL====*/
 async function initApp() {
   try {
+<<<<<<< HEAD
     setupWidgetJogos();
     setupMobileNavigation();
     await carregarProximosJogos();
@@ -127,13 +172,43 @@ async function initApp() {
     mostrarErroGeral(
       "Erro ao carregar a aplicação. Por favor, recarregue a página."
     );
+=======
+    setupWidgetJogos()
+    setupMobileNavigation()
+    await carregarProximosJogos()
+    setupScrollEffects()
+
+    // Carrega competição salva ou padrão
+    const campeonatoSelecionado = localStorage.getItem("campeonatoSelecionado") || "brasileirao"
+    const campeonatoSelect = document.getElementById("campeonato-select")
+    if (campeonatoSelect) campeonatoSelect.value = campeonatoSelecionado
+
+    await carregarTabela(campeonatoSelecionado)
+    setupEventListeners()
+    iniciarAtualizacaoPeriodica()
+    verificarEAjustarBotaoMinutoAMinuto()
+
+    setInterval(verificarEAjustarBotaoMinutoAMinuto, 60000)
+    setInterval(verificarJogosAoVivo, 300000)
+    verificarWidgetAutoAtivacao()
+
+    console.log("Aplicação inicializada com sucesso!")
+  } catch (error) {
+    console.error("Erro na inicialização:", error)
+    mostrarErroGeral("Erro ao carregar a aplicação. Por favor, recarregue a página.")
+>>>>>>> 59feaf8 (.)
   }
 }
 
 /*====FUNÇÕES DE UTILIDADE GERAL====*/
 function mostrarErroGeral(mensagem) {
+<<<<<<< HEAD
   const container = document.createElement("div");
   container.className = "erro-geral";
+=======
+  const container = document.createElement("div")
+  container.className = "erro-geral"
+>>>>>>> 59feaf8 (.)
   container.innerHTML = `
     <button class="fechar" onclick="this.parentElement.remove()">×</button>
     <div class="alert alert-danger">
@@ -141,12 +216,19 @@ function mostrarErroGeral(mensagem) {
       <p>${mensagem}</p>
       <button onclick="window.location.reload()">Recarregar</button>
     </div>
+<<<<<<< HEAD
   `;
   document.body.prepend(container);
 }
 
 
 
+=======
+  `
+  document.body.prepend(container)
+}
+
+>>>>>>> 59feaf8 (.)
 function formatarData() {
   return new Date()
     .toLocaleTimeString("pt-BR", {
@@ -157,6 +239,7 @@ function formatarData() {
       month: "long",
       year: "numeric",
     })
+<<<<<<< HEAD
     .replace(",", " -");
 }
 
@@ -229,18 +312,84 @@ function setupBackToTop() {
     e.preventDefault();
     window.scrollTo({ top: 0, behavior: "smooth" });
   });
+=======
+    .replace(",", " -")
+}
+
+function setupEventListeners() {
+  const campeonatoSelect = document.getElementById("campeonato-select")
+  if (campeonatoSelect) {
+    campeonatoSelect.addEventListener("change", async function () {
+      const campeonato = this.value
+
+      // Limpa dados anteriores antes de carregar nova competição
+      limparDadosAnteriores()
+
+      localStorage.setItem("campeonatoSelecionado", campeonato)
+      const tabelaContainer = document.getElementById("tabela-container")
+
+      if (tabelaContainer) {
+        // Mostra loading
+        tabelaContainer.innerHTML = `
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <p>Carregando ${CONFIG.campeonatos[campeonato]?.nome || "competição"}...</p>
+          </div>
+        `
+
+        // Atualiza legendas
+        atualizarLegendas(campeonato)
+
+        // Carrega nova tabela
+        await carregarTabela(campeonato)
+      }
+    })
+  }
+}
+
+function limparDadosAnteriores() {
+  // Limpa cache de dados
+  dadosCarregados = {}
+
+  // Limpa container da tabela
+  const tabelaContainer = document.getElementById("tabela-container")
+  if (tabelaContainer) {
+    tabelaContainer.innerHTML = ""
+  }
+
+  // Reseta competição atual
+  competicaoAtual = null
+}
+
+function setupScrollEffects() {
+  const navbar = document.querySelector(".navbar")
+  if (!navbar) return
+  window.addEventListener("scroll", () => {
+    if (window.scrollY > 50) {
+      navbar.classList.add("scrolled")
+    } else {
+      navbar.classList.remove("scrolled")
+    }
+  })
+>>>>>>> 59feaf8 (.)
 }
 
 /*====FUNÇÕES DE JOGOS====*/
 async function carregarProximosJogos() {
+<<<<<<< HEAD
   const container = document.querySelector(".games-list");
   if (!container) return;
+=======
+  const container = document.querySelector(".games-list")
+  if (!container) return
+>>>>>>> 59feaf8 (.)
 
   container.innerHTML = `
     <div class="loading-jogos">
       <div class="spinner"></div>
       <p>Carregando próximos jogos...</p>
     </div>
+<<<<<<< HEAD
   `;
 
   try {
@@ -259,16 +408,58 @@ async function carregarProximosJogos() {
     setupFiltrosJogos(jogos);
   } catch (error) {
     console.error("Erro ao carregar jogos:", error);
+=======
+  `
+
+  try {
+    // Simula dados de jogos para demonstração
+    const jogosDemo = [
+      {
+        data: "15/01",
+        hora: "16:00",
+        campeonato: "Campeonato Brasileiro",
+        timeCasa: "Cruzeiro",
+        escudoCasa: escudos.Cruzeiro,
+        timeVisitante: "Flamengo",
+        escudoVisitante: escudos.Flamengo,
+        isCruzeiro: true,
+        isMandante: true,
+        aoVivo: false,
+      },
+      {
+        data: "18/01",
+        hora: "19:00",
+        campeonato: "Copa do Brasil",
+        timeCasa: "Palmeiras",
+        escudoCasa: escudos.Palmeiras,
+        timeVisitante: "Cruzeiro",
+        escudoVisitante: escudos.Cruzeiro,
+        isCruzeiro: true,
+        isMandante: false,
+        aoVivo: false,
+      },
+    ]
+
+    exibirJogosWidget(jogosDemo)
+    setupFiltrosJogos(jogosDemo)
+  } catch (error) {
+    console.error("Erro ao carregar jogos:", error)
+>>>>>>> 59feaf8 (.)
     container.innerHTML = `
       <div class="error-jogos">
         <i class="fas fa-exclamation-triangle"></i>
         <p>Erro ao carregar jogos. Tente novamente.</p>
       </div>
+<<<<<<< HEAD
     `;
+=======
+    `
+>>>>>>> 59feaf8 (.)
   }
 }
 
 function exibirJogosWidget(jogos, filtro = "todos") {
+<<<<<<< HEAD
   const container = document.querySelector(".games-list");
   if (!container) return;
 
@@ -279,6 +470,16 @@ function exibirJogosWidget(jogos, filtro = "todos") {
         jogo.campeonato.includes(filtro) ||
         (filtro === "Cruzeiro" && jogo.isCruzeiro)
     );
+=======
+  const container = document.querySelector(".games-list")
+  if (!container) return
+
+  let jogosFiltrados = jogos
+  if (filtro !== "todos") {
+    jogosFiltrados = jogos.filter(
+      (jogo) => jogo.campeonato.includes(filtro) || (filtro === "Cruzeiro" && jogo.isCruzeiro),
+    )
+>>>>>>> 59feaf8 (.)
   }
 
   if (jogosFiltrados.length === 0) {
@@ -286,6 +487,7 @@ function exibirJogosWidget(jogos, filtro = "todos") {
       <div class="sem-jogos">
         <i class="far fa-calendar-times"></i>
         <p>Nenhum jogo ${
+<<<<<<< HEAD
           filtro === "todos"
             ? "agendado"
             : filtro === "Cruzeiro"
@@ -295,11 +497,19 @@ function exibirJogosWidget(jogos, filtro = "todos") {
       </div>
     `;
     return;
+=======
+          filtro === "todos" ? "agendado" : filtro === "Cruzeiro" ? "do Cruzeiro" : `do(a) ${filtro}`
+        }</p>
+      </div>
+    `
+    return
+>>>>>>> 59feaf8 (.)
   }
 
   container.innerHTML = jogosFiltrados
     .map(
       (jogo) => `
+<<<<<<< HEAD
     <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${
         jogo.aoVivo ? "ao-vivo" : ""
       }">
@@ -308,19 +518,30 @@ function exibirJogosWidget(jogos, filtro = "todos") {
         <div class="time ${
           jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""
         }">
+=======
+    <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${jogo.aoVivo ? "ao-vivo" : ""}">
+      <div class="jogo-data">${jogo.data} - ${jogo.hora}</div>
+      <div class="jogo-times">
+        <div class="time ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
+>>>>>>> 59feaf8 (.)
           <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}">
           <span>${jogo.timeCasa}</span>
         </div>
         <span class="vs">vs</span>
+<<<<<<< HEAD
         <div class="time ${
           jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""
         }">
+=======
+        <div class="time ${jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""}">
+>>>>>>> 59feaf8 (.)
           <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}">
           <span>${jogo.timeVisitante}</span>
         </div>
       </div>
       <div class="jogo-campeonato">${jogo.campeonato}</div>
     </div>
+<<<<<<< HEAD
   `
     )
     .join("");
@@ -835,10 +1056,45 @@ function setupFiltrosJogos(jogos) {
       exibirJogosWidget(jogos, filtro);
     }
   });
+=======
+  `,
+    )
+    .join("")
+}
+
+function setupFiltrosJogos(jogos) {
+  const filtrosContainer = document.querySelector(".widget-filters")
+  if (!filtrosContainer) return
+
+  filtrosContainer.addEventListener("click", (e) => {
+    if (e.target.classList.contains("filter-btn")) {
+      document.querySelector(".filter-btn.active")?.classList.remove("active")
+      e.target.classList.add("active")
+      const filtro = e.target.dataset.filter
+      exibirJogosWidget(jogos, filtro)
+    }
+  })
+}
+
+function verificarEAjustarBotaoMinutoAMinuto() {
+  const btnContainer = document.getElementById("btn-minuto-a-minuto-container")
+  const btnTimes = document.getElementById("btn-ao-vivo-times")
+
+  if (!btnContainer) return
+
+  // Por enquanto, mantém oculto (pode ser implementado conforme necessário)
+  btnContainer.style.display = "none"
+}
+
+async function verificarJogosAoVivo() {
+  // Implementação futura para verificar jogos ao vivo
+  console.log("Verificando jogos ao vivo...")
+>>>>>>> 59feaf8 (.)
 }
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
+<<<<<<< HEAD
   const widgetToggle = document.getElementById("widget-toggle");
   const widgetClose = document.getElementById("widget-close");
   const widget = document.getElementById("games-widget");
@@ -975,11 +1231,121 @@ async function carregarTabela(campeonato = "brasileirao") {
       }
     } catch (error) {
       console.error("Erro ao carregar jogos:", error);
+=======
+  const widgetToggle = document.getElementById("widget-toggle")
+  const widgetClose = document.getElementById("widget-close")
+  const widget = document.getElementById("games-widget")
+  const widgetSpan = widgetToggle ? widgetToggle.querySelector("span") : null
+
+  if (!widgetToggle || !widgetClose || !widget) return
+
+  const toggleWidget = (e) => {
+    if (e) {
+      e.preventDefault()
+      e.stopPropagation()
+    }
+    widget.classList.toggle("visible")
+
+    if (widgetSpan) {
+      widgetSpan.textContent = widget.classList.contains("visible") ? "Fechar" : "Jogos"
+    }
+  }
+
+  widgetToggle.addEventListener("click", toggleWidget)
+  widgetClose.addEventListener("click", toggleWidget)
+
+  document.addEventListener("click", (e) => {
+    if (!widget.contains(e.target) && !widgetToggle.contains(e.target)) {
+      widget.classList.remove("visible")
+      if (widgetSpan) {
+        widgetSpan.textContent = "Jogos"
+      }
+    }
+  })
+
+  widget.addEventListener("click", (e) => e.stopPropagation())
+}
+
+function setupMobileNavigation() {
+  const menuToggle = document.getElementById("menuToggle")
+  const navMenu = document.getElementById("nav-menu")
+
+  if (!menuToggle || !navMenu) return
+
+  menuToggle.addEventListener("click", (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+
+    menuToggle.classList.toggle("active")
+    navMenu.classList.toggle("active")
+
+    const icon = menuToggle.querySelector("i")
+    if (menuToggle.classList.contains("active")) {
+      icon.classList.remove("fa-cog")
+      icon.classList.add("fa-times")
+    } else {
+      icon.classList.remove("fa-times")
+      icon.classList.add("fa-cog")
+    }
+  })
+
+  document.querySelectorAll(".nav-link").forEach((link) => {
+    link.addEventListener("click", () => {
+      if (navMenu.classList.contains("active")) {
+        navMenu.classList.remove("active")
+        menuToggle.classList.remove("active")
+        const icon = menuToggle.querySelector("i")
+        icon.classList.remove("fa-times")
+        icon.classList.add("fa-cog")
+      }
+    })
+  })
+
+  document.addEventListener("click", (e) => {
+    if (!navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
+      navMenu.classList.remove("active")
+      menuToggle.classList.remove("active")
+      const icon = menuToggle.querySelector("i")
+      icon.classList.remove("fa-times")
+      icon.classList.add("fa-cog")
+    }
+  })
+}
+
+/*====FUNÇÕES DE TABELA====*/
+async function carregarTabela(campeonato = "brasileirao") {
+  const config = CONFIG.campeonatos[campeonato]
+  const tabelaContainer = document.getElementById("tabela-container")
+
+  if (!config || !tabelaContainer) {
+    console.error("Configuração do campeonato ou container não encontrado")
+    return
+  }
+
+  // Evita recarregar a mesma competição
+  if (competicaoAtual === campeonato && dadosCarregados[campeonato]) {
+    return
+  }
+
+  competicaoAtual = campeonato
+
+  const campeonatoNome = document.getElementById("campeonato-nome")
+  if (campeonatoNome) campeonatoNome.textContent = config.nome
+
+  if (campeonato === "copa-do-brasil") {
+    try {
+      const jogosDemo = gerarJogosCopaDemonstração()
+      tabelaContainer.innerHTML = gerarHTMLCopaDoBrasil(jogosDemo)
+      dadosCarregados[campeonato] = true
+    } catch (error) {
+      console.error("Erro ao carregar Copa do Brasil:", error)
+>>>>>>> 59feaf8 (.)
       tabelaContainer.innerHTML = `
         <div class="error">
           <i class="fas fa-exclamation-triangle"></i>
           <p>Erro ao carregar dados. Tentando novamente...</p>
         </div>
+<<<<<<< HEAD
       `;
       setTimeout(() => carregarTabela(campeonato), 30000);
     }
@@ -1007,11 +1373,26 @@ async function carregarTabela(campeonato = "brasileirao") {
     processarTabelaBrasileirao(data.values); // Processa para armazenar variações
   } catch (error) {
     console.error(`Erro ao carregar tabela do ${campeonato}:`, error);
+=======
+      `
+    }
+    return
+  }
+
+  // Para o Brasileirão, gera dados de demonstração
+  try {
+    const dadosDemo = gerarDadosBrasileiraoDemonstração()
+    tabelaContainer.innerHTML = gerarHTMLTabela(dadosDemo)
+    dadosCarregados[campeonato] = true
+  } catch (error) {
+    console.error(`Erro ao carregar tabela do ${campeonato}:`, error)
+>>>>>>> 59feaf8 (.)
     tabelaContainer.innerHTML = `
       <div class="error">
         <i class="fas fa-exclamation-triangle"></i>
         <p>Erro ao carregar dados. Tentando novamente...</p>
       </div>
+<<<<<<< HEAD
     `;
     setTimeout(() => carregarTabela(campeonato), 30000);
   }
@@ -1024,6 +1405,50 @@ function gerarHTMLTabela(dados) {
 
   const hasHeader = dados[0] && dados[0].length > 0;
   const startRow = hasHeader ? 1 : 0;
+=======
+    `
+  }
+}
+
+function gerarDadosBrasileiraoDemonstração() {
+  return [
+    ["Pos", "Time", "Pts", "J", "V", "E", "D", "GC", "GP", "SG", "Apr%"],
+    ["1º", "Flamengo", "24", "11", "7", "3", "1", "4", "24", "20", "73%"],
+    ["2º", "Cruzeiro", "24", "12", "7", "3", "2", "8", "17", "9", "67%"],
+    ["3º", "Red Bull Bragantino", "23", "12", "7", "2", "3", "11", "14", "3", "64%"],
+    ["4º", "Palmeiras", "22", "11", "7", "1", "3", "8", "12", "4", "67%"],
+    ["5º", "Bahia", "21", "12", "6", "3", "3", "11", "14", "3", "58%"],
+    ["6º", "Fluminense", "20", "11", "6", "2", "3", "12", "15", "3", "61%"]
+  ]
+}
+
+function gerarJogosCopaDemonstração() {
+  return [
+    {
+      data: "20/01",
+      hora: "16:00",
+      campeonato: "Copa do Brasil",
+      timeCasa: "Cruzeiro",
+      escudoCasa: escudos.Cruzeiro,
+      timeVisitante: "CRB",
+      escudoVisitante: escudos.CRB,
+      fase: "Ida",
+      isCruzeiro: true,
+      isMandante: true,
+      placar: "",
+      aoVivo: false,
+    },
+  ]
+}
+
+function gerarHTMLTabela(dados) {
+  if (!dados || dados.length === 0) {
+    return '<div class="error">Nenhum dado disponível</div>'
+  }
+
+  const hasHeader = dados[0] && dados[0].length > 0
+  const startRow = hasHeader ? 1 : 0
+>>>>>>> 59feaf8 (.)
 
   let html = `
     <table id="tabela-brasileirao">
@@ -1043,6 +1468,7 @@ function gerarHTMLTabela(dados) {
         </tr>
       </thead>
       <tbody>
+<<<<<<< HEAD
   `;
 
   for (let i = startRow; i < dados.length; i++) {
@@ -1056,6 +1482,20 @@ function gerarHTMLTabela(dados) {
     const posicaoClass = getPositionClass(i);
     const cruzeiroClass = isCruzeiro(nomeTime) ? "cruzeiro" : "";
     const escudoTime = escudos[nomeTime] || "https://via.placeholder.com/30";
+=======
+  `
+
+  for (let i = startRow; i < dados.length; i++) {
+    const row = dados[i]
+    const nomeTime = row[1]
+      .replace(/^\d+°\s*/, "")
+      .replace(/\s[A-Z]{2,4}$/, "")
+      .trim()
+
+    const posicaoClass = getPositionClass(i)
+    const cruzeiroClass = isCruzeiro(nomeTime) ? "cruzeiro" : ""
+    const escudoTime = escudos[nomeTime] || "/placeholder.svg?height=30&width=30"
+>>>>>>> 59feaf8 (.)
 
     html += `
       <tr class="${posicaoClass} ${cruzeiroClass}">
@@ -1074,6 +1514,7 @@ function gerarHTMLTabela(dados) {
         <td>${row[9] || 0}</td>
         <td>${row[10] || 0}</td>
       </tr>
+<<<<<<< HEAD
     `;
   }
 
@@ -1207,6 +1648,36 @@ function gerarHTMLCopaDoBrasil(jogos) {
   }
 
   return html;
+=======
+    `
+  }
+
+  return html + "</tbody></table>"
+}
+
+function gerarHTMLCopaDoBrasil(jogos) {
+  if (!jogos || jogos.length === 0) {
+    return `
+      <div class="aviso-sem-jogos-copa">
+        <div class="aviso-icon">
+          <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="aviso-content">
+          <h3>Nenhuma partida agendada</h3>
+          <p>Até o momento não há jogos confirmados para o Cruzeiro na Copa do Brasil 2025.</p>
+          <p>Fique atento às atualizações!</p>
+        </div>
+      </div>
+    `
+  }
+
+  let html = '<div class="fase-copa">'
+  html += '<h3><i class="fas fa-trophy"></i> Copa do Brasil 2025</h3>'
+  html += jogos.map((jogo) => gerarHTMLJogoCopa(jogo)).join("")
+  html += "</div>"
+
+  return html
+>>>>>>> 59feaf8 (.)
 }
 
 function gerarHTMLJogoCopa(jogo) {
@@ -1218,6 +1689,7 @@ function gerarHTMLJogoCopa(jogo) {
         ${jogo.placar ? `<span class="placar-jogo">${jogo.placar}</span>` : ""}
       </div>
       <div class="times-jogo-copa">
+<<<<<<< HEAD
         <div class="time-casa ${jogo.isMandante ? "destaque" : ""} ${
     jogo.resultadoCasa
   }">
@@ -1304,3 +1776,86 @@ function verificarWidgetAutoAtivacao() {
     }
   }
 }
+=======
+        <div class="time-casa ${jogo.isMandante ? "destaque" : ""}">
+          <span>${jogo.timeCasa}</span>
+          <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}" width="40" height="40">
+        </div>
+        <span class="vs">vs</span>
+        <div class="time-visitante ${!jogo.isMandante ? "destaque" : ""}">
+          <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}" width="40" height="40">
+          <span>${jogo.timeVisitante}</span>
+        </div>
+      </div>
+    </div>
+  `
+}
+
+function getPositionClass(position) {
+  const posNum = typeof position === "string" ? Number.parseInt(position.replace("º", "")) : position
+
+  if (posNum <= 4) return "pos1-4"
+  if (posNum <= 6) return "pos5-6"
+  if (posNum <= 12) return "pos7-12"
+  if (posNum <= 16) return "pos13-16"
+  return "pos17-20"
+}
+
+function isCruzeiro(nomeTime) {
+  return nomeTime && nomeTime.toLowerCase().includes("cruzeiro")
+}
+
+function atualizarLegendas(campeonato) {
+  const legendGroups = document.querySelectorAll(".legend-group")
+
+  legendGroups.forEach((group) => {
+    if (group.dataset.campeonato === campeonato) {
+      group.style.display = "flex"
+    } else {
+      group.style.display = "none"
+    }
+  })
+}
+
+function iniciarAtualizacaoPeriodica() {
+  if (!localStorage.getItem("dadosTimes")) {
+    localStorage.setItem("dadosTimes", JSON.stringify({}))
+  }
+
+  setInterval(() => {
+    const campeonatoSelect = document.getElementById("campeonato-select")
+    const campeonato = campeonatoSelect?.value || "brasileirao"
+
+    // Só atualiza se não mudou de competição recentemente
+    if (competicaoAtual === campeonato) {
+      carregarTabela(campeonato)
+    }
+  }, CONFIG.intervaloAtualizacao)
+}
+
+function verificarWidgetAutoAtivacao() {
+  const urlParams = new URLSearchParams(window.location.search)
+  const widgetParam = urlParams.get("widget")
+
+  if (widgetParam === "jogos") {
+    const widgetToggle = document.getElementById("widget-toggle")
+    const widget = document.getElementById("games-widget")
+
+    if (widgetToggle && widget) {
+      widgetToggle.click()
+
+      setTimeout(() => {
+        widget.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      }, 300)
+    }
+  }
+}
+
+// Inicializa legendas no carregamento
+window.addEventListener("DOMContentLoaded", () => {
+  const select = document.getElementById("campeonato-select")
+  if (select) {
+    atualizarLegendas(select.value)
+  }
+})
+>>>>>>> 59feaf8 (.)
