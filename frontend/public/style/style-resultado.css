@@ -1605,7 +1605,56 @@ ul {
     font-size: 0.85rem;
   }
 }
+/* ================= RESPONSIVE ADJUSTMENTS FOR SMALL PHONES ================= */
+@media (max-width: 400px) {
+  /* Break vertical em telas muito pequenas */
+  .stat-breakdown {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+  
+  .breakdown-item {
+    text-align: left;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-3);
+  }
+  
+  /* Ajustar tamanhos para caber melhor */
+  .stat-value {
+    font-size: 2rem;
+  }
+  
+  .stat-title {
+    font-size: 1rem;
+  }
+  
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    font-size: 1.25rem;
+  }
+}
 
+@media (max-width: 340px) {
+  /* Ajustes adicionais para telas extremamente pequenas */
+  .stat-card {
+    padding: var(--space-3);
+  }
+  
+  .stat-header {
+    margin-bottom: var(--space-3);
+  }
+  
+  .breakdown-value {
+    font-size: 1rem;
+  }
+  
+  .breakdown-label {
+    font-size: 0.7rem;
+  }
+}
 /* ================= ANIMATIONS ================= */
 @keyframes fadeInUp {
   from {

@@ -94,8 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 /*====FUNÇÃO PRINCIPAL====*/
 async function initApp() {
   try {
-    setupWidgetJogos()
-    setupMobileNavigation()
+    setupWidgetJogos()   
     await carregarProximosJogos()
     setupScrollEffects()
 
@@ -173,6 +172,24 @@ function setupEventListeners() {
         // Carrega nova tabela
         await carregarTabela(campeonato)
       }
+    })
+  }
+    // Mobile menu toggle
+  const menuToggle = document.getElementById("menuToggle")
+  const navMenu = document.getElementById("nav-menu")
+
+  if (menuToggle && navMenu) {
+    menuToggle.addEventListener("click", () => {
+      menuToggle.classList.toggle("active")
+      navMenu.classList.toggle("active")
+    })
+
+    // Close menu when clicking on links
+    navMenu.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        menuToggle.classList.remove("active")
+        navMenu.classList.remove("active")
+      })
     })
   }
 }
@@ -515,55 +532,6 @@ function setupWidgetJogos() {
 
   // Impede que cliques dentro do widget fechem ele
   widget.addEventListener("click", (e) => e.stopPropagation())
-}
-
-function setupMobileNavigation() {
-  const menuToggle = document.getElementById("menuToggle")
-  const navMenu = document.getElementById("nav-menu")
-
-  if (!menuToggle || !navMenu) return
-
-  menuToggle.addEventListener("click", (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-
-    menuToggle.classList.toggle("active")
-    navMenu.classList.toggle("active")
-
-    // Atualiza o ícone
-    const icon = menuToggle.querySelector("i")
-    if (menuToggle.classList.contains("active")) {
-      icon.classList.remove("fa-cog")
-      icon.classList.add("fa-times")
-    } else {
-      icon.classList.remove("fa-times")
-      icon.classList.add("fa-cog")
-    }
-  })
-
-  // Fecha o menu ao clicar em um link
-  document.querySelectorAll(".nav-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      if (navMenu.classList.contains("active")) {
-        navMenu.classList.remove("active")
-        menuToggle.classList.remove("active")
-        const icon = menuToggle.querySelector("i")
-        icon.classList.remove("fa-times")
-        icon.classList.add("fa-cog")
-      }
-    })
-  })
-
-  // Fecha o menu ao clicar fora
-  document.addEventListener("click", (e) => {
-    if (!navMenu.contains(e.target) && !menuToggle.contains(e.target)) {
-      navMenu.classList.remove("active")
-      menuToggle.classList.remove("active")
-      const icon = menuToggle.querySelector("i")
-      icon.classList.remove("fa-times")
-      icon.classList.add("fa-cog")
-    }
-  })
 }
 
 /*====FUNÇÕES DE TABELA====*/
