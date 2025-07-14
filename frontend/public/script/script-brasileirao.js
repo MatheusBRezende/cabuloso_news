@@ -105,8 +105,12 @@ async function initApp() {
     await carregarTabela(campeonatoSelecionado)
     setupEventListeners()
     iniciarAtualizacaoPeriodica()
+    
+    // Verifica imediatamente ao carregar a página
     verificarEAjustarBotaoMinutoAMinuto()
+    verificarJogosAoVivo() // Verifica também aqui para garantir
 
+    // Intervalos de verificação
     setInterval(verificarEAjustarBotaoMinutoAMinuto, 60000)
     setInterval(verificarJogosAoVivo, 300000)
     verificarWidgetAutoAtivacao()
@@ -485,13 +489,40 @@ function verificarEAjustarBotaoMinutoAMinuto() {
   const btnContainer = document.getElementById("btn-minuto-a-minuto-container")
   if (!btnContainer) return
 
-  // Por enquanto mantém oculto - pode ser implementado conforme necessário
-  btnContainer.style.display = "none"
+  // Verifica se há algum jogo ao vivo do Cruzeiro
+  const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro')
+  
+  if (jogosAoVivo.length > 0) {
+    // Mostra o botão e atualiza as informações
+    btnContainer.style.display = "block"
+    const primeiroJogo = jogosAoVivo[0]
+    const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || ''
+    const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || ''
+    
+    document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`
+    
+    // Adiciona link para o minuto a minuto
+    const link = btnContainer.querySelector('a')
+    if (link) {
+      link.href = `minuto-a-minuto.html?jogo=${encodeURIComponent(timeCasa + '-' + timeVisitante)}`
+    }
+  } else {
+    btnContainer.style.display = "none"
+  }
 }
 
 async function verificarJogosAoVivo() {
   console.log("Verificando jogos ao vivo...")
-  // Implementação futura para verificar jogos ao vivo
+  
+  try {
+    // Atualiza a lista de jogos primeiro
+    await carregarProximosJogos()
+    
+    // Depois verifica se há jogos ao vivo
+    verificarEAjustarBotaoMinutoAMinuto()
+  } catch (error) {
+    console.error("Erro ao verificar jogos ao vivo:", error)
+  }
 }
 
 /*====FUNÇÕES DE WIDGET====*/
