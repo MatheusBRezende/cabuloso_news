@@ -419,7 +419,7 @@ async function loadMiniTable() {
     if (!html.includes("cruzeiro-row")) {
       const cruzeiroRow = data.values.find((row) => row[1].includes("Cruzeiro"));
       if (cruzeiroRow) {
-        const pos = parseInt(cruzeiroRow[0]);
+        const pos = parseInt(cruzeiroRow[0].replace('º', '')); // Extrai o número da posição
         html += `
           <tr class="cruzeiro-row">
             <td>${pos}º</td>
@@ -430,20 +430,17 @@ async function loadMiniTable() {
             <td>${cruzeiroRow[2] || 0}</td>
           </tr>
         `;
+        
+        // Atualiza stat card com a posição correta
+        const positionStat = document.getElementById('position-stat');
+        if (positionStat) {
+          positionStat.textContent = `${pos}º lugar`;
+        }
       }
     }
     
     document.getElementById("mini-tabela").innerHTML = html;
     updateStatusIndicator('table-update', 'online');
-    
-    // Atualiza stat card
-    const cruzeiroRow = data.values.find((row) => row[1].includes("Cruzeiro"));
-    if (cruzeiroRow) {
-      const positionStat = document.getElementById('position-stat');
-      if (positionStat) {
-        positionStat.textContent = `${parseInt(cruzeiroRow[0])}º lugar`;
-      }
-    }
     
   } catch (error) {
     console.error("Erro ao carregar tabela:", error);
