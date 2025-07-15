@@ -441,7 +441,7 @@ async function loadMiniTable() {
     if (cruzeiroRow) {
       const positionStat = document.getElementById('position-stat');
       if (positionStat) {
-        const position = cruzeiroRow[0].match(/\d+/)?.[0] || '?';
+        const position = cruzeiroRow[1].match(/\d+/)?.[0] || '?';
         positionStat.textContent = `${position}º lugar`;
       }
     }
