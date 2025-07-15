@@ -1,12 +1,11 @@
 /*====CONFIGURAÇÕES GLOBAIS====*/
 const CONFIG = {
   apiKey: null,
-  updateInterval: 30000, // 30 segundos
+  updateInterval: 30000, 
   retryAttempts: 3,
   retryDelay: 2000
 };
 
-// Estado global da aplicação
 const AppState = {
   isLoading: true,
   lastUpdate: null,
