@@ -419,7 +419,7 @@ async function loadMiniTable() {
     if (!html.includes("cruzeiro-row")) {
       const cruzeiroRow = data.values.find((row) => row[1].includes("Cruzeiro"));
       if (cruzeiroRow) {
-        const pos = parseInt(cruzeiroRow[0]);
+        const pos = cruzeiroRow[0].match(/\d+/)?.[0] || '?';
         html += `
           <tr class="cruzeiro-row">
             <td>${pos}º</td>
@@ -436,12 +436,13 @@ async function loadMiniTable() {
     document.getElementById("mini-tabela").innerHTML = html;
     updateStatusIndicator('table-update', 'online');
     
-    // Atualiza stat card
+    // Atualiza stat card - CORREÇÃO APLICADA AQUI
     const cruzeiroRow = data.values.find((row) => row[1].includes("Cruzeiro"));
     if (cruzeiroRow) {
       const positionStat = document.getElementById('position-stat');
       if (positionStat) {
-        positionStat.textContent = `${parseInt(cruzeiroRow[0])}º lugar`;
+        const position = cruzeiroRow[0].match(/\d+/)?.[0] || '?';
+        positionStat.textContent = `${position}º lugar`;
       }
     }
     
