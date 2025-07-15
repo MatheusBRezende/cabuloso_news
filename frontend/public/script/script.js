@@ -391,7 +391,7 @@ async function loadMiniTable() {
   try {
     const response = await retryWithBackoff(async () => {
       const res = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0/values/A1:M6?key=${CONFIG.apiKey}`
+        `https://sheets.googleapis.com/v4/spreadsheets/1ubZ_5cXZYLLcFQnHGAqsWMDn59arVI8JynTpf4-kOa0/values/A1:M21?key=${CONFIG.apiKey}`
       );
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res;
@@ -400,46 +400,49 @@ async function loadMiniTable() {
     const data = await response.json();
     let html = "";
     
-    data.values.slice(1, 6).forEach((row, index) => {
-      const isCruzeiro = row[1].includes("Cruzeiro");
-      html += `
-        <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
-          <td>${index + 1}º</td>
-          <td class="team-cell">
-            <img src="${getTeamLogo(row[1])}" class="team-logo" alt="${row[1]}" loading="lazy">
-            ${cleanTeamName(row[1])}
-          </td>
-          <td>${row[2] || 0}</td>
-        </tr>
-      `;
-    });
-    
-    // Adiciona Cruzeiro se não estiver no top 5
-    if (!html.includes("cruzeiro-row")) {
-      const cruzeiroRow = data.values.find((row) => row[1].includes("Cruzeiro"));
-      if (cruzeiroRow) {
-        const pos = parseInt(cruzeiroRow[0].replace('º', '')); // Extrai o número da posição
+    // Processa os dados da planilha no novo formato
+    data.values.slice(1).forEach((row) => {
+      if (!row[0] || !row[1]) return; // Ignora linhas vazias
+      
+      // Extrai posição e nome do time da primeira coluna
+      const match = row[0].match(/(\d+)°\s*([^\n]+)/);
+      if (!match) return;
+      
+      const pos = match[1];
+      const teamName = match[2].trim();
+      const points = row[1];
+      
+      const isCruzeiro = teamName.includes("Cruzeiro");
+      
+      // Mostra apenas os 5 primeiros + Cruzeiro (se não estiver no top 5)
+      if (parseInt(pos) <= 5 || isCruzeiro) {
         html += `
-          <tr class="cruzeiro-row">
+          <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
             <td>${pos}º</td>
             <td class="team-cell">
-              <img src="${getTeamLogo(cruzeiroRow[1])}" class="team-logo" alt="${cruzeiroRow[1]}" loading="lazy">
-              ${cleanTeamName(cruzeiroRow[1])}
+              <img src="${getTeamLogo(teamName)}" class="team-logo" alt="${teamName}" loading="lazy">
+              ${cleanTeamName(teamName)}
             </td>
-            <td>${cruzeiroRow[2] || 0}</td>
+            <td>${points || 0}</td>
           </tr>
         `;
-        
-        // Atualiza stat card com a posição correta
-        const positionStat = document.getElementById('position-stat');
-        if (positionStat) {
-          positionStat.textContent = `${pos}º lugar`;
-        }
       }
-    }
+    });
     
     document.getElementById("mini-tabela").innerHTML = html;
     updateStatusIndicator('table-update', 'online');
+    
+    // Atualiza o stat card com a posição do Cruzeiro
+    const cruzeiroRow = data.values.find(row => row[0] && row[0].includes("Cruzeiro"));
+    if (cruzeiroRow) {
+      const positionStat = document.getElementById('position-stat');
+      if (positionStat) {
+        const posMatch = cruzeiroRow[0].match(/(\d+)°/);
+        if (posMatch) {
+          positionStat.textContent = `${posMatch[1]}º lugar`;
+        }
+      }
+    }
     
   } catch (error) {
     console.error("Erro ao carregar tabela:", error);
