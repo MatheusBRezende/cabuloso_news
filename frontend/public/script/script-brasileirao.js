@@ -413,16 +413,41 @@ function formatarNomeCampeonato(nome) {
 
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "") {
-    return "/placeholder.svg?height=24&width=24"
+    return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
   }
 
-  const nomeLower = nomeTime.toLowerCase().trim()
-  const timeEncontrado = Object.keys(escudos).find(
-    (key) =>
-      key.toLowerCase() === nomeLower || nomeLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nomeLower),
-  )
+  // Normaliza o nome do time
+  const nomeNormalizado = nomeTime
+    .toLowerCase()
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^(ec|esporte clube|clube de regatas|sc)\s+/i, '')
+    .replace(/\s+(fc|cf)$/i, '');
 
-  return timeEncontrado ? escudos[timeEncontrado] : "/placeholder.svg?height=24&width=24"
+  // Verifica correspondência exata primeiro
+  for (const [key, value] of Object.entries(escudos)) {
+    const keyNormalizado = key
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+      .replace(/^(ec|esporte clube|clube de regatas|sc)\s+/i, '')
+      .replace(/\s+(fc|cf)$/i, '');
+
+    if (keyNormalizado === nomeNormalizado) {
+      return value;
+    }
+  }
+
+  // Verifica correspondência parcial
+  for (const [key, value] of Object.entries(escudos)) {
+    const keyNormalizado = key.toLowerCase();
+    if (nomeNormalizado.includes(keyNormalizado) || keyNormalizado.includes(nomeNormalizado)) {
+      return value;
+    }
+  }
+
+  // Fallback para placeholder
+  return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
 }
 
 function exibirJogosWidget(jogos, filtro = "todos") {
@@ -486,28 +511,34 @@ function setupFiltrosJogos(jogos) {
 }
 
 function verificarEAjustarBotaoMinutoAMinuto() {
-  const btnContainer = document.getElementById("btn-minuto-a-minuto-container")
-  if (!btnContainer) return
+  const btnContainer = document.getElementById("btn-minuto-a-minuto-container");
+  if (!btnContainer) return;
 
-  // Verifica se há algum jogo ao vivo do Cruzeiro
-  const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro')
+  const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro');
   
   if (jogosAoVivo.length > 0) {
-    // Mostra o botão e atualiza as informações
-    btnContainer.style.display = "block"
-    const primeiroJogo = jogosAoVivo[0]
-    const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || ''
-    const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || ''
+    btnContainer.style.display = "block";
+    const primeiroJogo = jogosAoVivo[0];
     
-    document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`
+    // Obter todos os dados necessários
+    const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || '';
+    const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || '';
+    const escudoCasa = primeiroJogo.querySelector('.time.destaque img')?.src || obterEscudoTime(timeCasa);
+    const escudoVisitante = primeiroJogo.querySelector('.time:not(.destaque) img')?.src || obterEscudoTime(timeVisitante);
+    const campeonato = primeiroJogo.querySelector('.jogo-campeonato')?.textContent || 'Campeonato Desconhecido';
     
-    // Adiciona link para o minuto a minuto
-    const link = btnContainer.querySelector('a')
+    document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`;
+    
+    const link = btnContainer.querySelector('a');
     if (link) {
-      link.href = `minuto-a-minuto.html?jogo=${encodeURIComponent(timeCasa + '-' + timeVisitante)}`
+      link.href = `minuto-a-minuto.html?timeCasa=${encodeURIComponent(timeCasa)}` +
+                  `&timeVisitante=${encodeURIComponent(timeVisitante)}` +
+                  `&escudoCasa=${encodeURIComponent(escudoCasa)}` +
+                  `&escudoVisitante=${encodeURIComponent(escudoVisitante)}` +
+                  `&campeonato=${encodeURIComponent(campeonato)}`;
     }
   } else {
-    btnContainer.style.display = "none"
+    btnContainer.style.display = "none";
   }
 }
 

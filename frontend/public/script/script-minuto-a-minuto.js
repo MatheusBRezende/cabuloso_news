@@ -38,18 +38,25 @@ document.addEventListener("DOMContentLoaded", async () => {
   const urlParams = new URLSearchParams(window.location.search);
   const jogoSalvo = localStorage.getItem("jogoAoVivo");
   jogoAoVivo = {
-    timeCasa: urlParams.get("timeCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).timeCasa : ""),
-    timeVisitante: urlParams.get("timeVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).timeVisitante : ""),
-    escudoCasa: urlParams.get("escudoCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).escudoCasa : ""),
-    escudoVisitante: urlParams.get("escudoVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).escudoVisitante : ""),
-    campeonato: urlParams.get("campeonato") || (jogoSalvo ? JSON.parse(jogoSalvo).campeonato : ""),
-    planilhaId: config.planilhaId,
+    timeCasa: urlParams.get("timeCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).timeCasa : "Time Casa"),
+    timeVisitante: urlParams.get("timeVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).timeVisitante : "Time Visitante"),
+    escudoCasa: urlParams.get("escudoCasa") || 
+               (jogoSalvo ? JSON.parse(jogoSalvo).escudoCasa : obterEscudoTime(urlParams.get("timeCasa"))),
+    escudoVisitante: urlParams.get("escudoVisitante") || 
+                   (jogoSalvo ? JSON.parse(jogoSalvo).escudoVisitante : obterEscudoTime(urlParams.get("timeVisitante"))),
+    campeonato: urlParams.get("campeonato") || (jogoSalvo ? JSON.parse(jogoSalvo).campeonato : "Campeonato"),
+    planilhaId: CONFIG.planilhaId,
   };
+
   Object.keys(jogoAoVivo).forEach((key) => {
-    if (jogoAoVivo[key] === null || jogoAoVivo[key] === undefined) jogoAoVivo[key] = "";
+    if (jogoAoVivo[key] === null || jogoAoVivo[key] === undefined) {
+      jogoAoVivo[key] = "";
+    }
   });
+
   localStorage.setItem("jogoAoVivo", JSON.stringify(jogoAoVivo));
   atualizarInformacoesJogo(jogoAoVivo);
+
 
   // Botão de atualização manual
   const btnAtualizar = document.getElementById("atualizar-dados");
