@@ -800,8 +800,9 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
 
 // ===================== ESCUDOS DOS TIMES =====================
 function obterEscudoTime(nomeTime) {
-  if (!nomeTime || nomeTime.trim() === "")
+  if (!nomeTime || nomeTime.trim() === "") {
     return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
+  }
   const escudos = {
   Flamengo:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
@@ -836,14 +837,20 @@ function obterEscudoTime(nomeTime) {
     CRB:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png",
   };
   const nomeLower = nomeTime.toLowerCase().trim();
+  
+  // Verifica correspondência exata primeiro
   for (const [key, value] of Object.entries(escudos)) {
     if (key.toLowerCase() === nomeLower) return value;
   }
+
+  // Verifica correspondência parcial
   for (const [key, value] of Object.entries(escudos)) {
-    if (key.toLowerCase().includes(nomeLower) || nomeLower.includes(key.toLowerCase())) {
+    if (nomeLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nomeLower)) {
       return value;
     }
   }
+
+  // Fallback para placeholder
   return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
 }
 
