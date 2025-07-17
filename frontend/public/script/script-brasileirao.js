@@ -527,42 +527,34 @@ async function verificarJogosAoVivo() {
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
-  const widgetToggle = document.getElementById("widget-toggle")
-  const widgetClose = document.getElementById("widget-close")
-  const widget = document.getElementById("games-widget")
-  const widgetSpan = widgetToggle ? widgetToggle.querySelector("span") : null
+  const widgetToggle = document.querySelector(".games-widget-container");
+  const widgetClose = document.getElementById("widget-close");
+  const widget = document.getElementById("games-widget");
 
-  if (!widgetToggle || !widgetClose || !widget) return
+  if (!widgetToggle || !widgetClose || !widget) return;
+
+  // Mostra o widget por padrão
+  widget.classList.add("visible");
 
   const toggleWidget = (e) => {
     if (e) {
-      e.preventDefault()
-      e.stopPropagation()
+      e.preventDefault();
+      e.stopPropagation();
     }
-    widget.classList.toggle("visible")
+    widgetToggle.classList.toggle("active");
+    widget.classList.toggle("visible");
+  };
 
-    // Atualiza o texto do botão
-    if (widgetSpan) {
-      widgetSpan.textContent = widget.classList.contains("visible") ? "Fechar" : "Jogos"
-    }
-  }
-
-  // Adiciona eventos
-  widgetToggle.addEventListener("click", toggleWidget)
-  widgetClose.addEventListener("click", toggleWidget)
+  widgetClose.addEventListener("click", toggleWidget);
 
   // Fecha ao clicar fora
   document.addEventListener("click", (e) => {
     if (!widget.contains(e.target) && !widgetToggle.contains(e.target)) {
-      widget.classList.remove("visible")
-      if (widgetSpan) {
-        widgetSpan.textContent = "Jogos"
-      }
+      widget.classList.remove("visible");
     }
-  })
+  });
 
-  // Impede que cliques dentro do widget fechem ele
-  widget.addEventListener("click", (e) => e.stopPropagation())
+  widget.addEventListener("click", (e) => e.stopPropagation());
 }
 
 /*====FUNÇÕES DE TABELA====*/
