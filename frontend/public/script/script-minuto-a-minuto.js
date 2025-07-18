@@ -4,14 +4,16 @@ const CONFIG = {
   nomeAba: "minutoaminuto",
   intervaloPadrao: window.innerWidth <= 10000,
   coresPadrao: {
-    casa: { primary: '#003399', secondary: '#ffffff' },
-    visitante: { primary: '#cc0000', secondary: '#ffffff' }
-  }
+    casa: { primary: "#003399", secondary: "#ffffff" },
+    visitante: { primary: "#cc0000", secondary: "#ffffff" },
+  },
 };
 
 async function loadColorThief() {
-  if (typeof ColorThief === 'undefined') {
-    await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js');
+  if (typeof ColorThief === "undefined") {
+    await carregarScript(
+      "https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"
+    );
     colorThiefLoaded = true;
   }
 }
@@ -33,18 +35,29 @@ document.addEventListener("DOMContentLoaded", async () => {
     nomeAbaEstatisticas: "minutoaminuto",
   };
 
-  
   // Recupera dados do jogo
   const urlParams = new URLSearchParams(window.location.search);
   const jogoSalvo = localStorage.getItem("jogoAoVivo");
   jogoAoVivo = {
-    timeCasa: urlParams.get("timeCasa") || (jogoSalvo ? JSON.parse(jogoSalvo).timeCasa : "Time Casa"),
-    timeVisitante: urlParams.get("timeVisitante") || (jogoSalvo ? JSON.parse(jogoSalvo).timeVisitante : "Time Visitante"),
-    escudoCasa: urlParams.get("escudoCasa") || 
-               (jogoSalvo ? JSON.parse(jogoSalvo).escudoCasa : obterEscudoTime(urlParams.get("timeCasa"))),
-    escudoVisitante: urlParams.get("escudoVisitante") || 
-                   (jogoSalvo ? JSON.parse(jogoSalvo).escudoVisitante : obterEscudoTime(urlParams.get("timeVisitante"))),
-    campeonato: urlParams.get("campeonato") || (jogoSalvo ? JSON.parse(jogoSalvo).campeonato : "Campeonato"),
+    timeCasa:
+      urlParams.get("timeCasa") ||
+      (jogoSalvo ? JSON.parse(jogoSalvo).timeCasa : "Time Casa"),
+    timeVisitante:
+      urlParams.get("timeVisitante") ||
+      (jogoSalvo ? JSON.parse(jogoSalvo).timeVisitante : "Time Visitante"),
+    escudoCasa:
+      urlParams.get("escudoCasa") ||
+      (jogoSalvo
+        ? JSON.parse(jogoSalvo).escudoCasa
+        : obterEscudoTime(urlParams.get("timeCasa"))),
+    escudoVisitante:
+      urlParams.get("escudoVisitante") ||
+      (jogoSalvo
+        ? JSON.parse(jogoSalvo).escudoVisitante
+        : obterEscudoTime(urlParams.get("timeVisitante"))),
+    campeonato:
+      urlParams.get("campeonato") ||
+      (jogoSalvo ? JSON.parse(jogoSalvo).campeonato : "Campeonato"),
     planilhaId: CONFIG.planilhaId,
   };
 
@@ -57,22 +70,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   localStorage.setItem("jogoAoVivo", JSON.stringify(jogoAoVivo));
   atualizarInformacoesJogo(jogoAoVivo);
 
-
   // Botão de atualização manual
   const btnAtualizar = document.getElementById("atualizar-dados");
   if (btnAtualizar) {
     btnAtualizar.addEventListener("click", async () => {
       btnAtualizar.classList.add("pulsing");
-      btnAtualizar.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
+      btnAtualizar.innerHTML =
+        '<i class="fas fa-sync-alt fa-spin"></i> Atualizando...';
       try {
         await Promise.all([
-          carregarDadosDaPlanilha(config.planilhaId, apiKey, config.nomeAba, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
-          carregarEstatisticas(config.planilhaId, apiKey, config.nomeAbaEstatisticas, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante),
+          carregarDadosDaPlanilha(
+            config.planilhaId,
+            apiKey,
+            config.nomeAba,
+            jogoAoVivo.timeCasa,
+            jogoAoVivo.timeVisitante,
+            jogoAoVivo.escudoCasa,
+            jogoAoVivo.escudoVisitante
+          ),
+          carregarEstatisticas(
+            config.planilhaId,
+            apiKey,
+            config.nomeAbaEstatisticas,
+            jogoAoVivo.timeCasa,
+            jogoAoVivo.timeVisitante
+          ),
         ]);
       } catch (error) {
         console.error("Erro ao atualizar:", error);
       } finally {
-        btnAtualizar.innerHTML = '<i class="fas fa-sync-alt"></i> Atualizar Dados';
+        btnAtualizar.innerHTML =
+          '<i class="fas fa-sync-alt"></i> Atualizar Dados';
         setTimeout(() => btnAtualizar.classList.remove("pulsing"), 1000);
       }
     });
@@ -81,8 +109,22 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Carrega dados inicialmente
   try {
     await Promise.all([
-      carregarDadosDaPlanilha(config.planilhaId, apiKey, config.nomeAba, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
-      carregarEstatisticas(config.planilhaId, apiKey, config.nomeAbaEstatisticas, jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante),
+      carregarDadosDaPlanilha(
+        config.planilhaId,
+        apiKey,
+        config.nomeAba,
+        jogoAoVivo.timeCasa,
+        jogoAoVivo.timeVisitante,
+        jogoAoVivo.escudoCasa,
+        jogoAoVivo.escudoVisitante
+      ),
+      carregarEstatisticas(
+        config.planilhaId,
+        apiKey,
+        config.nomeAbaEstatisticas,
+        jogoAoVivo.timeCasa,
+        jogoAoVivo.timeVisitante
+      ),
     ]);
   } catch (error) {
     console.error("Erro no carregamento inicial:", error);
@@ -96,18 +138,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (document.hidden && intervaloAtualizacao) {
       clearInterval(intervaloAtualizacao);
       intervaloAtualizacao = null;
-    } else if (!document.hidden && !intervaloAtualizacao && !jogoEncerradoGlobal) {
+    } else if (
+      !document.hidden &&
+      !intervaloAtualizacao &&
+      !jogoEncerradoGlobal
+    ) {
       intervaloAtualizacao = setInterval(atualizarTudo, INTERVALO_PADRAO);
     }
   });
 
-
-
-    if (jogoAoVivo.escudoCasa) {
-    coresTimes.timeCasa = await extrairCoresDoEscudo(jogoAoVivo.escudoCasa, 'casa');
+  if (jogoAoVivo.escudoCasa) {
+    coresTimes.timeCasa = await extrairCoresDoEscudo(
+      jogoAoVivo.escudoCasa,
+      "casa"
+    );
   }
   if (jogoAoVivo.escudoVisitante) {
-    coresTimes.timeVisitante = await extrairCoresDoEscudo(jogoAoVivo.escudoVisitante, 'visitante');
+    coresTimes.timeVisitante = await extrairCoresDoEscudo(
+      jogoAoVivo.escudoVisitante,
+      "visitante"
+    );
   }
 });
 
@@ -126,11 +176,22 @@ async function atualizarTudo() {
   try {
     console.log("Iniciando atualização automática...");
     await Promise.all([
-      carregarDadosDaPlanilha(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", 
-                             jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante, 
-                             jogoAoVivo.escudoCasa, jogoAoVivo.escudoVisitante),
-      carregarEstatisticas(jogoAoVivo.planilhaId, apiKey, "minutoaminuto", 
-                         jogoAoVivo.timeCasa, jogoAoVivo.timeVisitante)
+      carregarDadosDaPlanilha(
+        jogoAoVivo.planilhaId,
+        apiKey,
+        "minutoaminuto",
+        jogoAoVivo.timeCasa,
+        jogoAoVivo.timeVisitante,
+        jogoAoVivo.escudoCasa,
+        jogoAoVivo.escudoVisitante
+      ),
+      carregarEstatisticas(
+        jogoAoVivo.planilhaId,
+        apiKey,
+        "minutoaminuto",
+        jogoAoVivo.timeCasa,
+        jogoAoVivo.timeVisitante
+      ),
     ]);
     console.log("Atualização automática concluída com sucesso");
   } catch (error) {
@@ -148,8 +209,8 @@ function carregarScript(url) {
       resolve();
       return;
     }
-    
-    const script = document.createElement('script');
+
+    const script = document.createElement("script");
     script.src = url;
     script.onload = resolve;
     script.onerror = reject;
@@ -174,20 +235,25 @@ async function fetchAPIKey() {
 function atualizarInformacoesJogo(jogo) {
   const escudoCasa = document.getElementById("escudo-casa");
   const escudoVisitante = document.getElementById("escudo-visitante");
-  if (escudoCasa) escudoCasa.src = jogo.escudoCasa || obterEscudoTime(jogo.timeCasa);
-  if (escudoVisitante) escudoVisitante.src = jogo.escudoVisitante || obterEscudoTime(jogo.timeVisitante);
+  if (escudoCasa)
+    escudoCasa.src = jogo.escudoCasa || obterEscudoTime(jogo.timeCasa);
+  if (escudoVisitante)
+    escudoVisitante.src =
+      jogo.escudoVisitante || obterEscudoTime(jogo.timeVisitante);
 
   const nomeCasa = document.getElementById("nome-time-casa");
   const nomeVisitante = document.getElementById("nome-time-visitante");
   if (nomeCasa) nomeCasa.textContent = jogo.timeCasa || "Time Mandante";
-  if (nomeVisitante) nomeVisitante.textContent = jogo.timeVisitante || "Time Visitante";
+  if (nomeVisitante)
+    nomeVisitante.textContent = jogo.timeVisitante || "Time Visitante";
 
   const titulo = document.getElementById("titulo-jogo");
   const tituloPagina = document.getElementById("titulo-pagina");
   const campeonato = document.getElementById("campeonato-badge");
 
   if (titulo) titulo.textContent = `${jogo.timeCasa} vs ${jogo.timeVisitante}`;
-  if (tituloPagina) tituloPagina.textContent = `Minuto a Minuto | ${jogo.timeCasa} vs ${jogo.timeVisitante}`;
+  if (tituloPagina)
+    tituloPagina.textContent = `Minuto a Minuto | ${jogo.timeCasa} vs ${jogo.timeVisitante}`;
   if (campeonato) campeonato.textContent = jogo.campeonato;
 }
 
@@ -199,7 +265,8 @@ function processarEventos(dados, timeCasa, timeVisitante) {
   let placarConfirmado = null;
 
   // Regex para placar
-  const padraoGol = /^(\d{1,3}'\+\d+'|\d{1,3}')?\s*(?:Fim do (?:Jogo|segundo tempo|primeiro tempo|Intervalo),?\s*)?([^,0-9]+?)\s*(\d+)\s*,\s*([^,0-9]+?)\s*(\d+)/i;
+  const padraoGol =
+    /^(\d{1,3}'\+\d+'|\d{1,3}')?\s*(?:Fim do (?:Jogo|segundo tempo|primeiro tempo|Intervalo),?\s*)?([^,0-9]+?)\s*(\d+)\s*,\s*([^,0-9]+?)\s*(\d+)/i;
   const extrairNumeroTempo = (tempoStr) => {
     if (!tempoStr) return 0;
     const match = tempoStr.match(/(\d+)'/);
@@ -225,8 +292,12 @@ function processarEventos(dados, timeCasa, timeVisitante) {
         const time2 = placarMatch[3].trim();
         const gols2 = parseInt(placarMatch[4]);
         placarAtual = {
-          casa: time1.toLowerCase().includes(timeCasa.toLowerCase()) ? gols1 : gols2,
-          visitante: time2.toLowerCase().includes(timeVisitante.toLowerCase()) ? gols2 : gols1,
+          casa: time1.toLowerCase().includes(timeCasa.toLowerCase())
+            ? gols1
+            : gols2,
+          visitante: time2.toLowerCase().includes(timeVisitante.toLowerCase())
+            ? gols2
+            : gols1,
         };
         atualizarPlacar(placarAtual.casa, placarAtual.visitante);
       }
@@ -242,10 +313,16 @@ function processarEventos(dados, timeCasa, timeVisitante) {
           const time2 = placarMatch[4].trim();
           const gols2 = parseInt(placarMatch[5]);
           let golsCasa, golsVisitante;
-          if (time1.toLowerCase().includes(timeCasa.toLowerCase()) || timeCasa.toLowerCase().includes(time1.toLowerCase())) {
+          if (
+            time1.toLowerCase().includes(timeCasa.toLowerCase()) ||
+            timeCasa.toLowerCase().includes(time1.toLowerCase())
+          ) {
             golsCasa = gols1;
             golsVisitante = gols2;
-          } else if (time2.toLowerCase().includes(timeCasa.toLowerCase()) || timeCasa.toLowerCase().includes(time2.toLowerCase())) {
+          } else if (
+            time2.toLowerCase().includes(timeCasa.toLowerCase()) ||
+            timeCasa.toLowerCase().includes(time2.toLowerCase())
+          ) {
             golsCasa = gols2;
             golsVisitante = gols1;
           } else {
@@ -258,13 +335,18 @@ function processarEventos(dados, timeCasa, timeVisitante) {
             tempo,
             tempoNumerico: extrairNumeroTempo(tempo),
           };
-          if ((!placarConfirmado || novoPlacar.tempoNumerico > placarConfirmado.tempoNumerico) && !jogoEncerrado) {
+          if (
+            (!placarConfirmado ||
+              novoPlacar.tempoNumerico > placarConfirmado.tempoNumerico) &&
+            !jogoEncerrado
+          ) {
             placarConfirmado = novoPlacar;
             placarAtual = { casa: golsCasa, visitante: golsVisitante };
             atualizarPlacar(placarAtual.casa, placarAtual.visitante);
             let timeFezGol = null;
             if (golsCasa > (placarConfirmado?.casa ?? 0)) timeFezGol = "casa";
-            else if (golsVisitante > (placarConfirmado?.visitante ?? 0)) timeFezGol = "visitante";
+            else if (golsVisitante > (placarConfirmado?.visitante ?? 0))
+              timeFezGol = "visitante";
             if (timeFezGol) mostrarAnimacaoGol(timeFezGol);
           }
         }
@@ -274,17 +356,26 @@ function processarEventos(dados, timeCasa, timeVisitante) {
     }
 
     const times = [];
-    const timeMatches = descricao.matchAll(new RegExp(`(${escapeRegExp(timeCasa)}|${escapeRegExp(timeVisitante)})`, "gi"));
+    const timeMatches = descricao.matchAll(
+      new RegExp(
+        `(${escapeRegExp(timeCasa)}|${escapeRegExp(timeVisitante)})`,
+        "gi"
+      )
+    );
     for (const match of timeMatches) {
       if (match[0] && !times.includes(match[0])) times.push(match[0]);
     }
     const tipoEvento = determinarTipoEvento(descricao);
-    if (!eventosAgrupados[tempo]) eventosAgrupados[tempo] = { tempo, eventos: [] };
+    if (!eventosAgrupados[tempo])
+      eventosAgrupados[tempo] = { tempo, eventos: [] };
     eventosAgrupados[tempo].eventos.push({ descricao, times, tipoEvento });
   }
 
   if (placarConfirmado) {
-    placarAtual = { casa: placarConfirmado.casa, visitante: placarConfirmado.visitante };
+    placarAtual = {
+      casa: placarConfirmado.casa,
+      visitante: placarConfirmado.visitante,
+    };
     atualizarPlacar(placarAtual.casa, placarAtual.visitante);
   }
   jogoEncerradoGlobal = jogoEncerrado;
@@ -322,10 +413,22 @@ function determinarTipoEvento(descricao) {
   if (desc.includes("falta")) return "falta";
   if (desc.includes("amarelo")) return "amarelo";
   if (desc.includes("vermelho")) return "vermelho";
-  if (desc.includes("substituição") || desc.includes("substituicao")) return "substituicao";
-  if (desc.includes("início") || desc.includes("início do jogo") || desc.includes("inicia") || desc.includes("começa")) return "inicio";
+  if (desc.includes("substituição") || desc.includes("substituicao"))
+    return "substituicao";
+  if (
+    desc.includes("início") ||
+    desc.includes("início do jogo") ||
+    desc.includes("inicia") ||
+    desc.includes("começa")
+  )
+    return "inicio";
   if (desc.includes("intervalo")) return "intervalo";
-  if (desc.includes("fim de jogo") || desc.includes("termina") || desc.includes("final de jogo")) return "fim";
+  if (
+    desc.includes("fim de jogo") ||
+    desc.includes("termina") ||
+    desc.includes("final de jogo")
+  )
+    return "fim";
   if (desc.includes("impedimento")) return "impedimento";
   if (desc.includes("defesa")) return "defesa";
   if (desc.includes("pênalti") || desc.includes("penalti")) return "penalti";
@@ -334,29 +437,29 @@ function determinarTipoEvento(descricao) {
 
 function atualizarPlacar(golsCasa, golsVisitante) {
   if (golsCasa < 0 || golsVisitante < 0) return;
-  
+
   const casaElement = document.getElementById("gols-casa");
   const visitanteElement = document.getElementById("gols-visitante");
-  
+
   if (casaElement && visitanteElement) {
     // Remove classes de cor padrão para priorizar as cores dinâmicas
     casaElement.className = "";
     visitanteElement.className = "";
-    
+
     const golCasa = golsCasa > parseInt(casaElement.textContent);
     const golVisitante = golsVisitante > parseInt(visitanteElement.textContent);
-    
+
     casaElement.textContent = golsCasa;
     visitanteElement.textContent = golsVisitante;
-    
+
     if (golCasa && coresTimes.timeCasa) {
       casaElement.style.color = coresTimes.timeCasa.primary;
-      animarPlacar(casaElement, 'casa');
+      animarPlacar(casaElement, "casa");
     }
-    
+
     if (golVisitante && coresTimes.timeVisitante) {
       visitanteElement.style.color = coresTimes.timeVisitante.primary;
-      animarPlacar(visitanteElement, 'visitante');
+      animarPlacar(visitanteElement, "visitante");
     }
   }
 }
@@ -369,82 +472,87 @@ async function extrairCoresDominantes(imagemUrl) {
     img.crossOrigin = "Anonymous";
     img.src = imagemUrl;
 
-    img.onload = function() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
+    img.onload = function () {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
       canvas.width = img.width;
       canvas.height = img.height;
       ctx.drawImage(img, 0, 0);
-      
+
       // Analisa apenas 9 pontos estratégicos da imagem para melhor performance
       const pontos = [
-        {x: 10, y: 10},           // Canto superior esquerdo
-        {x: img.width/2, y: 10},   // Topo centro
-        {x: img.width-10, y: 10},  // Canto superior direito
-        {x: 10, y: img.height/2},  // Meio esquerdo
-        {x: img.width/2, y: img.height/2}, // Centro
-        {x: img.width-10, y: img.height/2}, // Meio direito
-        {x: 10, y: img.height-10}, // Canto inferior esquerdo
-        {x: img.width/2, y: img.height-10}, // Fundo centro
-        {x: img.width-10, y: img.height-10} // Canto inferior direito
+        { x: 10, y: 10 }, // Canto superior esquerdo
+        { x: img.width / 2, y: 10 }, // Topo centro
+        { x: img.width - 10, y: 10 }, // Canto superior direito
+        { x: 10, y: img.height / 2 }, // Meio esquerdo
+        { x: img.width / 2, y: img.height / 2 }, // Centro
+        { x: img.width - 10, y: img.height / 2 }, // Meio direito
+        { x: 10, y: img.height - 10 }, // Canto inferior esquerdo
+        { x: img.width / 2, y: img.height - 10 }, // Fundo centro
+        { x: img.width - 10, y: img.height - 10 }, // Canto inferior direito
       ];
 
-      const cores = pontos.map(ponto => {
+      const cores = pontos.map((ponto) => {
         const pixel = ctx.getImageData(ponto.x, ponto.y, 1, 1).data;
         return `rgb(${pixel[0]}, ${pixel[1]}, ${pixel[2]})`;
       });
 
       // Filtra cores muito claras ou muito escuras (fundo branco/preto)
-      const coresFiltradas = cores.filter(cor => {
+      const coresFiltradas = cores.filter((cor) => {
         const [r, g, b] = cor.match(/\d+/g).map(Number);
         const luminosidade = (r * 299 + g * 587 + b * 114) / 1000;
         return luminosidade > 30 && luminosidade < 230;
       });
 
       // Se não encontrou cores válidas, usa as primeiras
-      const coresParaAnalise = coresFiltradas.length > 0 ? coresFiltradas : cores;
-      
+      const coresParaAnalise =
+        coresFiltradas.length > 0 ? coresFiltradas : cores;
+
       // Conta a frequência de cada cor
       const contagem = {};
-      coresParaAnalise.forEach(cor => {
+      coresParaAnalise.forEach((cor) => {
         contagem[cor] = (contagem[cor] || 0) + 1;
       });
 
       // Ordena por frequência
-      const coresOrdenadas = Object.keys(contagem).sort((a, b) => contagem[b] - contagem[a]);
-      
+      const coresOrdenadas = Object.keys(contagem).sort(
+        (a, b) => contagem[b] - contagem[a]
+      );
+
       // Pega as 2 cores mais frequentes
-      const primary = coresOrdenadas[0] || '#003399'; // Fallback
-      const secondary = coresOrdenadas[1] || '#FFFFFF'; // Fallback
+      const primary = coresOrdenadas[0] || "#003399"; // Fallback
+      const secondary = coresOrdenadas[1] || "#FFFFFF"; // Fallback
 
       resolve({ primary, secondary });
     };
 
-    img.onerror = function() {
-      resolve({ primary: '#003399', secondary: '#FFFFFF' }); // Fallback
+    img.onerror = function () {
+      resolve({ primary: "#003399", secondary: "#FFFFFF" }); // Fallback
     };
   });
 }
 
 async function extrairCoresDoEscudo(imagemUrl, time) {
-  
-  const nomeTime = time === 'casa' ? jogoAoVivo.timeCasa : jogoAoVivo.timeVisitante;
-  
-  
+  const nomeTime =
+    time === "casa" ? jogoAoVivo.timeCasa : jogoAoVivo.timeVisitante;
+
   if (!nomeTime) {
-    return time === 'casa' ? CONFIG.coresPadrao.casa : CONFIG.coresPadrao.visitante;
+    return time === "casa"
+      ? CONFIG.coresPadrao.casa
+      : CONFIG.coresPadrao.visitante;
   }
 
   // Tratamento especial para times conhecidos
   const timeLower = nomeTime.toLowerCase();
-  
-  if (timeLower.includes('cruzeiro')) {
-    return { primary: '#0055A8', secondary: '#FFFFFF' };
+
+  if (timeLower.includes("cruzeiro")) {
+    return { primary: "#0055A8", secondary: "#FFFFFF" };
   }
 
-  
-  if (!document.getElementById('auto-colors')?.checked) {
-    return time === 'casa' ? CONFIG.coresPadrao.casa : CONFIG.coresPadrao.visitante;
+  if (!document.getElementById("auto-colors")?.checked) {
+    return time === "casa"
+      ? CONFIG.coresPadrao.casa
+      : CONFIG.coresPadrao.visitante;
   }
 
   // Extração de cores da imagem
@@ -461,9 +569,12 @@ function getColorBrightness(hexColor) {
 async function mostrarAnimacaoGol(time) {
   const timeKey = time === "casa" ? "timeCasa" : "timeVisitante";
   const escudoKey = time === "casa" ? "escudoCasa" : "escudoVisitante";
-  
+
   if (!coresTimes[timeKey]) {
-    coresTimes[timeKey] = await extrairCoresDoEscudo(jogoAoVivo[escudoKey], time);
+    coresTimes[timeKey] = await extrairCoresDoEscudo(
+      jogoAoVivo[escudoKey],
+      time
+    );
   }
 
   const { primary, secondary } = coresTimes[timeKey];
@@ -475,7 +586,7 @@ async function mostrarAnimacaoGol(time) {
     return;
   }
 
-  container.innerHTML = '';
+  container.innerHTML = "";
   container.style.display = "block";
 
   // Animação de gol
@@ -486,15 +597,19 @@ async function mostrarAnimacaoGol(time) {
         background:radial-gradient(circle, ${primary} 0%, transparent 70%);
       "></div>
       <div class="confetti-container">
-        ${Array(25).fill().map((_, i) => 
-          `<div class="confetti" style="
+        ${Array(25)
+          .fill()
+          .map(
+            (_, i) =>
+              `<div class="confetti" style="
             --rotate: ${Math.random() * 360}deg;
             --x: ${Math.random() * 100}vw;
             --delay: ${Math.random() * 0.5}s;
             --duration: ${0.5 + Math.random() * 1}s;
             background: ${i % 2 === 0 ? primary : secondary};
           "></div>`
-        ).join('')}
+          )
+          .join("")}
       </div>
       <div class="shockwave" style="
         background:radial-gradient(circle, transparent 0%, ${primary} 30%, transparent 60%);
@@ -512,31 +627,36 @@ async function mostrarAnimacaoGol(time) {
 async function animarPlacar(elemento, time) {
   const timeKey = time === "casa" ? "timeCasa" : "timeVisitante";
   const escudoKey = time === "casa" ? "escudoCasa" : "escudoVisitante";
-  
+
   if (!coresTimes[timeKey]) {
-    coresTimes[timeKey] = await extrairCoresDoEscudo(jogoAoVivo[escudoKey], time);
+    coresTimes[timeKey] = await extrairCoresDoEscudo(
+      jogoAoVivo[escudoKey],
+      time
+    );
   }
 
   const { primary, secondary } = coresTimes[timeKey];
-  
+
   // Efeito de pulso
-  elemento.style.animation = 'none';
+  elemento.style.animation = "none";
   void elemento.offsetWidth;
   elemento.style.animation = `pulseColor 0.8s ease-out`;
   elemento.style.color = primary;
-  
+
   // Cria partículas
   criarParticulas(elemento, primary, secondary);
 }
 
 function criarParticulas(elemento, cor1, cor2) {
-  const particulas = document.createElement('div');
-  particulas.className = 'placar-particulas';
-  
-  particulas.innerHTML = Array(15).fill().map((_, i) => {
-    const cor = i % 2 === 0 ? cor1 : cor2;
-    const size = Math.random() * 8 + 4;
-    return `<span style="
+  const particulas = document.createElement("div");
+  particulas.className = "placar-particulas";
+
+  particulas.innerHTML = Array(15)
+    .fill()
+    .map((_, i) => {
+      const cor = i % 2 === 0 ? cor1 : cor2;
+      const size = Math.random() * 8 + 4;
+      return `<span style="
       --size: ${size}px;
       --delay: ${Math.random() * 0.5}s;
       --distance: ${Math.random() * 40 + 20}px;
@@ -544,10 +664,11 @@ function criarParticulas(elemento, cor1, cor2) {
       background: ${cor};
       box-shadow: 0 0 ${size}px ${cor};
     "></span>`;
-  }).join('');
-  
+    })
+    .join("");
+
   elemento.appendChild(particulas);
-  
+
   setTimeout(() => particulas.remove(), 1000);
 }
 
@@ -555,7 +676,7 @@ function criarParticulas(elemento, cor1, cor2) {
 function exibirEventos(eventosAgrupados) {
   const container = document.getElementById("narrativa-jogo");
   if (!container) return;
-  
+
   // Verifica se já existem eventos carregados
   const isUpdate = container.querySelector(".grupo-tempo") !== null;
   const eventosOrdenados = [...eventosAgrupados].reverse();
@@ -574,28 +695,48 @@ function exibirEventos(eventosAgrupados) {
   }
 
   // Cria o HTML dos eventos
-  const eventosHTML = eventosOrdenados.map(grupo => `
+  const eventosHTML = eventosOrdenados
+    .map(
+      (grupo) => `
     <div class="grupo-tempo" data-tempo="${grupo.tempo}">
       <span class="tempo-evento">${grupo.tempo}</span>
       <div class="eventos-container">
-        ${grupo.eventos.map(evento => `
+        ${grupo.eventos
+          .map(
+            (evento) => `
           <div class="evento-jogo">
-            <div class="evento-content ${evento.tipoEvento !== "padrao" ? "evento-" + evento.tipoEvento : ""}">
+            <div class="evento-content ${
+              evento.tipoEvento !== "padrao"
+                ? "evento-" + evento.tipoEvento
+                : ""
+            }">
               <div class="evento-header">
                 ${getEventIcon(evento.tipoEvento)}
-                <p class="evento-descricao">${formatarDescricao(evento.descricao) || ""}</p>
+                <p class="evento-descricao">${
+                  formatarDescricao(evento.descricao) || ""
+                }</p>
               </div>
-              ${evento.times.length > 0 ? `
+              ${
+                evento.times.length > 0
+                  ? `
                 <div class="evento-footer">
-                  ${evento.times.map(time => `<span class="time-badge">${time}</span>`).join("")}
+                  ${evento.times
+                    .map((time) => `<span class="time-badge">${time}</span>`)
+                    .join("")}
                 </div>
-              ` : ""}
+              `
+                  : ""
+              }
             </div>
           </div>
-        `).join("")}
+        `
+          )
+          .join("")}
       </div>
     </div>
-  `).join("");
+  `
+    )
+    .join("");
 
   // Só atualiza se mudou
   if (container._ultimoEventosHTML === eventosHTML) return;
@@ -622,12 +763,14 @@ function exibirEventos(eventosAgrupados) {
   if (isUpdate && eventosNovos > 0) {
     setTimeout(() => {
       container.scrollTop = container.scrollHeight;
-      
+
       // Mostra notificação de novos eventos (opcional)
       if (eventosNovos > 0 && !document.querySelector(".novo-indicador")) {
         const indicador = document.createElement("div");
         indicador.className = "novo-indicador";
-        indicador.textContent = `${eventosNovos} novo${eventosNovos > 1 ? "s" : ""} lance${eventosNovos > 1 ? "s" : ""}`;
+        indicador.textContent = `${eventosNovos} novo${
+          eventosNovos > 1 ? "s" : ""
+        } lance${eventosNovos > 1 ? "s" : ""}`;
         container.appendChild(indicador);
         setTimeout(() => indicador.remove(), 5000);
       }
@@ -639,7 +782,10 @@ function exibirEventos(eventosAgrupados) {
 }
 
 function formatarDescricao(descricao) {
-  return descricao.replace(/\$\$([^$]+)\$\$/g, '<span class="time-destaque">$1</span>');
+  return descricao.replace(
+    /\$\$([^$]+)\$\$/g,
+    '<span class="time-destaque">$1</span>'
+  );
 }
 
 function getEventIcon(tipoEvento) {
@@ -660,7 +806,15 @@ function getEventIcon(tipoEvento) {
 }
 
 // ===================== CARREGAMENTO DE DADOS =====================
-async function carregarDadosDaPlanilha(planilhaId, apiKey, nomeAba, timeCasa, timeVisitante, escudoCasa, escudoVisitante) {
+async function carregarDadosDaPlanilha(
+  planilhaId,
+  apiKey,
+  nomeAba,
+  timeCasa,
+  timeVisitante,
+  escudoCasa,
+  escudoVisitante
+) {
   const loadingNarrativa = document.querySelector(".loading-narrativa");
   const containerNarrativa = document.getElementById("narrativa-jogo");
   if (jogoEncerradoGlobal) {
@@ -676,7 +830,8 @@ async function carregarDadosDaPlanilha(planilhaId, apiKey, nomeAba, timeCasa, ti
     );
     if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
     const data = await response.json();
-    if (!data.values || data.values.length === 0) throw new Error("Planilha vazia ou sem dados");
+    if (!data.values || data.values.length === 0)
+      throw new Error("Planilha vazia ou sem dados");
     const dadosString = JSON.stringify(data.values);
     if (carregarDadosDaPlanilha._ultimoDados === dadosString) {
       if (containerNarrativa) containerNarrativa.style.opacity = "1";
@@ -705,7 +860,13 @@ async function carregarDadosDaPlanilha(planilhaId, apiKey, nomeAba, timeCasa, ti
   }
 }
 
-async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeVisitante) {
+async function carregarEstatisticas(
+  planilhaId,
+  apiKey,
+  nomeAba,
+  timeCasa,
+  timeVisitante
+) {
   const loadingEstatisticas = document.querySelector(".loading-estatisticas");
   const containerEstatisticas = document.getElementById("match-container");
   try {
@@ -714,13 +875,17 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
     const response = await fetch(
       `https://sheets.googleapis.com/v4/spreadsheets/${planilhaId}/values/${nomeAba}!C2:J3?key=${apiKey}`
     );
-    if (!response.ok) throw new Error(`Erro ao buscar dados: ${response.status}`);
+    if (!response.ok)
+      throw new Error(`Erro ao buscar dados: ${response.status}`);
     const data = await response.json();
     const statsData = data.values;
-    if (!statsData || statsData.length <= 1) throw new Error("Dados insuficientes na planilha de estatísticas");
+    if (!statsData || statsData.length <= 1)
+      throw new Error("Dados insuficientes na planilha de estatísticas");
     const getValue = (row, col) => statsData[row]?.[col] || "0";
     const getNumericValue = (row, col) => {
-      const raw = getValue(row, col).replace(",", ".").replace(/[^\d.]/g, "");
+      const raw = getValue(row, col)
+        .replace(",", ".")
+        .replace(/[^\d.]/g, "");
       return parseFloat(raw) || 0;
     };
     const statIcons = {
@@ -738,20 +903,30 @@ async function carregarEstatisticas(planilhaId, apiKey, nomeAba, timeCasa, timeV
       chutesNoGol: { home: getNumericValue(0, 1), away: getNumericValue(1, 1) },
       chutes: { home: getNumericValue(0, 2), away: getNumericValue(1, 2) },
       faltas: { home: getNumericValue(0, 3), away: getNumericValue(1, 3) },
-      cartoesAmarelos: { home: getNumericValue(0, 4), away: getNumericValue(1, 4) },
-      cartoesVermelhos: { home: getNumericValue(0, 5), away: getNumericValue(1, 5) },
+      cartoesAmarelos: {
+        home: getNumericValue(0, 4),
+        away: getNumericValue(1, 4),
+      },
+      cartoesVermelhos: {
+        home: getNumericValue(0, 5),
+        away: getNumericValue(1, 5),
+      },
       escanteios: { home: getNumericValue(0, 6), away: getNumericValue(1, 6) },
       defesas: { home: getNumericValue(0, 7), away: getNumericValue(1, 7) },
     };
     containerEstatisticas.innerHTML = `
       <div class="match-header">
         <div class="team home-team">
-          <img src="${jogoAoVivo?.escudoCasa || obterEscudoTime(timeCasa)}" alt="${timeCasa}" width="60" height="60">
+          <img src="${
+            jogoAoVivo?.escudoCasa || obterEscudoTime(timeCasa)
+          }" alt="${timeCasa}" width="60" height="60">
           <h2>${timeCasa}</h2>
         </div>
 
         <div class="team away-team">
-          <img src="${jogoAoVivo?.escudoVisitante || obterEscudoTime(timeVisitante)}" alt="${timeVisitante}" width="60" height="60">
+          <img src="${
+            jogoAoVivo?.escudoVisitante || obterEscudoTime(timeVisitante)
+          }" alt="${timeVisitante}" width="60" height="60">
           <h2>${timeVisitante}</h2>
         </div>
       </div>
@@ -811,40 +986,50 @@ function obterEscudoTime(nomeTime) {
     return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
   }
   const escudos = {
-  Flamengo:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
-  Palmeiras: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
-  "Red Bull Bragantino": "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
-  Cruzeiro:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-  Fluminense: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/50px-FFC_crest.svg.png",
-  Internacional:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/50px-SC_Internacional_Brazil_Logo.svg.png",
-  Bahia: "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
-  "São Paulo":
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/50px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
-  Botafogo:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/50px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
-  Ceará:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
-  Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-  Corinthians: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
-  Juventude: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
-  Mirassol: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-  Fortaleza:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
-  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
-  "Atlético-MG":
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
-  Grêmio: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
-  Santos: "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
-  Sport: "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
-  "Vila Nova":
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/50px-Vila_Nova_Logo_Oficial.svg.png",
-    CRB:"https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png",
+    Flamengo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Flamengo-RJ_%28BRA%29.png/50px-Flamengo-RJ_%28BRA%29.png",
+    Palmeiras:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Palmeiras_logo.svg/50px-Palmeiras_logo.svg.png",
+    "Red Bull Bragantino":
+      "https://upload.wikimedia.org/wikipedia/pt/9/9e/RedBullBragantino.png",
+    Cruzeiro:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+    Fluminense:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/FFC_crest.svg/50px-FFC_crest.svg.png",
+    Internacional:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/SC_Internacional_Brazil_Logo.svg/50px-SC_Internacional_Brazil_Logo.svg.png",
+    Bahia: "https://upload.wikimedia.org/wikipedia/pt/9/90/ECBahia.png",
+    "São Paulo":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6f/Brasao_do_Sao_Paulo_Futebol_Clube.svg/50px-Brasao_do_Sao_Paulo_Futebol_Clube.svg.png",
+    Botafogo:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Botafogo_de_Futebol_e_Regatas_logo.svg/50px-Botafogo_de_Futebol_e_Regatas_logo.svg.png",
+    Ceará:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
+    Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
+    Corinthians:
+      "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+    Juventude:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
+    Mirassol:
+      "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
+    Fortaleza:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
+    Vitória:
+      "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+    "Atlético-MG":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
+    Grêmio:
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
+    Santos:
+      "https://upload.wikimedia.org/wikipedia/commons/1/15/Santos_Logo.png",
+    Sport:
+      "https://upload.wikimedia.org/wikipedia/pt/1/17/Sport_Club_do_Recife.png",
+    "Vila Nova":
+      "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Vila_Nova_Logo_Oficial.svg/50px-Vila_Nova_Logo_Oficial.svg.png",
+    CRB: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png",
   };
   const nomeLower = nomeTime.toLowerCase().trim();
-  
+
   // Verifica correspondência exata primeiro
   for (const [key, value] of Object.entries(escudos)) {
     if (key.toLowerCase() === nomeLower) return value;
@@ -852,7 +1037,10 @@ function obterEscudoTime(nomeTime) {
 
   // Verifica correspondência parcial
   for (const [key, value] of Object.entries(escudos)) {
-    if (nomeLower.includes(key.toLowerCase()) || key.toLowerCase().includes(nomeLower)) {
+    if (
+      nomeLower.includes(key.toLowerCase()) ||
+      key.toLowerCase().includes(nomeLower)
+    ) {
       return value;
     }
   }
@@ -862,9 +1050,9 @@ function obterEscudoTime(nomeTime) {
 }
 
 // ===================== EVENTOS DO DOM =====================
-document.addEventListener('DOMContentLoaded', function() {
-  const menuToggle = document.querySelector('.menu-toggle');
-  const navMenu = document.querySelector('.nav-menu');
+document.addEventListener("DOMContentLoaded", function () {
+  const menuToggle = document.querySelector(".menu-toggle");
+  const navMenu = document.querySelector(".nav-menu");
   const container = document.getElementById("narrativa-jogo");
   if (container) {
     container.addEventListener("scroll", () => {
@@ -872,16 +1060,16 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   if (menuToggle && navMenu) {
-    menuToggle.addEventListener('click', () => {
-      menuToggle.classList.toggle('active');
-      navMenu.classList.toggle('active');
+    menuToggle.addEventListener("click", () => {
+      menuToggle.classList.toggle("active");
+      navMenu.classList.toggle("active");
     });
-    
+
     // Fechar menu quando um link é clicado
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        menuToggle.classList.remove('active');
-        navMenu.classList.remove('active');
+    document.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        menuToggle.classList.remove("active");
+        navMenu.classList.remove("active");
       });
     });
   }
@@ -891,8 +1079,11 @@ function atualizarBotaoDescer(container) {
   const btnDescer = document.getElementById("btn-descer");
   if (!btnDescer) return;
 
-  const isAtBottom = Math.abs(container.scrollHeight - container.scrollTop - container.clientHeight) < 10;
-  
+  const isAtBottom =
+    Math.abs(
+      container.scrollHeight - container.scrollTop - container.clientHeight
+    ) < 10;
+
   if (!isAtBottom) {
     btnDescer.style.display = "flex";
     btnDescer.classList.add("pulse");
