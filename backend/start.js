@@ -1,20 +1,18 @@
-require('dotenv').config({ path: 'api.env' });
+require('dotenv').config({ path: 'api.env' }); 
 const express = require('express');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middlewares
-app.use(express.json());
-app.use(cors());
+app.get('/api/chave-google', (req, res) => {
+  const apiKey = process.env.GOOGLE_API_KEY;
+  if (!apiKey) {
+    return res.status(500).json({ error: 'Chave da API não definida' });
+  }
+  res.json({ apiKey });
+});
 
-// Rotas
-const apiRoutes = require('./routes/api');
-app.use('/api', apiRoutes);
-
-// Arquivos estáticos
 app.use(express.static('../frontend/public'));
 
-// Iniciar servidor
 app.listen(PORT, () => {
   console.log(`Servidor rodando em http://localhost:${PORT}`);
 });

@@ -189,10 +189,16 @@ async function fetchNews() {
   `;
 
   try {
-    const response = await fetch("/api/noticias-espn");
+    const response = await retryWithBackoff(async () => {
+      const res = await fetch("/api/noticias-espn");
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res;
+    });
+    
     let noticias = await response.json();
 
     if (!Array.isArray(noticias)) {
+      console.error("A resposta não é um array!", noticias);
       throw new Error("Resposta inesperada do backend");
     }
     
