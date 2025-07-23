@@ -916,7 +916,7 @@ ul {
 .games-widget {
   position: fixed;
   right: 20px;
-  bottom: 80px; 
+  bottom: 90px;
   width: 460px;
   max-height: 95vh;
   background: #fff;
@@ -986,58 +986,6 @@ ul {
 
 .widget-filters::-webkit-scrollbar {
   display: none;
-}
-
-/* Widget Toggle Button */
-.widget-toggle-container {
-  position: fixed;
-  right: 20px;
-  bottom: 20px;
-  z-index: 1001;
-}
-
-.widget-toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  background: var(--primary);
-  color: var(--white);
-  border: none;
-  border-radius: var(--radius-lg);
-  padding: var(--space-3) var(--space-4);
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: var(--shadow-lg);
-  transition: var(--transition);
-}
-
-.widget-toggle-btn:hover {
-  background: var(--primary-dark);
-  transform: translateY(-2px);
-  box-shadow: var(--shadow-xl);
-}
-
-.widget-toggle-btn i {
-  font-size: 1rem;
-}
-
-/* Ajuste para mobile */
-@media (max-width: 768px) {
-  .widget-toggle-container {
-    right: 10px;
-    bottom: 10px;
-  }
-  
-  .widget-toggle-btn span {
-    display: none;
-  }
-  
-  .widget-toggle-btn {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    justify-content: center;
-  }
 }
 
 .filter-btn {

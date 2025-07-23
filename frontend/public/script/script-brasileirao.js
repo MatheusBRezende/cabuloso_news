@@ -558,24 +558,24 @@ async function verificarJogosAoVivo() {
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
-  const widgetToggle = document.getElementById("widget-toggle");
+  const widgetToggle = document.querySelector(".games-widget-container");
   const widgetClose = document.getElementById("widget-close");
   const widget = document.getElementById("games-widget");
 
   if (!widgetToggle || !widgetClose || !widget) return;
 
-  // Inicialmente esconde o widget
-  widget.classList.remove("visible");
+  // Mostra o widget por padrão
+  widget.classList.add("visible");
 
   const toggleWidget = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
+    widgetToggle.classList.toggle("active");
     widget.classList.toggle("visible");
   };
 
-  widgetToggle.addEventListener("click", toggleWidget);
   widgetClose.addEventListener("click", toggleWidget);
 
   // Fecha ao clicar fora
@@ -953,21 +953,21 @@ function iniciarAtualizacaoPeriodica() {
 }
 
 function verificarWidgetAutoAtivacao() {
-  const urlParams = new URLSearchParams(window.location.search);
-  const widgetParam = urlParams.get("widget");
+  const urlParams = new URLSearchParams(window.location.search)
+  const widgetParam = urlParams.get("widget")
 
   if (widgetParam === "jogos") {
-    const widgetToggle = document.getElementById("widget-toggle");
-    const widget = document.getElementById("games-widget");
+    const widgetToggle = document.getElementById("widget-toggle")
+    const widget = document.getElementById("games-widget")
 
     if (widgetToggle && widget) {
-      // Abre o widget automaticamente
-      widget.classList.add("visible");
-      
+      // Simula o clique para abrir o widget
+      widgetToggle.click()
+
       // Rola a página até o widget (opcional)
       setTimeout(() => {
-        widget.scrollIntoView({ behavior: "smooth", block: "nearest" });
-      }, 300);
+        widget.scrollIntoView({ behavior: "smooth", block: "nearest" })
+      }, 300)
     }
   }
 }
