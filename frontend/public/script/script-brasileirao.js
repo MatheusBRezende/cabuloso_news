@@ -509,27 +509,44 @@ function setupFiltrosJogos(jogos) {
     }
   })
 }
-
 function verificarEAjustarBotaoMinutoAMinuto() {
+  console.log("Verificando botão minuto a minuto...");
   const btnContainer = document.getElementById("btn-minuto-a-minuto-container");
-  if (!btnContainer) return;
+  if (!btnContainer) {
+    console.error("Container do botão não encontrado");
+    return;
+  }
 
-  // Verifica todos os jogos, não apenas os do Cruzeiro
+  // Verifica todos os jogos com a classe 'ao-vivo'
   const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo');
-  
+  console.log(`Jogos ao vivo encontrados: ${jogosAoVivo.length}`);
+
   if (jogosAoVivo.length > 0) {
+    console.log("Jogo ao vivo detectado, mostrando botão...");
     btnContainer.style.display = "block";
+    
     const primeiroJogo = jogosAoVivo[0];
+    console.log("Dados do primeiro jogo ao vivo:", primeiroJogo);
     
-    // Obter dados do jogo
-    const timeCasa = primeiroJogo.querySelector('.time:first-child span')?.textContent || '';
-    const timeVisitante = primeiroJogo.querySelector('.time:last-child span')?.textContent || '';
-    const escudoCasa = primeiroJogo.querySelector('.time:first-child img')?.src || obterEscudoTime(timeCasa);
-    const escudoVisitante = primeiroJogo.querySelector('.time:last-child img')?.src || obterEscudoTime(timeVisitante);
+    // Obter todos os dados necessários com verificações mais robustas
+    const timeCasaEl = primeiroJogo.querySelector('.jogo-times .time:first-child');
+    const timeVisitanteEl = primeiroJogo.querySelector('.jogo-times .time:last-child');
+    
+    const timeCasa = timeCasaEl?.querySelector('span')?.textContent || 'Time Casa';
+    const timeVisitante = timeVisitanteEl?.querySelector('span')?.textContent || 'Time Visitante';
+    
+    const escudoCasa = timeCasaEl?.querySelector('img')?.src || obterEscudoTime(timeCasa);
+    const escudoVisitante = timeVisitanteEl?.querySelector('img')?.src || obterEscudoTime(timeVisitante);
+    
     const campeonato = primeiroJogo.querySelector('.jogo-campeonato')?.textContent || 'Campeonato Desconhecido';
-    
-    document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`;
-    
+
+    // Atualiza o texto do botão
+    const btnTimes = document.getElementById("btn-ao-vivo-times");
+    if (btnTimes) {
+      btnTimes.textContent = `${timeCasa} vs ${timeVisitante}`;
+    }
+
+    // Atualiza o link
     const link = btnContainer.querySelector('a');
     if (link) {
       link.href = `minuto-a-minuto.html?timeCasa=${encodeURIComponent(timeCasa)}` +
@@ -539,6 +556,7 @@ function verificarEAjustarBotaoMinutoAMinuto() {
                   `&campeonato=${encodeURIComponent(campeonato)}`;
     }
   } else {
+    console.log("Nenhum jogo ao vivo encontrado, ocultando botão...");
     btnContainer.style.display = "none";
   }
 }
