@@ -248,7 +248,6 @@ async function carregarProximosJogos() {
             const jogos = processarDadosJogos(data.values)
             exibirJogosWidget(jogos)
             setupFiltrosJogos(jogos)
-            verificarEAjustarBotaoMinutoAMinuto() // Adicione esta linha
             return
           }
         }
@@ -261,7 +260,6 @@ async function carregarProximosJogos() {
     const jogosDemo = gerarJogosDemo()
     exibirJogosWidget(jogosDemo)
     setupFiltrosJogos(jogosDemo)
-    verificarEAjustarBotaoMinutoAMinuto() // Adicione esta linha
   } catch (error) {
     console.error("Erro ao carregar jogos:", error)
     container.innerHTML = `
@@ -516,24 +514,21 @@ function verificarEAjustarBotaoMinutoAMinuto() {
   const btnContainer = document.getElementById("btn-minuto-a-minuto-container");
   if (!btnContainer) return;
 
-  // Verifica se há algum jogo ao vivo do Cruzeiro
   const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro');
   
   if (jogosAoVivo.length > 0) {
     btnContainer.style.display = "block";
     const primeiroJogo = jogosAoVivo[0];
     
-    // Extrai os dados do jogo
+    // Obter todos os dados necessários
     const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || '';
     const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || '';
     const escudoCasa = primeiroJogo.querySelector('.time.destaque img')?.src || obterEscudoTime(timeCasa);
     const escudoVisitante = primeiroJogo.querySelector('.time:not(.destaque) img')?.src || obterEscudoTime(timeVisitante);
     const campeonato = primeiroJogo.querySelector('.jogo-campeonato')?.textContent || 'Campeonato Desconhecido';
     
-    // Atualiza o texto do botão
     document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`;
     
-    // Atualiza o link do botão
     const link = btnContainer.querySelector('a');
     if (link) {
       link.href = `minuto-a-minuto.html?timeCasa=${encodeURIComponent(timeCasa)}` +
@@ -563,11 +558,11 @@ async function verificarJogosAoVivo() {
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
-  const widgetToggleBtn = document.getElementById("widget-toggle");
+  const widgetToggle = document.getElementById("widget-toggle");
   const widgetClose = document.getElementById("widget-close");
   const widget = document.getElementById("games-widget");
 
-  if (!widgetToggleBtn || !widgetClose || !widget) return;
+  if (!widgetToggle || !widgetClose || !widget) return;
 
   // Inicialmente esconde o widget
   widget.classList.remove("visible");
@@ -580,12 +575,12 @@ function setupWidgetJogos() {
     widget.classList.toggle("visible");
   };
 
-  widgetToggleBtn.addEventListener("click", toggleWidget);
+  widgetToggle.addEventListener("click", toggleWidget);
   widgetClose.addEventListener("click", toggleWidget);
 
   // Fecha ao clicar fora
   document.addEventListener("click", (e) => {
-    if (!widget.contains(e.target) && !widgetToggleBtn.contains(e.target)) {
+    if (!widget.contains(e.target) && !widgetToggle.contains(e.target)) {
       widget.classList.remove("visible");
     }
   });
@@ -962,9 +957,14 @@ function verificarWidgetAutoAtivacao() {
   const widgetParam = urlParams.get("widget");
 
   if (widgetParam === "jogos") {
+    const widgetToggle = document.getElementById("widget-toggle");
     const widget = document.getElementById("games-widget");
-    if (widget) {
+
+    if (widgetToggle && widget) {
+      // Abre o widget automaticamente
       widget.classList.add("visible");
+      
+      // Rola a página até o widget (opcional)
       setTimeout(() => {
         widget.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 300);
