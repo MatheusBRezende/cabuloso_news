@@ -563,11 +563,11 @@ async function verificarJogosAoVivo() {
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
-  const widgetToggle = document.getElementById("widget-toggle");
+  const widgetToggleBtn = document.getElementById("widget-toggle");
   const widgetClose = document.getElementById("widget-close");
   const widget = document.getElementById("games-widget");
 
-  if (!widgetToggle || !widgetClose || !widget) return;
+  if (!widgetToggleBtn || !widgetClose || !widget) return;
 
   // Inicialmente esconde o widget
   widget.classList.remove("visible");
@@ -580,12 +580,12 @@ function setupWidgetJogos() {
     widget.classList.toggle("visible");
   };
 
-  widgetToggle.addEventListener("click", toggleWidget);
+  widgetToggleBtn.addEventListener("click", toggleWidget);
   widgetClose.addEventListener("click", toggleWidget);
 
   // Fecha ao clicar fora
   document.addEventListener("click", (e) => {
-    if (!widget.contains(e.target) && !widgetToggle.contains(e.target)) {
+    if (!widget.contains(e.target) && !widgetToggleBtn.contains(e.target)) {
       widget.classList.remove("visible");
     }
   });
