@@ -962,14 +962,9 @@ function verificarWidgetAutoAtivacao() {
   const widgetParam = urlParams.get("widget");
 
   if (widgetParam === "jogos") {
-    const widgetToggle = document.getElementById("widget-toggle");
     const widget = document.getElementById("games-widget");
-
-    if (widgetToggle && widget) {
-      // Abre o widget automaticamente
+    if (widget) {
       widget.classList.add("visible");
-      
-      // Rola a página até o widget (opcional)
       setTimeout(() => {
         widget.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }, 300);

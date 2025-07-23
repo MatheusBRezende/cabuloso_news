@@ -992,7 +992,7 @@ ul {
 .widget-toggle-container {
   position: fixed;
   right: 20px;
-  bottom: 80px; /* Ajustado para ficar acima do botão de jogo ao vivo */
+  bottom: 80px;
   z-index: 1001;
 }
 
@@ -1010,6 +1010,7 @@ ul {
   box-shadow: var(--shadow-lg);
   transition: var(--transition);
 }
+
 
 .widget-toggle-btn:hover {
   background: var(--primary-dark);
