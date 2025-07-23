@@ -248,6 +248,7 @@ async function carregarProximosJogos() {
             const jogos = processarDadosJogos(data.values)
             exibirJogosWidget(jogos)
             setupFiltrosJogos(jogos)
+            verificarEAjustarBotaoMinutoAMinuto() // Adicione esta linha
             return
           }
         }
@@ -260,6 +261,7 @@ async function carregarProximosJogos() {
     const jogosDemo = gerarJogosDemo()
     exibirJogosWidget(jogosDemo)
     setupFiltrosJogos(jogosDemo)
+    verificarEAjustarBotaoMinutoAMinuto() // Adicione esta linha
   } catch (error) {
     console.error("Erro ao carregar jogos:", error)
     container.innerHTML = `
@@ -514,21 +516,24 @@ function verificarEAjustarBotaoMinutoAMinuto() {
   const btnContainer = document.getElementById("btn-minuto-a-minuto-container");
   if (!btnContainer) return;
 
+  // Verifica se há algum jogo ao vivo do Cruzeiro
   const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro');
   
   if (jogosAoVivo.length > 0) {
     btnContainer.style.display = "block";
     const primeiroJogo = jogosAoVivo[0];
     
-    // Obter todos os dados necessários
+    // Extrai os dados do jogo
     const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || '';
     const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || '';
     const escudoCasa = primeiroJogo.querySelector('.time.destaque img')?.src || obterEscudoTime(timeCasa);
     const escudoVisitante = primeiroJogo.querySelector('.time:not(.destaque) img')?.src || obterEscudoTime(timeVisitante);
     const campeonato = primeiroJogo.querySelector('.jogo-campeonato')?.textContent || 'Campeonato Desconhecido';
     
+    // Atualiza o texto do botão
     document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`;
     
+    // Atualiza o link do botão
     const link = btnContainer.querySelector('a');
     if (link) {
       link.href = `minuto-a-minuto.html?timeCasa=${encodeURIComponent(timeCasa)}` +
