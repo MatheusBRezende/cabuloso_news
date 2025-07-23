@@ -427,9 +427,9 @@ ul {
 /* ================= LIVE MATCH BUTTON ================= */
 .live-match-container {
   position: fixed;
-  bottom: 80px; /* Ajuste para ficar acima do botão de próximos jogos */
-  right: 20px;
-  z-index: 1001; 
+  bottom: var(--space-4);
+  right: var(--space-4);
+  z-index: 1000;
   animation: slideInUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -992,7 +992,7 @@ ul {
 .widget-toggle-container {
   position: fixed;
   right: 20px;
-  bottom: 20px;
+  bottom: 80px; /* Ajustado para ficar acima do botão de jogo ao vivo */
   z-index: 1001;
 }
 
@@ -1025,7 +1025,7 @@ ul {
 @media (max-width: 768px) {
   .widget-toggle-container {
     right: 10px;
-    bottom: 10px;
+    bottom: 70px; /* Ajuste para mobile */
   }
   
   .widget-toggle-btn span {
