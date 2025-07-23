@@ -313,63 +313,47 @@ function gerarJogosDemo() {
 }
 
 function processarDadosJogos(dados) {
-  let headerIndex = -1
+  let headerIndex = -1;
   for (let i = 0; i < dados.length; i++) {
-    const row = dados[i].map((cell) => (cell || "").toString().toUpperCase())
-    if (row.includes("DATA") && (row.includes("JOGO") || row.includes("TIME") || row.includes("CAMPEONATO"))) {
-      headerIndex = i
-      break
+    const row = dados[i].map((cell) => (cell || "").toString().toUpperCase());
+    if (row.includes("DATA") && (row.includes("JOGO") || row.includes("HORA") || row.includes("CAMPEONATO"))) {
+      headerIndex = i;
+      break;
     }
   }
 
   const linhas = dados.slice(headerIndex + 1).filter((row) => {
-    return row && row.length >= 4 && row.some((cell) => !!cell && cell.toString().trim() !== "")
-  })
+    return row && row.length >= 4 && row.some((cell) => !!cell && cell.toString().trim() !== "");
+  });
 
   return linhas
     .map((jogo) => {
-      // Data
-      let dataFormatada = "--/--"
-      if (typeof jogo[0] === "number") {
-        const data = new Date((jogo[0] - 25569) * 86400 * 1000)
-        dataFormatada = data.toLocaleDateString("pt-BR", {
-          day: "2-digit",
-          month: "short",
-        })
-      } else if (typeof jogo[0] === "string" && jogo[0].match(/\d{1,2}[/.]\d{1,2}/)) {
-        dataFormatada = jogo[0].replace(/\./g, "/")
-      } else if (typeof jogo[0] === "string") {
-        dataFormatada = jogo[0]
-      }
+      // Data - já vem formatada do Excel (ex: "qua., 23 jul.")
+      const dataFormatada = (jogo[0] || "--/--").toString().replace(/\./g, "");
 
       // Times
-      const timeCasa = (jogo[1] || "").trim()
-      const timeVisitante = (jogo[3] || "").trim()
+      const timeCasa = (jogo[1] || "").toString().trim();
+      // Remover placar se existir (ex: "0 - 0" no exemplo do Corinthians)
+      const timeVisitante = (jogo[3] || "").toString().replace(/\d+\s*-\s*\d+/, "").trim();
 
-      // Hora
-      let horaFormatada = "--:--"
-      let aoVivo = false
-      if (jogo[7] === "LIVE" || jogo[7] === "AO VIVO") {
-        horaFormatada = "AO VIVO"
-        aoVivo = true
-      } else if (typeof jogo[7] === "string" && jogo[7].match(/^\d{2}:\d{2}$/)) {
-        horaFormatada = jogo[7]
-      } else if (typeof jogo[7] === "number") {
-        const horaDecimal = Number.parseFloat(jogo[7])
-        const horas = Math.floor(horaDecimal * 24)
-        const minutos = Math.round((horaDecimal * 24 - horas) * 60)
-        horaFormatada = `${horas.toString().padStart(2, "0")}:${minutos.toString().padStart(2, "0")}`
-      } else if (jogo[4] && typeof jogo[4] === "string" && jogo[4].match(/^\d{2}:\d{2}$/)) {
-        horaFormatada = jogo[4]
-      } else {
-        horaFormatada = jogo[7] || jogo[4] || "--:--"
+      // Hora - agora verificamos a coluna 4 (índice 3 no array)
+      let horaFormatada = "--:--";
+      let aoVivo = false;
+      const horaRaw = (jogo[4] || "").toString().toUpperCase();
+      
+      if (horaRaw === "LIVE" || horaRaw === "AO VIVO") {
+        horaFormatada = "AO VIVO";
+        aoVivo = true;
+      } else if (horaRaw.match(/^\d{2}:\d{2}$/)) {
+        horaFormatada = horaRaw;
       }
 
-      // Campeonato
-      const campeonato = formatarNomeCampeonato(jogo[6] || jogo[5] || "Campeonato Desconhecido")
+      // Campeonato - coluna 5 (índice 4 no array)
+      const campeonato = formatarNomeCampeonato(jogo[5] || "Campeonato Desconhecido");
 
-      const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") || timeVisitante.toLowerCase().includes("cruzeiro")
-      const isMandante = timeCasa.toLowerCase().includes("cruzeiro")
+      const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") || 
+                        timeVisitante.toLowerCase().includes("cruzeiro");
+      const isMandante = timeCasa.toLowerCase().includes("cruzeiro");
 
       return {
         data: dataFormatada,
@@ -382,25 +366,21 @@ function processarDadosJogos(dados) {
         isCruzeiro,
         isMandante,
         aoVivo,
-      }
+      };
     })
     .filter(
       (jogo) =>
         jogo.timeCasa !== "DATA" &&
         jogo.timeCasa !== "Jogo" &&
         jogo.timeCasa !== "" &&
-        jogo.timeCasa !== "Time" &&
-        jogo.timeCasa !== "CAMPEONATO",
+        jogo.aoVivo === true  // Filtra apenas jogos ao vivo
     )
     .sort((a, b) => {
-      try {
-        const dateA = new Date(a.data.split("/").reverse().join("-"))
-        const dateB = new Date(b.data.split("/").reverse().join("-"))
-        return dateA - dateB
-      } catch {
-        return 0
-      }
-    })
+      // Ordena por data (jogos ao vivo primeiro)
+      if (a.aoVivo && !b.aoVivo) return -1;
+      if (!a.aoVivo && b.aoVivo) return 1;
+      return 0;
+    });
 }
 
 function formatarNomeCampeonato(nome) {
