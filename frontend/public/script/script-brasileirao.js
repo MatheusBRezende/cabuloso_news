@@ -514,17 +514,18 @@ function verificarEAjustarBotaoMinutoAMinuto() {
   const btnContainer = document.getElementById("btn-minuto-a-minuto-container");
   if (!btnContainer) return;
 
-  const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro');
+  // Verifica todos os jogos, não apenas os do Cruzeiro
+  const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo');
   
   if (jogosAoVivo.length > 0) {
     btnContainer.style.display = "block";
     const primeiroJogo = jogosAoVivo[0];
     
-    // Obter todos os dados necessários
-    const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || '';
-    const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || '';
-    const escudoCasa = primeiroJogo.querySelector('.time.destaque img')?.src || obterEscudoTime(timeCasa);
-    const escudoVisitante = primeiroJogo.querySelector('.time:not(.destaque) img')?.src || obterEscudoTime(timeVisitante);
+    // Obter dados do jogo
+    const timeCasa = primeiroJogo.querySelector('.time:first-child span')?.textContent || '';
+    const timeVisitante = primeiroJogo.querySelector('.time:last-child span')?.textContent || '';
+    const escudoCasa = primeiroJogo.querySelector('.time:first-child img')?.src || obterEscudoTime(timeCasa);
+    const escudoVisitante = primeiroJogo.querySelector('.time:last-child img')?.src || obterEscudoTime(timeVisitante);
     const campeonato = primeiroJogo.querySelector('.jogo-campeonato')?.textContent || 'Campeonato Desconhecido';
     
     document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`;
