@@ -1122,6 +1122,53 @@ ul {
   color: var(--gray-400);
 }
 
+/* ================= WIDGET TOGGLE BUTTON ================= */
+.widget-toggle-btn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: var(--shadow-xl);
+  z-index: 1001;
+  transition: var(--transition);
+}
+
+.widget-toggle-btn:hover {
+  background: var(--primary-dark);
+  transform: translateY(-2px);
+}
+
+.widget-toggle-btn i {
+  font-size: 1rem;
+}
+
+/* Quando o widget estiver visível */
+.widget-toggle-btn.active {
+  background: var(--accent);
+  color: var(--gray-900);
+}
+
+@media (max-width: 768px) {
+  .widget-toggle-btn {
+    right: 10px;
+    bottom: 10px;
+  }
+  
+  .widget-toggle-btn span {
+    display: none;
+  }
+}
+
 /* ================= COPA DO BRASIL STYLES ================= */
 .fase-copa {
   margin-bottom: var(--space-8);
