@@ -327,13 +327,16 @@ function processarDadosJogos(dados) {
   });
 
   const hoje = new Date();
-  const hojeFormatado = hoje.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' }).replace(/\./g, '');
+  hoje.setHours(0, 0, 0, 0); // Reset para comparar apenas a data
 
   return linhas
     .map((jogo) => {
       // Data - já vem formatada do Excel (ex: "qua., 23 jul.")
       const dataRaw = (jogo[0] || "").toString();
       const dataFormatada = dataRaw.replace(/\./g, "").trim();
+
+      // Converter para objeto Date (para comparação)
+      const dataJogo = parseExcelDate(dataRaw) || new Date(dataRaw) || hoje;
 
       // Times
       const timeCasa = (jogo[1] || "").toString().trim();
@@ -356,13 +359,9 @@ function processarDadosJogos(dados) {
 
       const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") || 
                         timeVisitante.toLowerCase().includes("cruzeiro");
+      
       const isMandante = timeCasa.toLowerCase().includes("cruzeiro");
-
-      // Verifica se é um jogo futuro (a partir de hoje)
-      const isProximaPartida = !aoVivo && (
-        dataFormatada !== hojeFormatado && 
-        new Date(dataFormatada) >= new Date(hoje.setHours(0, 0, 0, 0))
-      );
+      const isProximaPartida = !aoVivo && (dataJogo >= hoje);
 
       return {
         data: dataFormatada,
@@ -376,6 +375,7 @@ function processarDadosJogos(dados) {
         isMandante,
         aoVivo,
         isProximaPartida,
+        dataJogo: dataJogo, // Adicionado para ordenação
       };
     })
     .filter(
@@ -383,17 +383,23 @@ function processarDadosJogos(dados) {
         jogo.timeCasa !== "DATA" &&
         jogo.timeCasa !== "Jogo" &&
         jogo.timeCasa !== "" &&
-        (jogo.aoVivo || jogo.isProximaPartida)  // Mostra AO VIVO ou PRÓXIMAS PARTIDAS
+        (jogo.aoVivo || (jogo.isProximaPartida && jogo.isCruzeiro)) // MOSTRA: AO VIVO ou PRÓXIMAS DO CRUZEIRO
     )
     .sort((a, b) => {
       // Ordena: AO VIVO primeiro, depois por data mais próxima
       if (a.aoVivo && !b.aoVivo) return -1;
       if (!a.aoVivo && b.aoVivo) return 1;
-      
-      const dataA = new Date(a.data);
-      const dataB = new Date(b.data);
-      return dataA - dataB;
+      return a.dataJogo - b.dataJogo;
     });
+}
+
+// Função auxiliar para converter datas do Excel (se necessário)
+function parseExcelDate(dataRaw) {
+  if (typeof dataRaw === "number") {
+    // Se for número (formato Excel), converte para Date
+    return new Date((dataRaw - 25569) * 86400 * 1000);
+  }
+  return null;
 }
 
 function formatarNomeCampeonato(nome) {
@@ -551,24 +557,24 @@ async function verificarJogosAoVivo() {
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
-  const widgetToggle = document.querySelector(".games-widget-container");
+  const widgetToggle = document.getElementById("widget-toggle");
   const widgetClose = document.getElementById("widget-close");
   const widget = document.getElementById("games-widget");
 
   if (!widgetToggle || !widgetClose || !widget) return;
 
-  // Mostra o widget por padrão
-  widget.classList.add("visible");
+  // Inicialmente esconde o widget
+  widget.classList.remove("visible");
 
   const toggleWidget = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-    widgetToggle.classList.toggle("active");
     widget.classList.toggle("visible");
   };
 
+  widgetToggle.addEventListener("click", toggleWidget);
   widgetClose.addEventListener("click", toggleWidget);
 
   // Fecha ao clicar fora
@@ -946,21 +952,21 @@ function iniciarAtualizacaoPeriodica() {
 }
 
 function verificarWidgetAutoAtivacao() {
-  const urlParams = new URLSearchParams(window.location.search)
-  const widgetParam = urlParams.get("widget")
+  const urlParams = new URLSearchParams(window.location.search);
+  const widgetParam = urlParams.get("widget");
 
   if (widgetParam === "jogos") {
-    const widgetToggle = document.getElementById("widget-toggle")
-    const widget = document.getElementById("games-widget")
+    const widgetToggle = document.getElementById("widget-toggle");
+    const widget = document.getElementById("games-widget");
 
     if (widgetToggle && widget) {
-      // Simula o clique para abrir o widget
-      widgetToggle.click()
-
+      // Abre o widget automaticamente
+      widget.classList.add("visible");
+      
       // Rola a página até o widget (opcional)
       setTimeout(() => {
-        widget.scrollIntoView({ behavior: "smooth", block: "nearest" })
-      }, 300)
+        widget.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 300);
     }
   }
 }
