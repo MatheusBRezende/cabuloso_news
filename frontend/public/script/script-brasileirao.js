@@ -346,27 +346,25 @@ function processarDadosJogos(dados) {
       const timeCasa = (jogo[1] || "").trim()
       const timeVisitante = (jogo[3] || "").trim()
 
-      // Hora
+      // Hora - CORREÇÃO PRINCIPAL AQUI
       let horaFormatada = "--:--"
       let aoVivo = false
-      if (jogo[7] === "LIVE" || jogo[7] === "AO VIVO") {
+      if (jogo[4] === "LIVE" || jogo[4] === "AO VIVO") {
         horaFormatada = "AO VIVO"
         aoVivo = true
-      } else if (typeof jogo[7] === "string" && jogo[7].match(/^\d{2}:\d{2}$/)) {
-        horaFormatada = jogo[7]
-      } else if (typeof jogo[7] === "number") {
-        const horaDecimal = Number.parseFloat(jogo[7])
+      } else if (typeof jogo[4] === "string" && jogo[4].match(/^\d{2}:\d{2}$/)) {
+        horaFormatada = jogo[4]
+      } else if (typeof jogo[4] === "number") {
+        const horaDecimal = Number.parseFloat(jogo[4])
         const horas = Math.floor(horaDecimal * 24)
         const minutos = Math.round((horaDecimal * 24 - horas) * 60)
         horaFormatada = `${horas.toString().padStart(2, "0")}:${minutos.toString().padStart(2, "0")}`
-      } else if (jogo[4] && typeof jogo[4] === "string" && jogo[4].match(/^\d{2}:\d{2}$/)) {
-        horaFormatada = jogo[4]
       } else {
-        horaFormatada = jogo[7] || jogo[4] || "--:--"
+        horaFormatada = jogo[4] || "--:--"
       }
 
       // Campeonato
-      const campeonato = formatarNomeCampeonato(jogo[6] || jogo[5] || "Campeonato Desconhecido")
+      const campeonato = formatarNomeCampeonato(jogo[5] || "Campeonato Desconhecido")
 
       const isCruzeiro = timeCasa.toLowerCase().includes("cruzeiro") || timeVisitante.toLowerCase().includes("cruzeiro")
       const isMandante = timeCasa.toLowerCase().includes("cruzeiro")
