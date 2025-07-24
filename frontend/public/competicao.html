@@ -37,8 +37,14 @@
       <nav class="navbar">
         <div class="nav-container">
           <a href="index.html" class="nav-logo">
-            <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="logo" />
-            <span class="logo-text">Cabuloso News</span>
+            <div class="logo-container">
+              <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="logo" />
+              <div class="logo-glow"></div>
+            </div>
+            <div class="logo-text-container">
+              <span class="logo-text">Cabuloso News</span>
+              <span class="logo-subtitle">Maior de Minas</span>
+            </div>
           </a>
 
           <ul class="nav-menu" id="nav-menu">
@@ -55,7 +61,7 @@
               </a>
             </li>
             <li class="nav-item">
-              <a href="resultados.html" class="nav-link ">
+              <a href="resultados.html" class="nav-link">
                 <i class="fas fa-trophy"></i>
                 <span>Resultados</span>
               </a>
@@ -63,8 +69,12 @@
           </ul>
 
           <div class="menu-toggle" id="menuToggle">
-            <i class="fas fa-bars"></i>
-            <span>Menu</span>
+            <span class="menu-text">Menu</span>
+            <div class="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
       </nav>
@@ -74,6 +84,7 @@
     <section class="hero">
       <div class="hero-background">
         <div class="hero-pattern"></div>
+        <div class="hero-gradient-overlay"></div>
       </div>
       <div class="container">
         <div class="hero-content">
@@ -82,16 +93,14 @@
             <span>Temporada 2025</span>
           </div>
           <h1 class="hero-title">
-            <span class="title-main" id="campeonato-nome"
-              >Brasileirão Série A</span
-            >
-            <span class="title-sub">Acompanhe todas as competições</span>
+            <span class="title-main" id="campeonato-nome">Brasileirão Série A</span>
+            <span class="title-sub">Acompanhe todas as competições do Cruzeiro</span>
           </h1>
           <div class="hero-selector">
             <div class="selector-wrapper">
               <select id="campeonato-select" class="championship-select">
-                <option value="brasileirao">Campeonato Brasileiro</option>
-                <option value="copa-do-brasil">Copa do Brasil</option>
+                <option value="brasileirao">🏆 Campeonato Brasileiro</option>
+                <option value="copa-do-brasil">🏅 Copa do Brasil</option>
               </select>
               <i class="fas fa-chevron-down selector-icon"></i>
             </div>
@@ -102,38 +111,57 @@
 
     <!-- Main Content -->
     <section class="intro-content">
-      <h2>Sobre o Cabuloso News</h2>
-      <p>
+      <div class="intro-header">
+        <div class="intro-icon">
+          <i class="fas fa-star"></i>
+        </div>
+        <h2>Sobre o Cabuloso News</h2>
+      </div>
+      <p class="intro-lead">
         Bem-vindo ao <strong>Cabuloso News</strong>, o portal definitivo para
         todos os apaixonados pelo <strong>Cruzeiro Esporte Clube</strong>. Nossa
         missão é manter a torcida sempre informada com conteúdos de qualidade,
         atualizações em tempo real e uma navegação leve e acessível.
       </p>
 
-      <p>O que você encontra aqui:</p>
-      <ul>
-        <li>
-          <i class="fas fa-newspaper"></i> Notícias diárias e exclusivas sobre o
-          Cruzeiro
-        </li>
-        <li>
-          <i class="fas fa-table-list"></i> Tabelas atualizadas do Campeonato
-          Brasileiro e outras competições
-        </li>
-        <li>
-          <i class="fas fa-calendar-check"></i> Resultados completos e
-          estatísticas de todos os jogos
-        </li>
-        <li>
-          <i class="fas fa-tv"></i> Cobertura minuto a minuto das partidas ao
-          vivo
-        </li>
-      </ul>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-newspaper"></i>
+          </div>
+          <h3>Notícias Exclusivas</h3>
+          <p>Notícias diárias e exclusivas sobre o Cruzeiro</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-table-list"></i>
+          </div>
+          <h3>Tabelas Atualizadas</h3>
+          <p>Classificações em tempo real de todas as competições</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-calendar-check"></i>
+          </div>
+          <h3>Resultados Completos</h3>
+          <p>Estatísticas detalhadas de todos os jogos</p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">
+            <i class="fas fa-tv"></i>
+          </div>
+          <h3>Cobertura Ao Vivo</h3>
+          <p>Minuto a minuto das partidas em tempo real</p>
+        </div>
+      </div>
 
-      <p>
-        Nosso conteúdo é produzido com base em fontes confiáveis, sempre
-        buscando oferecer a melhor experiência para o torcedor celeste.
-      </p>
+      <div class="intro-footer">
+        <p>
+          <i class="fas fa-shield-alt"></i>
+          Nosso conteúdo é produzido com base em fontes confiáveis, sempre
+          buscando oferecer a melhor experiência para o torcedor celeste.
+        </p>
+      </div>
     </section>
 
     <!-- Live Match Button -->
@@ -149,9 +177,7 @@
         </div>
         <div class="live-content">
           <span class="live-title">Minuto a Minuto</span>
-          <span class="live-teams" id="btn-ao-vivo-times"
-            >Jogo em Andamento</span
-          >
+          <span class="live-teams" id="btn-ao-vivo-times">Jogo em Andamento</span>
         </div>
         <div class="live-arrow">
           <i class="fas fa-chevron-right"></i>
@@ -184,10 +210,10 @@
     </div>
 
     <!-- Botão flutuante para o widget de jogos -->
-<div class="widget-toggle-btn" id="widget-toggle">
-  <i class="fas fa-calendar-alt"></i>
-  <span>Próximos Jogos</span>
-</div>
+    <div class="widget-toggle-btn" id="widget-toggle">
+      <i class="fas fa-calendar-alt"></i>
+      <span>Próximos Jogos</span>
+    </div>
 
     <main class="main-content">
       <div class="container">
@@ -195,81 +221,104 @@
         <section class="table-section">
           <div class="section-header">
             <div class="header-info">
-              <h2 class="section-title">Classificação</h2>
+              <h2 class="section-title">
+                <i class="fas fa-trophy section-icon"></i>
+                Classificação
+              </h2>
               <div class="update-info">
-                <i class="fas fa-clock"></i>
+                <div class="update-pulse"></div>
+                <i class="fas fa-sync-alt"></i>
                 <span>Atualizado em tempo real</span>
               </div>
             </div>
           </div>
 
           <div class="table-wrapper">
-  <div id="tabela-container" class="table-container">
-    <div class="loading-state">
-      <div class="loading-spinner">
-        <div class="spinner"></div>
-      </div>
-      <p>Carregando dados do campeonato...</p>
-    </div>
-    <div class="fase-copa fade-in-up" id="copa-static-games" style="display: none;">
-      <h3><i class="fas fa-trophy"></i> Copa do Brasil 2025</h3>
+            <div id="tabela-container" class="table-container">
+              <div class="loading-state">
+                <div class="loading-spinner">
+                  <div class="spinner"></div>
+                </div>
+                <p>Carregando dados do campeonato...</p>
+              </div>
+              <div class="fase-copa fade-in-up" id="copa-static-games" style="display: none;">
+                <h3><i class="fas fa-trophy"></i> Copa do Brasil 2025</h3>
 
-      <div class="jogo-copa destaque-cruzeiro">
-        <div class="cabecalho-jogo-copa">
-          <span class="fase-jogo">
-            <i class="fas fa-calendar-alt"></i>
-            3ª Fase - Ida
-          </span>
-          <span class="data-jogo-copa">
-            <i class="far fa-clock"></i>
-            20/01 - 16:00
-          </span>
-          <span class="placar-jogo">
-            <i class="fas fa-futbol"></i>
-            2 x 0
-          </span>
-        </div>
-        <div class="times-jogo-copa">
-          <div class="time-casa destaque">
-            <span>Cruzeiro</span>
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png" alt="Cruzeiro" loading="lazy">
+                <div class="jogo-copa destaque-cruzeiro">
+                  <div class="cabecalho-jogo-copa">
+                    <span class="fase-jogo">
+                      <i class="fas fa-calendar-alt"></i>
+                      3ª Fase - Ida
+                    </span>
+                    <span class="data-jogo-copa">
+                      <i class="far fa-clock"></i>
+                      20/01 - 16:00
+                    </span>
+                    <span class="placar-jogo">
+                      <i class="fas fa-futbol"></i>
+                      2 x 0
+                    </span>
+                  </div>
+                  <div class="times-jogo-copa">
+                    <div class="time-casa destaque">
+                      <span>Cruzeiro</span>
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png" alt="Cruzeiro" loading="lazy">
+                    </div>
+                    <span class="vs">VS</span>
+                    <div class="time-visitante">
+                      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png" alt="CRB" loading="lazy">
+                      <span>CRB</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <span class="vs">VS</span>
-          <div class="time-visitante">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png" alt="CRB" loading="lazy">
-            <span>CRB</span>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </div>
-</div>
 
           <!-- Legend -->
           <div class="legend-container">
             <div class="legend" id="legend">
+              <div class="legend-header">
+                <h3><i class="fas fa-info-circle"></i> Legenda</h3>
+                <p class="legend-description">As cores na tabela representam as classificações para Libertadores, Pré-Libertadores, Sul-Americana e rebaixamento:</p>
+              </div>
+              
               <!-- Brasileirão Legend -->
               <div class="legend-group" data-campeonato="brasileirao">
                 <div class="legend-item">
                   <span class="legend-color pos1-4"></span>
-                  <span class="legend-text">Libertadores (1º-4º)</span>
+                  <span class="legend-text">
+                    <strong>Libertadores</strong>
+                    <small>(1º-4º)</small>
+                  </span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-color pos5-6"></span>
-                  <span class="legend-text">Pré-Libertadores (5º-6º)</span>
+                  <span class="legend-text">
+                    <strong>Pré-Libertadores</strong>
+                    <small>(5º-6º)</small>
+                  </span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-color pos7-12"></span>
-                  <span class="legend-text">Sul-Americana (7º-12º)</span>
+                  <span class="legend-text">
+                    <strong>Sul-Americana</strong>
+                    <small>(7º-12º)</small>
+                  </span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-color pos17-20"></span>
-                  <span class="legend-text">Rebaixamento (17º-20º)</span>
+                  <span class="legend-text">
+                    <strong>Rebaixamento</strong>
+                    <small>(17º-20º)</small>
+                  </span>
                 </div>
                 <div class="legend-item special">
                   <span class="legend-color cruzeiro"></span>
-                  <span class="legend-text">Cruzeiro</span>
+                  <span class="legend-text">
+                    <strong>Cruzeiro</strong>
+                    <small>Maior de Minas</small>
+                  </span>
                 </div>
               </div>
 
@@ -279,17 +328,26 @@
                 data-campeonato="copa-do-brasil"
                 style="display: none"
               >
-                <div class="legend-item">
+                <div class="legend-item special">
                   <span class="legend-color cruzeiro"></span>
-                  <span class="legend-text">Cruzeiro</span>
+                  <span class="legend-text">
+                    <strong>Cruzeiro</strong>
+                    <small>Maior de Minas</small>
+                  </span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-color pos1-4"></span>
-                  <span class="legend-text">Classificado</span>
+                  <span class="legend-text">
+                    <strong>Classificado</strong>
+                    <small>Próxima fase</small>
+                  </span>
                 </div>
                 <div class="legend-item">
                   <span class="legend-color pos17-20"></span>
-                  <span class="legend-text">Eliminado</span>
+                  <span class="legend-text">
+                    <strong>Eliminado</strong>
+                    <small>Fora da competição</small>
+                  </span>
                 </div>
               </div>
             </div>
@@ -301,18 +359,38 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <div class="footer-logo">
+              <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="footer-logo-img" />
+              <div>
+                <h3>Cabuloso News</h3>
+                <p>O portal do torcedor celeste</p>
+              </div>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h4>Navegação</h4>
+            <ul>
+              <li><a href="index.html">Início</a></li>
+              <li><a href="competicao.html">Tabelas</a></li>
+              <li><a href="resultados.html">Resultados</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Contato</h4>
+            <p>
+              <i class="fas fa-envelope"></i>
+              <a href="mailto:cabulosonews92@gmail.com">cabulosonews92@gmail.com</a>
+            </p>
+          </div>
+        </div>
         <div class="footer-bottom">
           <p>
             &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
             vínculo oficial com o Cruzeiro Esporte Clube.<br />
             Todo conteúdo, imagens e notícias pertencem aos seus respectivos
-            autores e portais de origem. Se você é detentor de direitos e deseja
-            remoção de algum conteúdo, entre em contato pelo e-mail:
-            <a
-              href="mailto:cabulosonews92@gmail.com?subject=Remoção de Conteúdo"
-            >
-              cabulosonews92@gmail.com
-            </a>
+            autores e portais de origem.
           </p>
         </div>
       </div>
