@@ -94,7 +94,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 /*====FUNÇÃO PRINCIPAL====*/
 async function initApp() {
   try {
-    setupWidgetJogos()   
+    setupWidgetJogos()
     await carregarProximosJogos()
     setupScrollEffects()
 
@@ -105,7 +105,7 @@ async function initApp() {
     await carregarTabela(campeonatoSelecionado)
     setupEventListeners()
     iniciarAtualizacaoPeriodica()
-    
+
     // Verifica imediatamente ao carregar a página
     verificarEAjustarBotaoMinutoAMinuto()
     verificarJogosAoVivo() // Verifica também aqui para garantir
@@ -178,14 +178,25 @@ function setupEventListeners() {
       }
     })
   }
-    // Mobile menu toggle
+
+  // Mobile menu toggle - CORREÇÃO PRINCIPAL AQUI
   const menuToggle = document.getElementById("menuToggle")
   const navMenu = document.getElementById("nav-menu")
 
   if (menuToggle && navMenu) {
-    menuToggle.addEventListener("click", () => {
+    menuToggle.addEventListener("click", (e) => {
+      e.preventDefault()
+      e.stopPropagation()
+
       menuToggle.classList.toggle("active")
       navMenu.classList.toggle("active")
+
+      // Prevent body scroll when menu is open
+      if (navMenu.classList.contains("active")) {
+        document.body.classList.add("menu-open")
+      } else {
+        document.body.classList.remove("menu-open")
+      }
     })
 
     // Close menu when clicking on links
@@ -193,7 +204,17 @@ function setupEventListeners() {
       link.addEventListener("click", () => {
         menuToggle.classList.remove("active")
         navMenu.classList.remove("active")
+        document.body.classList.remove("menu-open")
       })
+    })
+
+    // Close menu when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!menuToggle.contains(e.target) && !navMenu.contains(e.target)) {
+        menuToggle.classList.remove("active")
+        navMenu.classList.remove("active")
+        document.body.classList.remove("menu-open")
+      }
     })
   }
 }
@@ -411,41 +432,41 @@ function formatarNomeCampeonato(nome) {
 
 function obterEscudoTime(nomeTime) {
   if (!nomeTime || nomeTime.trim() === "") {
-    return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
+    return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
   }
 
   // Normaliza o nome do time
   const nomeNormalizado = nomeTime
     .toLowerCase()
-    .replace(/\s+/g, ' ')
+    .replace(/\s+/g, " ")
     .trim()
-    .replace(/^(ec|esporte clube|clube de regatas|sc)\s+/i, '')
-    .replace(/\s+(fc|cf)$/i, '');
+    .replace(/^(ec|esporte clube|clube de regatas|sc)\s+/i, "")
+    .replace(/\s+(fc|cf)$/i, "")
 
   // Verifica correspondência exata primeiro
   for (const [key, value] of Object.entries(escudos)) {
     const keyNormalizado = key
       .toLowerCase()
-      .replace(/\s+/g, ' ')
+      .replace(/\s+/g, " ")
       .trim()
-      .replace(/^(ec|esporte clube|clube de regatas|sc)\s+/i, '')
-      .replace(/\s+(fc|cf)$/i, '');
+      .replace(/^(ec|esporte clube|clube de regatas|sc)\s+/i, "")
+      .replace(/\s+(fc|cf)$/i, "")
 
     if (keyNormalizado === nomeNormalizado) {
-      return value;
+      return value
     }
   }
 
   // Verifica correspondência parcial
   for (const [key, value] of Object.entries(escudos)) {
-    const keyNormalizado = key.toLowerCase();
+    const keyNormalizado = key.toLowerCase()
     if (nomeNormalizado.includes(keyNormalizado) || keyNormalizado.includes(nomeNormalizado)) {
-      return value;
+      return value
     }
   }
 
   // Fallback para placeholder
-  return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png";
+  return "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png"
 }
 
 function exibirJogosWidget(jogos, filtro = "todos") {
@@ -509,44 +530,46 @@ function setupFiltrosJogos(jogos) {
 }
 
 function verificarEAjustarBotaoMinutoAMinuto() {
-  const btnContainer = document.getElementById("btn-minuto-a-minuto-container");
-  if (!btnContainer) return;
+  const btnContainer = document.getElementById("btn-minuto-a-minuto-container")
+  if (!btnContainer) return
 
-  const jogosAoVivo = document.querySelectorAll('.jogo-widget.ao-vivo.cruzeiro');
-  
+  const jogosAoVivo = document.querySelectorAll(".jogo-widget.ao-vivo.cruzeiro")
+
   if (jogosAoVivo.length > 0) {
-    btnContainer.style.display = "block";
-    const primeiroJogo = jogosAoVivo[0];
-    
+    btnContainer.style.display = "block"
+    const primeiroJogo = jogosAoVivo[0]
+
     // Obter todos os dados necessários
-    const timeCasa = primeiroJogo.querySelector('.time.destaque span')?.textContent || '';
-    const timeVisitante = primeiroJogo.querySelector('.time:not(.destaque) span')?.textContent || '';
-    const escudoCasa = primeiroJogo.querySelector('.time.destaque img')?.src || obterEscudoTime(timeCasa);
-    const escudoVisitante = primeiroJogo.querySelector('.time:not(.destaque) img')?.src || obterEscudoTime(timeVisitante);
-    const campeonato = primeiroJogo.querySelector('.jogo-campeonato')?.textContent || 'Campeonato Desconhecido';
-    
-    document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`;
-    
-    const link = btnContainer.querySelector('a');
+    const timeCasa = primeiroJogo.querySelector(".time.destaque span")?.textContent || ""
+    const timeVisitante = primeiroJogo.querySelector(".time:not(.destaque) span")?.textContent || ""
+    const escudoCasa = primeiroJogo.querySelector(".time.destaque img")?.src || obterEscudoTime(timeCasa)
+    const escudoVisitante =
+      primeiroJogo.querySelector(".time:not(.destaque) img")?.src || obterEscudoTime(timeVisitante)
+    const campeonato = primeiroJogo.querySelector(".jogo-campeonato")?.textContent || "Campeonato Desconhecido"
+
+    document.getElementById("btn-ao-vivo-times").textContent = `${timeCasa} vs ${timeVisitante}`
+
+    const link = btnContainer.querySelector("a")
     if (link) {
-      link.href = `minuto-a-minuto.html?timeCasa=${encodeURIComponent(timeCasa)}` +
-                  `&timeVisitante=${encodeURIComponent(timeVisitante)}` +
-                  `&escudoCasa=${encodeURIComponent(escudoCasa)}` +
-                  `&escudoVisitante=${encodeURIComponent(escudoVisitante)}` +
-                  `&campeonato=${encodeURIComponent(campeonato)}`;
+      link.href =
+        `minuto-a-minuto.html?timeCasa=${encodeURIComponent(timeCasa)}` +
+        `&timeVisitante=${encodeURIComponent(timeVisitante)}` +
+        `&escudoCasa=${encodeURIComponent(escudoCasa)}` +
+        `&escudoVisitante=${encodeURIComponent(escudoVisitante)}` +
+        `&campeonato=${encodeURIComponent(campeonato)}`
     }
   } else {
-    btnContainer.style.display = "none";
+    btnContainer.style.display = "none"
   }
 }
 
 async function verificarJogosAoVivo() {
   console.log("Verificando jogos ao vivo...")
-  
+
   try {
     // Atualiza a lista de jogos primeiro
     await carregarProximosJogos()
-    
+
     // Depois verifica se há jogos ao vivo
     verificarEAjustarBotaoMinutoAMinuto()
   } catch (error) {
@@ -556,37 +579,37 @@ async function verificarJogosAoVivo() {
 
 /*====FUNÇÕES DE WIDGET====*/
 function setupWidgetJogos() {
-  const widgetToggle = document.getElementById("widget-toggle");
-  const widgetClose = document.getElementById("widget-close");
-  const widget = document.getElementById("games-widget");
+  const widgetToggle = document.getElementById("widget-toggle")
+  const widgetClose = document.getElementById("widget-close")
+  const widget = document.getElementById("games-widget")
 
-  if (!widgetToggle || !widgetClose || !widget) return;
+  if (!widgetToggle || !widgetClose || !widget) return
 
   // Mostra o widget por padrão
-  widget.classList.add("visible");
-  widgetToggle.classList.add("active");
+  widget.classList.add("visible")
+  widgetToggle.classList.add("active")
 
   const toggleWidget = (e) => {
     if (e) {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault()
+      e.stopPropagation()
     }
-    widget.classList.toggle("visible");
-    widgetToggle.classList.toggle("active");
-  };
+    widget.classList.toggle("visible")
+    widgetToggle.classList.toggle("active")
+  }
 
-  widgetToggle.addEventListener("click", toggleWidget);
-  widgetClose.addEventListener("click", toggleWidget);
+  widgetToggle.addEventListener("click", toggleWidget)
+  widgetClose.addEventListener("click", toggleWidget)
 
   // Fecha ao clicar fora
   document.addEventListener("click", (e) => {
     if (!widget.contains(e.target) && !widgetToggle.contains(e.target)) {
-      widget.classList.remove("visible");
-      widgetToggle.classList.remove("active");
+      widget.classList.remove("visible")
+      widgetToggle.classList.remove("active")
     }
-  });
+  })
 
-  widget.addEventListener("click", (e) => e.stopPropagation());
+  widget.addEventListener("click", (e) => e.stopPropagation())
 }
 
 /*====FUNÇÕES DE TABELA====*/
@@ -913,26 +936,27 @@ function isCruzeiro(nomeTime) {
 }
 
 function atualizarLegendas(campeonato) {
-  const legendGroups = document.querySelectorAll(".legend-group");
-  const legendDescription = document.querySelector(".legend-description");
-  
+  const legendGroups = document.querySelectorAll(".legend-group")
+  const legendDescription = document.querySelector(".legend-description")
+
   // Atualiza o texto explicativo
   if (legendDescription) {
     const textos = {
-      "brasileirao": "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores , Sul-Americana e rebaixamento:",
-    };
-    
-    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`;
-  }
-  
-  // Mostra/oculta os grupos de legenda
-  legendGroups.forEach(group => {
-    if (group.dataset.campeonato === campeonato) {
-      group.style.display = "flex";
-    } else {
-      group.style.display = "none";
+      brasileirao:
+        "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores , Sul-Americana e rebaixamento:",
     }
-  });
+
+    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`
+  }
+
+  // Mostra/oculta os grupos de legenda
+  legendGroups.forEach((group) => {
+    if (group.dataset.campeonato === campeonato) {
+      group.style.display = "flex"
+    } else {
+      group.style.display = "none"
+    }
+  })
 }
 
 function iniciarAtualizacaoPeriodica() {

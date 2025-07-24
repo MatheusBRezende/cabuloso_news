@@ -59,7 +59,8 @@
     <div id="loading-overlay" class="loading-overlay">
       <div class="loading-content">
         <div class="loading-spinner"></div>
-        <p>Carregando resultados...</p>
+        <h3>Carregando Cabuloso News...</h3>
+        <p>Preparando os resultados do Maior de Minas</p>
       </div>
     </div>
 
@@ -68,8 +69,14 @@
       <nav class="navbar">
         <div class="nav-container">
           <a href="index.html" class="nav-logo">
-            <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="logo" />
-            <span class="logo-text">Cabuloso News</span>
+            <div class="logo-container">
+              <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="logo" />
+              <div class="logo-glow"></div>
+            </div>
+            <div class="logo-text-container">
+              <span class="logo-text">Cabuloso News</span>
+              <span class="logo-subtitle">Resultados</span>
+            </div>
           </a>
 
           <ul class="nav-menu" id="nav-menu">
@@ -94,8 +101,12 @@
           </ul>
 
           <div class="menu-toggle" id="menuToggle">
-            <i class="fas fa-bars"></i>
-            <span>Menu</span>
+            <span class="menu-text">Menu</span>
+            <div class="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
           </div>
         </div>
       </nav>
@@ -232,19 +243,19 @@
             <div class="competition-tabs">
               <button class="tab-btn active" data-competition="">
                 <i class="fas fa-globe"></i>
-                Geral
+                <span>Geral</span>
               </button>
               <button class="tab-btn" data-competition="Campeonato Brasileiro">
                 <i class="fas fa-flag"></i>
-                Brasileirão
+                <span>Brasileirão</span>
               </button>
               <button class="tab-btn" data-competition="Copa do Brasil">
                 <i class="fas fa-trophy"></i>
-                Copa do Brasil
+                <span>Copa do Brasil</span>
               </button>
               <button class="tab-btn" data-competition="CONMEBOL Sudamericana">
                 <i class="fas fa-medal"></i>
-                Sul-Americana
+                <span>Sul-Americana</span>
               </button>
             </div>
           </div>
@@ -320,12 +331,12 @@
             <div class="view-toggle">
               <button id="view-table" class="view-btn active">
                 <i class="fas fa-table"></i>
-                Tabela
+                <span>Tabela</span>
               </button>
 
               <button id="view-cards" class="view-btn">
                 <i class="fas fa-th-large"></i>
-                Cards
+                <span>Cards</span>
               </button>
             </div>
           </div>
@@ -344,7 +355,7 @@
                 <p>Não foi possível carregar os dados. Tente novamente.</p>
                 <button id="btn-retry" class="btn-retry">
                   <i class="fas fa-redo"></i>
-                  Tentar Novamente
+                  <span>Tentar Novamente</span>
                 </button>
               </div>
             </div>
@@ -366,21 +377,21 @@
                     <tr>
                       <th class="sortable" data-sort="date">
                         <i class="fas fa-calendar"></i>
-                        Data
+                        <span>Data</span>
                         <i class="fas fa-sort sort-icon"></i>
                       </th>
                       <th>
                         <i class="fas fa-users"></i>
-                        Jogo
+                        <span>Jogo</span>
                       </th>
                       <th class="sortable" data-sort="result">
                         <i class="fas fa-trophy"></i>
-                        Resultado
+                        <span>Resultado</span>
                         <i class="fas fa-sort sort-icon"></i>
                       </th>
                       <th class="sortable" data-sort="competition">
                         <i class="fas fa-medal"></i>
-                        Competição
+                        <span>Competição</span>
                         <i class="fas fa-sort sort-icon"></i>
                       </th>
                     </tr>
@@ -402,14 +413,14 @@
           <div id="pagination" class="pagination" style="display: none">
             <button id="prev-page" class="page-btn">
               <i class="fas fa-chevron-left"></i>
-              Anterior
+              <span>Anterior</span>
             </button>
             <div id="page-info" class="page-info">
               Página <span id="current-page">1</span> de
               <span id="total-pages">1</span>
             </div>
             <button id="next-page" class="page-btn">
-              Próxima
+              <span>Próxima</span>
               <i class="fas fa-chevron-right"></i>
             </button>
           </div>
@@ -417,7 +428,10 @@
 
         <!-- Fallback Table (for when API fails) -->
         <div id="fallback-table" class="fallback-table" style="display: none">
-          <h3>Últimos Resultados (Dados Estáticos)</h3>
+          <h3>
+            <i class="fas fa-info-circle"></i>
+            Últimos Resultados (Dados Estáticos)
+          </h3>
           <div class="table-container">
             <table class="results-table">
               <thead>
@@ -438,8 +452,8 @@
                         alt="Cruzeiro"
                         class="team-logo"
                       />
-                      <span class="team-name">Cruzeiro</span>
-                      <span class="vs">x</span>
+                      <span class="team-name home">Cruzeiro</span>
+                      <span class="vs">×</span>
                       <img
                         src="/placeholder.svg?height=24&width=24"
                         alt="Palmeiras"
@@ -448,7 +462,10 @@
                       <span class="team-name">Palmeiras</span>
                     </div>
                   </td>
-                  <td><span class="result vitoria">2-1</span></td>
+                  <td><span class="result vitoria">
+                    <i class="fas fa-check-circle"></i>
+                    2-1
+                  </span></td>
                   <td>Campeonato Brasileiro</td>
                 </tr>
                 <tr>
@@ -461,16 +478,19 @@
                         class="team-logo"
                       />
                       <span class="team-name">Flamengo</span>
-                      <span class="vs">x</span>
+                      <span class="vs">×</span>
                       <img
                         src="/placeholder.svg?height=24&width=24"
                         alt="Cruzeiro"
                         class="team-logo"
                       />
-                      <span class="team-name">Cruzeiro</span>
+                      <span class="team-name home">Cruzeiro</span>
                     </div>
                   </td>
-                  <td><span class="result empate">1-1</span></td>
+                  <td><span class="result empate">
+                    <i class="fas fa-equals"></i>
+                    1-1
+                  </span></td>
                   <td>Copa do Brasil</td>
                 </tr>
               </tbody>
@@ -486,11 +506,38 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <div class="footer-logo">
+              <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="footer-logo-img" />
+              <div>
+                <h3>Cabuloso News</h3>
+                <p>O portal do torcedor celeste</p>
+              </div>
+            </div>
+          </div>
+          <div class="footer-section">
+            <h4>Navegação</h4>
+            <ul>
+              <li><a href="index.html"><i class="fas fa-home"></i> Início</a></li>
+              <li><a href="competicao.html"><i class="fas fa-list-ol"></i> Tabelas</a></li>
+              <li><a href="resultados.html"><i class="fas fa-trophy"></i> Resultados</a></li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Contato</h4>
+            <p>
+              <i class="fas fa-envelope"></i>
+              <a href="mailto:cabulosonews92@gmail.com">cabulosonews92@gmail.com</a>
+            </p>
+          </div>
+        </div>
         <div class="footer-bottom">
           <p>
             &copy; 2025 CabulosoNews - O mais completo acompanhamento
             estatístico do Cruzeiro Esporte Clube. Este é um site independente
-            criado por torcedores para torcedores.
+            criado por torcedores para torcedores.<br />
+            Todo conteúdo, imagens e notícias pertencem aos seus respectivos autores e portais de origem.
           </p>
           <p class="disclaimer">
             Todas as estatísticas são calculadas com base em dados oficiais, mas
@@ -501,6 +548,11 @@
         </div>
       </div>
     </footer>
+
+    <!-- Back to Top Button -->
+    <a href="#" class="back-to-top" id="backToTop">
+      <i class="fas fa-arrow-up"></i>
+    </a>
 
     <!-- Scripts -->
     <script src="./script/script-resultado.js"></script>
