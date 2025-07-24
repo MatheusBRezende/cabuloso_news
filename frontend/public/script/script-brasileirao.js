@@ -326,17 +326,20 @@ function processarDadosJogos(dados) {
     return row && row.length >= 4 && row.some((cell) => !!cell && cell.toString().trim() !== "");
   });
 
+  const hoje = new Date();
+  const hojeFormatado = hoje.toLocaleDateString("pt-BR", { weekday: 'short', day: '2-digit', month: 'short' }).replace(/\./g, '');
+
   return linhas
     .map((jogo) => {
       // Data - já vem formatada do Excel (ex: "qua., 23 jul.")
-      const dataFormatada = (jogo[0] || "--/--").toString().replace(/\./g, "");
+      const dataRaw = (jogo[0] || "").toString();
+      const dataFormatada = dataRaw.replace(/\./g, "").trim();
 
       // Times
       const timeCasa = (jogo[1] || "").toString().trim();
-      // Remover placar se existir (ex: "0 - 0" no exemplo do Corinthians)
       const timeVisitante = (jogo[3] || "").toString().replace(/\d+\s*-\s*\d+/, "").trim();
 
-      // Hora - agora verificamos a coluna 4 (índice 3 no array)
+      // Hora - verificamos a coluna 4 (índice 3 no array)
       let horaFormatada = "--:--";
       let aoVivo = false;
       const horaRaw = (jogo[4] || "").toString().toUpperCase();
@@ -355,6 +358,12 @@ function processarDadosJogos(dados) {
                         timeVisitante.toLowerCase().includes("cruzeiro");
       const isMandante = timeCasa.toLowerCase().includes("cruzeiro");
 
+      // Verifica se é um jogo futuro (a partir de hoje)
+      const isProximaPartida = !aoVivo && (
+        dataFormatada !== hojeFormatado && 
+        new Date(dataFormatada) >= new Date(hoje.setHours(0, 0, 0, 0))
+      );
+
       return {
         data: dataFormatada,
         hora: horaFormatada,
@@ -366,6 +375,7 @@ function processarDadosJogos(dados) {
         isCruzeiro,
         isMandante,
         aoVivo,
+        isProximaPartida,
       };
     })
     .filter(
@@ -373,13 +383,16 @@ function processarDadosJogos(dados) {
         jogo.timeCasa !== "DATA" &&
         jogo.timeCasa !== "Jogo" &&
         jogo.timeCasa !== "" &&
-        jogo.aoVivo === true  // Filtra apenas jogos ao vivo
+        (jogo.aoVivo || jogo.isProximaPartida)  // Mostra AO VIVO ou PRÓXIMAS PARTIDAS
     )
     .sort((a, b) => {
-      // Ordena por data (jogos ao vivo primeiro)
+      // Ordena: AO VIVO primeiro, depois por data mais próxima
       if (a.aoVivo && !b.aoVivo) return -1;
       if (!a.aoVivo && b.aoVivo) return 1;
-      return 0;
+      
+      const dataA = new Date(a.data);
+      const dataB = new Date(b.data);
+      return dataA - dataB;
     });
 }
 
