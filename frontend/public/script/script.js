@@ -581,7 +581,6 @@ html += `
     </div>
     <div class="match-info">
       <span>${row[5] || "Amistoso"}</span>
-      <span>${row[6] || "Local a definir"}</span>
     </div>
   </div>
 `;
