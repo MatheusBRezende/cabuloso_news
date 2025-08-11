@@ -62,56 +62,11 @@ async function fetchNoticiasZeiro() {
   return noticias;
 }
 
-// ========== SCRAPER UOL ==========
-async function fetchNoticiasUOL() {
-  console.log('Iniciando scraping do UOL...');
-  const { data: html } = await axios.get('https://www.uol.com.br/esporte/futebol/times/cruzeiro/', {
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-    }
-  });
-  const $ = cheerio.load(html);
-  const noticias = [];
-
-  $('a:has(.thumb-title)').each((i, el) => {
-    const title = $(el).find('.thumb-title').text().trim();
-    const url = $(el).attr('href');
-    const image = $(el).find('img').attr('data-src')
-      || $(el).find('img').attr('src')
-      || (() => {
-        const srcset = $(el).find('source').attr('srcset');
-        if (srcset) return srcset.split(',')[0].split(' ')[0];
-        return null;
-      })();
-    const date = $(el).find('.thumb-date').text().trim();
-
-    if (title && url && image) {
-      noticias.push({
-        fonte: 'UOL',
-        title,
-        url: url.startsWith('http') ? url : `https://www.uol.com.br${url}`,
-        description: date,
-        image
-      });
-    }
-  });
-
-  console.log(`UOL: Encontradas ${noticias.length} notícias.`);
-  if (noticias.length > 0) {
-    console.log('Primeira notícia UOL:', noticias[0]);
-  }
-  return noticias;
-}
-
 // ========== UNIFICAÇÃO DAS FONTES ==========
 async function fetchNoticiasTodasFontes() {
-  const [zeiro, uol] = await Promise.all([
-    fetchNoticiasZeiro(),
-    fetchNoticiasUOL()
-  ]);
-  const todas = [...zeiro, ...uol];
-  console.log(`Total de notícias unificadas: ${todas.length}`);
-  return todas.sort(() => Math.random() - 0.5);
+  const zeiro = await fetchNoticiasZeiro();
+  console.log(`Total de notícias: ${zeiro.length}`);
+  return zeiro.sort(() => Math.random() - 0.5);
 }
 
 // ========== ROTA PRINCIPAL DINÂMICA ==========
@@ -124,9 +79,6 @@ app.get('/api/noticias-espn', async (req, res) => {
     if (fonte === 'zeiro') {
       noticias = await fetchNoticiasZeiro();
       console.log('Retornando apenas notícias do Zeiro');
-    } else if (fonte === 'uol') {
-      noticias = await fetchNoticiasUOL();
-      console.log('Retornando apenas notícias do UOL');
     } else {
       if (noticiasCache.length > 0 && now - cacheTimestamp < CACHE_TTL) {
         return res.json(noticiasCache);
@@ -134,7 +86,7 @@ app.get('/api/noticias-espn', async (req, res) => {
       noticias = await fetchNoticiasTodasFontes();
       noticiasCache = noticias;
       cacheTimestamp = now;
-      console.log('Retornando notícias de todas as fontes');
+      console.log('Retornando notícias do Zeiro');
     }
     res.json(noticias);
   } catch (err) {
