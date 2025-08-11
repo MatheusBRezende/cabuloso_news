@@ -566,7 +566,7 @@ async function loadNextMatches() {
       html += `
         <div class="next-match">
           <div class="match-date">
-            ${row[0]} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : row[7]} : ''}
+${row[0] || ''} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : (row[7] || '')}
           </div>
           <div class="match-teams">
             <div class="match-team ${row[1].includes("Cruzeiro") ? "cruzeiro" : ""}">
