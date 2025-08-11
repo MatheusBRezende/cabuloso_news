@@ -38,7 +38,7 @@ const escudos = {
   Ceará:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
   Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-  Corinthians: "https://upload.wikimedia.org/wikipedia/commons/c/c9/Escudo_sc_corinthians.png",
+  Corinthians: "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Sport_Club_Corinthians_Paulista_crest.svg/800px-Sport_Club_Corinthians_Paulista_crest.svg.png",
   Juventude: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
   Mirassol: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
   Fortaleza:
@@ -602,8 +602,10 @@ async function carregarTabela(campeonato = "brasileirao") {
 
   competicaoAtual = campeonato
 
-  const campeonatoNome = document.getElementById("campeonato-nome")
-  if (campeonatoNome) campeonatoNome.textContent = config.nome
+const campeonatoNome = document.getElementById("campeonato-nome");
+  if (campeonatoNome) campeonatoNome.textContent = config.nome;
+
+  atualizarLegendas(campeonato);
 
   if (campeonato === "copa-do-brasil") {
     console.log("Carregando Copa do Brasil...")
@@ -657,7 +659,7 @@ async function carregarTabela(campeonato = "brasileirao") {
     return
   }
 
-  // Para o Brasileirão, tenta carregar dados reais
+
   try {
     let dados = null
 
@@ -860,27 +862,36 @@ function isCruzeiro(nomeTime) {
 }
 
 function atualizarLegendas(campeonato) {
-  const legendGroups = document.querySelectorAll(".legend-group")
-  const legendDescription = document.querySelector(".legend-description")
+  const legendGroups = document.querySelectorAll(".legend-group");
+  const legendDescription = document.querySelector(".legend-description");
+  const legendContainer = document.querySelector(".legend-container");
 
-  // Atualiza o texto explicativo
+  // Esconde completamente o container da legenda para a Copa do Brasil
+  if (campeonato === "copa-do-brasil") {
+    if (legendContainer) legendContainer.style.display = "none";
+    return;
+  }
+
+
+  if (legendContainer) legendContainer.style.display = "block";
+
+
   if (legendDescription) {
     const textos = {
-      brasileirao:
-        "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores , Sul-Americana e rebaixamento:",
-    }
+      brasileirao: "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores, Sul-Americana e rebaixamento:",
+    };
 
-    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`
+    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`;
   }
 
   // Mostra/oculta os grupos de legenda
   legendGroups.forEach((group) => {
     if (group.dataset.campeonato === campeonato) {
-      group.style.display = "flex"
+      group.style.display = "flex";
     } else {
-      group.style.display = "none"
+      group.style.display = "none";
     }
-  })
+  });
 }
 
 function iniciarAtualizacaoPeriodica() {
