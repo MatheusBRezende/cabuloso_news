@@ -563,28 +563,28 @@ async function loadNextMatches() {
       
       const isLive = row[7] === "LIVE" || row[7] === "AO VIVO";
       
-      html += `
-        <div class="next-match">
-          <div class="match-date">
-            ${row[0]} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : row[7]}
-          </div>
-          <div class="match-teams">
-            <div class="match-team ${row[1].includes("Cruzeiro") ? "cruzeiro" : ""}">
-              <img src="${getTeamLogo(row[1])}" class="match-team-logo" loading="lazy">
-              <span>${cleanTeamName(row[1])}</span>
-            </div>
-            <span class="match-vs">vs</span>
-            <div class="match-team ${row[3].includes("Cruzeiro") ? "cruzeiro" : ""}">
-              <span>${cleanTeamName(row[3])}</span>
-              <img src="${getTeamLogo(row[3])}" class="match-team-logo" loading="lazy">
-            </div>
-          </div>
-          <div class="match-info">
-            <span>${row[5] || "Amistoso"}</span>
-            <span>${row[6] || "Local a definir"}</span>
-          </div>
-        </div>
-      `;
+html += `
+  <div class="next-match">
+    <div class="match-date">
+      ${row[0]}${row[7] ? ` • ${isLive ? '<span class="live-badge">AO VIVO</span>' : row[7]}` : ''}
+    </div>
+    <div class="match-teams">
+      <div class="match-team ${row[1].includes("Cruzeiro") ? "cruzeiro" : ""}">
+        <img src="${getTeamLogo(row[1])}" class="match-team-logo" loading="lazy">
+        <span>${cleanTeamName(row[1])}</span>
+      </div>
+      <span class="match-vs">vs</span>
+      <div class="match-team ${row[3].includes("Cruzeiro") ? "cruzeiro" : ""}">
+        <span>${cleanTeamName(row[3])}</span>
+        <img src="${getTeamLogo(row[3])}" class="match-team-logo" loading="lazy">
+      </div>
+    </div>
+    <div class="match-info">
+      <span>${row[5] || "Amistoso"}</span>
+      <span>${row[6] || "Local a definir"}</span>
+    </div>
+  </div>
+`;
       count++;
     }
     
