@@ -43,7 +43,7 @@ const escudos = {
   Mirassol: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
   Fortaleza:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
-  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B4ria_logo.png",
   "Atlético-MG":
     "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
   Grêmio: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
@@ -277,60 +277,33 @@ async function carregarProximosJogos() {
       }
     }
 
-    // Fallback para dados demo
-    const jogosDemo = gerarJogosDemo()
-    exibirJogosWidget(jogosDemo)
-    setupFiltrosJogos(jogosDemo)
+    container.innerHTML = `
+      <div class="aviso-sem-jogos-copa">
+        <div class="aviso-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="aviso-content">
+          <h3>AGUARDE ATÉ A INFORMAÇÃO DE PRÓXIMOS JOGOS DA COPA DO BRASIL</h3>
+          <p>As informações dos próximos jogos serão atualizadas em breve.</p>
+          <p>Acompanhe o Cruzeiro em todas as competições!</p>
+        </div>
+      </div>
+    `
   } catch (error) {
     console.error("Erro ao carregar jogos:", error)
     container.innerHTML = `
-      <div class="error-jogos">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Erro ao carregar jogos. Tente novamente.</p>
+      <div class="aviso-sem-jogos-copa">
+        <div class="aviso-icon">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="aviso-content">
+          <h3>AGUARDE ATÉ A INFORMAÇÃO DE PRÓXIMOS JOGOS DA COPA DO BRASIL</h3>
+          <p>Erro ao carregar dados. As informações serão atualizadas em breve.</p>
+          <p>Tente novamente mais tarde.</p>
+        </div>
       </div>
     `
   }
-}
-
-function gerarJogosDemo() {
-  return [
-    {
-      data: "15/01",
-      hora: "16:00",
-      campeonato: "Campeonato Brasileiro",
-      timeCasa: "Cruzeiro",
-      escudoCasa: escudos.Cruzeiro,
-      timeVisitante: "Flamengo",
-      escudoVisitante: escudos.Flamengo,
-      isCruzeiro: true,
-      isMandante: true,
-      aoVivo: false,
-    },
-    {
-      data: "18/01",
-      hora: "19:00",
-      campeonato: "Copa do Brasil",
-      timeCasa: "Palmeiras",
-      escudoCasa: escudos.Palmeiras,
-      timeVisitante: "Cruzeiro",
-      escudoVisitante: escudos.Cruzeiro,
-      isCruzeiro: true,
-      isMandante: false,
-      aoVivo: false,
-    },
-    {
-      data: "22/01",
-      hora: "20:30",
-      campeonato: "Copa do Brasil",
-      timeCasa: "Cruzeiro",
-      escudoCasa: escudos.Cruzeiro,
-      timeVisitante: "CRB",
-      escudoVisitante: escudos.CRB,
-      isCruzeiro: true,
-      isMandante: true,
-      aoVivo: false,
-    },
-  ]
 }
 
 function processarDadosJogos(dados) {
@@ -660,22 +633,11 @@ async function carregarTabela(campeonato = "brasileirao") {
         }
       }
 
-      // Se não conseguiu carregar ou não há dados, usa fallback
       if (jogosCopa.length === 0) {
         jogosCopa = gerarJogosCopaDemonstração()
       }
 
-      // Gera HTML da Copa do Brasil
-      if (jogosCopa.length > 0) {
-        tabelaContainer.innerHTML = gerarHTMLCopaDoBrasil(jogosCopa)
-      } else {
-        // Fallback para jogos estáticos do HTML
-        const loading = tabelaContainer.querySelector(".loading-state")
-        const staticGames = document.getElementById("copa-static-games")
-
-        if (loading) loading.style.display = "none"
-        if (staticGames) staticGames.style.display = "block"
-      }
+      tabelaContainer.innerHTML = gerarHTMLCopaDoBrasil(jogosCopa)
 
       dadosCarregados[campeonato] = true
       console.log("Copa do Brasil carregada com sucesso!")
@@ -748,34 +710,7 @@ function gerarDadosBrasileiraoDemonstração() {
 }
 
 function gerarJogosCopaDemonstração() {
-  return [
-    {
-      data: "20/01",
-      hora: "16:00",
-      timeCasa: "Cruzeiro",
-      timeVisitante: "CRB",
-      fase: "3ª Fase - Ida",
-      placar: "2 x 0",
-      escudoCasa: escudos.Cruzeiro,
-      escudoVisitante: escudos.CRB,
-      isCruzeiro: true,
-      isMandante: true,
-      campeonato: "Copa do Brasil",
-    },
-    {
-      data: "27/01",
-      hora: "19:30",
-      timeCasa: "CRB",
-      timeVisitante: "Cruzeiro",
-      fase: "3ª Fase - Volta",
-      placar: "",
-      escudoCasa: escudos.CRB,
-      escudoVisitante: escudos.Cruzeiro,
-      isCruzeiro: true,
-      isMandante: false,
-      campeonato: "Copa do Brasil",
-    },
-  ]
+  return []
 }
 
 function gerarHTMLTabela(dados) {
@@ -845,18 +780,17 @@ function gerarHTMLCopaDoBrasil(jogos) {
     return `
       <div class="aviso-sem-jogos-copa">
         <div class="aviso-icon">
-          <i class="fas fa-info-circle"></i>
+          <i class="fas fa-clock"></i>
         </div>
         <div class="aviso-content">
-          <h3>Nenhuma partida agendada</h3>
-          <p>Até o momento não há jogos confirmados para o Cruzeiro na Copa do Brasil 2025.</p>
-          <p>Fique atento às atualizações!</p>
+          <h3>Aguarde informações</h3>
+          <p>Estamos aguardando a divulgação dos próximos jogos da Copa do Brasil 2025.</p>
+          <p>As informações serão atualizadas assim que disponíveis.</p>
         </div>
       </div>
     `
   }
 
-  // Agrupa jogos por fase
   const jogosPorFase = jogos.reduce((acc, jogo) => {
     const fase = jogo.fase || "Fase não definida"
     if (!acc[fase]) {
@@ -868,7 +802,6 @@ function gerarHTMLCopaDoBrasil(jogos) {
 
   let html = ""
 
-  // Cria uma seção para cada fase
   for (const [fase, jogosFase] of Object.entries(jogosPorFase)) {
     html += `
       <div class="fase-copa fade-in-up">
@@ -895,16 +828,7 @@ function gerarHTMLJogoCopa(jogo) {
           <i class="far fa-clock"></i>
           ${jogo.data} - ${jogo.hora}
         </span>
-        ${
-          isResultado
-            ? `
-          <span class="placar-jogo">
-            <i class="fas fa-futbol"></i>
-            ${jogo.placar}
-          </span>
-        `
-            : ""
-        }
+        ${isResultado ? `` : ""}
       </div>
       <div class="times-jogo-copa">
         <div class="time-casa ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">

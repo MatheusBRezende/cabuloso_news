@@ -1523,7 +1523,7 @@ ul {
   display: flex;
   align-items: center;
   gap: var(--space-4);
-  margin: 0 auto;
+  margin: 0 auto var(--space-6) auto;
   box-shadow: var(--shadow-lg);
   position: relative;
   overflow: hidden;
@@ -1561,6 +1561,10 @@ ul {
   margin-bottom: var(--space-2);
   font-size: clamp(0.875rem, 2vw, 0.95rem);
   line-height: 1.6;
+}
+
+.aviso-content p:last-child {
+  margin-bottom: 0;
 }
 
 .fase-copa {
