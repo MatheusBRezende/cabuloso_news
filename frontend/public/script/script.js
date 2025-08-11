@@ -473,9 +473,7 @@ async function loadMiniResults() {
   
   try {
     const response = await retryWithBackoff(async () => {
-      const res = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/14r46LGxmQVUilSvimrcbBcUvUmIPaEtp89wblh_8ZU0/values/A1:F6?key=${CONFIG.apiKey}`
-      );
+      const res = await fetch("/api/ultimos-resultados");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res;
     });
@@ -483,25 +481,24 @@ async function loadMiniResults() {
     const data = await response.json();
     let html = "";
     
-    data.values.slice(1, 4).forEach((row) => {
-      const isCruzeiro = row[1].includes("Cruzeiro") || row[3].includes("Cruzeiro");
-      const scoreParts = row[2]?.split(/(?=[A-Za-z])/) || ["-"];
+    data.forEach((resultado) => {
+      const isCruzeiro = resultado.timeCasa.includes("Cruzeiro") || resultado.timeFora.includes("Cruzeiro");
       
       html += `
         <div class="mini-result">
           <div class="mini-teams">
-            <div class="mini-team ${row[1].includes("Cruzeiro") ? "cruzeiro" : ""}">
-              <img src="${getTeamLogo(row[1])}" class="mini-team-logo" loading="lazy">
-              <span>${cleanTeamName(row[1])}</span>
+            <div class="mini-team ${resultado.timeCasa.includes("Cruzeiro") ? "cruzeiro" : ""}">
+              <img src="${getTeamLogo(resultado.timeCasa)}" class="mini-team-logo" loading="lazy">
+              <span>${cleanTeamName(resultado.timeCasa)}</span>
             </div>
-            <div class="mini-score">${scoreParts[0].trim()}</div>
-            <div class="mini-team ${row[3].includes("Cruzeiro") ? "cruzeiro" : ""}">
-              <span>${cleanTeamName(row[3])}</span>
-              <img src="${getTeamLogo(row[3])}" class="mini-team-logo" loading="lazy">
+            <div class="mini-score">${resultado.placar}</div>
+            <div class="mini-team ${resultado.timeFora.includes("Cruzeiro") ? "cruzeiro" : ""}">
+              <span>${cleanTeamName(resultado.timeFora)}</span>
+              <img src="${getTeamLogo(resultado.timeFora)}" class="mini-team-logo" loading="lazy">
             </div>
           </div>
           <div class="mini-competition">
-            ${row[0]} • ${row[5] || "Amistoso"}
+            ${resultado.competicao}
           </div>
         </div>
       `;
@@ -511,12 +508,10 @@ async function loadMiniResults() {
     updateStatusIndicator('results-update', 'online');
     
     // Atualiza stat card com último resultado
-    const lastResult = data.values[1];
-    if (lastResult) {
+    if (data.length > 0) {
       const lastResultStat = document.getElementById('last-result-stat');
       if (lastResultStat) {
-        const scoreParts = lastResult[2]?.split(/(?=[A-Za-z])/) || ["-"];
-        lastResultStat.textContent = `${cleanTeamName(lastResult[1])} ${scoreParts[0].trim()} ${cleanTeamName(lastResult[3])}`;
+        lastResultStat.textContent = `${cleanTeamName(data[0].timeCasa)} ${data[0].placar} ${cleanTeamName(data[0].timeFora)}`;
       }
     }
     
@@ -538,54 +533,39 @@ async function loadNextMatches() {
   
   try {
     const response = await retryWithBackoff(async () => {
-      const res = await fetch(
-        `https://sheets.googleapis.com/v4/spreadsheets/1i3KjyXbLnyC-zt6ByPuuZFRe96PfhiXJRFGCPYG7l1c/values/PARTIDAS?key=${CONFIG.apiKey}`
-      );
+      const res = await fetch("/api/proximos-jogos");
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return res;
     });
     
     const data = await response.json();
     let html = "";
-    let count = 0;
     
-    for (let i = 1; i < data.values.length && count < 3; i++) {
-      const row = data.values[i];
-      if (!row[0] || !row[1] || !row[3]) continue;
+    data.forEach((jogo) => {
+      const isCruzeiro = jogo.timeCasa.includes("Cruzeiro") || jogo.timeFora.includes("Cruzeiro");
       
-      const isCruzeiro = row[1].includes("Cruzeiro") || row[3].includes("Cruzeiro");
-      if (!isCruzeiro && count > 0) continue;
-      
-      const hoje = new Date();
-      const [dia, mes] = row[0].split("/");
-      const dataJogo = new Date(hoje.getFullYear(), parseInt(mes) - 1, parseInt(dia));
-      if (dataJogo < hoje) continue;
-      
-      const isLive = row[7] === "LIVE" || row[7] === "AO VIVO";
-      
-html += `
-  <div class="next-match">
-    <div class="match-date">
-      ${row[0]}${row[7] ? ` • ${isLive ? '<span class="live-badge">AO VIVO</span>' : row[7]}` : ''}
-    </div>
-    <div class="match-teams">
-      <div class="match-team ${row[1].includes("Cruzeiro") ? "cruzeiro" : ""}">
-        <img src="${getTeamLogo(row[1])}" class="match-team-logo" loading="lazy">
-        <span>${cleanTeamName(row[1])}</span>
-      </div>
-      <span class="match-vs">vs</span>
-      <div class="match-team ${row[3].includes("Cruzeiro") ? "cruzeiro" : ""}">
-        <span>${cleanTeamName(row[3])}</span>
-        <img src="${getTeamLogo(row[3])}" class="match-team-logo" loading="lazy">
-      </div>
-    </div>
-    <div class="match-info">
-      <span>${row[5] || "Amistoso"}</span>
-    </div>
-  </div>
-`;
-      count++;
-    }
+      html += `
+        <div class="next-match">
+          <div class="match-date">
+            ${jogo.data} • ${jogo.status === 'AGENDADO' ? 'AGENDADO' : 'AO VIVO'}
+          </div>
+          <div class="match-teams">
+            <div class="match-team ${jogo.timeCasa.includes("Cruzeiro") ? "cruzeiro" : ""}">
+              <img src="${getTeamLogo(jogo.timeCasa)}" class="match-team-logo" loading="lazy">
+              <span>${cleanTeamName(jogo.timeCasa)}</span>
+            </div>
+            <span class="match-vs">vs</span>
+            <div class="match-team ${jogo.timeFora.includes("Cruzeiro") ? "cruzeiro" : ""}">
+              <span>${cleanTeamName(jogo.timeFora)}</span>
+              <img src="${getTeamLogo(jogo.timeFora)}" class="match-team-logo" loading="lazy">
+            </div>
+          </div>
+          <div class="match-info">
+            <span>${jogo.competicao}</span>
+          </div>
+        </div>
+      `;
+    });
     
     document.getElementById("proximos-jogos").innerHTML = html || `
       <div class="next-match loading">
@@ -597,12 +577,11 @@ html += `
     updateStatusIndicator('matches-update', 'online');
     
     // Atualiza stat card com próximo jogo
-    if (html) {
+    if (html && data[0]) {
       const nextGameStat = document.getElementById('next-game-stat');
-      if (nextGameStat && data.values[1]) {
-        const nextGame = data.values[1];
-        const opponent = nextGame[1].includes("Cruzeiro") ? cleanTeamName(nextGame[3]) : cleanTeamName(nextGame[1]);
-        nextGameStat.textContent = `${nextGame[0]} vs ${opponent}`;
+      if (nextGameStat) {
+        const opponent = data[0].timeCasa.includes("Cruzeiro") ? cleanTeamName(data[0].timeFora) : cleanTeamName(data[0].timeCasa);
+        nextGameStat.textContent = `${data[0].data} vs ${opponent}`;
       }
     }
     
