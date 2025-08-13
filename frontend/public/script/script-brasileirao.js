@@ -471,7 +471,7 @@ function exibirJogosWidget(jogos, filtro = "todos") {
   container.innerHTML = jogosFiltrados
     .map(
       (jogo) => {
-        // Added match phase detection for ida/volta games
+       
         let faseInfo = ""
         const colunaC = jogo.colunaC || ""
         
@@ -489,35 +489,7 @@ function exibirJogosWidget(jogos, filtro = "todos") {
               <span>Jogo de Volta</span>
             </div>
           `
-        } else if (colunaC.toLowerCase().includes("final")) {
-          faseInfo = `
-            <div class="match-phase">
-              <i class="fas fa-trophy"></i>
-              <span>Final</span>
-            </div>
-          `
-        } else if (colunaC.toLowerCase().includes("semifinal")) {
-          faseInfo = `
-            <div class="match-phase">
-              <i class="fas fa-medal"></i>
-              <span>Semifinal</span>
-            </div>
-          `
-        } else if (colunaC.toLowerCase().includes("quartas")) {
-          faseInfo = `
-            <div class="match-phase">
-              <i class="fas fa-award"></i>
-              <span>Quartas de Final</span>
-            </div>
-          `
-        } else if (colunaC.toLowerCase().includes("oitavas")) {
-          faseInfo = `
-            <div class="match-phase">
-              <i class="fas fa-star"></i>
-              <span>Oitavas de Final</span>
-            </div>
-          `
-        }
+        } 
 
         return `
           <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${jogo.aoVivo ? "ao-vivo" : ""}">
