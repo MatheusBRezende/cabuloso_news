@@ -639,110 +639,173 @@ async function carregarTabela(campeonato = "brasileirao") {
     console.log("Carregando Copa do Brasil...")
 
     try {
-      let jogosCopa = []
-
-      // Tenta carregar dados da planilha primeiro
-      if (CONFIG.apiKey) {
-        try {
-          console.log("Tentando carregar dados da Copa do Brasil da planilha...")
-          const timestamp = new Date().getTime()
-          const response = await fetch(
-            `https://sheets.googleapis.com/v4/spreadsheets/${CONFIG.planilhaJogos}/values/PARTIDAS?key=${CONFIG.apiKey}&t=${timestamp}`,
-          )
-
-          if (response.ok) {
-            const data = await response.json()
-            if (data.values && data.values.length > 0) {
-              const jogos = processarDadosJogos(data.values)
-              jogosCopa = jogos.filter((jogo) => jogo.campeonato.includes("Copa do Brasil") && jogo.isCruzeiro)
-              console.log("Dados da Copa carregados:", jogosCopa)
-            }
-          }
-        } catch (error) {
-          console.warn("Erro ao carregar Copa da planilha, usando dados estáticos:", error)
-        }
-      }
-
-      if (jogosCopa.length === 0) {
-        jogosCopa = gerarJogosCopaDemonstração()
-      }
-
-      tabelaContainer.innerHTML = gerarHTMLCopaDoBrasil(jogosCopa)
+      const dadosCopa = gerarDadosCopaDoBrasil()
+      tabelaContainer.innerHTML = gerarTabelaCopaDoBrasil(dadosCopa)
 
       dadosCarregados[campeonato] = true
       console.log("Copa do Brasil carregada com sucesso!")
     } catch (error) {
       console.error("Erro ao carregar Copa do Brasil:", error)
+      tabelaContainer.innerHTML = `
+        <div class="error-state">
+          <i class="fas fa-exclamation-triangle"></i>
+          <p>Erro ao carregar dados da Copa do Brasil</p>
+        </div>
+      `
+    }
+  } else {
+    // Código original para Brasileirão
+    try {
+      console.log(`Carregando ${config.nome}...`)
 
-      // Fallback para jogos estáticos
-      const loading = tabelaContainer.querySelector(".loading-state")
-      const staticGames = document.getElementById("copa-static-games")
+      if (!CONFIG.apiKey) {
+        console.warn("API Key não configurada, usando dados de demonstração")
+        const dadosDemo = gerarDadosDemonstracao(campeonato)
+        tabelaContainer.innerHTML = gerarTabelaHTML(dadosDemo, campeonato)
+        dadosCarregados[campeonato] = true
+        return
+      }
 
-      if (loading) loading.style.display = "none"
-      if (staticGames) staticGames.style.display = "block"
+      const timestamp = new Date().getTime()
+      const response = await fetch(
+        `https://sheets.googleapis.com/v4/spreadsheets/${config.planilhaId}/values/${config.aba}?key=${CONFIG.apiKey}&t=${timestamp}`,
+      )
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+
+      const data = await response.json()
+
+      if (!data.values || data.values.length === 0) {
+        throw new Error("Nenhum dado encontrado na planilha")
+      }
+
+      const dadosProcessados = processarDados(data.values, campeonato)
+      tabelaContainer.innerHTML = gerarTabelaHTML(dadosProcessados, campeonato)
 
       dadosCarregados[campeonato] = true
+      console.log(`${config.nome} carregado com sucesso!`)
+    } catch (error) {
+      console.error(`Erro ao carregar ${config.nome}:`, error)
+
+      const dadosDemo = gerarDadosDemonstracao(campeonato)
+      tabelaContainer.innerHTML = gerarTabelaHTML(dadosDemo, campeonato)
+      dadosCarregados[campeonato] = true
+
+      console.log(`Usando dados de demonstração para ${config.nome}`)
     }
-
-    return
-  }
-
-  try {
-    let dados = null
-
-    if (CONFIG.apiKey) {
-      try {
-        const timestamp = new Date().getTime()
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${config.sheetId}/values/${config.intervaloDados}?key=${CONFIG.apiKey}&t=${timestamp}`
-        const response = await fetch(url)
-
-        if (response.ok) {
-          const data = await response.json()
-          if (data.values) {
-            dados = data.values
-            console.log("Dados carregados da planilha:", dados.length, "linhas")
-          }
-        }
-      } catch (error) {
-        console.warn("Erro ao carregar da planilha, usando dados demo:", error)
-      }
-    }
-
-    // Se não conseguiu carregar, usa dados demo
-    if (!dados) {
-      dados = gerarDadosBrasileiraoDemonstração()
-    }
-
-    tabelaContainer.innerHTML = gerarHTMLTabela(dados)
-    dadosCarregados[campeonato] = true
-  } catch (error) {
-    console.error(`Erro ao carregar tabela do ${campeonato}:`, error)
-    tabelaContainer.innerHTML = `
-      <div class="error">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Erro ao carregar dados. Tentando novamente...</p>
-      </div>
-    `
   }
 }
 
-function gerarDadosBrasileiraoDemonstração() {
+function gerarDadosCopaDoBrasil() {
   return [
-    ["Pos", "Time", "Pts", "J", "V", "E", "D", "GC", "GP", "SG", "Apr%"],
-    ["1º", "Flamengo", "24", "11", "7", "3", "1", "4", "24", "20", "73%"],
-    ["2º", "Cruzeiro", "24", "12", "7", "3", "2", "8", "17", "9", "67%"],
-    ["3º", "Red Bull Bragantino", "23", "12", "7", "2", "3", "11", "14", "3", "64%"],
-    ["4º", "Palmeiras", "22", "11", "7", "1", "3", "8", "12", "4", "67%"],
-    ["5º", "Bahia", "21", "12", "6", "3", "3", "11", "14", "3", "58%"],
-    ["6º", "Fluminense", "20", "11", "6", "2", "3", "12", "15", "3", "61%"],
+    {
+      time: "Cruzeiro",
+      escudo:
+        "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+      situacao: "Ativo",
+      fase: "Oitavas de Final",
+      proximoJogo: "vs Flamengo - 15/02",
+      resultado: "2x0 vs CRB",
+      isCruzeiro: true,
+    },
+    {
+      time: "Flamengo",
+      escudo: "https://logoeps.com/wp-content/uploads/2013/03/flamengo-vector-logo.png",
+      situacao: "Ativo",
+      fase: "Oitavas de Final",
+      proximoJogo: "vs Cruzeiro - 15/02",
+      resultado: "3x1 vs Vasco",
+      isCruzeiro: false,
+    },
+    {
+      time: "Palmeiras",
+      escudo: "https://logoeps.com/wp-content/uploads/2013/03/palmeiras-vector-logo.png",
+      situacao: "Ativo",
+      fase: "Oitavas de Final",
+      proximoJogo: "vs São Paulo - 16/02",
+      resultado: "1x0 vs Santos",
+      isCruzeiro: false,
+    },
+    {
+      time: "Corinthians",
+      escudo: "https://logoeps.com/wp-content/uploads/2013/03/corinthians-vector-logo.png",
+      situacao: "Eliminado",
+      fase: "3ª Fase",
+      proximoJogo: "-",
+      resultado: "0x2 vs Grêmio",
+      isCruzeiro: false,
+    },
   ]
 }
 
-function gerarJogosCopaDemonstração() {
+function gerarTabelaCopaDoBrasil(dados) {
+  let html = `
+    <div class="copa-brasil-table-container">
+      <table id="tabela-copa-brasil">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Situação</th>
+            <th>Fase</th>
+            <th>Próximo Jogo</th>
+            <th>Último Resultado</th>
+          </tr>
+        </thead>
+        <tbody>
+  `
+
+  dados.forEach((time) => {
+    const rowClass = time.isCruzeiro
+      ? "cruzeiro-row"
+      : time.situacao === "Ativo"
+        ? "copa-status-ativo"
+        : time.situacao === "Eliminado"
+          ? "copa-status-eliminado"
+          : "copa-status-classificado"
+
+    html += `
+      <tr class="${rowClass}">
+        <td>
+          <div class="time">
+            <img src="${time.escudo}" alt="${time.time}" class="escudo" loading="lazy">
+            <span>${time.time}</span>
+          </div>
+        </td>
+        <td><strong>${time.situacao}</strong></td>
+        <td>${time.fase}</td>
+        <td>${time.proximoJogo}</td>
+        <td>${time.resultado}</td>
+      </tr>
+    `
+  })
+
+  html += `
+        </tbody>
+      </table>
+    </div>
+  `
+
+  return html
+}
+
+function gerarDadosDemonstracao(campeonato) {
+  if (campeonato === "brasileirao") {
+    return [
+      ["Pos", "Time", "Pts", "J", "V", "E", "D", "GC", "GP", "SG", "Apr%"],
+      ["1º", "Flamengo", "24", "11", "7", "3", "1", "4", "24", "20", "73%"],
+      ["2º", "Cruzeiro", "24", "12", "7", "3", "2", "8", "17", "9", "67%"],
+      ["3º", "Red Bull Bragantino", "23", "12", "7", "2", "3", "11", "14", "3", "64%"],
+      ["4º", "Palmeiras", "22", "11", "7", "1", "3", "8", "12", "4", "67%"],
+      ["5º", "Bahia", "21", "12", "6", "3", "3", "11", "14", "3", "58%"],
+      ["6º", "Fluminense", "20", "11", "6", "2", "3", "12", "15", "3", "61%"],
+    ]
+  }
   return []
 }
 
-function gerarHTMLTabela(dados) {
+function gerarTabelaHTML(dados, campeonato) {
   if (!dados || dados.length === 0) {
     return '<div class="error">Nenhum dado disponível</div>'
   }
@@ -750,25 +813,28 @@ function gerarHTMLTabela(dados) {
   const hasHeader = dados[0] && dados[0].length > 0
   const startRow = hasHeader ? 1 : 0
 
-  let html = `
-    <table id="tabela-brasileirao">
-      <thead>
-        <tr>
-          <th>Pos</th>
-          <th class="time-header">Time</th>
-          <th>Pts</th>
-          <th>J</th>
-          <th>V</th>
-          <th>E</th>
-          <th>D</th>
-          <th>GC</th>
-          <th>GP</th>
-          <th>SG</th>
-          <th>apr%</th>
-        </tr>
-      </thead>
-      <tbody>
-  `
+  let html = ``
+  if (campeonato === "brasileirao") {
+    html = `
+      <table id="tabela-brasileirao">
+        <thead>
+          <tr>
+            <th>Pos</th>
+            <th class="time-header">Time</th>
+            <th>Pts</th>
+            <th>J</th>
+            <th>V</th>
+            <th>E</th>
+            <th>D</th>
+            <th>GC</th>
+            <th>GP</th>
+            <th>SG</th>
+            <th>apr%</th>
+          </tr>
+        </thead>
+        <tbody>
+    `
+  }
 
   for (let i = startRow; i < dados.length; i++) {
     const row = dados[i]
@@ -801,160 +867,74 @@ function gerarHTMLTabela(dados) {
     `
   }
 
-  return html + "</tbody></table>"
-}
-
-function gerarHTMLCopaDoBrasil(jogos) {
-  if (!jogos || jogos.length === 0) {
-    return `
-      <div class="copa-brasil-container">
-        <div class="copa-header">
-          <div class="copa-title">
-            <i class="fas fa-trophy"></i>
-            <h2>Copa do Brasil 2025</h2>
-          </div>
-          <div class="copa-subtitle">
-            <i class="fas fa-star"></i>
-            <span>Acompanhe o Cruzeiro na competição nacional</span>
-          </div>
-        </div>
-        
-        <div class="aviso-sem-jogos-copa">
-          <div class="aviso-icon">
-            <i class="fas fa-clock"></i>
-          </div>
-          <div class="aviso-content">
-            <h3>Aguarde informações dos próximos jogos</h3>
-            <p>Estamos aguardando a divulgação dos próximos jogos da Copa do Brasil 2025.</p>
-            <p>As informações serão atualizadas assim que disponíveis.</p>
-            <div class="aviso-footer">
-              <i class="fas fa-shield-alt"></i>
-              <span>Maior de Minas sempre presente!</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    `
-  }
-
-  const jogosPorFase = jogos.reduce((acc, jogo) => {
-    const fase = jogo.fase || "Quartas De Final"
-    if (!acc[fase]) {
-      acc[fase] = []
-    }
-    acc[fase].push(jogo)
-    return acc
-  }, {})
-
-  let html = `
-    <div class="copa-brasil-container">
-      <div class="copa-header">
-        <div class="copa-title">
-          <i class="fas fa-trophy"></i>
-          <h2>Copa do Brasil 2025</h2>
-        </div>
-        <div class="copa-subtitle">
-          <i class="fas fa-star"></i>
-          <span>Acompanhe o Cruzeiro na competição nacional</span>
-        </div>
-      </div>
-  `
-
-  for (const [fase, jogosFase] of Object.entries(jogosPorFase)) {
+  if (campeonato === "brasileirao") {
     html += `
-      <div class="fase-copa fade-in-up">
-        <div class="fase-header">
-          <h3><i class="fas fa-futbol"></i> ${fase}</h3>
-          <div class="fase-info">
-            <i class="fas fa-calendar-alt"></i>
-            <span>${jogosFase.length} jogo${jogosFase.length > 1 ? "s" : ""}</span>
-          </div>
-        </div>
-        <div class="jogos-fase">
-          ${jogosFase.map((jogo) => gerarHTMLJogoCopa(jogo)).join("")}
-        </div>
-      </div>
+        </tbody>
+      </table>
     `
   }
 
-  return html + "</div>"
+  return html
 }
 
-function gerarHTMLJogoCopa(jogo) {
-  const isResultado = jogo.placar && jogo.placar.trim() !== ""
+function atualizarLegendas(campeonato) {
+  const legendGroups = document.querySelectorAll(".legend-group")
 
-  let faseInfo = ""
-  const colunaC = jogo.colunaC || ""
+  legendGroups.forEach((group) => {
+    group.style.display = "none"
+  })
 
-  if (colunaC.toLowerCase().includes("ida")) {
-    faseInfo = `
-      <div class="match-phase">
-        <i class="fas fa-arrow-right"></i>
-        <span>Jogo de Ida</span>
-      </div>
-    `
-  } else if (colunaC.toLowerCase().includes("volta")) {
-    faseInfo = `
-      <div class="match-phase">
-        <i class="fas fa-arrow-left"></i>
-        <span>Jogo de Volta</span>
-      </div>
-    `
+  const activeGroup = document.querySelector(`[data-campeonato="${campeonato}"]`)
+  if (activeGroup) {
+    activeGroup.style.display = "grid"
   }
 
-  return `
-    <div class="jogo-copa ${jogo.isCruzeiro ? "destaque-cruzeiro" : ""}">
-      <div class="cabecalho-jogo-copa">
-        <div class="jogo-status">
-          <span class="fase-jogo">
-            <i class="fas fa-${isResultado ? "check-circle" : "calendar-alt"}"></i>
-            ${jogo.fase || "Quartas De Final"}
-          </span>
-          ${
-            isResultado
-              ? `
-            <span class="placar-jogo">
-              <i class="fas fa-futbol"></i>
-              ${jogo.placar}
-            </span>
-          `
-              : ""
-          }
-        </div>
-        <span class="data-jogo-copa">
-          <i class="far fa-clock"></i>
-          ${jogo.data} - ${jogo.hora}
-        </span>
-      </div>
-      
-      ${faseInfo}
-      
-      ${
-        jogo.colunaC && !faseInfo
-          ? `
-        <div class="jogo-info-adicional">
-          <i class="fas fa-info-circle"></i>
-          <span>${jogo.colunaC}</span>
-        </div>
-      `
-          : ""
+  if (campeonato === "copa-do-brasil") {
+    const legendContainer = document.querySelector(".legend")
+    if (legendContainer) {
+      // Remove legenda existente da Copa do Brasil se houver
+      const existingCopaLegend = legendContainer.querySelector('[data-campeonato="copa-do-brasil"]')
+      if (existingCopaLegend) {
+        existingCopaLegend.remove()
       }
 
-      <div class="times-jogo-copa">
-        <div class="time-casa ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
-          <span class="nome-time">${jogo.timeCasa}</span>
-          <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}" loading="lazy">
+      // Cria nova legenda para Copa do Brasil
+      const copaLegendHTML = `
+        <div class="legend-group" data-campeonato="copa-do-brasil" style="display: grid;">
+          <div class="legend-item">
+            <span class="legend-color copa-ativo"></span>
+            <span class="legend-text">
+              <strong>Ativo na Competição</strong>
+              <small>Time ainda disputando</small>
+            </span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color copa-eliminado"></span>
+            <span class="legend-text">
+              <strong>Eliminado</strong>
+              <small>Fora da competição</small>
+            </span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-color copa-classificado"></span>
+            <span class="legend-text">
+              <strong>Classificado</strong>
+              <small>Avançou de fase</small>
+            </span>
+          </div>
+          <div class="legend-item special">
+            <span class="legend-color cruzeiro"></span>
+            <span class="legend-text">
+              <strong>Cruzeiro</strong>
+              <small>Maior de Minas</small>
+            </span>
+          </div>
         </div>
-        <div class="vs-container">
-          <span class="vs">VS</span>
-        </div>
-        <div class="time-visitante ${jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""}">
-          <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}" loading="lazy">
-          <span class="nome-time">${jogo.timeVisitante}</span>
-        </div>
-      </div>
-    </div>
-  `
+      `
+
+      legendContainer.insertAdjacentHTML("beforeend", copaLegendHTML)
+    }
+  }
 }
 
 function getPositionClass(position) {
@@ -969,38 +949,6 @@ function getPositionClass(position) {
 
 function isCruzeiro(nomeTime) {
   return nomeTime && nomeTime.toLowerCase().includes("cruzeiro")
-}
-
-function atualizarLegendas(campeonato) {
-  const legendGroups = document.querySelectorAll(".legend-group")
-  const legendDescription = document.querySelector(".legend-description")
-  const legendContainer = document.querySelector(".legend-container")
-
-  // Esconde completamente o container da legenda para a Copa do Brasil
-  if (campeonato === "copa-do-brasil") {
-    if (legendContainer) legendContainer.style.display = "none"
-    return
-  }
-
-  if (legendContainer) legendContainer.style.display = "block"
-
-  if (legendDescription) {
-    const textos = {
-      brasileirao:
-        "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores, Sul-Americana e rebaixamento:",
-    }
-
-    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`
-  }
-
-  // Mostra/oculta os grupos de legenda
-  legendGroups.forEach((group) => {
-    if (group.dataset.campeonato === campeonato) {
-      group.style.display = "flex"
-    } else {
-      group.style.display = "none"
-    }
-  })
 }
 
 function iniciarAtualizacaoPeriodica() {
