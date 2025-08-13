@@ -562,14 +562,24 @@ async function loadNextMatches() {
       if (dataJogo < hoje) continue;
       
       const isLive = row[7] === "LIVE" || row[7] === "AO VIVO";
-      // Adicionando a coluna C (row[2]) que contém informações sobre "vida"
-      const colunaC = row[2] || ''; // Coluna C que estava sendo ignorada
+      const colunaC = row[2] || '';
+      
+      // Tratamento especial para jogos de ida e volta da Copa do Brasil
+      let faseInfo = '';
+      if (colunaC.toLowerCase().includes('vida')) {
+        faseInfo = '<div class="match-phase"><i class="fas fa-arrow-right"></i> Jogo de Ida</div>';
+      } else if (colunaC.toLowerCase().includes('volta')) {
+        faseInfo = '<div class="match-phase"><i class="fas fa-arrow-left"></i> Jogo de Volta</div>';
+      } else if (colunaC) {
+        faseInfo = `<div class="match-phase"><i class="fas fa-info-circle"></i> ${colunaC}</div>`;
+      }
       
       html += `
         <div class="next-match">
           <div class="match-date">
-${row[0] || ''} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : (row[7] || '')}
+            ${row[0] || ''} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : (row[7] || '')}
           </div>
+          ${faseInfo}
           <div class="match-teams">
             <div class="match-team ${row[1].includes("Cruzeiro") ? "cruzeiro" : ""}">
               <img src="${getTeamLogo(row[1])}" class="match-team-logo" loading="lazy">
@@ -581,7 +591,6 @@ ${row[0] || ''} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : (row[
               <img src="${getTeamLogo(row[3])}" class="match-team-logo" loading="lazy">
             </div>
           </div>
-          ${colunaC ? `<div class="match-vida"><i class="fas fa-info-circle"></i> ${colunaC}</div>` : ''}
           <div class="match-info">
             <span>${row[5] || "Amistoso"}</span>
             <span>${row[4]}</span>

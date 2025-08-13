@@ -38,11 +38,13 @@ const escudos = {
   Ceará:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Cear%C3%A1_Sporting_Club_logo.svg/50px-Cear%C3%A1_Sporting_Club_logo.svg.png",
   Vasco: "https://upload.wikimedia.org/wikipedia/pt/a/ac/CRVascodaGama.png",
-  Corinthians: "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Sport_Club_Corinthians_Paulista_crest.svg/800px-Sport_Club_Corinthians_Paulista_crest.svg.png",
+  Corinthians:
+    "https://upload.wikimedia.org/wikipedia/en/thumb/5/5a/Sport_Club_Corinthians_Paulista_crest.svg/800px-Sport_Club_Corinthians_Paulista_crest.svg.png",
   Juventude: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/EC_Juventude.svg/50px-EC_Juventude.svg.png",
   Mirassol: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
-  Fortaleza:"https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
-  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+  Fortaleza:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
+  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B4ria_logo.png",
   "Atlético-MG":
     "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
   Grêmio: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
@@ -337,6 +339,7 @@ function processarDadosJogos(dados) {
 
       // Times
       const timeCasa = (jogo[1] || "").trim()
+      const colunaC = (jogo[2] || "").trim()
       const timeVisitante = (jogo[3] || "").trim()
 
       // Hora - CORREÇÃO PRINCIPAL AQUI
@@ -370,6 +373,7 @@ function processarDadosJogos(dados) {
         escudoCasa: obterEscudoTime(timeCasa),
         timeVisitante: timeVisitante || "Time Desconhecido",
         escudoVisitante: obterEscudoTime(timeVisitante),
+        colunaC: colunaC,
         isCruzeiro,
         isMandante,
         aoVivo,
@@ -480,6 +484,16 @@ function exibirJogosWidget(jogos, filtro = "todos") {
           <span>${jogo.timeVisitante}</span>
         </div>
       </div>
+      ${
+        jogo.colunaC
+          ? `
+        <div class="jogo-coluna-c">
+          <i class="fas fa-info-circle"></i>
+          <span>${jogo.colunaC}</span>
+        </div>
+      `
+          : ""
+      }
       <div class="jogo-campeonato">${jogo.campeonato}</div>
     </div>
   `,
@@ -601,10 +615,10 @@ async function carregarTabela(campeonato = "brasileirao") {
 
   competicaoAtual = campeonato
 
-const campeonatoNome = document.getElementById("campeonato-nome");
-  if (campeonatoNome) campeonatoNome.textContent = config.nome;
+  const campeonatoNome = document.getElementById("campeonato-nome")
+  if (campeonatoNome) campeonatoNome.textContent = config.nome
 
-  atualizarLegendas(campeonato);
+  atualizarLegendas(campeonato)
 
   if (campeonato === "copa-do-brasil") {
     console.log("Carregando Copa do Brasil...")
@@ -657,7 +671,6 @@ const campeonatoNome = document.getElementById("campeonato-nome");
 
     return
   }
-
 
   try {
     let dados = null
@@ -779,14 +792,31 @@ function gerarHTMLTabela(dados) {
 function gerarHTMLCopaDoBrasil(jogos) {
   if (!jogos || jogos.length === 0) {
     return `
-      <div class="aviso-sem-jogos-copa">
-        <div class="aviso-icon">
-          <i class="fas fa-clock"></i>
+      <div class="copa-brasil-container">
+        <div class="copa-header">
+          <div class="copa-title">
+            <i class="fas fa-trophy"></i>
+            <h2>Copa do Brasil 2025</h2>
+          </div>
+          <div class="copa-subtitle">
+            <i class="fas fa-star"></i>
+            <span>Acompanhe o Cruzeiro na competição nacional</span>
+          </div>
         </div>
-        <div class="aviso-content">
-          <h3>Aguarde informações</h3>
-          <p>Estamos aguardando a divulgação dos próximos jogos da Copa do Brasil 2025.</p>
-          <p>As informações serão atualizadas assim que disponíveis.</p>
+        
+        <div class="aviso-sem-jogos-copa">
+          <div class="aviso-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="aviso-content">
+            <h3>Aguarde informações dos próximos jogos</h3>
+            <p>Estamos aguardando a divulgação dos próximos jogos da Copa do Brasil 2025.</p>
+            <p>As informações serão atualizadas assim que disponíveis.</p>
+            <div class="aviso-footer">
+              <i class="fas fa-shield-alt"></i>
+              <span>Maior de Minas sempre presente!</span>
+            </div>
+          </div>
         </div>
       </div>
     `
@@ -801,18 +831,38 @@ function gerarHTMLCopaDoBrasil(jogos) {
     return acc
   }, {})
 
-  let html = ""
+  let html = `
+    <div class="copa-brasil-container">
+      <div class="copa-header">
+        <div class="copa-title">
+          <i class="fas fa-trophy"></i>
+          <h2>Copa do Brasil 2025</h2>
+        </div>
+        <div class="copa-subtitle">
+          <i class="fas fa-star"></i>
+          <span>Acompanhe o Cruzeiro na competição nacional</span>
+        </div>
+      </div>
+  `
 
   for (const [fase, jogosFase] of Object.entries(jogosPorFase)) {
     html += `
       <div class="fase-copa fade-in-up">
-        <h3><i class="fas fa-trophy"></i> ${fase} - Copa do Brasil 2025</h3>
-        ${jogosFase.map((jogo) => gerarHTMLJogoCopa(jogo)).join("")}
+        <div class="fase-header">
+          <h3><i class="fas fa-futbol"></i> ${fase}</h3>
+          <div class="fase-info">
+            <i class="fas fa-calendar-alt"></i>
+            <span>${jogosFase.length} jogo${jogosFase.length > 1 ? "s" : ""}</span>
+          </div>
+        </div>
+        <div class="jogos-fase">
+          ${jogosFase.map((jogo) => gerarHTMLJogoCopa(jogo)).join("")}
+        </div>
       </div>
     `
   }
 
-  return html
+  return html + "</div>"
 }
 
 function gerarHTMLJogoCopa(jogo) {
@@ -821,25 +871,50 @@ function gerarHTMLJogoCopa(jogo) {
   return `
     <div class="jogo-copa ${jogo.isCruzeiro ? "destaque-cruzeiro" : ""}">
       <div class="cabecalho-jogo-copa">
-        <span class="fase-jogo">
-          <i class="fas fa-${isResultado ? "check-circle" : "calendar-alt"}"></i>
-          ${jogo.fase || "Fase não definida"}
-        </span>
+        <div class="jogo-status">
+          <span class="fase-jogo">
+            <i class="fas fa-${isResultado ? "check-circle" : "calendar-alt"}"></i>
+            ${jogo.fase || "Fase não definida"}
+          </span>
+          ${
+            isResultado
+              ? `
+            <span class="placar-jogo">
+              <i class="fas fa-futbol"></i>
+              ${jogo.placar}
+            </span>
+          `
+              : ""
+          }
+        </div>
         <span class="data-jogo-copa">
           <i class="far fa-clock"></i>
           ${jogo.data} - ${jogo.hora}
         </span>
-        ${isResultado ? `` : ""}
       </div>
+      
+      ${
+        jogo.colunaC
+          ? `
+        <div class="jogo-info-adicional">
+          <i class="fas fa-info-circle"></i>
+          <span>${jogo.colunaC}</span>
+        </div>
+      `
+          : ""
+      }
+      
       <div class="times-jogo-copa">
         <div class="time-casa ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
-          <span>${jogo.timeCasa}</span>
+          <span class="nome-time">${jogo.timeCasa}</span>
           <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}" loading="lazy">
         </div>
-        <span class="vs">VS</span>
+        <div class="vs-container">
+          <span class="vs">VS</span>
+        </div>
         <div class="time-visitante ${jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""}">
           <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}" loading="lazy">
-          <span>${jogo.timeVisitante}</span>
+          <span class="nome-time">${jogo.timeVisitante}</span>
         </div>
       </div>
     </div>
@@ -861,36 +936,35 @@ function isCruzeiro(nomeTime) {
 }
 
 function atualizarLegendas(campeonato) {
-  const legendGroups = document.querySelectorAll(".legend-group");
-  const legendDescription = document.querySelector(".legend-description");
-  const legendContainer = document.querySelector(".legend-container");
+  const legendGroups = document.querySelectorAll(".legend-group")
+  const legendDescription = document.querySelector(".legend-description")
+  const legendContainer = document.querySelector(".legend-container")
 
   // Esconde completamente o container da legenda para a Copa do Brasil
   if (campeonato === "copa-do-brasil") {
-    if (legendContainer) legendContainer.style.display = "none";
-    return;
+    if (legendContainer) legendContainer.style.display = "none"
+    return
   }
 
-
-  if (legendContainer) legendContainer.style.display = "block";
-
+  if (legendContainer) legendContainer.style.display = "block"
 
   if (legendDescription) {
     const textos = {
-      brasileirao: "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores, Sul-Americana e rebaixamento:",
-    };
+      brasileirao:
+        "As cores na tabela representam as classificações para Libertadores, Pré-Libertadores, Sul-Americana e rebaixamento:",
+    }
 
-    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`;
+    legendDescription.innerHTML = `<p>${textos[campeonato] || "As cores na tabela representam as diferentes classificações:"}</p>`
   }
 
   // Mostra/oculta os grupos de legenda
   legendGroups.forEach((group) => {
     if (group.dataset.campeonato === campeonato) {
-      group.style.display = "flex";
+      group.style.display = "flex"
     } else {
-      group.style.display = "none";
+      group.style.display = "none"
     }
-  });
+  })
 }
 
 function iniciarAtualizacaoPeriodica() {
