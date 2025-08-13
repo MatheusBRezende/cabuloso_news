@@ -1194,33 +1194,6 @@ ul {
   animation: pulse 2s infinite;
 }
 
-.match-teams {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--space-3);
-}
-
-.match-team {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  font-weight: 600;
-  font-size: clamp(0.85rem, 2vw, 0.95rem);
-}
-
-.match-team.cruzeiro {
-  color: var(--primary);
-}
-
-.match-team-logo {
-  width: clamp(24px, 5vw, 28px);
-  height: clamp(24px, 5vw, 28px);
-  object-fit: contain;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-
 .match-phase {
   display: flex;
   align-items: center;
@@ -1238,6 +1211,78 @@ ul {
 .match-phase i {
   color: var(--primary);
   flex-shrink: 0;
+}
+
+.match-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 1rem;
+  position: relative;
+}
+
+.match-line {
+  width: 2rem;
+  height: 2px;
+  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  border-radius: 1px;
+}
+
+.match-dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  position: absolute;
+}
+
+.match-dot:first-child {
+  left: -3px;
+}
+
+.match-dot:last-child {
+  right: -3px;
+}
+
+.match-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: var(--space-3) 0;
+  padding: var(--space-2) 0;
+}
+
+.match-team {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.match-team:last-child {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.match-team.cruzeiro {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.match-team-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.match-team span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .match-info {
