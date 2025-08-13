@@ -585,43 +585,7 @@ async function loadNextMatches() {
             <span>Jogo de Volta</span>
           </div>
         `
-      } else if (colunaC.toLowerCase().includes("final")) {
-        faseInfo = `
-          <div class="match-phase">
-            <i class="fas fa-trophy"></i>
-            <span>Final</span>
-          </div>
-        `
-      } else if (colunaC.toLowerCase().includes("semifinal")) {
-        faseInfo = `
-          <div class="match-phase">
-            <i class="fas fa-medal"></i>
-            <span>Semifinal</span>
-          </div>
-        `
-      } else if (colunaC.toLowerCase().includes("quartas")) {
-        faseInfo = `
-          <div class="match-phase">
-            <i class="fas fa-star"></i>
-            <span>Quartas de Final</span>
-          </div>
-        `
-      } else if (colunaC.toLowerCase().includes("oitavas")) {
-        faseInfo = `
-          <div class="match-phase">
-            <i class="fas fa-futbol"></i>
-            <span>Oitavas de Final</span>
-          </div>
-        `
-      } else if (colunaC) {
-        faseInfo = `
-          <div class="match-phase">
-            <i class="fas fa-info-circle"></i>
-            <span>${colunaC}</span>
-          </div>
-        `
       }
-
       html += `
         <div class="next-match">
           <div class="match-date">
