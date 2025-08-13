@@ -852,7 +852,7 @@ function gerarHTMLCopaDoBrasil(jogos) {
   }
 
   const jogosPorFase = jogos.reduce((acc, jogo) => {
-    const fase = jogo.fase || "Fase não definida"
+    const fase = jogo.fase || "Quartas De Final"
     if (!acc[fase]) {
       acc[fase] = []
     }
@@ -951,7 +951,7 @@ function gerarHTMLJogoCopa(jogo) {
         <div class="jogo-status">
           <span class="fase-jogo">
             <i class="fas fa-${isResultado ? "check-circle" : "calendar-alt"}"></i>
-            ${jogo.fase || "Fase não definida"}
+            ${jogo.fase || "Quartas De Final"}
           </span>
           ${
             isResultado
