@@ -511,16 +511,6 @@ function exibirJogosWidget(jogos, filtro = "todos") {
                 <span>${jogo.timeVisitante}</span>
               </div>
             </div>
-            ${
-              jogo.colunaC && !faseInfo
-                ? `
-              <div class="jogo-coluna-c">
-                <i class="fas fa-info-circle"></i>
-                <span>${jogo.colunaC}</span>
-              </div>
-            `
-                : ""
-            }
             <div class="jogo-campeonato">${jogo.campeonato}</div>
           </div>
         `
@@ -896,7 +886,7 @@ function gerarHTMLCopaDoBrasil(jogos) {
 function gerarHTMLJogoCopa(jogo) {
   const isResultado = jogo.placar && jogo.placar.trim() !== ""
   
-  // Added match phase detection for Copa games
+ 
   let faseInfo = ""
   const colunaC = jogo.colunaC || ""
   
