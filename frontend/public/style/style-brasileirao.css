@@ -1417,9 +1417,7 @@ ul {
 }
 
 .jogo-times .vs {
-  font-weight: 600;
-  color: var(--gray-500);
-  font-size: clamp(0.7rem, 1.8vw, 0.75rem);
+  display: none;
 }
 
 .jogo-times img {
@@ -2002,7 +2000,7 @@ ul {
   }
 
   .championship-select {
-    padding: var(--space-3) var(--space-10) var(--space-3) var(--space-4);
+    padding: var(--space-4) var(--space-10) var(--space-4) var(--space-4);
   }
 
   .header-info {
@@ -2436,4 +2434,103 @@ a:focus-visible {
 /* ================= PREVENT BODY SCROLL WHEN MENU IS OPEN ================= */
 body.menu-open {
   overflow: hidden;
+}
+
+/* ================= MATCH PHASE STYLES ================= */
+.match-phase {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--gray-100);
+  color: var(--gray-700);
+  border-radius: var(--radius);
+  font-size: clamp(0.8rem, 2vw, 0.875rem);
+  font-weight: 500;
+  border-left: 3px solid var(--primary);
+}
+
+.match-phase i {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* ================= MATCH SEPARATOR ================= */
+.match-separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-1);
+}
+
+.separator-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.separator-dots .dot {
+  width: 6px;
+  height: 6px;
+  background: var(--primary);
+  border-radius: 50%;
+  opacity: 0.7;
+  transition: var(--transition);
+}
+
+.separator-line {
+  width: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.5;
+  transition: var(--transition);
+}
+
+.jogo-widget:hover .separator-dots .dot {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.jogo-widget:hover .separator-line {
+  opacity: 0.8;
+}
+
+/* ================= ENHANCED COPA GAMES STYLES ================= */
+.jogo-copa .match-phase {
+  margin: var(--space-3) 0;
+  background: linear-gradient(90deg, rgba(0, 51, 160, 0.1), transparent);
+  border-left-color: var(--primary);
+}
+
+.jogo-copa.destaque-cruzeiro .match-phase {
+  background: linear-gradient(90deg, rgba(0, 51, 160, 0.15), transparent);
+  border-left-color: var(--primary);
+}
+
+.jogo-copa.destaque-cruzeiro .match-phase i {
+  color: var(--primary);
+}
+
+/* ================= RESPONSIVE IMPROVEMENTS FOR MATCH PHASES ================= */
+@media (max-width: 480px) {
+  .match-phase {
+    padding: var(--space-1) var(--space-2);
+    margin-bottom: var(--space-2);
+    font-size: 0.75rem;
+  }
+
+  .match-phase i {
+    font-size: 0.8rem;
+  }
+
+  .separator-dots .dot {
+    width: 4px;
+    height: 4px;
+  }
+
+  .separator-line {
+    width: 15px;
+  }
 }
