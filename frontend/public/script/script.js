@@ -597,11 +597,13 @@ async function loadNextMatches() {
               <img src="${getTeamLogo(row[1])}" class="match-team-logo" loading="lazy">
               <span>${cleanTeamName(row[1])}</span>
             </div>
-            <div class="match-separator">
-              <div class="match-dot"></div>
-              <div class="match-line"></div>
-              <div class="match-dot"></div>
-            </div>
+              <div class="match-separator">
+                <div class="separator-dots">
+                  <div class="dot"></div>
+                  <div class="separator-line"></div>
+                  <div class="dot"></div>
+                </div>
+              </div>
             <div class="match-team ${row[3].includes("Cruzeiro") ? "cruzeiro" : ""}">
               <span>${cleanTeamName(row[3])}</span>
               <img src="${getTeamLogo(row[3])}" class="match-team-logo" loading="lazy">
