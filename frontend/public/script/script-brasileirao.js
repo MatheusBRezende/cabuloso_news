@@ -470,33 +470,90 @@ function exibirJogosWidget(jogos, filtro = "todos") {
 
   container.innerHTML = jogosFiltrados
     .map(
-      (jogo) => `
-    <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${jogo.aoVivo ? "ao-vivo" : ""}">
-      <div class="jogo-data">${jogo.data} - ${jogo.hora}</div>
-      <div class="jogo-times">
-        <div class="time ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
-          <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}">
-          <span>${jogo.timeCasa}</span>
-        </div>
-        <span class="vs">vs</span>
-        <div class="time ${jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""}">
-          <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}">
-          <span>${jogo.timeVisitante}</span>
-        </div>
-      </div>
-      ${
-        jogo.colunaC
-          ? `
-        <div class="jogo-coluna-c">
-          <i class="fas fa-info-circle"></i>
-          <span>${jogo.colunaC}</span>
-        </div>
-      `
-          : ""
+      (jogo) => {
+        // Added match phase detection for ida/volta games
+        let faseInfo = ""
+        const colunaC = jogo.colunaC || ""
+        
+        if (colunaC.toLowerCase().includes("ida")) {
+          faseInfo = `
+            <div class="match-phase">
+              <i class="fas fa-arrow-right"></i>
+              <span>Jogo de Ida</span>
+            </div>
+          `
+        } else if (colunaC.toLowerCase().includes("volta")) {
+          faseInfo = `
+            <div class="match-phase">
+              <i class="fas fa-arrow-left"></i>
+              <span>Jogo de Volta</span>
+            </div>
+          `
+        } else if (colunaC.toLowerCase().includes("final")) {
+          faseInfo = `
+            <div class="match-phase">
+              <i class="fas fa-trophy"></i>
+              <span>Final</span>
+            </div>
+          `
+        } else if (colunaC.toLowerCase().includes("semifinal")) {
+          faseInfo = `
+            <div class="match-phase">
+              <i class="fas fa-medal"></i>
+              <span>Semifinal</span>
+            </div>
+          `
+        } else if (colunaC.toLowerCase().includes("quartas")) {
+          faseInfo = `
+            <div class="match-phase">
+              <i class="fas fa-award"></i>
+              <span>Quartas de Final</span>
+            </div>
+          `
+        } else if (colunaC.toLowerCase().includes("oitavas")) {
+          faseInfo = `
+            <div class="match-phase">
+              <i class="fas fa-star"></i>
+              <span>Oitavas de Final</span>
+            </div>
+          `
+        }
+
+        return `
+          <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${jogo.aoVivo ? "ao-vivo" : ""}">
+            <div class="jogo-data">${jogo.data} - ${jogo.hora}</div>
+            ${faseInfo}
+            <div class="jogo-times">
+              <div class="time ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
+                <img src="${jogo.escudoCasa}" alt="${jogo.timeCasa}">
+                <span>${jogo.timeCasa}</span>
+              </div>
+              <div class="match-separator">
+                <div class="separator-dots">
+                  <div class="dot"></div>
+                  <div class="separator-line"></div>
+                  <div class="dot"></div>
+                </div>
+              </div>
+              <div class="time ${jogo.isCruzeiro && !jogo.isMandante ? "destaque" : ""}">
+                <img src="${jogo.escudoVisitante}" alt="${jogo.timeVisitante}">
+                <span>${jogo.timeVisitante}</span>
+              </div>
+            </div>
+            ${
+              jogo.colunaC && !faseInfo
+                ? `
+              <div class="jogo-coluna-c">
+                <i class="fas fa-info-circle"></i>
+                <span>${jogo.colunaC}</span>
+              </div>
+            `
+                : ""
+            }
+            <div class="jogo-campeonato">${jogo.campeonato}</div>
+          </div>
+        `
       }
-      <div class="jogo-campeonato">${jogo.campeonato}</div>
-    </div>
-  `,
     )
     .join("")
 }
@@ -867,7 +924,55 @@ function gerarHTMLCopaDoBrasil(jogos) {
 
 function gerarHTMLJogoCopa(jogo) {
   const isResultado = jogo.placar && jogo.placar.trim() !== ""
-
+  
+  // Added match phase detection for Copa games
+  let faseInfo = ""
+  const colunaC = jogo.colunaC || ""
+  
+  if (colunaC.toLowerCase().includes("ida")) {
+    faseInfo = `
+      <div class="match-phase">
+        <i class="fas fa-arrow-right"></i>
+        <span>Jogo de Ida</span>
+      </div>
+    `
+  } else if (colunaC.toLowerCase().includes("volta")) {
+    faseInfo = `
+      <div class="match-phase">
+        <i class="fas fa-arrow-left"></i>
+        <span>Jogo de Volta</span>
+      </div>
+    `
+  } else if (colunaC.toLowerCase().includes("final")) {
+    faseInfo = `
+      <div class="match-phase">
+        <i class="fas fa-trophy"></i>
+        <span>Final</span>
+      </div>
+    `
+  } else if (colunaC.toLowerCase().includes("semifinal")) {
+    faseInfo = `
+      <div class="match-phase">
+        <i class="fas fa-medal"></i>
+        <span>Semifinal</span>
+      </div>
+    `
+  } else if (colunaC.toLowerCase().includes("quartas")) {
+    faseInfo = `
+      <div class="match-phase">
+        <i class="fas fa-award"></i>
+        <span>Quartas de Final</span>
+      </div>
+    `
+  } else if (colunaC.toLowerCase().includes("oitavas")) {
+    faseInfo = `
+      <div class="match-phase">
+        <i class="fas fa-star"></i>
+        <span>Oitavas de Final</span>
+      </div>
+    `
+  }
+      
   return `
     <div class="jogo-copa ${jogo.isCruzeiro ? "destaque-cruzeiro" : ""}">
       <div class="cabecalho-jogo-copa">
@@ -893,8 +998,10 @@ function gerarHTMLJogoCopa(jogo) {
         </span>
       </div>
       
+      ${faseInfo}
+      
       ${
-        jogo.colunaC
+        jogo.colunaC && !faseInfo
           ? `
         <div class="jogo-info-adicional">
           <i class="fas fa-info-circle"></i>
@@ -903,7 +1010,7 @@ function gerarHTMLJogoCopa(jogo) {
       `
           : ""
       }
-      
+
       <div class="times-jogo-copa">
         <div class="time-casa ${jogo.isCruzeiro && jogo.isMandante ? "destaque" : ""}">
           <span class="nome-time">${jogo.timeCasa}</span>
