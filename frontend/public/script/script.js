@@ -367,7 +367,7 @@ function getTeamLogo(teamName) {
   Mirassol: "https://upload.wikimedia.org/wikipedia/commons/5/5b/Mirassol_FC_logo.png",
   Fortaleza:
     "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Fortaleza_EC_2018.png/50px-Fortaleza_EC_2018.png",
-  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B3ria_logo.png",
+  Vitória: "https://upload.wikimedia.org/wikipedia/pt/3/34/Esporte_Clube_Vit%C3%B4ria_logo.png",
   "Atlético-MG":
     "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Atletico_mineiro_galo.png/50px-Atletico_mineiro_galo.png",
   Grêmio: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Gremio_logo.svg/50px-Gremio_logo.svg.png",
@@ -562,6 +562,8 @@ async function loadNextMatches() {
       if (dataJogo < hoje) continue;
       
       const isLive = row[7] === "LIVE" || row[7] === "AO VIVO";
+      // Adicionando a coluna C (row[2]) que contém informações sobre "vida"
+      const colunaC = row[2] || ''; // Coluna C que estava sendo ignorada
       
       html += `
         <div class="next-match">
@@ -579,6 +581,7 @@ ${row[0] || ''} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : (row[
               <img src="${getTeamLogo(row[3])}" class="match-team-logo" loading="lazy">
             </div>
           </div>
+          ${colunaC ? `<div class="match-vida"><i class="fas fa-info-circle"></i> ${colunaC}</div>` : ''}
           <div class="match-info">
             <span>${row[5] || "Amistoso"}</span>
             <span>${row[4]}</span>
