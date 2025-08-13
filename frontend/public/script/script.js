@@ -581,7 +581,7 @@ ${row[0] || ''} • ${isLive ? '<span class="live-badge">AO VIVO</span>' : (row[
           </div>
           <div class="match-info">
             <span>${row[5] || "Amistoso"}</span>
-            <span>${row[6]}</span>
+            <span>${row[4]}</span>
           </div>
         </div>
       `;
