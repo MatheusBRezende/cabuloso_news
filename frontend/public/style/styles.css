@@ -1194,6 +1194,7 @@ ul {
   animation: pulse 2s infinite;
 }
 
+/* ================= MATCH PHASE STYLES ================= */
 .match-phase {
   display: flex;
   align-items: center;
@@ -1213,35 +1214,45 @@ ul {
   flex-shrink: 0;
 }
 
+/* ================= MATCH SEPARATOR ================= */
 .match-separator {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 1rem;
+  padding: var(--space-1);
+}
+
+.separator-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   position: relative;
 }
 
-.match-line {
-  width: 2rem;
-  height: 2px;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
-  border-radius: 1px;
-}
-
-.match-dot {
+.separator-dots .dot {
   width: 6px;
   height: 6px;
   background: var(--primary);
   border-radius: 50%;
-  position: absolute;
+  opacity: 0.7;
+  transition: var(--transition);
 }
 
-.match-dot:first-child {
-  left: -3px;
+.separator-line {
+  width: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--primary), transparent);
+  opacity: 0.5;
+  transition: var(--transition);
 }
 
-.match-dot:last-child {
-  right: -3px;
+.jogo-widget:hover .separator-dots .dot {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
+.jogo-widget:hover .separator-line {
+  opacity: 0.8;
 }
 
 .match-teams {
