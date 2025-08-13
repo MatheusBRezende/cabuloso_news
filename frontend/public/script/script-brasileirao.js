@@ -469,28 +469,26 @@ function exibirJogosWidget(jogos, filtro = "todos") {
   }
 
   container.innerHTML = jogosFiltrados
-    .map(
-      (jogo) => {
-       
-        let faseInfo = ""
-        const colunaC = jogo.colunaC || ""
-        
-        if (colunaC.toLowerCase().includes("ida")) {
-          faseInfo = `
+    .map((jogo) => {
+      let faseInfo = ""
+      const colunaC = jogo.colunaC || ""
+
+      if (colunaC.toLowerCase().includes("ida")) {
+        faseInfo = `
             <div class="match-phase">
               <i class="fas fa-arrow-right"></i>
               <span>Jogo de Ida</span>
             </div>
           `
-        } else if (colunaC.toLowerCase().includes("volta")) {
-          faseInfo = `
+      } else if (colunaC.toLowerCase().includes("volta")) {
+        faseInfo = `
             <div class="match-phase">
               <i class="fas fa-arrow-left"></i>
               <span>Jogo de Volta</span>
             </div>
           `
-        } 
-        return `
+      }
+      return `
           <div class="jogo-widget ${jogo.isCruzeiro ? "cruzeiro" : ""} ${jogo.aoVivo ? "ao-vivo" : ""}">
             <div class="jogo-data">${jogo.data} - ${jogo.hora}</div>
             ${faseInfo}
@@ -514,8 +512,7 @@ function exibirJogosWidget(jogos, filtro = "todos") {
             <div class="jogo-campeonato">${jogo.campeonato}</div>
           </div>
         `
-      }
-    )
+    })
     .join("")
 }
 
@@ -885,11 +882,10 @@ function gerarHTMLCopaDoBrasil(jogos) {
 
 function gerarHTMLJogoCopa(jogo) {
   const isResultado = jogo.placar && jogo.placar.trim() !== ""
-  
- 
+
   let faseInfo = ""
   const colunaC = jogo.colunaC || ""
-  
+
   if (colunaC.toLowerCase().includes("ida")) {
     faseInfo = `
       <div class="match-phase">
@@ -905,7 +901,7 @@ function gerarHTMLJogoCopa(jogo) {
       </div>
     `
   }
-      
+
   return `
     <div class="jogo-copa ${jogo.isCruzeiro ? "destaque-cruzeiro" : ""}">
       <div class="cabecalho-jogo-copa">

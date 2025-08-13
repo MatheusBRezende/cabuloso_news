@@ -971,113 +971,216 @@ ul {
   box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
-#tabela-brasileirao {
-  width: 100%;
-  min-width: 700px;
-  table-layout: auto;
-  border-collapse: collapse;
+/* Aplicando o mesmo estilo de container para a Copa do Brasil */
+.fase-copa {
+  background: var(--white);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  border: 1px solid var(--gray-200);
+  transition: var(--transition-slow);
 }
 
-#tabela-brasileirao th {
-  background: var(--gradient-primary);
-  color: var(--white);
-  padding: var(--space-4);
-  text-align: center;
-  font-weight: 600;
-  font-size: clamp(0.75rem, 2vw, 0.875rem);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  position: sticky;
-  top: 0;
-  z-index: 10;
-  border-bottom: 2px solid var(--primary-dark);
+.fase-copa:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
 }
 
-#tabela-brasileirao td {
-  padding: var(--space-3);
-  text-align: center;
-  border-bottom: 1px solid var(--gray-100);
-  font-weight: 500;
-  transition: var(--transition);
-  font-size: clamp(0.8rem, 2vw, 0.9rem);
-}
-
-#tabela-brasileirao tr:hover td {
-  background: linear-gradient(90deg, var(--gray-50), var(--white));
-  transform: scale(1.01);
-}
-
-.time {
+.fase-copa h3 {
+  color: var(--primary);
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-4);
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  text-align: left !important;
-  font-weight: 600;
+  text-align: center;
+  justify-content: center;
 }
 
-.escudo {
-  width: clamp(24px, 5vw, 32px);
-  height: clamp(24px, 5vw, 32px);
-  object-fit: contain;
-  border-radius: var(--radius-sm);
-  transition: var(--transition);
+.fase-copa h3 i {
+  color: var(--accent);
+  font-size: 1.2rem;
+}
+
+/* Melhorando o estilo do aviso da Copa do Brasil */
+.aviso-sem-jogos-copa {
+  background: linear-gradient(135deg, var(--gray-50) 0%, #f8fafc 100%);
+  border: 2px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+  margin: var(--space-4) 0;
+  text-align: center;
   box-shadow: var(--shadow-sm);
-  flex-shrink: 0;
+  transition: var(--transition);
 }
 
-#tabela-brasileirao tr:hover .escudo {
-  transform: scale(1.2);
+.aviso-sem-jogos-copa:hover {
+  transform: translateY(-2px);
   box-shadow: var(--shadow-md);
 }
 
-/* Position Classes */
-.pos1-4 {
-  background: linear-gradient(90deg, rgba(16, 185, 129, 0.15), rgba(16, 185, 129, 0.05));
-  border-left: 4px solid var(--success);
+.aviso-icon {
+  margin-bottom: var(--space-3);
 }
 
-.pos5-6 {
-  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), rgba(245, 158, 11, 0.05));
-  border-left: 4px solid var(--warning);
+.aviso-icon i {
+  font-size: 2.5rem;
+  color: var(--primary);
+  opacity: 0.8;
 }
 
-.pos7-12 {
-  background: linear-gradient(90deg, rgba(59, 130, 246, 0.15), rgba(59, 130, 246, 0.05));
-  border-left: 4px solid var(--info);
+.aviso-content h3 {
+  color: var(--primary);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.pos17-20 {
-  background: linear-gradient(90deg, rgba(239, 68, 68, 0.15), rgba(239, 68, 68, 0.05));
-  border-left: 4px solid var(--error);
+.aviso-content p {
+  color: var(--gray-700);
+  font-size: 1rem;
+  line-height: 1.6;
+  margin-bottom: var(--space-2);
 }
 
-.cruzeiro {
-  background: linear-gradient(90deg, rgba(0, 51, 160, 0.2), rgba(255, 215, 0, 0.1)) !important;
-  border-left: 4px solid var(--primary) !important;
-  position: relative;
-  font-weight: 700 !important;
+.aviso-content p:last-child {
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0;
 }
 
-.cruzeiro::after {
-  content: "🦊";
-  position: absolute;
-  right: var(--space-2);
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: clamp(1rem, 3vw, 1.2rem);
-  animation: twinkle 2s infinite;
+/* Harmonizando o estilo dos jogos da Copa do Brasil */
+.jogo-copa {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  margin-bottom: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
 }
 
-@keyframes twinkle {
-  0%,
-  100% {
-    opacity: 1;
-    transform: translateY(-50%) scale(1);
-  }
-  50% {
-    opacity: 0.5;
-    transform: translateY(-50%) scale(1.2);
-  }
+.jogo-copa:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-light);
+}
+
+.jogo-copa.destaque-cruzeiro {
+  background: linear-gradient(135deg, rgba(0, 51, 160, 0.05), rgba(255, 215, 0, 0.05));
+  border: 2px solid var(--primary);
+  box-shadow: 0 8px 25px rgba(0, 51, 160, 0.15);
+}
+
+.jogo-copa.destaque-cruzeiro:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 15px 35px rgba(0, 51, 160, 0.25);
+}
+
+.cabecalho-jogo-copa {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.fase-jogo,
+.data-jogo-copa,
+.placar-jogo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius);
+  background: var(--gray-100);
+  color: var(--gray-700);
+}
+
+.fase-jogo {
+  background: var(--primary-light);
+  color: var(--primary);
+}
+
+.data-jogo-copa {
+  background: var(--info-light);
+  color: var(--info);
+}
+
+.placar-jogo {
+  background: var(--success-light);
+  color: var(--success);
+  font-weight: 700;
+}
+
+.times-jogo-copa {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.time-casa,
+.time-visitante {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: 1;
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
+.time-casa.destaque,
+.time-visitante.destaque {
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.time-casa {
+  justify-content: flex-start;
+}
+
+.time-visitante {
+  justify-content: flex-end;
+  flex-direction: row-reverse;
+}
+
+.time-casa img,
+.time-visitante img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.jogo-copa:hover .time-casa img,
+.jogo-copa:hover .time-visitante img {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+
+.vs {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-500);
+  background: var(--gray-100);
+  padding: var(--space-2);
+  border-radius: 50%;
+  min-width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-sm);
 }
 
 /* ================= LEGEND ================= */
