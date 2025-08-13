@@ -851,7 +851,7 @@ function gerarHTMLCopaDoBrasil(jogos) {
   }
 
   const jogosPorFase = jogos.reduce((acc, jogo) => {
-    const fase = jogo.fase || "Fase não definida"
+    const fase = jogo.fase || "Quartas De Final"
     if (!acc[fase]) {
       acc[fase] = []
     }
@@ -914,34 +914,6 @@ function gerarHTMLJogoCopa(jogo) {
         <span>Jogo de Volta</span>
       </div>
     `
-  } else if (colunaC.toLowerCase().includes("final")) {
-    faseInfo = `
-      <div class="match-phase">
-        <i class="fas fa-trophy"></i>
-        <span>Final</span>
-      </div>
-    `
-  } else if (colunaC.toLowerCase().includes("semifinal")) {
-    faseInfo = `
-      <div class="match-phase">
-        <i class="fas fa-medal"></i>
-        <span>Semifinal</span>
-      </div>
-    `
-  } else if (colunaC.toLowerCase().includes("quartas")) {
-    faseInfo = `
-      <div class="match-phase">
-        <i class="fas fa-award"></i>
-        <span>Quartas de Final</span>
-      </div>
-    `
-  } else if (colunaC.toLowerCase().includes("oitavas")) {
-    faseInfo = `
-      <div class="match-phase">
-        <i class="fas fa-star"></i>
-        <span>Oitavas de Final</span>
-      </div>
-    `
   }
       
   return `
@@ -950,7 +922,7 @@ function gerarHTMLJogoCopa(jogo) {
         <div class="jogo-status">
           <span class="fase-jogo">
             <i class="fas fa-${isResultado ? "check-circle" : "calendar-alt"}"></i>
-            ${jogo.fase || "Fase não definida"}
+            ${jogo.fase || "Quartas De Final"}
           </span>
           ${
             isResultado
