@@ -189,8 +189,12 @@ ul {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* ================= NAVIGATION ================= */
@@ -262,7 +266,8 @@ ul {
 }
 
 @keyframes pulse-glow {
-  0%, 100% {
+  0%,
+  100% {
     transform: scale(1);
     opacity: 0.3;
   }
@@ -400,8 +405,7 @@ ul {
 .hero-pattern {
   position: absolute;
   inset: 0;
-  background-image: 
-    radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+  background-image: radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
     radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
     linear-gradient(45deg, transparent 40%, rgba(255, 255, 255, 0.05) 50%, transparent 60%);
   background-size: 100px 100px, 150px 150px, 200px 200px;
@@ -445,8 +449,13 @@ ul {
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-20px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-20px);
+  }
 }
 
 .hero-content {
@@ -558,8 +567,15 @@ ul {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50% { transform: scale(1.1); opacity: 0.5; }
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.3;
+  }
+  50% {
+    transform: scale(1.1);
+    opacity: 0.5;
+  }
 }
 
 /* ================= BUTTONS ================= */
@@ -1209,6 +1225,25 @@ ul {
   color: var(--gray-400);
   font-weight: 600;
   font-size: clamp(0.8rem, 2vw, 0.875rem);
+}
+
+.match-vida {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  background: var(--primary-light);
+  color: var(--primary-dark);
+  border-radius: var(--radius);
+  font-size: clamp(0.8rem, 2vw, 0.875rem);
+  font-weight: 500;
+  border-left: 3px solid var(--primary);
+}
+
+.match-vida i {
+  color: var(--primary);
+  flex-shrink: 0;
 }
 
 .match-info {
