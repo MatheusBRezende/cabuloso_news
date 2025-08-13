@@ -570,8 +570,6 @@ async function loadNextMatches() {
         faseInfo = '<div class="match-phase"><i class="fas fa-arrow-right"></i> Jogo de Ida</div>';
       } else if (colunaC.toLowerCase().includes('volta')) {
         faseInfo = '<div class="match-phase"><i class="fas fa-arrow-left"></i> Jogo de Volta</div>';
-      } else if (colunaC) {
-        faseInfo = `<div class="match-phase"><i class="fas fa-info-circle"></i> ${colunaC}</div>`;
       }
       
       html += `
