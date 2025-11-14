@@ -451,15 +451,15 @@ async function loadMiniTable() {
     document.getElementById("mini-tabela").innerHTML = html
     updateStatusIndicator("table-update", "online")
 
-    // Atualiza stat card - CORREÇÃO APLICADA AQUI
-    const cruzeiroRow = data.values.find((row) => row[1].includes("Cruzeiro"))
-    if (cruzeiroRow) {
-      const positionStat = document.getElementById("position-stat")
-      if (positionStat) {
-        const position = cruzeiroRow[1].match(/\d+/)?.[0] || "?"
-        positionStat.textContent = `${position}º lugar`
-      }
+
+  const cruzeiroRowIndex = data.values.findIndex((row) => row[1] && row[1].includes("Cruzeiro"))
+  if (cruzeiroRowIndex !== -1) {
+    const positionStat = document.getElementById("position-stat")
+    if (positionStat) {
+      const position = cruzeiroRowIndex; // Já está correto! data.values[3] = 3º lugar
+      positionStat.textContent = `${position}º lugar`
     }
+  }
   } catch (error) {
     console.error("Erro ao carregar tabela:", error)
     updateStatusIndicator("table-update", "error")
@@ -872,3 +872,4 @@ window.fetchNews = fetchNews
 window.loadMiniTable = loadMiniTable
 window.loadMiniResults = loadMiniResults
 window.loadNextMatches = loadNextMatches
+
