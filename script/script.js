@@ -95,9 +95,16 @@ const showToast = (message, type = 'success') => {
 // ============================================
 // BUSCAR NOTÍCIAS
 // ============================================
+// Adicione estas variáveis no topo do arquivo ou dentro do escopo principal
+let allNews = [];
+let displayedNewsCount = 0;
+const NEWS_PER_PAGE = 6;
+
 const fetchNews = async () => {
   const container = document.getElementById('newsContainer');
   const loader = document.getElementById('newsLoader');
+  const loadMoreBtn = document.getElementById('btnLoadMore');
+  const loadMoreContainer = document.getElementById('loadMoreContainer');
 
   if (!container) return;
 
@@ -105,69 +112,66 @@ const fetchNews = async () => {
     const response = await fetch(CONFIG.newsApiUrl, { cache: 'no-cache' });
     if (!response.ok) throw new Error('Erro ao carregar notícias');
 
-    const news = await response.json();
-    
+    allNews = await response.json();
     if (loader) loader.classList.add('hidden');
     
     container.innerHTML = '';
+    displayedNewsCount = 0;
 
-    if (!Array.isArray(news) || news.length === 0) {
+    if (!Array.isArray(allNews) || allNews.length === 0) {
       container.innerHTML = '<p class="loading-cell">Nenhuma notícia disponível.</p>';
       return;
     }
 
-    const fragment = document.createDocumentFragment();
+    // Renderiza a primeira leva
+    renderMoreNews();
 
-    news.forEach(item => {
-      if (!item || !item.title) return;
-
-      const card = document.createElement('article');
-      card.className = 'news-card';
-      
-      const badgeClass = item.fonte === 'Samuca TV' ? 'news-badge--samuca' : '';
-
-      card.innerHTML = `
-        <div class="news-image">
-          <img src="${escapeHtml(item.image || CONFIG.defaultImage)}" 
-               alt="" 
-               loading="lazy"
-               onerror="this.src='${CONFIG.defaultImage}'">
-          <span class="news-badge ${badgeClass}">${escapeHtml(item.fonte || 'Notícia')}</span>
-        </div>
-        <div class="news-content">
-          <span class="news-date">
-            <i class="far fa-clock"></i>
-            ${escapeHtml(item.date || '')}
-          </span>
-          <h3 class="news-title">${escapeHtml(item.title)}</h3>
-          <div class="news-footer">
-            <span class="read-more">
-              Ler notícia <i class="fas fa-arrow-right"></i>
-            </span>
-          </div>
-        </div>
-      `;
-
-      card.addEventListener('click', () => {
-        window.open(item.url, '_blank', 'noopener,noreferrer');
-      });
-
-      fragment.appendChild(card);
-    });
-
-    container.appendChild(fragment);
+    // Configura o clique do botão
+    loadMoreBtn.onclick = () => renderMoreNews();
 
   } catch (error) {
     console.error('Erro ao buscar notícias:', error);
     if (loader) loader.classList.add('hidden');
-    container.innerHTML = `
-      <p class="loading-cell">
-        <i class="fas fa-exclamation-circle"></i>
-        Erro ao carregar notícias. Tente novamente mais tarde.
-      </p>
-    `;
+    container.innerHTML = `<p class="loading-cell">Erro ao carregar notícias.</p>`;
   }
 };
+
+const renderMoreNews = () => {
+  const container = document.getElementById('newsContainer');
+  const loadMoreContainer = document.getElementById('loadMoreContainer');
+  
+  const nextBatch = allNews.slice(displayedNewsCount, displayedNewsCount + NEWS_PER_PAGE);
+  
+  nextBatch.forEach(item => {
+    const card = document.createElement('article');
+    card.className = 'news-card';
+    const badgeClass = item.fonte === 'Samuca TV' ? 'news-badge--samuca' : '';
+
+    card.innerHTML = `
+      <div class="news-image">
+        <img src="${escapeHtml(item.image || CONFIG.defaultImage)}" alt="" loading="lazy">
+        <span class="news-badge ${badgeClass}">${escapeHtml(item.fonte || 'Notícia')}</span>
+      </div>
+      <div class="news-content">
+        <span class="news-date"><i class="far fa-clock"></i> ${escapeHtml(item.date || '')}</span>
+        <h3 class="news-title">${escapeHtml(item.title)}</h3>
+        <div class="news-footer"><span class="read-more">Ler notícia <i class="fas fa-arrow-right"></i></span></div>
+      </div>
+    `;
+    card.addEventListener('click', () => window.open(item.url, '_blank'));
+    container.appendChild(card);
+  });
+
+  displayedNewsCount += nextBatch.length;
+
+  // Esconde o botão se não houver mais notícias para carregar
+  if (displayedNewsCount >= allNews.length) {
+    loadMoreContainer.style.display = 'none';
+  } else {
+    loadMoreContainer.style.display = 'block';
+  }
+};
+
 
 // ============================================
 // WIDGETS - MINI TABELA

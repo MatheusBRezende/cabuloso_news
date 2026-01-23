@@ -332,7 +332,8 @@ ul { list-style: none; }
   align-items: center;
   position: relative;
   background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-  padding: calc(70px + var(--space-12)) var(--space-4) var(--space-12);
+  padding: calc(70px + var(--space-12)) var(--space-4) var(--space-8);
+  min-height: 80vh;
   overflow: hidden;
 }
 

@@ -1,373 +1,209 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Resultados do Cruzeiro | Cabuloso News</title>
+
     <meta
       name="description"
-      content="Cabuloso News - Resultados completos do Cruzeiro. Estatísticas detalhadas, histórico de jogos e análise de desempenho em todas as competições."
-    />
-    <meta
-      name="keywords"
-      content="Cruzeiro, resultados, futebol, estatísticas, histórico, campeonato brasileiro, copa do brasil"
+      content="Resultados completos do Cruzeiro Esporte Clube. Estatísticas, histórico de jogos e desempenho por competição."
     />
     <meta name="author" content="Cabuloso News" />
-    <title>
-      Resultados do Cruzeiro | Histórico e Estatísticas - Cabuloso News
-    </title>
 
-    <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="assets/logo.png" />
-
-    <!-- Fonts and Icons -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Poppins:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap"
       rel="stylesheet"
     />
+
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
     />
 
-    <!-- Styles -->
+    <link rel="stylesheet" href="./style/styles.css" />
     <link rel="stylesheet" href="./style/style-resultado.css" />
-
-    <!-- Structured Data -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebPage",
-        "name": "Resultados do Cruzeiro",
-        "description": "Histórico completo de resultados e estatísticas do Cruzeiro Esporte Clube",
-        "url": "https://cabulosonews.com/resultados",
-        "mainEntity": {
-          "@type": "SportsTeam",
-          "name": "Cruzeiro Esporte Clube",
-          "sport": "Soccer"
-        }
-      }
-    </script>
+    <link rel="icon" href="./assets/logo.png" />
   </head>
 
   <body>
-    <!-- Loading Overlay -->
-    <div id="loading-overlay" class="loading-overlay">
+    <div id="loading-overlay" class="loading-screen hidden">
       <div class="loading-content">
-        <div class="loading-spinner"></div>
-        <h3>Carregando Cabuloso News...</h3>
-        <p>Preparando os resultados do Maior de Minas</p>
+        <div class="loading-logo">
+          <i class="fas fa-futbol"></i>
+        </div>
+        <h3 class="loading-text">Cabuloso News</h3>
+        <p>Carregando resultados...</p>
+        <div class="loading-bar">
+          <div class="loading-progress"></div>
+        </div>
       </div>
     </div>
 
-    <!-- Navbar -->
     <header class="header">
-      <nav class="navbar">
-        <div class="nav-container">
-          <a href="index.html" class="nav-logo">
-            <div class="logo-container">
-              <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="logo" />
-              <div class="logo-glow"></div>
-            </div>
-            <div class="logo-text-container">
-              <span class="logo-text">Cabuloso News</span>
-              <span class="logo-subtitle">Resultados</span>
-            </div>
-          </a>
-
-          <ul class="nav-menu" id="nav-menu">
-            <li class="nav-item">
-              <a href="index.html" class="nav-link">
-                <i class="fas fa-home"></i>
-                <span>Início</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="competicao.html" class="nav-link">
-                <i class="fas fa-list-ol"></i>
-                <span>Tabela</span>
-              </a>
-            </li>
-            <li class="nav-item">
-              <a href="resultados.html" class="nav-link active">
-                <i class="fas fa-trophy"></i>
-                <span>Resultados</span>
-              </a>
-            </li>
-          </ul>
-
-          <div class="menu-toggle" id="menuToggle">
-            <span class="menu-text">Menu</span>
-            <div class="hamburger">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
+      <nav class="nav">
+        <a href="index.html" class="logo">
+          <div class="logo-icon">
+            <i class="fas fa-crown"></i>
           </div>
+          <div class="logo-text">
+            <span class="logo-main">Cabuloso News</span>
+            <span class="logo-sub">Resultados</span>
+          </div>
+        </a>
+
+        <div class="menu-toggle" id="menuToggle">
+          <span></span><span></span><span></span>
         </div>
+
+        <ul class="nav-menu" id="nav-menu">
+          <li>
+            <a href="index.html" class="nav-link">
+              <i class="fas fa-home"></i> Início
+            </a>
+          </li>
+          <li>
+            <a href="competicao.html" class="nav-link">
+              <i class="fas fa-list-ol"></i> Tabelas
+            </a>
+          </li>
+          <li>
+            <a href="resultados.html" class="nav-link active">
+              <i class="fas fa-trophy"></i> Resultados
+            </a>
+          </li>
+        </ul>
       </nav>
     </header>
 
-    <!-- Main Content -->
-    <main class="main-container">
+    <main>
+      <section class="page-hero">
+        <div class="page-hero-bg"></div>
+        <div class="container page-hero-content">
+          <div class="page-badge">
+            <i class="fas fa-trophy"></i> Temporada 2025
+          </div>
+          <h1 class="page-title">Resultados do Cruzeiro</h1>
+          <p class="page-subtitle">
+            Histórico completo, estatísticas detalhadas e análise de desempenho.
+          </p>
+
+          <div class="header-stats-preview">
+            <div class="stat-preview">
+              <span class="stat-number" id="preview-games" data-fallback="-">-</span>
+              <span class="stat-label">Jogos</span>
+            </div>
+            <div class="stat-preview">
+              <span class="stat-number" id="preview-wins" data-fallback="-">-</span>
+              <span class="stat-label">Vitórias</span>
+            </div>
+            <div class="stat-preview">
+              <span class="stat-number" id="preview-goals" data-fallback="-">-</span>
+              <span class="stat-label">Gols Pró</span>
+            </div>
+            <div class="stat-preview">
+              <span class="stat-number" id="preview-performance" data-fallback="-">-%</span>
+              <span class="stat-label">Aproveitamento</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <div class="container">
-        <!-- Page Header -->
-        <div class="page-header-wrapper">
-          <header class="page-header">
-            <div class="header-background">
-              <div class="header-pattern"></div>
-              <div class="header-shapes">
-                <div class="shape shape-1"></div>
-                <div class="shape shape-2"></div>
-                <div class="shape shape-3"></div>
-              </div>
-            </div>
-            <div class="header-content">
-              <div class="header-badge">
-                <i class="fas fa-trophy"></i>
-                <span>Temporada 2025</span>
-              </div>
-              <h1>
-                <span class="title-main">Resultados do Cruzeiro</span>
-                <span class="title-sub"
-                  >Histórico completo e estatísticas detalhadas</span
-                >
-              </h1>
-              <div class="header-stats-preview">
-                <div class="stat-preview">
-                  <div
-                    class="stat-number"
-                    id="preview-games"
-                    data-fallback="11"
-                  >
-                    -
-                  </div>
-                  <div class="stat-label">Jogos</div>
-                </div>
-                <div class="stat-preview">
-                  <div class="stat-number" id="preview-wins" data-fallback="7">
-                    -
-                  </div>
-                  <div class="stat-label">Vitórias</div>
-                </div>
-                <div class="stat-preview">
-                  <div
-                    class="stat-number"
-                    id="preview-goals"
-                    data-fallback="18"
-                  >
-                    -
-                  </div>
-                  <div class="stat-label">Gols</div>
-                </div>
-                <div class="stat-preview">
-                  <div
-                    class="stat-number"
-                    id="preview-performance"
-                    data-fallback="75.8"
-                  >
-                    -%
-                  </div>
-                  <div class="stat-label">Aproveitamento</div>
-                </div>
-              </div>
-            </div>
-          </header>
-        </div>
-
-        <!-- Intro Section -->
-        <section class="intro-section">
-          <div class="intro-content">
-            <h2>Acompanhe a Jornada Celeste</h2>
-            <p>
-              Reviva todos os momentos da temporada 2025 do Cruzeiro! Aqui você
-              encontra o histórico completo de jogos com estatísticas
-              detalhadas, análises de desempenho e filtros por competição.
-              Acompanhe a campanha do time em todas as competições: Brasileirão,
-              Copa do Brasil e Sul-Americana.
-            </p>
-            <p class="historical-context">
-              O Cruzeiro em 2025 busca reafirmar sua tradição no futebol
-              brasileiro. Com um elenco renovado e uma diretoria focada em
-              resultados, o time celeste vem mostrando um futebol vibrante que
-              promete trazer muitas alegrias para sua apaixonada torcida.
-            </p>
-            <div class="intro-features">
-              <div class="feature">
-                <i class="fas fa-chart-bar"></i>
-                <span>Estatísticas Detalhadas</span>
-              </div>
-              <div class="feature">
-                <i class="fas fa-filter"></i>
-                <span>Filtros Avançados</span>
-              </div>
-              <div class="feature">
-                <i class="fas fa-sync-alt"></i>
-                <span>Dados em Tempo Real</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Controls Bar -->
         <div class="controls-bar">
-          <div class="update-info">
-            <div class="status-indicator">
-              <div class="status-dot"></div>
-              <span
-                >Última atualização:
-                <span id="data-atualizacao">Carregando...</span></span
-              >
-            </div>
+          <div class="status-indicator">
+            <div class="status-dot"></div>
+            <span>Última atualização: <strong id="data-atualizacao">Carregando...</strong></span>
           </div>
 
-          <div class="controls-actions">
-            <button id="btn-atualizar" class="btn-update">
-              <i class="fas fa-sync-alt"></i>
-              <span>Atualizar</span>
-            </button>
-          </div>
+          <button id="btn-atualizar" class="btn btn-primary btn-sm">
+            <i class="fas fa-sync-alt"></i> Atualizar Dados
+          </button>
         </div>
 
-        <!-- Statistics Dashboard -->
         <section id="statistics-dashboard" class="statistics-dashboard">
           <div class="dashboard-header">
-            <h2>
-              <i class="fas fa-chart-bar"></i>
-              Estatísticas por Competição
-            </h2>
+            <div class="section-title" style="margin-bottom: 0">
+              <i class="fas fa-chart-bar"></i> Estatísticas
+            </div>
+
             <div class="competition-tabs">
               <button class="tab-btn active" data-competition="">
-                <i class="fas fa-globe"></i>
-                <span>Geral</span>
+                <i class="fas fa-globe"></i> Geral
               </button>
               <button class="tab-btn" data-competition="Campeonato Brasileiro">
-                <i class="fas fa-flag"></i>
-                <span>Brasileirão</span>
+                <i class="fas fa-flag"></i> Brasileirão
               </button>
               <button class="tab-btn" data-competition="Copa do Brasil">
-                <i class="fas fa-trophy"></i>
-                <span>Copa do Brasil</span>
+                <i class="fas fa-trophy"></i> Copa do Brasil
               </button>
               <button class="tab-btn" data-competition="CONMEBOL Sudamericana">
-                <i class="fas fa-medal"></i>
-                <span>Sul-Americana</span>
+                <i class="fas fa-medal"></i> Sul-Americana
               </button>
             </div>
           </div>
 
           <div id="stats-content" class="stats-content">
             <div class="stats-description">
-              <p>
-                As estatísticas apresentadas são calculadas em tempo real com
-                base nos jogos oficiais do Cruzeiro. O aproveitamento considera
-                3 pontos por vitória e 1 ponto por empate. A sequência atual
-                mostra o desempenho mais recente do time (V = Vitórias, E =
-                Empates, D = Derrotas).
-              </p>
+              <p>Selecione uma competição acima para ver o desempenho detalhado.</p>
             </div>
           </div>
         </section>
 
-        <!-- Filters Section -->
-        <section class="filters-section">
-          <div class="filters-container">
-            <div class="filter-group">
-              <label for="competition-filter">
-                <i class="fas fa-trophy"></i>
-                Competição
-              </label>
-              <select id="competition-filter" class="filter-select">
-                <option value="">Todas as Competições</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="period-filter">
-                <i class="fas fa-calendar"></i>
-                Período
-              </label>
-              <select id="period-filter" class="filter-select">
-                <option value="">Todos os Períodos</option>
-                <option value="last-10">Últimos 10 Jogos</option>
-                <option value="last-month">Último Mês</option>
-                <option value="current-season">Temporada Atual</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label for="result-filter">
-                <i class="fas fa-filter"></i>
-                Resultado
-              </label>
-              <select id="result-filter" class="filter-select">
-                <option value="">Todos os Resultados</option>
-                <option value="vitoria">Vitórias</option>
-                <option value="empate">Empates</option>
-                <option value="derrota">Derrotas</option>
-              </select>
-            </div>
-          </div>
-        </section>
-
-        <!-- Results Section -->
-        <section class="results-section">
+        <!-- SEÇÃO DE HISTÓRICO HORIZONTAL -->
+        <section class="horizontal-history-section">
           <div class="section-header">
-            <h2>
-              <i class="fas fa-list"></i>
-              Histórico de Jogos
-            </h2>
-            <p class="section-subtitle">
-              Confira todos os jogos do Cruzeiro na temporada 2025. Os
-              resultados são atualizados automaticamente após cada partida.
-              Utilize os filtros para encontrar jogos específicos por
-              competição, período ou resultado.
-            </p>
+            <div class="section-title">
+              <i class="fas fa-history"></i> Últimos Jogos
+            </div>
+            <div class="view-toggle">
+              <button id="view-more-horizontal" class="btn btn-outline btn-sm">
+                Ver Todos <i class="fas fa-arrow-right"></i>
+              </button>
+            </div>
+          </div>
+
+          <div id="horizontal-matches" class="horizontal-matches">
+            <!-- Os últimos jogos serão inseridos aqui via JavaScript -->
+          </div>
+        </section>
+
+        <section class="results-section" id="results-section">
+          <div class="section-header" style="margin-bottom: var(--space-4)">
+            <div class="section-title">
+              <i class="fas fa-list"></i> Histórico de Jogos
+            </div>
 
             <div class="view-toggle">
-              <button id="view-table" class="view-btn active">
+              <button id="view-table" class="view-btn active" title="Visualização em Tabela">
                 <i class="fas fa-table"></i>
-                <span>Tabela</span>
               </button>
-
-              <button id="view-cards" class="view-btn">
+              <button id="view-cards" class="view-btn" title="Visualização em Cards">
                 <i class="fas fa-th-large"></i>
-                <span>Cards</span>
               </button>
             </div>
           </div>
 
-          <div id="results-container" class="results-container">
-            <!-- Loading State -->
+          <div id="results-container">
             <div id="results-loading" class="loading-state">
               <div class="loading-spinner"></div>
-              <p>Carregando resultados...</p>
+              <p>Buscando histórico de partidas...</p>
             </div>
 
             <div id="results-error" class="error-state" style="display: none">
-              <div class="error-content">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Erro ao carregar resultados</h3>
-                <p>Não foi possível carregar os dados. Tente novamente.</p>
-                <button id="btn-retry" class="btn-retry">
-                  <i class="fas fa-redo"></i>
-                  <span>Tentar Novamente</span>
-                </button>
-              </div>
+              <i class="fas fa-exclamation-triangle fa-2x" style="color: var(--warning); margin-bottom: 1rem"></i>
+              <h3>Erro ao carregar</h3>
+              <p>Não foi possível sincronizar com a planilha.</p>
+              <button id="btn-retry" class="btn-retry">Tentar Novamente</button>
             </div>
 
             <div id="results-empty" class="empty-state" style="display: none">
-              <div class="empty-content">
-                <i class="fas fa-search"></i>
-                <h3>Nenhum resultado encontrado</h3>
-                <p>
-                  Tente ajustar os filtros para encontrar os jogos desejados.
-                </p>
-              </div>
+              <i class="fas fa-search fa-2x" style="margin-bottom: 1rem"></i>
+              <h3>Nenhum jogo encontrado</h3>
+              <p>Tente ajustar os filtros acima.</p>
             </div>
 
             <div id="table-view" class="table-view">
@@ -375,63 +211,36 @@
                 <table id="results-table" class="results-table">
                   <thead>
                     <tr>
-                      <th class="sortable" data-sort="date">
-                        <i class="fas fa-calendar"></i>
-                        <span>Data</span>
-                        <i class="fas fa-sort sort-icon"></i>
-                      </th>
-                      <th>
-                        <i class="fas fa-users"></i>
-                        <span>Jogo</span>
-                      </th>
-                      <th class="sortable" data-sort="result">
-                        <i class="fas fa-trophy"></i>
-                        <span>Resultado</span>
-                        <i class="fas fa-sort sort-icon"></i>
-                      </th>
-                      <th class="sortable" data-sort="competition">
-                        <i class="fas fa-medal"></i>
-                        <span>Competição</span>
-                        <i class="fas fa-sort sort-icon"></i>
-                      </th>
+                      <th class="sortable" data-sort="date">Data <i class="fas fa-sort"></i></th>
+                      <th>Confronto</th>
+                      <th class="sortable" data-sort="result">Placar <i class="fas fa-sort"></i></th>
+                      <th class="sortable" data-sort="competition">Competição <i class="fas fa-sort"></i></th>
                     </tr>
                   </thead>
-                  <tbody id="results-tbody">
-                  </tbody>
+                  <tbody id="results-tbody"></tbody>
                 </table>
               </div>
             </div>
 
             <div id="cards-view" class="cards-view" style="display: none">
-              <div id="results-cards" class="results-cards">
-                <!-- Cards will be loaded here -->
-              </div>
+              <div id="results-cards" class="results-cards"></div>
             </div>
           </div>
 
-          <!-- Pagination -->
           <div id="pagination" class="pagination" style="display: none">
             <button id="prev-page" class="page-btn">
-              <i class="fas fa-chevron-left"></i>
-              <span>Anterior</span>
+              <i class="fas fa-chevron-left"></i> Anterior
             </button>
             <div id="page-info" class="page-info">
-              Página <span id="current-page">1</span> de
-              <span id="total-pages">1</span>
+              Página <span id="current-page">1</span> de <span id="total-pages">1</span>
             </div>
             <button id="next-page" class="page-btn">
-              <span>Próxima</span>
-              <i class="fas fa-chevron-right"></i>
+              Próxima <i class="fas fa-chevron-right"></i>
             </button>
           </div>
         </section>
 
-        <!-- Fallback Table (for when API fails) -->
-        <div id="fallback-table" class="fallback-table" style="display: none">
-          <h3>
-            <i class="fas fa-info-circle"></i>
-            Últimos Resultados (Dados Estáticos)
-          </h3>
+        <div id="fallback-table" class="fallback-table" style="display: none; margin-top: 2rem">
           <div class="table-container">
             <table class="results-table">
               <thead>
@@ -447,51 +256,13 @@
                   <td>15/01/2025</td>
                   <td>
                     <div class="match-teams">
-                      <img
-                        src="/placeholder.svg?height=24&width=24"
-                        alt="Cruzeiro"
-                        class="team-logo"
-                      />
                       <span class="team-name home">Cruzeiro</span>
                       <span class="vs">×</span>
-                      <img
-                        src="/placeholder.svg?height=24&width=24"
-                        alt="Palmeiras"
-                        class="team-logo"
-                      />
                       <span class="team-name">Palmeiras</span>
                     </div>
                   </td>
-                  <td><span class="result vitoria">
-                    <i class="fas fa-check-circle"></i>
-                    2-1
-                  </span></td>
-                  <td>Campeonato Brasileiro</td>
-                </tr>
-                <tr>
-                  <td>12/01/2025</td>
-                  <td>
-                    <div class="match-teams">
-                      <img
-                        src="/placeholder.svg?height=24&width=24"
-                        alt="Flamengo"
-                        class="team-logo"
-                      />
-                      <span class="team-name">Flamengo</span>
-                      <span class="vs">×</span>
-                      <img
-                        src="/placeholder.svg?height=24&width=24"
-                        alt="Cruzeiro"
-                        class="team-logo"
-                      />
-                      <span class="team-name home">Cruzeiro</span>
-                    </div>
-                  </td>
-                  <td><span class="result empate">
-                    <i class="fas fa-equals"></i>
-                    1-1
-                  </span></td>
-                  <td>Copa do Brasil</td>
+                  <td><span class="result-badge vitoria">2-1</span></td>
+                  <td>Brasileirão</td>
                 </tr>
               </tbody>
             </table>
@@ -500,16 +271,14 @@
       </div>
     </main>
 
-    <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
-    <!-- Footer -->
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
           <div class="footer-section">
             <div class="footer-logo">
-              <img src="./assets/logo_m.jpeg" alt="Cabuloso News" class="footer-logo-img" />
+              <i class="fas fa-crown"></i>
               <div>
                 <h3>Cabuloso News</h3>
                 <p>O portal do torcedor celeste</p>
@@ -534,27 +303,40 @@
         </div>
         <div class="footer-bottom">
           <p>
-            &copy; 2025 CabulosoNews - O mais completo acompanhamento
-            estatístico do Cruzeiro Esporte Clube. Este é um site independente
-            criado por torcedores para torcedores.<br />
-            Todo conteúdo, imagens e notícias pertencem aos seus respectivos autores e portais de origem.
-          </p>
-          <p class="disclaimer">
-            Todas as estatísticas são calculadas com base em dados oficiais, mas
-            podem conter pequenas discrepâncias em relação aos registros
-            oficiais do clube. Resultados sujeitos a alterações mediante
-            confirmação das federações.
+            &copy; 2025 CabulosoNews - Site independente criado por torcedores.<br />
+            Cruzeiro Esporte Clube - O Maior de Minas.
           </p>
         </div>
       </div>
     </footer>
 
-    <!-- Back to Top Button -->
-    <a href="#" class="back-to-top" id="backToTop">
+    <a href="#" class="back-to-top" id="backToTop" style="
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: var(--accent);
+        color: var(--primary);
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: var(--shadow-lg);
+      ">
       <i class="fas fa-arrow-up"></i>
     </a>
 
-    <!-- Scripts -->
+    <script>
+      const menuToggle = document.getElementById("menuToggle");
+      const navMenu = document.getElementById("nav-menu");
+      if (menuToggle && navMenu) {
+        menuToggle.addEventListener("click", () => {
+          menuToggle.classList.toggle("active");
+          navMenu.classList.toggle("active");
+        });
+      }
+    </script>
     <script src="./script/script-resultado.js"></script>
   </body>
 </html>
