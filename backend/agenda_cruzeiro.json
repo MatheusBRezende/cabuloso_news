@@ -1,0 +1,122 @@
+[
+  {
+    "data": "dom., 25 jan.",
+    "hora": "18:00",
+    "mandante": "Atlético-MG",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Mineiro",
+    "estadio": "Arena MRV",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2019/11/atléticomg.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "qui., 29 jan.",
+    "hora": "21:30",
+    "mandante": "Botafogo",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Nilton Santos",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/02/botafogo-128x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "dom., 1 fev.",
+    "hora": "20:00",
+    "mandante": "Betim",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Mineiro",
+    "estadio": "Independência",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2024/12/Logo_Betim_Futebol-106x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "qui., 5 fev.",
+    "hora": "21:30",
+    "mandante": "Cruzeiro",
+    "visitante": "Coritiba",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Mineirão",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/02/CORITIBA-128x128.png"
+  },
+  {
+    "data": "dom., 8 fev.",
+    "hora": "18:00",
+    "mandante": "Cruzeiro",
+    "visitante": "América",
+    "campeonato": "Campeonato Mineiro",
+    "estadio": "Mineirão",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/américa.png"
+  },
+  {
+    "data": "qua., 11 fev.",
+    "hora": "19:00",
+    "mandante": "Mirassol",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Estádio Municipal José Maria de Campos Maia",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2025/03/mirassol-escudo-128x125.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "sáb., 14 fev.",
+    "hora": "16:30",
+    "mandante": "URT",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Mineiro",
+    "estadio": "Zama Maciel",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/URT.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "qua., 25 fev.",
+    "hora": "20:00",
+    "mandante": "Cruzeiro",
+    "visitante": "Corinthians",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Mineirão",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/02/CORINTHIANS-128x128.png"
+  },
+  {
+    "data": "qua., 11 mar.",
+    "hora": "21:30",
+    "mandante": "Flamengo",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Maracanã",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2019/11/flamengo.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "dom., 15 mar.",
+    "hora": "20:30",
+    "mandante": "Cruzeiro",
+    "visitante": "Vasco",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Mineirão",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/02/vasco-128x128.png"
+  },
+  {
+    "data": "qua., 18 mar.",
+    "hora": "19:30",
+    "mandante": "Athletico-PR",
+    "visitante": "Cruzeiro",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Ligga Arena",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/02/ATLÉTICO-128x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png"
+  },
+  {
+    "data": "dom., 22 mar.",
+    "hora": "16:00",
+    "mandante": "Cruzeiro",
+    "visitante": "Santos",
+    "campeonato": "Campeonato Brasileiro",
+    "estadio": "Mineirão",
+    "escudo_mandante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/01/cruzeiro-106x128.png",
+    "escudo_visitante": "https://www.diarioceleste.com.br/wp-content/uploads/2020/02/SANTOS-128x128.png"
+  }
+]
