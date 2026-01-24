@@ -36,36 +36,37 @@ function determinarResultado(score, team1) {
 }
 
 async function loadResults() {
-  try {
-    showLoadingState();
-    const response = await fetch(`${CONFIG_RESULTADOS.jsonUrl}?v=${new Date().getTime()}`);
-    if (!response.ok) throw new Error('Arquivo JSON não encontrado');
-    
-    const data = await response.json();
-    const rawList = data.results || data || [];
+  stateResultados.isLoading = true;
+  const container = document.getElementById('results-cards');
+  if (container) container.innerHTML = '<div class="loading-cell">Carregando...</div>';
 
-    stateResultados.allResults = rawList.map((game, index) => ({
-      ...game,
-      id: index,
-      competition: game.competition === "Campeonato" ? "Campeonato Mineiro" : game.competition,
-      resultado: determinarResultado(game.score, game.team1),
-      isCruzeiroHome: game.team1.toLowerCase().includes('cruzeiro')
+  try {
+    const response = await fetch(`${CONFIG_RESULTADOS.jsonUrl}?t=${Date.now()}`);
+    const data = await response.json();
+
+    // AQUI ESTÁ O AJUSTE:
+    // O seu JSON tem a estrutura { "results": [...] }. 
+    // Precisamos pegar a chave .results para poder usar o .map()
+    const rawList = data.results || []; 
+
+    if (!Array.isArray(rawList)) {
+      throw new Error("O formato dos dados não é uma lista válida.");
+    }
+
+    stateResultados.allResults = rawList.map(item => ({
+      ...item,
+      resultadoStatus: determinarResultado(item.score, item.team1)
     }));
 
-    updateStatistics();
     renderHorizontalMatches();
     applyFilter(stateResultados.currentFilter);
+    updateStats();
 
-    const now = new Date();
-    document.getElementById('data-atualizacao').textContent = now.toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-    
   } catch (error) {
-    console.error('Erro:', error);
-    showErrorState();
+    console.error('Erro ao carregar resultados:', error);
+    showToast('Erro ao carregar dados dos resultados.', 'error');
   } finally {
     stateResultados.isLoading = false;
-    const loader = document.getElementById('loading-overlay');
-    if (loader) loader.classList.add('hidden');
   }
 }
 
