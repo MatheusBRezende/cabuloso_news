@@ -96,13 +96,12 @@ async function loadResults() {
 
 function applyFilter(filter) {
   stateResultados.currentFilter = filter;
+  
   const filtered = stateResultados.allResults.filter((game) => {
-    if (filter === "all") return true;
-    return (
-      game.competition.includes(filter) ||
-      (filter === "Campeonato" && game.competition === "Campeonato Mineiro")
-    );
+    if (!filter || filter === "all" || filter === "") return true;
+    return game.competition.toLowerCase().includes(filter.toLowerCase());
   });
+  
   renderResultsList(filtered);
 }
 
@@ -240,7 +239,10 @@ document.addEventListener("DOMContentLoaded", () => {
         .querySelectorAll(".tab-btn")
         .forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-      applyFilter(btn.getAttribute("data-filter"));
+
+      // Pega o valor correto do atributo data-competition
+      const filtroEscolhido = btn.getAttribute("data-competition");
+      applyFilter(filtroEscolhido);
     });
   });
 
