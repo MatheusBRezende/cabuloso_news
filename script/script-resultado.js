@@ -4,7 +4,7 @@
  */
 
 const CONFIG_RESULTADOS = {
-  jsonUrl: "./backend/resultados.json",
+  jsonUrl: "backend/resultados.json",
   updateInterval: 60000,
   placeholderLogo:
     "https://vignette.wikia.nocookie.net/p__/images/2/2a/Flag_placeholder.png/revision/latest?cb=20140706154316&path-prefix=protagonist",
