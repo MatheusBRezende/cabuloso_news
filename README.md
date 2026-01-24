@@ -22,11 +22,6 @@ O **Cabuloso News** é um portal dedicado ao Cruzeiro Esporte Clube, oferecendo 
   - Histórico completo de jogos com filtros por competição.  
   - Visualização de resultados (vitórias, empates, derrotas) com cores intuitivas.  
   - Atualização em tempo real.  
-
-- **Minuto a Minuto (minuto-a-minuto.html)**  
-  - Cobertura ao vivo com placar atualizado, eventos (gols, cartões) e estatísticas.  
-  - Animações para gols e lances importantes.  
-
 ---
 
 ## 🛠️ Tecnologias Utilizadas
