@@ -106,172 +106,22 @@
             <span class="title-main" id="campeonato-nome">Brasileirao Serie A</span>
             <span class="title-sub">Acompanhe todas as competicoes do Cruzeiro</span>
           </h1>
-<div class="hero-selector">
-  <div class="selector-wrapper">
-    <label for="campeonato-select" class="sr-only">Selecionar campeonato</label>
-    <select id="campeonato-select" class="championship-select">
-      <option value="brasileirao">Campeonato Brasileiro</option>
-      <option value="mineiro">Campeonato Mineiro</option>
-      <option value="copa-do-brasil">Copa do Brasil</option>
-    </select>
-    <i class="fas fa-chevron-down selector-icon" aria-hidden="true"></i>
-  </div>
-</div>
+          <div class="hero-selector">
+            <div class="selector-wrapper">
+              <label for="campeonato-select" class="sr-only">Selecionar campeonato</label>
+              <select id="campeonato-select" class="championship-select">
+                <option value="brasileirao">Campeonato Brasileiro</option>
+                <option value="mineiro">Campeonato Mineiro</option>
+                <option value="copa-do-brasil">Copa do Brasil</option>
+              </select>
+              <i class="fas fa-chevron-down selector-icon" aria-hidden="true"></i>
+            </div>
+          </div>
         </div>
       </div>
     </section>
 
     <!-- Main Content -->
-    <section class="intro-content" aria-labelledby="intro-title">
-      <div class="container">
-        <div class="intro-header">
-          <div class="intro-icon" aria-hidden="true">
-            <i class="fas fa-star"></i>
-          </div>
-          <h2 id="intro-title">Sobre o Cabuloso News</h2>
-        </div>
-        <p class="intro-lead">
-          Bem-vindo ao <strong>Cabuloso News</strong>, o portal definitivo para
-          todos os apaixonados pelo <strong>Cruzeiro Esporte Clube</strong>. Nossa
-          missao e manter a torcida sempre informada com conteudos de qualidade,
-          atualizacoes em tempo real e uma navegacao leve e acessivel.
-        </p>
-
-        <div class="features-grid" role="list">
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon" aria-hidden="true">
-              <i class="fas fa-newspaper"></i>
-            </div>
-            <h3>Noticias Exclusivas</h3>
-            <p>Noticias diarias e exclusivas sobre o Cruzeiro</p>
-          </article>
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon" aria-hidden="true">
-              <i class="fas fa-table-list"></i>
-            </div>
-            <h3>Tabelas Atualizadas</h3>
-            <p>Classificacoes em tempo real de todas as competicoes</p>
-          </article>
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon" aria-hidden="true">
-              <i class="fas fa-calendar-check"></i>
-            </div>
-            <h3>Resultados Completos</h3>
-            <p>Estatisticas detalhadas de todos os jogos</p>
-          </article>
-          <article class="feature-card" role="listitem">
-            <div class="feature-icon" aria-hidden="true">
-              <i class="fas fa-tv"></i>
-            </div>
-            <h3>Cobertura Ao Vivo</h3>
-            <p>Minuto a minuto das partidas em tempo real</p>
-          </article>
-        </div>
-
-        <div class="intro-footer">
-          <p>
-            <i class="fas fa-shield-alt" aria-hidden="true"></i>
-            Nosso conteudo e produzido com base em fontes confiaveis, sempre
-            buscando oferecer a melhor experiencia para o torcedor celeste.
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- Live Match Button -->
-    <div
-      id="btn-minuto-a-minuto-container"
-      class="live-match-container"
-      style="display: none"
-      role="alert"
-      aria-live="polite"
-    >
-      <a href="#" class="live-match-btn" aria-label="Acompanhar jogo ao vivo">
-        <div class="live-indicator">
-          <div class="live-dot" aria-hidden="true"></div>
-          <span class="live-text">AO VIVO</span>
-        </div>
-        <div class="live-content">
-          <span class="live-title">Minuto a Minuto</span>
-          <span class="live-teams" id="btn-ao-vivo-times">Jogo em Andamento</span>
-        </div>
-        <div class="live-arrow" aria-hidden="true">
-          <i class="fas fa-chevron-right"></i>
-        </div>
-      </a>
-    </div>
-
-    <!-- Games Widget -->
-    <aside class="games-widget-container" aria-label="Widget de proximos jogos">
-      <div 
-        class="games-widget" 
-        id="games-widget" 
-        role="dialog" 
-        aria-labelledby="widget-title"
-        aria-hidden="true"
-      >
-        <div class="widget-header">
-          <h3 id="widget-title">
-            <i class="fas fa-calendar-alt" aria-hidden="true"></i> 
-            Proximos Jogos
-          </h3>
-          <button 
-            class="widget-close" 
-            id="widget-close" 
-            type="button"
-            aria-label="Fechar widget de proximos jogos"
-          >
-            <i class="fas fa-times" aria-hidden="true"></i>
-          </button>
-        </div>
-        <div class="widget-filters" role="tablist" aria-label="Filtrar por campeonato">
-          <button 
-            class="filter-btn active" 
-            data-filter="todos" 
-            type="button"
-            role="tab"
-            aria-selected="true"
-          >
-            Todos
-          </button>
-          <button 
-            class="filter-btn" 
-            data-filter="Campeonato Brasileiro" 
-            type="button"
-            role="tab"
-            aria-selected="false"
-          >
-            Brasileirao
-          </button>
-          <button 
-            class="filter-btn" 
-            data-filter="Copa do Brasil" 
-            type="button"
-            role="tab"
-            aria-selected="false"
-          >
-            Copa Do Brasil
-          </button>
-        </div>
-        <div class="games-list" role="tabpanel" aria-live="polite">
-          <!-- Os jogos serao carregados aqui -->
-        </div>
-      </div>
-    </aside>
-
-    <!-- Botao flutuante para o widget de jogos -->
-    <button 
-      class="widget-toggle-btn" 
-      id="widget-toggle" 
-      type="button"
-      aria-label="Abrir proximos jogos"
-      aria-expanded="false"
-      aria-controls="games-widget"
-    >
-      <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-      <span>Proximos Jogos</span>
-    </button>
-
     <main class="main-content" id="main-content" role="main">
       <div class="container">
         <!-- Table Section -->
@@ -300,104 +150,101 @@
                 </div>
                 <p>Carregando dados do campeonato...</p>
               </div>
+              
+              <!-- Copa do Brasil Static Games -->
               <div class="fase-copa fade-in-up" id="copa-static-games" style="display: none;">
                 <h3><i class="fas fa-trophy" aria-hidden="true"></i> Copa do Brasil 2026</h3>
-
-                <!-- Aviso de aguarde para proximos jogos -->
                 <div class="aviso-sem-jogos-copa" role="alert">
                   <div class="aviso-icon" aria-hidden="true">
                     <i class="fas fa-clock"></i>
                   </div>
                   <div class="aviso-content">
-                    <h3>AGUARDE ATE A INFORMACAO DE PROXIMOS JOGOS DA COPA DO BRASIL</h3>
+                    <h3>AGUARDE ENQUANTO NAO HA PARTIDAS</h3>
                     <p>As informacoes dos proximos jogos da Copa do Brasil serao atualizadas em breve.</p>
-                    <p>Acompanhe o Cruzeiro em todas as competicoes!</p>
                   </div>
                 </div>
-
-                <article class="jogo-copa destaque-cruzeiro">
-                  <div class="cabecalho-jogo-copa">
-                    <span class="fase-jogo">
-                      <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-                      3a Fase - Ida
-                    </span>
-                    <span class="data-jogo-copa">
-                      <i class="far fa-clock" aria-hidden="true"></i>
-                      20/01 - 16:00
-                    </span>
-                    <span class="placar-jogo">
-                      <i class="fas fa-futbol" aria-hidden="true"></i>
-                      2 x 0
-                    </span>
-                  </div>
-                  <div class="times-jogo-copa">
-                    <div class="time-casa destaque">
-                      <span>Cruzeiro</span>
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/50px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png" 
-                        alt="Escudo do Cruzeiro" 
-                        loading="lazy"
-                        width="40"
-                        height="40"
-                      />
-                    </div>
-                    <span class="vs" aria-label="versus">VS</span>
-                    <div class="time-visitante">
-                      <img 
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/73/CRB_logo.svg/1024px-CRB_logo.svg.png" 
-                        alt="Escudo do CRB" 
-                        loading="lazy"
-                        width="40"
-                        height="40"
-                      />
-                      <span>CRB</span>
-                    </div>
-                  </div>
-                </article>
               </div>
             </div>
           </div>
 
           <!-- Legend -->
-          <div class="legend-container">
+          <div class="legend-container" id="legend-container">
             <div class="legend" id="legend" role="complementary" aria-label="Legenda da tabela">
               <div class="legend-header">
                 <h3><i class="fas fa-info-circle" aria-hidden="true"></i> Legenda</h3>
-                <p class="legend-description">As cores na tabela representam as classificacoes para Libertadores, Pre-Libertadores, Sul-Americana e rebaixamento:</p>
               </div>
               
               <!-- Brasileirao Legend -->
-              <div class="legend-group" data-campeonato="brasileirao" role="list">
+              <div class="legend-group" id="legend-brasileirao" data-campeonato="brasileirao" role="list">
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color pos1-4" aria-hidden="true"></span>
+                  <span class="legend-color zona-libertadores" aria-hidden="true"></span>
                   <span class="legend-text">
                     <strong>Libertadores</strong>
-                    <small>(1o-4o)</small>
+                    <small>(1º-4º)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color pos5-6" aria-hidden="true"></span>
+                  <span class="legend-color zona-preliberta" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>Pre-Libertadores</strong>
-                    <small>(5o-6o)</small>
+                    <strong>Pré-Libertadores</strong>
+                    <small>(5º-6º)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color pos7-12" aria-hidden="true"></span>
+                  <span class="legend-color zona-sulamericana" aria-hidden="true"></span>
                   <span class="legend-text">
                     <strong>Sul-Americana</strong>
-                    <small>(7o-12o)</small>
+                    <small>(7º-12º)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color pos17-20" aria-hidden="true"></span>
+                  <span class="legend-color zona-rebaixamento" aria-hidden="true"></span>
                   <span class="legend-text">
                     <strong>Rebaixamento</strong>
-                    <small>(17o-20o)</small>
+                    <small>(17º-20º)</small>
                   </span>
                 </div>
                 <div class="legend-item special" role="listitem">
-                  <span class="legend-color cruzeiro" aria-hidden="true"></span>
+                  <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
+                  <span class="legend-text">
+                    <strong>Cruzeiro</strong>
+                    <small>Maior de Minas</small>
+                  </span>
+                </div>
+              </div>
+
+              <!-- Mineiro Legend -->
+              <div class="legend-group" id="legend-mineiro" data-campeonato="mineiro" role="list" style="display: none;">
+                <div class="legend-item" role="listitem">
+                  <span class="legend-color zona-classificado-direto" aria-hidden="true"></span>
+                  <span class="legend-text">
+                    <strong>Classificado Direto</strong>
+                    <small>(1º de cada grupo)</small>
+                  </span>
+                </div>
+                <div class="legend-item" role="listitem">
+                  <span class="legend-color zona-melhor-segundo" aria-hidden="true"></span>
+                  <span class="legend-text">
+                    <strong>Melhor 2º - Classifica</strong>
+                    <small>(melhor entre os 3)</small>
+                  </span>
+                </div>
+                <div class="legend-item" role="listitem">
+                  <span class="legend-color zona-disputa-segundo" aria-hidden="true"></span>
+                  <span class="legend-text">
+                    <strong>2º Colocado</strong>
+                    <small>(nao classifica)</small>
+                  </span>
+                </div>
+                <div class="legend-item" role="listitem">
+                  <span class="legend-color zona-eliminado" aria-hidden="true"></span>
+                  <span class="legend-text">
+                    <strong>Eliminado</strong>
+                    <small>(3º-4º do grupo)</small>
+                  </span>
+                </div>
+                <div class="legend-item special" role="listitem">
+                  <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
                   <span class="legend-text">
                     <strong>Cruzeiro</strong>
                     <small>Maior de Minas</small>
@@ -409,6 +256,54 @@
         </section>
       </div>
     </main>
+
+    <!-- Widget Toggle Button -->
+    <button 
+      class="widget-toggle-btn" 
+      id="widget-toggle" 
+      type="button"
+      aria-label="Abrir proximos jogos"
+      aria-expanded="false"
+      aria-controls="games-widget"
+    >
+      <i class="fas fa-calendar-alt" aria-hidden="true"></i>
+      <span>Proximos Jogos</span>
+    </button>
+
+    <!-- Games Widget -->
+    <aside class="games-widget-container" aria-label="Widget de proximos jogos">
+      <div 
+        class="games-widget" 
+        id="games-widget" 
+        role="dialog" 
+        aria-labelledby="widget-title"
+        aria-hidden="true"
+      >
+        <div class="widget-header">
+          <h3 id="widget-title">
+            <i class="fas fa-calendar-alt" aria-hidden="true"></i> 
+            Proximos Jogos
+          </h3>
+          <button 
+            class="widget-close" 
+            id="widget-close" 
+            type="button"
+            aria-label="Fechar widget de proximos jogos"
+          >
+            <i class="fas fa-times" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="widget-filters" role="tablist" aria-label="Filtrar por campeonato">
+          <button class="filter-btn active" data-filter="todos" type="button" role="tab" aria-selected="true">Todos</button>
+          <button class="filter-btn" data-filter="Campeonato Brasileiro" type="button" role="tab" aria-selected="false">Brasileirao</button>
+          <button class="filter-btn" data-filter="Campeonato Mineiro" type="button" role="tab" aria-selected="false">Mineiro</button>
+          <button class="filter-btn" data-filter="Copa do Brasil" type="button" role="tab" aria-selected="false">Copa do Brasil</button>
+        </div>
+        <div class="games-list" role="tabpanel" aria-live="polite">
+          <!-- Os jogos serao carregados aqui -->
+        </div>
+      </div>
+    </aside>
 
     <!-- Footer -->
     <footer class="footer" role="contentinfo">
@@ -442,15 +337,13 @@
         <div class="footer-bottom">
           <p>
             &copy; 2025 CabulosoNews - Site de fas para fas. Nao possuimos
-            vinculo oficial com o Cruzeiro Esporte Clube.<br />
-            Todo conteudo, imagens e noticias pertencem aos seus respectivos
-            autores e portais de origem.
+            vinculo oficial com o Cruzeiro Esporte Clube.
           </p>
         </div>
       </div>
     </footer>
 
     <!-- Scripts -->
-    <script src="./script/script-brasileirao.js"></script>
+    <script src="./script/script-brasileirao.js "></script>
   </body>
 </html>
