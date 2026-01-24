@@ -7,23 +7,23 @@
 :root {
   /* Cores do Cruzeiro */
   --primary: #003399;
-  --primary-dark: #002266;
+  --primary-dark: #001f5c;
   --primary-light: #1a4db8;
   --accent: #ffd700;
   --accent-dark: #ccac00;
   
-  /* Neutrals */
+  /* Neutrals - Mais contraste */
   --white: #ffffff;
   --gray-50: #f8fafc;
   --gray-100: #f1f5f9;
   --gray-200: #e2e8f0;
   --gray-300: #cbd5e1;
-  --gray-400: #94a3b8;
-  --gray-500: #64748b;
-  --gray-600: #475569;
-  --gray-700: #334155;
-  --gray-800: #1e293b;
-  --gray-900: #0f172a;
+  --gray-400: #8b95a5;
+  --gray-500: #5a6578;
+  --gray-600: #3d4654;
+  --gray-700: #2a3241;
+  --gray-800: #1a212d;
+  --gray-900: #0d1117;
   
   /* Status - Cores das Zonas */
   --success: #22c55e;
@@ -31,14 +31,20 @@
   --error: #ef4444;
   --info: #3b82f6;
   
-  /* Zonas da Tabela */
+  /* Zonas da Tabela - Brasileirao */
   --zona-libertadores: #1e40af;      /* Azul escuro */
   --zona-preliberta: #3b82f6;        /* Azul claro */
-  --zona-sulamericana: #f97316;      /* Laranja */
+  --zona-sulamericana: #ea580c;      /* Laranja forte */
   --zona-rebaixamento: #dc2626;      /* Vermelho */
   --zona-classificado: #16a34a;      /* Verde */
   --zona-eliminado: #6b7280;         /* Cinza */
   --zona-cruzeiro: #003399;          /* Azul Cruzeiro */
+  
+  /* Zonas da Tabela - Mineiro */
+  --zona-classificado-direto: #059669;  /* Verde esmeralda */
+  --zona-melhor-segundo: #d97706;       /* Dourado/Ambar - BEM DIFERENTE */
+  --zona-segundo-normal: #6366f1;       /* Roxo/Indigo - MUITO DIFERENTE */
+  --zona-repescagem: #0891b2;           /* Ciano/Turquesa */
   
   /* Typography */
   --font-main: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -371,44 +377,63 @@ ul { list-style: none; }
   margin-top: var(--space-6);
 }
 
-.selector-wrapper {
-  position: relative;
-  display: inline-block;
+/* Botoes de Campeonato */
+.campeonato-buttons {
+  display: flex;
+  gap: var(--space-3);
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.championship-select {
-  appearance: none;
-  background: rgba(255,255,255,0.1);
-  border: 2px solid rgba(255,255,255,0.3);
-  border-radius: var(--radius-lg);
+.campeonato-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-5);
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: var(--radius-full);
   color: var(--white);
-  padding: var(--space-3) var(--space-8) var(--space-3) var(--space-4);
-  font-size: 1rem;
-  font-weight: 500;
+  font-size: 0.95rem;
+  font-weight: 600;
   cursor: pointer;
   transition: var(--transition);
-  min-width: 250px;
+  backdrop-filter: blur(10px);
 }
 
-.championship-select:hover,
-.championship-select:focus {
-  background: rgba(255,255,255,0.2);
+.campeonato-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+
+.campeonato-btn.active {
+  background: var(--accent);
   border-color: var(--accent);
-  outline: none;
+  color: var(--gray-900);
+  box-shadow: 0 4px 15px rgba(255, 215, 0, 0.4);
 }
 
-.championship-select option {
-  background: var(--primary-dark);
-  color: var(--white);
+.campeonato-btn.active i {
+  color: var(--gray-900);
 }
 
-.selector-icon {
-  position: absolute;
-  right: var(--space-4);
-  top: 50%;
-  transform: translateY(-50%);
+.campeonato-btn i {
+  font-size: 1rem;
   color: var(--accent);
-  pointer-events: none;
+}
+
+@media (max-width: 480px) {
+  .campeonato-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .campeonato-btn {
+    width: 100%;
+    max-width: 220px;
+    justify-content: center;
+  }
 }
 
 /* === MAIN CONTENT === */
@@ -535,8 +560,8 @@ ul { list-style: none; }
 #tabela-brasileirao th {
   padding: var(--space-4) var(--space-3);
   text-align: center;
-  font-size: 0.8rem;
-  font-weight: 600;
+  font-size: 0.85rem;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -548,10 +573,11 @@ ul { list-style: none; }
 
 #tabela-brasileirao td {
   padding: var(--space-3) var(--space-2);
-  border-bottom: 1px solid var(--gray-100);
+  border-bottom: 1px solid var(--gray-200);
   text-align: center;
-  font-size: 0.9rem;
-  color: var(--gray-600);
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--gray-700);
 }
 
 #tabela-brasileirao tbody tr {
@@ -587,10 +613,10 @@ ul { list-style: none; }
 }
 
 .numero-posicao {
-  font-weight: 700;
-  font-size: 0.95rem;
+  font-weight: 800;
+  font-size: 1rem;
   color: var(--gray-900);
-  min-width: 20px;
+  min-width: 24px;
 }
 
 .time-info {
@@ -607,7 +633,8 @@ ul { list-style: none; }
 }
 
 .nome-time-texto {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 0.95rem;
   color: var(--gray-900);
   white-space: nowrap;
 }
@@ -639,18 +666,23 @@ ul { list-style: none; }
 }
 
 .zona-classificado-direto {
-  background: #15803d !important;
-  box-shadow: 0 0 0 3px rgba(21, 128, 61, 0.2);
+  background: var(--zona-classificado-direto) !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.3);
 }
 
 .zona-melhor-segundo {
-  background: #bdea08 !important;
-  box-shadow: 0 0 0 3px rgba(162, 234, 8, 0.2);
+  background: var(--zona-melhor-segundo) !important;
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.3);
 }
 
-.zona-disputa-segundo {
-  background: #f97316 !important;
-  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+.zona-segundo-normal {
+  background: var(--zona-segundo-normal) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+.zona-repescagem {
+  background: var(--zona-repescagem) !important;
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.3);
 }
 
 .zona-eliminado {
@@ -698,35 +730,43 @@ ul { list-style: none; }
 
 /* === CORES DE FUNDO DAS LINHAS (MINEIRO) === */
 .grupo-table tbody tr.row-classificado-direto {
-  background: rgba(21, 128, 61, 0.06);
+  background: rgba(5, 150, 105, 0.08);
 }
 
 .grupo-table tbody tr.row-melhor-segundo {
-  background: rgba(234, 179, 8, 0.06);
+  background: rgba(217, 119, 6, 0.08);
+}
+
+.grupo-table tbody tr.row-segundo-normal {
+  background: rgba(99, 102, 241, 0.08);
 }
 
 .grupo-table tbody tr.row-eliminado {
-  background: rgba(107, 114, 128, 0.06);
+  background: rgba(107, 114, 128, 0.08);
 }
 
-.grupo-table tbody tr.row-disputa-segundo {
-  background: rgba(249, 115, 22, 0.06);
+.grupo-table tbody tr.row-repescagem {
+  background: rgba(8, 145, 178, 0.08);
 }
 
 .grupo-table tbody tr.row-classificado-direto:hover {
-  background: rgba(21, 128, 61, 0.1);
+  background: rgba(5, 150, 105, 0.14);
 }
 
 .grupo-table tbody tr.row-melhor-segundo:hover {
-  background: rgba(234, 179, 8, 0.1);
+  background: rgba(217, 119, 6, 0.14);
 }
 
-.grupo-table tbody tr.row-disputa-segundo:hover {
-  background: rgba(249, 115, 22, 0.1);
+.grupo-table tbody tr.row-segundo-normal:hover {
+  background: rgba(99, 102, 241, 0.14);
 }
 
 .grupo-table tbody tr.row-eliminado:hover {
-  background: rgba(107, 114, 128, 0.1);
+  background: rgba(107, 114, 128, 0.14);
+}
+
+.grupo-table tbody tr.row-repescagem:hover {
+  background: rgba(8, 145, 178, 0.14);
 }
 
 /* === DESTAQUE CRUZEIRO === */

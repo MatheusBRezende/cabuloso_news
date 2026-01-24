@@ -107,14 +107,37 @@
             <span class="title-sub">Acompanhe todas as competicoes do Cruzeiro</span>
           </h1>
           <div class="hero-selector">
-            <div class="selector-wrapper">
-              <label for="campeonato-select" class="sr-only">Selecionar campeonato</label>
-              <select id="campeonato-select" class="championship-select">
-                <option value="brasileirao">Campeonato Brasileiro</option>
-                <option value="mineiro">Campeonato Mineiro</option>
-                <option value="copa-do-brasil">Copa do Brasil</option>
-              </select>
-              <i class="fas fa-chevron-down selector-icon" aria-hidden="true"></i>
+            <div class="campeonato-buttons" role="tablist" aria-label="Selecionar campeonato">
+              <button 
+                class="campeonato-btn active" 
+                data-campeonato="brasileirao" 
+                type="button"
+                role="tab"
+                aria-selected="true"
+              >
+                <i class="fas fa-futbol" aria-hidden="true"></i>
+                <span>Brasileirao</span>
+              </button>
+              <button 
+                class="campeonato-btn" 
+                data-campeonato="mineiro" 
+                type="button"
+                role="tab"
+                aria-selected="false"
+              >
+                <i class="fas fa-mountain" aria-hidden="true"></i>
+                <span>Mineiro</span>
+              </button>
+              <button 
+                class="campeonato-btn" 
+                data-campeonato="copa-do-brasil" 
+                type="button"
+                role="tab"
+                aria-selected="false"
+              >
+                <i class="fas fa-trophy" aria-hidden="true"></i>
+                <span>Copa do Brasil</span>
+              </button>
             </div>
           </div>
         </div>
@@ -219,28 +242,35 @@
                   <span class="legend-color zona-classificado-direto" aria-hidden="true"></span>
                   <span class="legend-text">
                     <strong>Classificado Direto</strong>
-                    <small>(1º de cada grupo)</small>
+                    <small>(1o de cada grupo)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-melhor-segundo" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>Melhor 2º - Classifica</strong>
+                    <strong>Melhor 2o - Classifica</strong>
                     <small>(melhor entre os 3)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-disputa-segundo" aria-hidden="true"></span>
+                  <span class="legend-color zona-segundo-normal" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>2º Colocado</strong>
+                    <strong>2o Colocado</strong>
                     <small>(nao classifica)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-eliminado" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>Eliminado</strong>
-                    <small>(3º-4º do grupo)</small>
+                    <strong>3o Colocado</strong>
+                    <small>(eliminado)</small>
+                  </span>
+                </div>
+                <div class="legend-item" role="listitem">
+                  <span class="legend-color zona-repescagem" aria-hidden="true"></span>
+                  <span class="legend-text">
+                    <strong>4o - Repescagem</strong>
+                    <small>(disputa vaga na semi)</small>
                   </span>
                 </div>
                 <div class="legend-item special" role="listitem">
@@ -344,6 +374,6 @@
     </footer>
 
     <!-- Scripts -->
-    <script src="./script/script-brasileirao.js "></script>
+    <script src="./script/script-brasileirao.js"></script>
   </body>
 </html>

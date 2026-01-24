@@ -81,18 +81,20 @@ const getRowZoneClass = (posicao) => {
 
 /**
  * Retorna a classe CSS para grupos do Mineiro (indicador)
- * 1o de cada grupo: Classificado direto (verde escuro)
- * 2o de cada grupo: Disputa vaga (amarelo) - APENAS o melhor segundo
- * 3o-4o: Eliminado (cinza)
+ * 1o de cada grupo: Classificado direto (verde esmeralda)
+ * 2o de cada grupo: Melhor segundo classifica (dourado) / Outros segundos (roxo)
+ * 3o: Eliminado (cinza)
+ * 4o: Repescagem (ciano)
  * @param {number} posicao - Posicao no grupo (1-4)
  * @param {boolean} isMelhorSegundo - Se este time eh o melhor segundo colocado
  * @returns {string} - Classe CSS da zona
  */
 const getZoneClassMineiro = (posicao, isMelhorSegundo = false) => {
-  if (posicao === 1) return 'zona-classificado-direto';   // Verde escuro (classificado direto)
-  if (posicao === 2 && isMelhorSegundo) return 'zona-melhor-segundo';  // Amarelo (melhor segundo - classifica)
-  if (posicao === 2) return 'zona-disputa-segundo';  // Laranja claro (segundo - nao classifica)
-  if (posicao >= 3 && posicao <= 4) return 'zona-eliminado';  // Cinza (eliminado)
+  if (posicao === 1) return 'zona-classificado-direto';   // Verde esmeralda
+  if (posicao === 2 && isMelhorSegundo) return 'zona-melhor-segundo';  // Dourado (classifica)
+  if (posicao === 2) return 'zona-segundo-normal';  // Roxo (nao classifica)
+  if (posicao === 3) return 'zona-eliminado';  // Cinza (eliminado)
+  if (posicao === 4) return 'zona-repescagem';  // Ciano (repescagem)
   return '';
 };
 
@@ -105,8 +107,9 @@ const getZoneClassMineiro = (posicao, isMelhorSegundo = false) => {
 const getRowZoneClassMineiro = (posicao, isMelhorSegundo = false) => {
   if (posicao === 1) return 'row-classificado-direto';
   if (posicao === 2 && isMelhorSegundo) return 'row-melhor-segundo';
-  if (posicao === 2) return 'row-disputa-segundo';
-  if (posicao >= 3 && posicao <= 4) return 'row-eliminado';
+  if (posicao === 2) return 'row-segundo-normal';
+  if (posicao === 3) return 'row-eliminado';
+  if (posicao === 4) return 'row-repescagem';
   return '';
 };
 
@@ -585,53 +588,60 @@ const initInterface = () => {
 };
 
 /**
- * Inicializa o seletor de campeonato
+ * Inicializa os botoes de campeonato
  */
 const initCampeonatoSelector = () => {
-  const select = document.getElementById('campeonato-select');
-  if (!select) return;
+  const buttons = document.querySelectorAll('.campeonato-btn');
+  if (!buttons.length) return;
 
-  select.addEventListener('change', async (e) => {
-    const value = e.target.value;
-    const copaGames = document.getElementById('copa-static-games');
-    const container = document.getElementById('tabela-container');
-    const nomeCamp = document.getElementById('campeonato-nome');
+  buttons.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const value = btn.dataset.campeonato;
+      const container = document.getElementById('tabela-container');
+      const nomeCamp = document.getElementById('campeonato-nome');
 
-    stateBrasileirao.campeonatoAtual = value;
+      // Atualiza estado visual dos botoes
+      buttons.forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
 
-    // Atualiza a legenda
-    updateLegend(value);
+      stateBrasileirao.campeonatoAtual = value;
 
-    if (value === 'brasileirao') {
-      if (copaGames) copaGames.style.display = 'none';
-      await fetchTabelaData(CONFIG_BRASILEIRAO.tabelaApiUrl);
-    }
-    else if (value === 'mineiro') {
-      if (copaGames) copaGames.style.display = 'none';
-      await fetchTabelaData(CONFIG_BRASILEIRAO.tabelaMineiroUrl);
-    }
-    else if (value === 'copa-do-brasil') {
-      // Limpa a tabela e mostra apenas o aviso da Copa
-      if (container) {
-        container.innerHTML = `
-          <div class="fase-copa fade-in-up" id="copa-static-games">
-            <h3><i class="fas fa-trophy" aria-hidden="true"></i> Copa do Brasil 2026</h3>
-            <div class="aviso-sem-jogos-copa" role="alert">
-              <div class="aviso-icon" aria-hidden="true">
-                <i class="fas fa-clock"></i>
-              </div>
-              <div class="aviso-content">
-                <h3>AGUARDE ENQUANTO NAO HA PARTIDAS</h3>
-                <p>As informacoes dos proximos jogos da Copa do Brasil serao atualizadas em breve.</p>
+      // Atualiza a legenda
+      updateLegend(value);
+
+      if (value === 'brasileirao') {
+        await fetchTabelaData(CONFIG_BRASILEIRAO.tabelaApiUrl);
+      }
+      else if (value === 'mineiro') {
+        await fetchTabelaData(CONFIG_BRASILEIRAO.tabelaMineiroUrl);
+      }
+      else if (value === 'copa-do-brasil') {
+        // Limpa a tabela e mostra apenas o aviso da Copa
+        if (container) {
+          container.innerHTML = `
+            <div class="fase-copa fade-in-up" id="copa-static-games">
+              <h3><i class="fas fa-trophy" aria-hidden="true"></i> Copa do Brasil 2026</h3>
+              <div class="aviso-sem-jogos-copa" role="alert">
+                <div class="aviso-icon" aria-hidden="true">
+                  <i class="fas fa-clock"></i>
+                </div>
+                <div class="aviso-content">
+                  <h3>AGUARDE ENQUANTO NAO HA PARTIDAS</h3>
+                  <p>As informacoes dos proximos jogos da Copa do Brasil serao atualizadas em breve.</p>
+                </div>
               </div>
             </div>
-          </div>
-        `;
+          `;
+        }
+        if (nomeCamp) {
+          nomeCamp.textContent = 'Copa do Brasil 2026';
+        }
       }
-      if (nomeCamp) {
-        nomeCamp.textContent = 'Copa do Brasil 2026';
-      }
-    }
+    });
   });
 };
 
@@ -671,4 +681,3 @@ const initBrasileirao = () => {
 
 // Inicia a aplicação
 initBrasileirao();
-  
