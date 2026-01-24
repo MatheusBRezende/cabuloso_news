@@ -363,17 +363,16 @@ const fetchRecentResults = async () => {
   if (!container) return;
 
   try {
-    const response = await fetch(CONFIG.resultadosApiUrl, {
-      cache: "no-cache",
-    });
+    const response = await fetch(CONFIG.resultadosApiUrl, { cache: "no-cache" });
     if (!response.ok) throw new Error("Erro ao carregar resultados");
 
     const data = await response.json();
-    const resultados = data.results || [];
+    
+    // Validação idêntica para garantir compatibilidade
+    const resultados = (data && data.results) ? data.results : (Array.isArray(data) ? data : []);
 
     if (resultados.length === 0) {
-      container.innerHTML =
-        '<div class="loading-cell">Nenhum resultado recente.</div>';
+      container.innerHTML = '<div class="loading-cell">Nenhum resultado recente.</div>';
       return;
     }
 
@@ -382,17 +381,18 @@ const fetchRecentResults = async () => {
 
     container.innerHTML = ultimos
       .map((res) => {
-        const scores = res.score.split(" - ");
-        const score1 = parseInt(scores[0]);
-        const score2 = parseInt(scores[1]);
+        // Garante que o score existe antes de dar split
+        const scoreStr = res.score || "0 - 0";
+        const scores = scoreStr.split(" - ");
+        const score1 = parseInt(scores[0]) || 0;
+        const score2 = parseInt(scores[1]) || 0;
 
         let statusClass = "";
-        if (res.team1.includes("Cruzeiro")) {
-          statusClass =
-            score1 > score2 ? "win" : score1 < score2 ? "loss" : "draw";
+        const team1Name = (res.team1 || "").toLowerCase();
+        if (team1Name.includes("cruzeiro")) {
+          statusClass = score1 > score2 ? "win" : (score1 < score2 ? "loss" : "draw");
         } else {
-          statusClass =
-            score2 > score1 ? "win" : score2 < score1 ? "loss" : "draw";
+          statusClass = score2 > score1 ? "win" : (score2 < score1 ? "loss" : "draw");
         }
 
         return `
@@ -402,27 +402,19 @@ const fetchRecentResults = async () => {
               <img src="${res.logo1 || CONFIG.defaultImage}" alt="">
               <span>${escapeHtml(res.team1)}</span>
             </div>
-            <span class="result-mini-score ${statusClass}">${escapeHtml(res.score)}</span>
+            <span class="result-mini-score ${statusClass}">${escapeHtml(scoreStr)}</span>
             <div class="result-mini-team">
               <img src="${res.logo2 || CONFIG.defaultImage}" alt="">
               <span>${escapeHtml(res.team2)}</span>
             </div>
           </div>
           <div class="result-mini-info">${escapeHtml(res.competition)} - ${escapeHtml(res.date)}</div>
-        </div>
-      `;
-      })
-      .join("");
+        </div>`;
+      }).join("");
 
-    const statLastResult = document.getElementById("statLastResult");
-    if (statLastResult && resultados.length > 0) {
-      const r = resultados[0];
-      statLastResult.textContent = `${r.team1} ${r.score} ${r.team2}`;
-    }
   } catch (error) {
-    console.error("Erro ao buscar resultados:", error);
-    container.innerHTML =
-      '<div class="loading-cell">Erro ao carregar resultados.</div>';
+    console.error("Erro ao buscar resultados no script.js:", error);
+    container.innerHTML = '<div class="loading-cell">Erro ao carregar resultados.</div>';
   }
 };
 
