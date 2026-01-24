@@ -40,17 +40,16 @@ async function loadResults() {
   const container = document.getElementById('results-cards');
   if (container) container.innerHTML = '<div class="loading-cell">Carregando...</div>';
 
-  try {
+try {
     const response = await fetch(`${CONFIG_RESULTADOS.jsonUrl}?t=${Date.now()}`);
     const data = await response.json();
 
-    // AQUI ESTÁ O AJUSTE:
-    // O seu JSON tem a estrutura { "results": [...] }. 
-    // Precisamos pegar a chave .results para poder usar o .map()
+    // AJUSTE AQUI: O seu JSON tem a chave "results"
+    // Usamos o || [] para garantir que, se o arquivo estiver vazio, o código não quebre
     const rawList = data.results || []; 
 
     if (!Array.isArray(rawList)) {
-      throw new Error("O formato dos dados não é uma lista válida.");
+      throw new Error("Os dados recebidos não são uma lista (Array). Verifique o JSON.");
     }
 
     stateResultados.allResults = rawList.map(item => ({
@@ -65,10 +64,9 @@ async function loadResults() {
   } catch (error) {
     console.error('Erro ao carregar resultados:', error);
     showToast('Erro ao carregar dados dos resultados.', 'error');
-  } finally {
-    stateResultados.isLoading = false;
   }
 }
+
 
 // --- FILTROS E RENDERIZAÇÃO ---
 
