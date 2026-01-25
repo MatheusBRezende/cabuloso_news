@@ -421,42 +421,44 @@ const renderLiveMatch = (status, tempo) => {
   const container = document.getElementById("live-match-container");
   if (!container) return;
 
-  const statusClass =
-    status === "ENCERRADO"
-      ? "finished"
-      : status === "INTERVALO"
-        ? "interval"
-        : "live";
+  // Busca o jogo atual na agenda para saber a ordem correta
+  const currentMatch = getNextMatch(); 
+  
+  // Define quem aparece na esquerda e direita com base na agenda
+  const nomeEsquerda = currentMatch ? currentMatch.mandante : (state.teamsInfo.cruzeiro.name || "Mandante");
+  const nomeDireita = currentMatch ? currentMatch.visitante : (state.teamsInfo.adversario.name || "Visitante");
+  
+  const logoEsquerda = currentMatch ? currentMatch.escudo_mandante : state.teamsInfo.cruzeiro.logo;
+  const logoDireita = currentMatch ? currentMatch.escudo_visitante : state.teamsInfo.adversario.logo;
 
-  const cruzeiroLogoHtml = state.teamsInfo.cruzeiro.logo
-    ? `<img src="${state.teamsInfo.cruzeiro.logo}" alt="${state.teamsInfo.cruzeiro.name || "Cruzeiro"}" class="team-logo">`
-    : `<div class="team-logo-placeholder"><i class="fas fa-shield-alt"></i></div>`;
-
-  const adversarioLogoHtml = state.teamsInfo.adversario.logo
-    ? `<img src="${state.teamsInfo.adversario.logo}" alt="${state.teamsInfo.adversario.name || "Adversario"}" class="team-logo">`
-    : `<div class="team-logo-placeholder"><i class="fas fa-shield-alt"></i></div>`;
+  // Lógica de Placar: Ajuste conforme quem é o Cruzeiro
+  // Se o Cruzeiro for visitante, o placar deve ser [Gols Adversário] - [Gols Cruzeiro]
+  const isCruzeiroMandante = currentMatch?.mandante.toLowerCase().includes("cruzeiro");
+  const placarExibicao = isCruzeiroMandante 
+    ? `${state.placar.cruzeiro} - ${state.placar.adversario}`
+    : `${state.placar.adversario} - ${state.placar.cruzeiro}`;
 
   container.innerHTML = `
         <div class="live-match-container">
             <div class="match-header">
                 <div class="match-competition">
                     <i class="fas fa-trophy"></i>
-                    Copa Sao Paulo de Futebol Junior 2026 - Final
+                    ${currentMatch?.campeonato || "Partida ao Vivo"}
                 </div>
-                <div class="match-status ${statusClass}">${status}</div>
+                <div class="match-status">${status}</div>
             </div>
             <div class="score-row">
                 <div class="team">
-                    ${cruzeiroLogoHtml}
-                    <div class="team-name">${state.teamsInfo.cruzeiro.name || "Cruzeiro"}</div>
+                    <img src="${logoEsquerda}" class="team-logo">
+                    <div class="team-name">${nomeEsquerda}</div>
                 </div>
                 <div class="score-container">
-                    <div class="score">${state.placar.cruzeiro} - ${state.placar.adversario}</div>
+                    <div class="score">${placarExibicao}</div>
                     <div class="match-time">${tempo || "Aguardando..."}</div>
                 </div>
                 <div class="team">
-                    ${adversarioLogoHtml}
-                    <div class="team-name">${state.teamsInfo.adversario.name || "Adversario"}</div>
+                    <img src="${logoDireita}" class="team-logo">
+                    <div class="team-name">${nomeDireita}</div>
                 </div>
             </div>
         </div>
