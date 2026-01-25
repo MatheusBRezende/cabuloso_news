@@ -605,65 +605,32 @@ const updateMatchStatus = (liveData) => {
 // ============================================
 const updateTimeline = (liveData) => {
     const timeline = document.getElementById('timeline');
-    if (!timeline || !liveData.Lances_Texto || !Array.isArray(liveData.Lances_Texto)) return;
+    // Ajustado para as chaves do seu n8n: lance_descricao e lance_minuto
+    if (!timeline || !liveData || !Array.isArray(liveData)) return;
     
-    // Limpar mensagem de "nenhum lance"
     const noEventsMessage = timeline.querySelector('.no-events-message');
-    if (noEventsMessage) {
-        noEventsMessage.remove();
-    }
+    if (noEventsMessage) noEventsMessage.remove();
     
-    // Limpar eventos antigos (mantém apenas os 10 mais recentes)
-    const existingEvents = timeline.querySelectorAll('.timeline-event');
-    if (existingEvents.length > 10) {
-        for (let i = 10; i < existingEvents.length; i++) {
-            existingEvents[i].remove();
-        }
-    }
-    
-    // Adicionar novos eventos
-    const lances = liveData.Lances_Texto;
-    const minutos = liveData.Lances_Minutos || [];
-    
-    for (let i = lances.length - 1; i >= Math.max(0, lances.length - 5); i--) {
-        const lance = lances[i];
-        const minuto = minutos[i] || '•';
+    // Limpamos para evitar duplicatas na visualização simples
+    timeline.innerHTML = ''; 
+
+    // O n8n envia uma lista de objetos, vamos iterar por eles
+    liveData.forEach(item => {
+        const lance = item.lance_descricao || '';
+        const minuto = item.lance_minuto || '•';
+        const isGol = item.is_gol ? 'goal' : 'info';
         
-        // Verificar tipo de evento
-        let eventType = 'info';
-        let eventClass = '';
-        
-        if (lance.includes('GOOOOOOOOL') || lance.includes('GOL')) {
-            eventType = 'goal';
-            eventClass = 'goal';
-        } else if (lance.includes('Cartão')) {
-            eventType = 'card';
-            eventClass = 'card';
-        } else if (lance.includes('Substituição')) {
-            eventType = 'substitution';
-            eventClass = 'substitution';
-        }
-        
-        // Verificar se é evento do Cruzeiro
-        const isCruzeiroEvent = lance.toLowerCase().includes('cruzeiro');
-        if (isCruzeiroEvent) {
-            eventClass += ' cruzeiro-event';
-        }
-        
-        // Criar elemento do evento
         const eventElement = document.createElement('div');
-        eventElement.className = `timeline-event ${eventClass}`;
+        eventElement.className = `timeline-event ${item.is_gol ? 'goal' : ''}`;
         eventElement.innerHTML = `
             <div class="event-header">
-                <div class="event-time">${minuto}'</div>
-                <div class="event-type ${eventType}">${eventType.toUpperCase()}</div>
+                <div class="event-time">${minuto}</div>
+                <div class="event-type">${isGol.toUpperCase()}</div>
             </div>
             <div class="event-text">${escapeHtml(lance)}</div>
         `;
-        
-        // Adicionar no início da timeline
-        timeline.insertBefore(eventElement, timeline.firstChild);
-    }
+        timeline.appendChild(eventElement);
+    });
 };
 
 // ============================================
