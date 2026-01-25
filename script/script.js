@@ -366,8 +366,7 @@ const fetchRecentResults = async () => {
     const response = await fetch(CONFIG.resultadosApiUrl);
     const data = await response.json();
 
-    // ESTA É A CORREÇÃO:
-    // Se data for um array, usa direto. Se tiver a chave .results, usa ela.
+    // Garante que funciona se for Array direto ou se estiver dentro de .results
     const resultsArray = Array.isArray(data) ? data : (data.results || []);
 
     if (resultsArray.length === 0) {
@@ -375,15 +374,46 @@ const fetchRecentResults = async () => {
       return;
     }
 
-    // Agora o .slice não dará mais erro
     const ultimosResultados = resultsArray.slice(0, 5);
 
     container.innerHTML = ultimosResultados.map(res => {
-        // ... resto do seu código de renderização (map)
+        const scoreStr = res.score || "v";
+        const isCruzeiroMandante = res.team1.toLowerCase().includes("cruzeiro");
+        
+        // Lógica de cores (Vitória/Derrota) baseada no placar
+        let statusClass = "draw";
+        if (scoreStr.includes("-")) {
+          const [s1, s2] = scoreStr.split("-").map(s => parseInt(s.trim()));
+          if (!isNaN(s1) && !isNaN(s2)) {
+            if (s1 === s2) statusClass = "draw";
+            else if (isCruzeiroMandante) {
+              statusClass = s1 > s2 ? "win" : "loss";
+            } else {
+              statusClass = s2 > s1 ? "win" : "loss";
+            }
+          }
+        }
+
+        return `
+        <div class="result-mini">
+          <div class="result-mini-teams">
+            <div class="result-mini-team">
+              <img src="${res.logo1 || CONFIG.defaultImage}" alt="${res.team1}">
+              <span>${escapeHtml(res.team1)}</span>
+            </div>
+            <span class="result-mini-score ${statusClass}">${escapeHtml(scoreStr)}</span>
+            <div class="result-mini-team">
+              <img src="${res.logo2 || CONFIG.defaultImage}" alt="${res.team2}">
+              <span>${escapeHtml(res.team2)}</span>
+            </div>
+          </div>
+          <div class="result-mini-info">${escapeHtml(res.competition)} - ${escapeHtml(res.date)}</div>
+        </div>`;
     }).join("");
 
   } catch (error) {
     console.error("Erro ao buscar resultados no script.js:", error);
+    container.innerHTML = '<div class="loading-cell">Erro ao carregar resultados.</div>';
   }
 };
 
