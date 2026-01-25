@@ -604,32 +604,22 @@ const updateMatchStatus = (liveData) => {
 // ATUALIZAR TIMELINE
 // ============================================
 const updateTimeline = (liveData) => {
-    const timeline = document.getElementById('timeline');
-    // Ajustado para as chaves do seu n8n: lance_descricao e lance_minuto
-    if (!timeline || !liveData || !Array.isArray(liveData)) return;
-    
-    const noEventsMessage = timeline.querySelector('.no-events-message');
-    if (noEventsMessage) noEventsMessage.remove();
-    
-    // Limpamos para evitar duplicatas na visualização simples
+    const timeline = document.getElementById('timeline-container'); // Verifique se o ID está correto no HTML
+    if (!timeline || !Array.isArray(liveData)) return;
+
     timeline.innerHTML = ''; 
 
-    // O n8n envia uma lista de objetos, vamos iterar por eles
-    liveData.forEach(item => {
-        const lance = item.lance_descricao || '';
-        const minuto = item.lance_minuto || '•';
-        const isGol = item.is_gol ? 'goal' : 'info';
-        
-        const eventElement = document.createElement('div');
-        eventElement.className = `timeline-event ${item.is_gol ? 'goal' : ''}`;
-        eventElement.innerHTML = `
-            <div class="event-header">
-                <div class="event-time">${minuto}</div>
-                <div class="event-type">${isGol.toUpperCase()}</div>
+    liveData.forEach(lance => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        item.innerHTML = `
+            <div class="time">${lance.lance_minuto}</div>
+            <div class="content">
+                <strong>${lance.lance_tipo}</strong>
+                <p>${lance.lance_descricao}</p>
             </div>
-            <div class="event-text">${escapeHtml(lance)}</div>
         `;
-        timeline.appendChild(eventElement);
+        timeline.appendChild(item);
     });
 };
 
