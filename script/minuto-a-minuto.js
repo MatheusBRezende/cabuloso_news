@@ -8,8 +8,7 @@
 // CONFIGURACAO
 // ============================================
 const CONFIG = {
-  webhookUrl:
-    "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
+  webhookUrl: "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
   agendaUrl: "backend/agenda_cruzeiro.json", // Use barras normais e caminho direto
   updateInterval: 5000,
 };
