@@ -604,23 +604,36 @@ const updateMatchStatus = (liveData) => {
 // ATUALIZAR TIMELINE
 // ============================================
 const updateTimeline = (data) => {
-    const container = document.getElementById('timeline-container'); // veja se o ID está certo no HTML
+    const container = document.getElementById('timeline-container');
     if (!container) return;
 
-    container.innerHTML = ''; // Limpa o "Carregando..."
+    // Se o dado vier do n8n (array), ou se vier do mock (objeto com Lances_Texto)
+    const lances = Array.isArray(data) ? data : (data.Lances_Texto || []);
 
-    // O n8n agora enviará um array direto [{}, {}, {}]
-    data.forEach(lance => {
-        const div = document.createElement('div');
-        div.className = 'timeline-item';
-        div.innerHTML = `
-            <div class="time">${lance.lance_minuto}</div>
-            <div class="details">
-                <strong>${lance.lance_tipo}</strong>
-                <p>${lance.lance_descricao}</p>
+    if (lances.length === 0) {
+        container.innerHTML = '<div class="loading-state">Aguardando início da partida...</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+
+    lances.forEach(lance => {
+        const item = document.createElement('div');
+        item.className = 'timeline-item';
+        
+        // Se for objeto formatado pelo nó Code do n8n
+        const minuto = lance.lance_minuto || '0\'';
+        const tipo = lance.lance_tipo || 'Lance';
+        const descricao = lance.lance_descricao || lance; // 'lance' caso seja apenas string
+
+        item.innerHTML = `
+            <div class="timeline-time">${minuto}</div>
+            <div class="timeline-content">
+                <div class="timeline-type">${tipo}</div>
+                <div class="timeline-desc">${descricao}</div>
             </div>
         `;
-        container.appendChild(div);
+        container.appendChild(item);
     });
 };
 
