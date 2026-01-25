@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Cabuloso News - Acompanhe o jogo do Cruzeiro em tempo real, minuto a minuto, estatísticas e lances.">
+    <title>Cabuloso News | Minuto a Minuto</title>
+    
+    <!-- Preconnect para performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- Fontes -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/png" href="../assets/logo.png">
+    
+    <!-- Lottie para animações -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.9.6/lottie.min.js"></script>
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="./style/minuto-a-minuto.css">
+</head>
+<body>
+    <!-- Cabeçalho -->
+    <header class="header" role="banner">
+        <nav class="navbar" role="navigation" aria-label="Navegação principal">
+            <div class="nav-container">
+                <a href="../index.html" class="nav-logo" aria-label="Cabuloso News - Página inicial">
+                    <div class="logo-container">
+                        <img src="../assets/logo.png" alt="Logo Cabuloso News" class="logo" width="40" height="40">
+                        <div class="logo-glow" aria-hidden="true"></div>
+                    </div>
+                    <div class="logo-text-container">
+                        <span class="logo-text">Cabuloso News</span>
+                        <span class="logo-subtitle">Maior de Minas</span>
+                    </div>
+                </a>
+
+                <ul class="nav-menu" id="nav-menu" role="menubar">
+                    <li class="nav-item" role="none">
+                        <a href="index.html" class="nav-link" role="menuitem">
+                            <i class="fas fa-home" aria-hidden="true"></i>
+                            <span>Início</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="none">
+                        <a href="competicao.html" class="nav-link" role="menuitem">
+                            <i class="fas fa-table"></i>
+                            <span>Tabela</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="none">
+                        <a href="resultados.html" class="nav-link" role="menuitem">
+                            <i class="fas fa-trophy" aria-hidden="true"></i>
+                            <span>Resultados</span>
+                        </a>
+                    </li>
+                    <li class="nav-item" role="none">
+                        <a href="minuto-a-minuto.html" class="nav-link active" role="menuitem" aria-current="page">
+                            <i class="fas fa-play-circle"></i>
+                            <span>Ao Vivo</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <button 
+                    class="menu-toggle" 
+                    id="menuToggle" 
+                    type="button"
+                    aria-label="Abrir menu de navegação"
+                    aria-expanded="false"
+                    aria-controls="nav-menu"
+                >
+                    <span class="menu-text">Menu</span>
+                    <div class="hamburger" aria-hidden="true">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-background" aria-hidden="true">
+            <div class="hero-pattern"></div>
+        </div>
+        <div class="container">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fas fa-play-circle" aria-hidden="true"></i>
+                    <span>Ao Vivo</span>
+                </div>
+                <h1 class="hero-title" id="hero-title">
+                    <span class="title-main">Minuto a Minuto</span>
+                    <span class="title-sub">Acompanhe o jogo do Cruzeiro em tempo real</span>
+                </h1>
+            </div>
+        </div>
+    </section>
+
+    <!-- Conteúdo Principal -->
+    <main class="main-content" id="main-content" role="main">
+        <div class="container">
+            <!-- Placar ao Vivo -->
+            <div id="live-match-container">
+                <!-- Conteúdo será preenchido por JavaScript -->
+            </div>
+
+            <!-- Timeline de lances -->
+            <div class="timeline-container">
+                <div class="timeline-header">
+                    <h2>
+                        <i class="fas fa-list-ul"></i>
+                        Linha do Tempo do Jogo
+                    </h2>
+                    <div class="match-status" id="match-status-indicator">AGUARDANDO JOGO</div>
+                </div>
+                <div class="timeline" id="timeline">
+                    <div class="no-events-message">
+                        <i class="fas fa-clock"></i>
+                        <p>Nenhum lance registrado ainda. O jogo ainda não começou.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Animação de Gol -->
+    <div id="goal-animation">
+        <div class="goal-animation-content">
+            <div class="goal-text">Gol!</div>
+            <div id="goal-animation-lottie"></div>
+        </div>
+    </div>
+
+    <!-- Rodapé -->
+    <footer class="footer" role="contentinfo">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <div class="footer-logo">
+                        <img src="../assets/logo.png" alt="Logo Cabuloso News" class="footer-logo-img" width="50" height="50">
+                        <div>
+                            <h3>Cabuloso News</h3>
+                            <p>O portal do torcedor celeste</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>Navegação</h4>
+                    <ul role="list">
+                        <li><a href="../index.html"><i class="fas fa-home" aria-hidden="true"></i> Início</a></li>
+                        <li><a href="../competicao.html"><i class="fas fa-table"></i> Tabelas</a></li>
+                        <li><a href="../resultados.html"><i class="fas fa-trophy" aria-hidden="true"></i> Resultados</a></li>
+                        <li><a href="minuto-a-minuto.html"><i class="fas fa-play-circle"></i> Ao Vivo</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>Contato</h4>
+                    <p>
+                        <i class="fas fa-envelope" aria-hidden="true"></i>
+                        <a href="mailto:cabulosonews92@gmail.com">cabulosonews92@gmail.com</a>
+                    </p>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>
+                    &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
+                    vínculo oficial com o Cruzeiro Esporte Clube.
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="./script/minuto-a-minuto.js"></script>
+
+    <div id="goal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,51,153,0.8); z-index:10000; justify-content:center; align-items:center; flex-direction:column;">
+    <div id="lottie-goal-container" style="width: 300px; height: 300px;"></div>
+    <h1 style="color:white; font-size: 4rem; font-family: 'Bebas Neue';">GOOOOOOOL!</h1>
+</div>
+</body>
+</html>

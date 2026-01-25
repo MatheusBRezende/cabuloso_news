@@ -1,284 +1,237 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <title>Resultados do Cruzeiro | Cabuloso News</title>
-
     <meta
       name="description"
-      content="Resultados completos do Cruzeiro Esporte Clube. Estatísticas, histórico de jogos e desempenho por competição."
+      content="Cabuloso News - Resultados completos dos jogos do Cruzeiro Esporte Clube em todas as competições."
     />
-    <meta name="author" content="Cabuloso News" />
+    <title>CABULOSO NEWS | Resultados</title>
 
+    <!-- Preconnect -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Fonts -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Bebas+Neue&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
+    <!-- Icons -->
     <link
       rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
 
-    <link rel="stylesheet" href="./style/styles.css" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/logo.png" />
+
+    <!-- Styles -->
+    <link rel="stylesheet" href="./style/style-brasileirao.css" />
     <link rel="stylesheet" href="./style/style-resultado.css" />
-    <link rel="icon" href="assets/logo.png" />
   </head>
-
   <body>
-    <div id="loading-overlay" class="loading-screen hidden">
-      <div class="loading-content">
-        <div class="loading-logo">
-          <i class="fas fa-futbol"></i>
-        </div>
-        <h3 class="loading-text">Cabuloso News</h3>
-        <p>Carregando resultados...</p>
-        <div class="loading-bar">
-          <div class="loading-progress"></div>
-        </div>
-      </div>
-    </div>
+    <!-- Skip Link -->
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
 
-    <header class="header">
-      <nav class="nav">
-        <a href="index.html" class="logo">
-          <div class="logo-icon">
-          <img src="./assets/logo.png" alt="" class="footer-logo-img">
-          </div>
-          <div class="logo-text">
-            <span class="logo-main">Cabuloso News</span>
-            <span class="logo-sub">Resultados</span>
-          </div>
-        </a>
+    <!-- Header -->
+    <header class="header" role="banner">
+      <nav class="navbar" role="navigation">
+        <div class="nav-container">
+          <a href="index.html" class="nav-logo">
+            <div class="logo-container">
+              <img src="./assets/logo.png" alt="" class="logo" width="40" height="40" />
+              <div class="logo-glow"></div>
+            </div>
+            <div class="logo-text-container">
+              <span class="logo-text">Cabuloso News</span>
+              <span class="logo-subtitle">Maior de Minas</span>
+            </div>
+          </a>
 
-        <div class="menu-toggle" id="menuToggle">
-          <span></span><span></span><span></span>
+          <ul class="nav-menu" id="nav-menu">
+            <li class="nav-item">
+              <a href="index.html" class="nav-link">
+                <i class="fas fa-home"></i>
+                <span>Início</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="competicao.html" class="nav-link">
+                <i class="fas fa-table"></i>
+                <span>Tabela</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="resultados.html" class="nav-link active">
+                <i class="fas fa-trophy"></i>
+                <span>Resultados</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="minuto-a-minuto.html" class="nav-link">
+                <i class="fas fa-play-circle"></i>
+                <span>Ao Vivo</span>
+              </a>
+            </li>
+          </ul>
+
+          <button class="menu-toggle" id="menuToggle">
+            <span class="menu-text">Menu</span>
+            <div class="hamburger">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+          </button>
         </div>
-
-        <ul class="nav-menu" id="nav-menu">
-          <li>
-            <a href="index.html" class="nav-link">
-              <i class="fas fa-home"></i> Início
-            </a>
-          </li>
-          <li>
-            <a href="competicao.html" class="nav-link">
-              <i class="fas fa-list-ol"></i> Tabelas
-            </a>
-          </li>
-          <li>
-            <a href="resultados.html" class="nav-link active">
-              <i class="fas fa-trophy"></i> Resultados
-            </a>
-          </li>
-        </ul>
       </nav>
     </header>
 
-    <main>
-      <section class="page-hero">
-        <div class="page-hero-bg"></div>
-        <div class="container page-hero-content">
+    <!-- Page Hero -->
+    <section class="page-hero">
+      <div class="page-hero-bg"></div>
+      <div class="container">
+        <div class="page-hero-content">
           <div class="page-badge">
-            <i class="fas fa-trophy"></i> Temporada 2026
+            <i class="fas fa-trophy"></i>
+            <span>Temporada 2026</span>
           </div>
-          <h1 class="page-title">Resultados do Cruzeiro</h1>
-          <p class="page-subtitle">
-            Histórico completo, estatísticas detalhadas e análise de desempenho.
-          </p>
+          <h1 class="page-title">RESULTADOS</h1>
+          <p class="page-subtitle">Acompanhe todos os jogos do Cruzeiro em todas as competições</p>
 
+          <!-- Stats Preview -->
           <div class="header-stats-preview">
             <div class="stat-preview">
-              <span class="stat-number" id="preview-games" data-fallback="-">-</span>
+              <span class="stat-number" id="statTotalGames">0</span>
               <span class="stat-label">Jogos</span>
             </div>
             <div class="stat-preview">
-              <span class="stat-number" id="preview-wins" data-fallback="-">-</span>
+              <span class="stat-number" id="statVitorias">0</span>
               <span class="stat-label">Vitórias</span>
             </div>
             <div class="stat-preview">
-              <span class="stat-number" id="preview-goals" data-fallback="-">-</span>
-              <span class="stat-label">Gols Pró</span>
+              <span class="stat-number" id="statEmpates">0</span>
+              <span class="stat-label">Empates</span>
             </div>
             <div class="stat-preview">
-              <span class="stat-number" id="preview-performance" data-fallback="-">-%</span>
-              <span class="stat-label">Aproveitamento</span>
+              <span class="stat-number" id="statDerrotas">0</span>
+              <span class="stat-label">Derrotas</span>
             </div>
           </div>
         </div>
-      </section>
+      </div>
+    </section>
 
+    <!-- Main Content -->
+    <main class="main-content" id="main-content">
       <div class="container">
-        <div class="controls-bar">
-          <div class="status-indicator">
-            <div class="status-dot"></div>
-            <span>Última atualização: <strong id="data-atualizacao">Carregando...</strong></span>
-          </div>
-
-          <button id="btn-atualizar" class="btn btn-primary btn-sm">
-            <i class="fas fa-sync-alt"></i> Atualizar Dados
-          </button>
-        </div>
-
-        <section id="statistics-dashboard" class="statistics-dashboard">
+        <!-- Dashboard de Estatísticas -->
+        <section class="statistics-dashboard">
           <div class="dashboard-header">
-            <div class="section-title" style="margin-bottom: 0">
-              <i class="fas fa-chart-bar"></i> Estatísticas
-            </div>
-
+            <h2 class="section-title">
+              <i class="fas fa-chart-bar"></i>
+              Estatísticas por Competição
+            </h2>
             <div class="competition-tabs">
-              <button class="tab-btn active" data-competition="">
-                <i class="fas fa-globe"></i> Geral
+              <button class="tab-btn active" data-competition="all">
+                <i class="fas fa-globe"></i> Todas
               </button>
               <button class="tab-btn" data-competition="Campeonato Brasileiro">
-                <i class="fas fa-flag"></i> Brasileirão
+                <i class="fas fa-futbol"></i> Brasileirão
+              </button>
+              <button class="tab-btn" data-competition="Campeonato Mineiro">
+                <i class="fas fa-mountain"></i> Mineiro
               </button>
               <button class="tab-btn" data-competition="Copa do Brasil">
                 <i class="fas fa-trophy"></i> Copa do Brasil
               </button>
-              <button class="tab-btn" data-competition="Campeonato Mineiro">
-                <i class="fas fa-medal"></i> Campeonato Mineiro
-              </button>
             </div>
           </div>
 
-          <div id="stats-content" class="stats-content">
-            <div class="stats-description">
-              <p>Selecione uma competição acima para ver o desempenho detalhado.</p>
-            </div>
+          <div class="stats-grid-container" id="statsGridContainer">
+            <!-- Cards serão gerados dinamicamente -->
           </div>
         </section>
 
-        <!-- SEÇÃO DE HISTÓRICO HORIZONTAL -->
+        <!-- Histórico Horizontal -->
         <section class="horizontal-history-section">
           <div class="section-header">
-            <div class="section-title">
-              <i class="fas fa-history"></i> Últimos Jogos
-            </div>
-            <div class="view-toggle">
-              <button id="view-more-horizontal" class="btn btn-outline btn-sm">
-                Ver Todos <i class="fas fa-arrow-right"></i>
-              </button>
-            </div>
+            <h2 class="section-title">
+              <i class="fas fa-history"></i>
+              Últimos Resultados
+            </h2>
           </div>
-
-          <div id="horizontal-matches" class="horizontal-matches">
-            <!-- Os últimos jogos serão inseridos aqui via JavaScript -->
+          <div class="horizontal-matches" id="horizontalMatches">
+            <!-- Cards horizontais serão gerados aqui -->
           </div>
         </section>
 
-        <section class="results-section" id="results-section">
-          <div class="section-header" style="margin-bottom: var(--space-4)">
-            <div class="section-title">
-              <i class="fas fa-list"></i> Histórico de Jogos
+        <!-- Tabela de Resultados -->
+        <section class="results-section">
+          <div class="controls-bar">
+            <div class="status-indicator">
+              <div class="status-dot"></div>
+              <span>Atualizado em tempo real</span>
             </div>
-
             <div class="view-toggle">
-              <button id="view-table" class="view-btn active" title="Visualização em Tabela">
-                <i class="fas fa-table"></i>
-              </button>
-              <button id="view-cards" class="view-btn" title="Visualização em Cards">
+              <button class="view-btn active" data-view="cards" title="Visualização em cards">
                 <i class="fas fa-th-large"></i>
               </button>
+              <button class="view-btn" data-view="table" title="Visualização em tabela">
+                <i class="fas fa-list"></i>
+              </button>
             </div>
           </div>
 
-          <div id="results-container">
-            <div id="results-loading" class="loading-state">
-              <div class="loading-spinner"></div>
-              <p>Buscando histórico de partidas...</p>
-            </div>
-
-            <div id="results-error" class="error-state" style="display: none">
-              <i class="fas fa-exclamation-triangle fa-2x" style="color: var(--warning); margin-bottom: 1rem"></i>
-              <h3>Erro ao carregar</h3>
-              <p>Não foi possível sincronizar com a planilha.</p>
-              <button id="btn-retry" class="btn-retry">Tentar Novamente</button>
-            </div>
-
-            <div id="results-empty" class="empty-state" style="display: none">
-              <i class="fas fa-search fa-2x" style="margin-bottom: 1rem"></i>
-              <h3>Nenhum jogo encontrado</h3>
-              <p>Tente ajustar os filtros acima.</p>
-            </div>
-
-            <div id="table-view" class="table-view">
-              <div class="table-container">
-                <table id="results-table" class="results-table">
-                  <thead>
-                    <tr>
-                      <th class="sortable" data-sort="date">Data <i class="fas fa-sort"></i></th>
-                      <th>Confronto</th>
-                      <th class="sortable" data-sort="result">Placar <i class="fas fa-sort"></i></th>
-                      <th class="sortable" data-sort="competition">Competição <i class="fas fa-sort"></i></th>
-                    </tr>
-                  </thead>
-                  <tbody id="results-tbody"></tbody>
-                </table>
-              </div>
-            </div>
-
-            <div id="cards-view" class="cards-view" style="display: none">
-              <div id="results-cards" class="results-cards"></div>
-            </div>
+          <!-- Cards View -->
+          <div class="results-cards" id="resultsCards">
+            <!-- Cards serão gerados aqui -->
           </div>
 
-          <div id="pagination" class="pagination" style="display: none">
-            <button id="prev-page" class="page-btn">
-              <i class="fas fa-chevron-left"></i> Anterior
-            </button>
-            <div id="page-info" class="page-info">
-              Página <span id="current-page">1</span> de <span id="total-pages">1</span>
-            </div>
-            <button id="next-page" class="page-btn">
-              Próxima <i class="fas fa-chevron-right"></i>
-            </button>
-          </div>
-        </section>
-
-        <div id="fallback-table" class="fallback-table" style="display: none; margin-top: 2rem">
-          <div class="table-container">
+          <!-- Table View (inicialmente oculto) -->
+          <div class="table-container" id="resultsTable" style="display: none;">
             <table class="results-table">
               <thead>
                 <tr>
                   <th>Data</th>
                   <th>Jogo</th>
-                  <th>Resultado</th>
+                  <th>Placar</th>
                   <th>Competição</th>
+                  <th>Resultado</th>
                 </tr>
               </thead>
-              <tbody>
-                <tr>
-                  <td>15/01/2025</td>
-                  <td>
-                    <div class="match-teams">
-                      <span class="team-name home">Cruzeiro</span>
-                      <span class="vs">×</span>
-                      <span class="team-name">Palmeiras</span>
-                    </div>
-                  </td>
-                  <td><span class="result-badge vitoria">2-1</span></td>
-                  <td>Brasileirão</td>
-                </tr>
+              <tbody id="resultsTableBody">
+                <!-- Linhas serão geradas aqui -->
               </tbody>
             </table>
           </div>
-        </div>
+
+          <!-- Paginação -->
+          <div class="pagination">
+            <button class="page-btn" id="prevPage" disabled>
+              <i class="fas fa-chevron-left"></i>
+              Anterior
+            </button>
+            <span id="pageInfo">Página 1 de 1</span>
+            <button class="page-btn" id="nextPage" disabled>
+              Próxima
+              <i class="fas fa-chevron-right"></i>
+            </button>
+          </div>
+        </section>
       </div>
     </main>
 
-    <div id="toast-container" class="toast-container"></div>
-
+    <!-- Footer -->
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
           <div class="footer-section">
             <div class="footer-logo">
-              <img src="assets/logo.png" alt="" class="footer-logo-img" width="70">
+              <img src="./assets/logo.png" alt="" class="footer-logo-img" width="50" height="50" />
               <div>
                 <h3>Cabuloso News</h3>
                 <p>O portal do torcedor celeste</p>
@@ -289,8 +242,9 @@
             <h4>Navegação</h4>
             <ul>
               <li><a href="index.html"><i class="fas fa-home"></i> Início</a></li>
-              <li><a href="competicao.html"><i class="fas fa-list-ol"></i> Tabelas</a></li>
+              <li><a href="competicao.html"><i class="fas fa-table"></i> Tabelas</a></li>
               <li><a href="resultados.html"><i class="fas fa-trophy"></i> Resultados</a></li>
+              <li><a href="minuto-a-minuto/minuto-a-minuto.html"><i class="fas fa-play-circle"></i> Ao Vivo</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -303,40 +257,18 @@
         </div>
         <div class="footer-bottom">
           <p>
-            &copy; 2025 CabulosoNews - Site independente criado por torcedores.<br />
-            Cruzeiro Esporte Clube - O Maior de Minas.
+            &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
+            vínculo oficial com o Cruzeiro Esporte Clube.
           </p>
         </div>
       </div>
     </footer>
 
-    <a href="#" class="back-to-top" id="backToTop" style="
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        background: var(--accent);
-        color: var(--primary);
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        box-shadow: var(--shadow-lg);
-      ">
-      <i class="fas fa-arrow-up"></i>
-    </a>
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
-    <script>
-      const menuToggle = document.getElementById("menuToggle");
-      const navMenu = document.getElementById("nav-menu");
-      if (menuToggle && navMenu) {
-        menuToggle.addEventListener("click", () => {
-          menuToggle.classList.toggle("active");
-          navMenu.classList.toggle("active");
-        });
-      }
-    </script>
+    <!-- Scripts -->
+    <script src="./script/live-match-detector.js"></script>
     <script src="./script/script-resultado.js"></script>
   </body>
 </html>

@@ -14,7 +14,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -69,6 +69,11 @@
           <li>
             <a href="resultados.html" class="nav-link"
               ><i class="fas fa-trophy"></i> Resultados</a
+            >
+          </li>
+          <li>
+            <a href="minuto-a-minuto.html" class="nav-link"
+              ><i class="fas fa-play-circle"></i> Ao Vivo</a
             >
           </li>
         </ul>
@@ -129,13 +134,10 @@
             <div class="section-line"></div>
           </div>
 
-          <!-- Remove este loader duplicado se não estiver usando -->
-          <!-- <div class="news-loader" id="newsLoader">...</div> -->
-
-          <!-- Use APENAS UM container para notícias -->
+          <!-- Container para notícias -->
           <div class="news-grid" id="newsContainer"></div>
 
-          <!-- Botão de carregar mais (opcional) -->
+          <!-- Botão de carregar mais -->
           <div
             id="loadMoreContainer"
             class="load-more-container"
@@ -245,6 +247,11 @@
                   ><i class="fas fa-trophy"></i> Resultados</a
                 >
               </li>
+              <li>
+                <a href="minuto-a-minuto/minuto-a-minuto.html"
+                  ><i class="fas fa-play-circle"></i> Ao Vivo</a
+                >
+              </li>
             </ul>
           </div>
           <div class="footer-contact">
@@ -264,6 +271,8 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
 
+    <!-- Scripts -->
+    <script src="./script/live-match-detector.js"></script>
     <script src="./script/script.js"></script>
   </body>
 </html>

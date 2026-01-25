@@ -7,7 +7,7 @@
       name="description"
       content="Cabuloso News - Tudo sobre o Maior de Minas. Notícias, tabelas do campeonato, resultados e minuto a minuto dos jogos do Cruzeiro."
     />
-    <title>CABULOSO NEWS | Competicoes</title>
+    <title>CABULOSO NEWS | Competições</title>
 
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -34,12 +34,12 @@
   </head>
   <body>
     <!-- Skip Link for Accessibility -->
-    <a href="#main-content" class="skip-link">Pular para o conteudo principal</a>
+    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
 
     <header class="header" role="banner">
-      <nav class="navbar" role="navigation" aria-label="Navegacao principal">
+      <nav class="navbar" role="navigation" aria-label="Navegação principal">
         <div class="nav-container">
-          <a href="index.html" class="nav-logo" aria-label="Cabuloso News - Pagina inicial">
+          <a href="index.html" class="nav-logo" aria-label="Cabuloso News - Página inicial">
             <div class="logo-container">
               <img src="./assets/logo.png" alt="" class="logo" width="40" height="40" />
               <div class="logo-glow" aria-hidden="true"></div>
@@ -54,7 +54,7 @@
             <li class="nav-item" role="none">
               <a href="index.html" class="nav-link" role="menuitem">
                 <i class="fas fa-home" aria-hidden="true"></i>
-                <span>Inicio</span>
+                <span>Início</span>
               </a>
             </li>
             <li class="nav-item" role="none">
@@ -69,13 +69,19 @@
                 <span>Resultados</span>
               </a>
             </li>
+            <li class="nav-item" role="none">
+              <a href="minuto-a-minuto.html" class="nav-link" role="menuitem">
+                <i class="fas fa-play-circle" aria-hidden="true"></i>
+                <span>Ao Vivo</span>
+              </a>
+            </li>
           </ul>
 
           <button 
             class="menu-toggle" 
             id="menuToggle" 
             type="button"
-            aria-label="Abrir menu de navegacao"
+            aria-label="Abrir menu de navegação"
             aria-expanded="false"
             aria-controls="nav-menu"
           >
@@ -103,8 +109,8 @@
             <span>Temporada 2026</span>
           </div>
           <h1 class="hero-title" id="hero-title">
-            <span class="title-main" id="campeonato-nome">Brasileirao Serie A</span>
-            <span class="title-sub">Acompanhe todas as competicoes do Cruzeiro</span>
+            <span class="title-main" id="campeonato-nome">Brasileirão Serie A</span>
+            <span class="title-sub">Acompanhe todas as competições do Cruzeiro</span>
           </h1>
           <div class="hero-selector">
             <div class="campeonato-buttons" role="tablist" aria-label="Selecionar campeonato">
@@ -116,7 +122,7 @@
                 aria-selected="true"
               >
                 <i class="fas fa-futbol" aria-hidden="true"></i>
-                <span>Brasileirao</span>
+                <span>Brasileirão</span>
               </button>
               <button 
                 class="campeonato-btn" 
@@ -153,7 +159,7 @@
             <div class="header-info">
               <h2 class="section-title" id="section-title">
                 <i class="fas fa-trophy section-icon" aria-hidden="true"></i>
-                Classificacao
+                Classificação
               </h2>
               <div class="update-info" aria-live="polite">
                 <div class="update-pulse" aria-hidden="true"></div>
@@ -164,7 +170,7 @@
           </div>
 
           <div class="table-wrapper">
-            <div id="tabela-container" class="table-container" role="region" aria-label="Tabela de classificacao">
+            <div id="tabela-container" class="table-container" role="region" aria-label="Tabela de classificação">
               <div class="loading-state" aria-busy="true">
                 <div class="loading-spinner">
                   <div class="spinner" role="status">
@@ -182,8 +188,8 @@
                     <i class="fas fa-clock"></i>
                   </div>
                   <div class="aviso-content">
-                    <h3>AGUARDE ENQUANTO NAO HA PARTIDAS</h3>
-                    <p>As informacoes dos proximos jogos da Copa do Brasil serao atualizadas em breve.</p>
+                    <h3>AGUARDE ENQUANTO NÃO HÁ PARTIDAS</h3>
+                    <p>As informações dos próximos jogos da Copa do Brasil serão atualizadas em breve.</p>
                   </div>
                 </div>
               </div>
@@ -197,7 +203,7 @@
                 <h3><i class="fas fa-info-circle" aria-hidden="true"></i> Legenda</h3>
               </div>
               
-              <!-- Brasileirao Legend -->
+              <!-- Brasileirão Legend -->
               <div class="legend-group" id="legend-brasileirao" data-campeonato="brasileirao" role="list">
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-libertadores" aria-hidden="true"></span>
@@ -242,34 +248,34 @@
                   <span class="legend-color zona-classificado-direto" aria-hidden="true"></span>
                   <span class="legend-text">
                     <strong>Classificado Direto</strong>
-                    <small>(1o de cada grupo)</small>
+                    <small>(1º de cada grupo)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-melhor-segundo" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>Melhor 2o - Classifica</strong>
+                    <strong>Melhor 2º - Classifica</strong>
                     <small>(melhor entre os 3)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-segundo-normal" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>2o Colocado</strong>
-                    <small>(nao classifica)</small>
+                    <strong>2º Colocado</strong>
+                    <small>(não classifica)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-eliminado" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>3o Colocado</strong>
+                    <strong>3º Colocado</strong>
                     <small>(eliminado)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-repescagem" aria-hidden="true"></span>
                   <span class="legend-text">
-                    <strong>4o - Repescagem</strong>
+                    <strong>4º - Repescagem</strong>
                     <small>(disputa vaga na semi)</small>
                   </span>
                 </div>
@@ -292,16 +298,16 @@
       class="widget-toggle-btn" 
       id="widget-toggle" 
       type="button"
-      aria-label="Abrir proximos jogos"
+      aria-label="Abrir próximos jogos"
       aria-expanded="false"
       aria-controls="games-widget"
     >
       <i class="fas fa-calendar-alt" aria-hidden="true"></i>
-      <span>Proximos Jogos</span>
+      <span>Próximos Jogos</span>
     </button>
 
     <!-- Games Widget -->
-    <aside class="games-widget-container" aria-label="Widget de proximos jogos">
+    <aside class="games-widget-container" aria-label="Widget de próximos jogos">
       <div 
         class="games-widget" 
         id="games-widget" 
@@ -312,25 +318,25 @@
         <div class="widget-header">
           <h3 id="widget-title">
             <i class="fas fa-calendar-alt" aria-hidden="true"></i> 
-            Proximos Jogos
+            Próximos Jogos
           </h3>
           <button 
             class="widget-close" 
             id="widget-close" 
             type="button"
-            aria-label="Fechar widget de proximos jogos"
+            aria-label="Fechar widget de próximos jogos"
           >
             <i class="fas fa-times" aria-hidden="true"></i>
           </button>
         </div>
         <div class="widget-filters" role="tablist" aria-label="Filtrar por campeonato">
           <button class="filter-btn active" data-filter="todos" type="button" role="tab" aria-selected="true">Todos</button>
-          <button class="filter-btn" data-filter="Campeonato Brasileiro" type="button" role="tab" aria-selected="false">Brasileirao</button>
+          <button class="filter-btn" data-filter="Campeonato Brasileiro" type="button" role="tab" aria-selected="false">Brasileirão</button>
           <button class="filter-btn" data-filter="Campeonato Mineiro" type="button" role="tab" aria-selected="false">Mineiro</button>
           <button class="filter-btn" data-filter="Copa do Brasil" type="button" role="tab" aria-selected="false">Copa do Brasil</button>
         </div>
         <div class="games-list" role="tabpanel" aria-live="polite">
-          <!-- Os jogos serao carregados aqui -->
+          <!-- Os jogos serão carregados aqui -->
         </div>
       </div>
     </aside>
@@ -349,11 +355,12 @@
             </div>
           </div>
           <div class="footer-section">
-            <h4>Navegacao</h4>
+            <h4>Navegação</h4>
             <ul role="list">
-              <li><a href="index.html"><i class="fas fa-home" aria-hidden="true"></i> Inicio</a></li>
+              <li><a href="index.html"><i class="fas fa-home" aria-hidden="true"></i> Início</a></li>
               <li><a href="competicao.html"><i class="fas fa-table"></i> Tabelas</a></li>
               <li><a href="resultados.html"><i class="fas fa-trophy" aria-hidden="true"></i> Resultados</a></li>
+              <li><a href="minuto-a-minuto/minuto-a-minuto.html"><i class="fas fa-play-circle"></i> Ao Vivo</a></li>
             </ul>
           </div>
           <div class="footer-section">
@@ -366,14 +373,15 @@
         </div>
         <div class="footer-bottom">
           <p>
-            &copy; 2025 CabulosoNews - Site de fas para fas. Nao possuimos
-            vinculo oficial com o Cruzeiro Esporte Clube.
+            &copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos
+            vínculo oficial com o Cruzeiro Esporte Clube.
           </p>
         </div>
       </div>
     </footer>
 
     <!-- Scripts -->
+    <script src="./script/live-match-detector.js"></script>
     <script src="./script/script-brasileirao.js"></script>
   </body>
 </html>

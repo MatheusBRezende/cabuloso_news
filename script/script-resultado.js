@@ -1,273 +1,519 @@
 /**
- * Cabuloso News - Resultados dos Jogos
- * Versão 100% JSON - Sem conflitos de inicialização
+ * Cabuloso News - Script de Resultados
+ * Página de resultados completos dos jogos
  */
 
+// ============================================
+// CONFIGURAÇÃO
+// ============================================
 const CONFIG_RESULTADOS = {
-  jsonUrl: "backend/resultados.json",
-  updateInterval: 60000,
-  placeholderLogo:
-    "https://vignette.wikia.nocookie.net/p__/images/2/2a/Flag_placeholder.png/revision/latest?cb=20140706154316&path-prefix=protagonist",
+  resultadosUrl: './backend/resultados.json',
+  itemsPerPage: 12,
+  defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png'
 };
 
-const stateResultados = {
-  isLoading: true,
+// ============================================
+// ESTADO
+// ============================================
+const state = {
   allResults: [],
-  currentFilter: "all",
-  lastMatchesCount: 5,
+  filteredResults: [],
+  currentPage: 1,
+  currentView: 'cards',
+  currentCompetition: 'all',
+  stats: {
+    total: 0,
+    vitorias: 0,
+    empates: 0,
+    derrotas: 0
+  }
 };
 
-// --- LÓGICA DE DADOS ---
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
+document.addEventListener('DOMContentLoaded', () => {
+  initNavigation();
+  initViewToggle();
+  initCompetitionTabs();
+  initPagination();
+  loadResultados();
+});
 
-function determinarResultado(score, team1) {
-  if (!score) return "empate";
-  const scores = score.split("-").map((s) => parseInt(s.trim()) || 0);
-  if (scores.length !== 2) return "empate";
-  const [golsT1, golsT2] = scores;
-  const isCruzeiroHome = team1.toLowerCase().includes("cruzeiro");
-  if (isCruzeiroHome) {
-    if (golsT1 > golsT2) return "vitoria";
-    if (golsT1 < golsT2) return "derrota";
-    return "empate";
-  } else {
-    if (golsT2 > golsT1) return "vitoria";
-    if (golsT2 < golsT1) return "derrota";
-    return "empate";
+// ============================================
+// NAVEGAÇÃO MOBILE
+// ============================================
+const initNavigation = () => {
+  const menuToggle = document.getElementById('menuToggle');
+  const navMenu = document.getElementById('nav-menu');
+
+  if (!menuToggle || !navMenu) return;
+
+  menuToggle.addEventListener('click', () => {
+    navMenu.classList.toggle('active');
+    const isExpanded = navMenu.classList.contains('active');
+    menuToggle.setAttribute('aria-expanded', isExpanded);
+  });
+
+  navMenu.querySelectorAll('.nav-link').forEach(link => {
+    link.addEventListener('click', () => {
+      navMenu.classList.remove('active');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+};
+
+// ============================================
+// TOGGLE DE VISUALIZAÇÃO
+// ============================================
+const initViewToggle = () => {
+  const viewBtns = document.querySelectorAll('.view-btn');
+
+  viewBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+
+      viewBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      state.currentView = view;
+      renderResults();
+    });
+  });
+};
+
+// ============================================
+// TABS DE COMPETIÇÃO
+// ============================================
+const initCompetitionTabs = () => {
+  const tabs = document.querySelectorAll('.tab-btn');
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const competition = tab.dataset.competition;
+
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      state.currentCompetition = competition;
+      filterByCompetition();
+      updateStatsCards();
+    });
+  });
+};
+
+// ============================================
+// PAGINAÇÃO
+// ============================================
+const initPagination = () => {
+  const prevBtn = document.getElementById('prevPage');
+  const nextBtn = document.getElementById('nextPage');
+
+  if (prevBtn) {
+    prevBtn.addEventListener('click', () => {
+      if (state.currentPage > 1) {
+        state.currentPage--;
+        renderResults();
+        updatePagination();
+        scrollToTop();
+      }
+    });
   }
-}
 
-async function loadResults() {
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      const totalPages = Math.ceil(state.filteredResults.length / CONFIG_RESULTADOS.itemsPerPage);
+      if (state.currentPage < totalPages) {
+        state.currentPage++;
+        renderResults();
+        updatePagination();
+        scrollToTop();
+      }
+    });
+  }
+};
+
+const updatePagination = () => {
+  const totalPages = Math.ceil(state.filteredResults.length / CONFIG_RESULTADOS.itemsPerPage);
+  const pageInfo = document.getElementById('pageInfo');
+  const prevBtn = document.getElementById('prevPage');
+  const nextBtn = document.getElementById('nextPage');
+
+  if (pageInfo) {
+    pageInfo.textContent = `Página ${state.currentPage} de ${totalPages}`;
+  }
+
+  if (prevBtn) {
+    prevBtn.disabled = state.currentPage === 1;
+  }
+
+  if (nextBtn) {
+    nextBtn.disabled = state.currentPage >= totalPages;
+  }
+};
+
+const scrollToTop = () => {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// ============================================
+// CARREGAR RESULTADOS
+// ============================================
+const loadResultados = async () => {
+  showLoading();
+
   try {
-    showLoadingState();
-    const response = await fetch(
-      `${CONFIG_RESULTADOS.jsonUrl}?v=${new Date().getTime()}`,
-    );
-    if (!response.ok) throw new Error("Arquivo JSON não encontrado");
+    const response = await fetch(CONFIG_RESULTADOS.resultadosUrl, { cache: 'no-cache' });
+    if (!response.ok) throw new Error('Erro ao carregar resultados');
 
     const data = await response.json();
+    state.allResults = data.results || data || [];
 
-    // Força a captura da chave 'results' conforme seu arquivo enviado
-    let rawList = [];
-    if (Array.isArray(data)) {
-      rawList = data; // Já é uma lista []
-    } else if (data && data.results && Array.isArray(data.results)) {
-      rawList = data.results; // É o objeto {"results": []}
-    } else if (data && typeof data === "object") {
-      rawList = [data]; // É um objeto único {}, transformamos em [{}]
+    if (state.allResults.length === 0) {
+      showEmpty();
+      return;
     }
 
-    if (rawList.length === 0) {
-      console.warn("A lista de resultados está vazia ou o formato é inválido.");
-    }
+    state.filteredResults = [...state.allResults];
+    calculateStats();
+    updateHeaderStats();
+    updateStatsCards();
+    renderHorizontalHistory();
+    renderResults();
+    updatePagination();
 
-    stateResultados.allResults = rawList.map((game, index) => ({
-      ...game,
-      id: index,
-      competition:
-        game.competition === "Campeonato"
-          ? "Campeonato Mineiro"
-          : game.competition || "Geral",
-      resultado: determinarResultado(game.score, game.team1),
-      isCruzeiroHome: (game.team1 || "").toLowerCase().includes("cruzeiro"),
-    }));
-
-    updateStatistics();
-    renderHorizontalMatches();
-    applyFilter(stateResultados.currentFilter);
-
-    const now = new Date();
-    const dataAtu = document.getElementById("data-atualizacao");
-    if (dataAtu)
-      dataAtu.textContent = now.toLocaleTimeString("pt-BR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
   } catch (error) {
-    console.error("Erro detalhado:", error);
-    showErrorState();
-  } finally {
-    stateResultados.isLoading = false;
-    const loader = document.getElementById("loading-overlay");
-    if (loader) loader.classList.add("hidden");
+    console.error('Erro ao carregar resultados:', error);
+    showError();
   }
-}
+};
 
-// --- FILTROS E RENDERIZAÇÃO ---
+// ============================================
+// FILTRAR POR COMPETIÇÃO
+// ============================================
+const filterByCompetition = () => {
+  if (state.currentCompetition === 'all') {
+    state.filteredResults = [...state.allResults];
+  } else {
+    state.filteredResults = state.allResults.filter(
+      r => r.competition === state.currentCompetition
+    );
+  }
 
-function applyFilter(filter) {
-  stateResultados.currentFilter = filter;
-  
-  const filtered = stateResultados.allResults.filter((game) => {
-    if (!filter || filter === "all" || filter === "") return true;
-    return game.competition.toLowerCase().includes(filter.toLowerCase());
+  state.currentPage = 1;
+  renderResults();
+  updatePagination();
+};
+
+// ============================================
+// CALCULAR ESTATÍSTICAS
+// ============================================
+const calculateStats = () => {
+  const stats = {
+    total: state.allResults.length,
+    vitorias: 0,
+    empates: 0,
+    derrotas: 0
+  };
+
+  state.allResults.forEach(res => {
+    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
+    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+
+    if (isCruzeiroHome) {
+      if (score1 > score2) stats.vitorias++;
+      else if (score1 < score2) stats.derrotas++;
+      else stats.empates++;
+    } else {
+      if (score2 > score1) stats.vitorias++;
+      else if (score2 < score1) stats.derrotas++;
+      else stats.empates++;
+    }
   });
-  
-  renderResultsList(filtered);
-}
 
-function renderResultsList(results) {
-  const tbody = document.getElementById("results-tbody");
-  const cardsContainer = document.getElementById("results-cards");
-  const emptyState = document.getElementById("results-empty");
-  const loadingState = document.getElementById("results-loading");
+  state.stats = stats;
+};
 
-  if (!tbody || !cardsContainer) return;
+// ============================================
+// ATUALIZAR ESTATÍSTICAS DO HEADER
+// ============================================
+const updateHeaderStats = () => {
+  const elements = {
+    total: document.getElementById('statTotalGames'),
+    vitorias: document.getElementById('statVitorias'),
+    empates: document.getElementById('statEmpates'),
+    derrotas: document.getElementById('statDerrotas')
+  };
 
-  tbody.innerHTML = "";
-  cardsContainer.innerHTML = "";
-  loadingState.style.display = "none"; // Garante que o carregando suma
+  if (elements.total) elements.total.textContent = state.stats.total;
+  if (elements.vitorias) elements.vitorias.textContent = state.stats.vitorias;
+  if (elements.empates) elements.empates.textContent = state.stats.empates;
+  if (elements.derrotas) elements.derrotas.textContent = state.stats.derrotas;
+};
 
-  if (results.length === 0) {
-    emptyState.style.display = "block";
-    document.getElementById("table-view").style.display = "none";
-    document.getElementById("cards-view").style.display = "none";
-    return;
-  }
+// ============================================
+// ATUALIZAR CARDS DE ESTATÍSTICAS
+// ============================================
+const updateStatsCards = () => {
+  const container = document.getElementById('statsGridContainer');
+  if (!container) return;
 
-  emptyState.style.display = "none";
+  const filtered = state.currentCompetition === 'all' 
+    ? state.allResults 
+    : state.allResults.filter(r => r.competition === state.currentCompetition);
 
-  // Decide qual visualização mostrar baseado no botão ativo
-  const isTableView = document
-    .getElementById("view-table")
-    .classList.contains("active");
-  document.getElementById("table-view").style.display = isTableView
-    ? "block"
-    : "none";
-  document.getElementById("cards-view").style.display = isTableView
-    ? "none"
-    : "block";
+  let vitorias = 0, empates = 0, derrotas = 0, golsMarcados = 0, golsSofridos = 0;
 
-  results.forEach((game) => {
-    // Tabela
-    tbody.innerHTML += `
-      <tr>
-        <td>${game.date}</td>
-        <td><div class="match-teams">
-          <span class="${game.isCruzeiroHome ? "home" : ""}">${game.team1}</span> × 
-          <span class="${!game.isCruzeiroHome ? "home" : ""}">${game.team2}</span>
-        </div></td>
-        <td><span class="result-badge ${game.resultado}">${game.score}</span></td>
-        <td>${game.competition}</td>
-      </tr>`;
+  filtered.forEach(res => {
+    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
+    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
 
-    // Cards
-    cardsContainer.innerHTML += `
-      <div class="match-card ${game.resultado}">
-        <div class="card-header"><span>${game.competition}</span><span>${game.date}</span></div>
-        <div class="card-teams">
-          <div class="card-team"><img src="${game.logo1}" onerror="this.src='${CONFIG_RESULTADOS.placeholderLogo}'"><span>${game.team1}</span></div>
-          <div class="card-score">${game.score}</div>
-          <div class="card-team"><img src="${game.logo2}" onerror="this.src='${CONFIG_RESULTADOS.placeholderLogo}'"><span>${game.team2}</span></div>
+    if (isCruzeiroHome) {
+      golsMarcados += score1;
+      golsSofridos += score2;
+      if (score1 > score2) vitorias++;
+      else if (score1 < score2) derrotas++;
+      else empates++;
+    } else {
+      golsMarcados += score2;
+      golsSofridos += score1;
+      if (score2 > score1) vitorias++;
+      else if (score2 < score1) derrotas++;
+      else empates++;
+    }
+  });
+
+  const aproveitamento = filtered.length > 0 
+    ? Math.round((vitorias * 3 + empates) / (filtered.length * 3) * 100) 
+    : 0;
+
+  container.innerHTML = `
+    <div class="stat-card-item">
+      <span class="value">${filtered.length}</span>
+      <span class="label">Jogos</span>
+    </div>
+    <div class="stat-card-item">
+      <span class="value">${vitorias}</span>
+      <span class="label">Vitórias</span>
+    </div>
+    <div class="stat-card-item">
+      <span class="value">${empates}</span>
+      <span class="label">Empates</span>
+    </div>
+    <div class="stat-card-item">
+      <span class="value">${derrotas}</span>
+      <span class="label">Derrotas</span>
+    </div>
+    <div class="stat-card-item">
+      <span class="value">${golsMarcados}</span>
+      <span class="label">Gols Marcados</span>
+    </div>
+    <div class="stat-card-item">
+      <span class="value">${golsSofridos}</span>
+      <span class="label">Gols Sofridos</span>
+    </div>
+    <div class="stat-card-item">
+      <span class="value">${aproveitamento}%</span>
+      <span class="label">Aproveitamento</span>
+    </div>
+  `;
+};
+
+// ============================================
+// RENDERIZAR HISTÓRICO HORIZONTAL
+// ============================================
+const renderHorizontalHistory = () => {
+  const container = document.getElementById('horizontalMatches');
+  if (!container) return;
+
+  const recent = state.allResults.slice(0, 10);
+
+  container.innerHTML = recent.map(res => {
+    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
+    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    
+    let resultClass = '';
+    if (isCruzeiroHome) {
+      resultClass = score1 > score2 ? 'vitoria' : (score1 < score2 ? 'derrota' : 'empate');
+    } else {
+      resultClass = score2 > score1 ? 'vitoria' : (score2 < score1 ? 'derrota' : 'empate');
+    }
+
+    return `
+      <div class="horizontal-match-card ${resultClass}">
+        <div class="horizontal-card-header">
+          <span>${escapeHtml(res.competition)}</span>
+          <span>${escapeHtml(res.date)}</span>
         </div>
-      </div>`;
-  });
-}
-
-// --- ESTADOS E AUXILIARES ---
-
-function updateStatistics() {
-  const total = stateResultados.allResults.length;
-  const vitorias = stateResultados.allResults.filter(
-    (g) => g.resultado === "vitoria",
-  ).length;
-  const empates = stateResultados.allResults.filter(
-    (g) => g.resultado === "empate",
-  ).length;
-  let gols = 0;
-  stateResultados.allResults.forEach((g) => {
-    const s = g.score.split("-").map((x) => parseInt(x.trim()) || 0);
-    gols += g.isCruzeiroHome ? s[0] : s[1];
-  });
-  const aprov =
-    total > 0 ? Math.round(((vitorias * 3 + empates) / (total * 3)) * 100) : 0;
-
-  document.getElementById("preview-games").textContent = total;
-  document.getElementById("preview-wins").textContent = vitorias;
-  document.getElementById("preview-goals").textContent = gols;
-  document.getElementById("preview-performance").textContent = `${aprov}%`;
-}
-
-function renderHorizontalMatches() {
-  const container = document.getElementById("horizontal-matches");
-  if (!container) return;
-  const last = stateResultados.allResults.slice(0, 5);
-  container.innerHTML = last
-    .map(
-      (game) => `
-    <div class="horizontal-match-card ${game.resultado}">
-      <div class="horizontal-card-header"><span>${game.competition}</span><span>${game.date}</span></div>
-      <div class="horizontal-card-teams">
-        <div class="horizontal-card-team"><img src="${game.logo1}" class="team-logo-uniform"><span>${game.team1}</span></div>
-        <div class="horizontal-card-score">${game.score}</div>
-        <div class="horizontal-card-team"><img src="${game.logo2}" class="team-logo-uniform"><span>${game.team2}</span></div>
+        <div class="horizontal-card-teams">
+          <div class="horizontal-card-team">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy">
+            <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team1)}</span>
+          </div>
+          <span class="horizontal-card-score">${escapeHtml(res.score)}</span>
+          <div class="horizontal-card-team">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy">
+            <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team2)}</span>
+          </div>
+        </div>
       </div>
-    </div>`,
-    )
-    .join("");
-}
+    `;
+  }).join('');
+};
 
-function showLoadingState() {
-  document.getElementById("results-loading").style.display = "block";
-  document.getElementById("results-error").style.display = "none";
-  document.getElementById("results-empty").style.display = "none";
-}
+// ============================================
+// RENDERIZAR RESULTADOS
+// ============================================
+const renderResults = () => {
+  const start = (state.currentPage - 1) * CONFIG_RESULTADOS.itemsPerPage;
+  const end = start + CONFIG_RESULTADOS.itemsPerPage;
+  const pageResults = state.filteredResults.slice(start, end);
 
-function showErrorState() {
-  document.getElementById("results-loading").style.display = "none";
-  document.getElementById("results-error").style.display = "block";
-}
-
-function showToast(msg, type = "info") {
-  const container = document.getElementById("toast-container");
-  if (!container) return;
-  const toast = document.createElement("div");
-  toast.className = `toast toast-${type}`;
-  toast.innerHTML = `<span>${msg}</span>`;
-  container.appendChild(toast);
-  setTimeout(() => toast.remove(), 3000);
-}
-
-// --- INICIALIZAÇÃO ÚNICA ---
-
-document.addEventListener("DOMContentLoaded", () => {
-  loadResults();
-
-  // Filtros de competição
-  document.querySelectorAll(".tab-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document
-        .querySelectorAll(".tab-btn")
-        .forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-
-      // Pega o valor correto do atributo data-competition
-      const filtroEscolhido = btn.getAttribute("data-competition");
-      applyFilter(filtroEscolhido);
-    });
-  });
-
-  // Alternar visualização (Tabela/Cards)
-  const viewTableBtn = document.getElementById("view-table");
-  const viewCardsBtn = document.getElementById("view-cards");
-
-  viewTableBtn.addEventListener("click", () => {
-    viewTableBtn.classList.add("active");
-    viewCardsBtn.classList.remove("active");
-    applyFilter(stateResultados.currentFilter);
-  });
-
-  viewCardsBtn.addEventListener("click", () => {
-    viewCardsBtn.classList.add("active");
-    viewTableBtn.classList.remove("active");
-    applyFilter(stateResultados.currentFilter);
-  });
-
-  // Botão Atualizar
-  const btnAtu = document.getElementById("btn-atualizar");
-  if (btnAtu) {
-    btnAtu.addEventListener("click", () => {
-      loadResults();
-      showToast("Dados atualizados!", "success");
-    });
+  if (state.currentView === 'cards') {
+    renderCardsView(pageResults);
+  } else {
+    renderTableView(pageResults);
   }
-});
+};
+
+const renderCardsView = (results) => {
+  const cardsContainer = document.getElementById('resultsCards');
+  const tableContainer = document.getElementById('resultsTable');
+
+  if (cardsContainer) cardsContainer.style.display = 'grid';
+  if (tableContainer) tableContainer.style.display = 'none';
+
+  if (!cardsContainer) return;
+
+  cardsContainer.innerHTML = results.map(res => {
+    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
+    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    
+    let resultClass = '';
+    if (isCruzeiroHome) {
+      resultClass = score1 > score2 ? 'vitoria' : (score1 < score2 ? 'derrota' : 'empate');
+    } else {
+      resultClass = score2 > score1 ? 'vitoria' : (score2 < score1 ? 'derrota' : 'empate');
+    }
+
+    return `
+      <div class="match-card ${resultClass}">
+        <div class="card-header">
+          <span>${escapeHtml(res.competition)}</span>
+          <span>${escapeHtml(res.date)}</span>
+        </div>
+        <div class="card-teams">
+          <div class="card-team">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team1)}</span>
+          </div>
+          <span class="card-score">${escapeHtml(res.score)}</span>
+          <div class="card-team">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team2)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+};
+
+const renderTableView = (results) => {
+  const cardsContainer = document.getElementById('resultsCards');
+  const tableContainer = document.getElementById('resultsTable');
+  const tableBody = document.getElementById('resultsTableBody');
+
+  if (cardsContainer) cardsContainer.style.display = 'none';
+  if (tableContainer) tableContainer.style.display = 'block';
+
+  if (!tableBody) return;
+
+  tableBody.innerHTML = results.map(res => {
+    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
+    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    
+    let resultBadge = '';
+    if (isCruzeiroHome) {
+      if (score1 > score2) resultBadge = '<span class="result-badge vitoria"><i class="fas fa-check"></i> Vitória</span>';
+      else if (score1 < score2) resultBadge = '<span class="result-badge derrota"><i class="fas fa-times"></i> Derrota</span>';
+      else resultBadge = '<span class="result-badge empate"><i class="fas fa-minus"></i> Empate</span>';
+    } else {
+      if (score2 > score1) resultBadge = '<span class="result-badge vitoria"><i class="fas fa-check"></i> Vitória</span>';
+      else if (score2 < score1) resultBadge = '<span class="result-badge derrota"><i class="fas fa-times"></i> Derrota</span>';
+      else resultBadge = '<span class="result-badge empate"><i class="fas fa-minus"></i> Empate</span>';
+    }
+
+    return `
+      <tr>
+        <td>${escapeHtml(res.date)}</td>
+        <td>
+          <div class="match-teams">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy">
+            <span class="team-name ${isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team1)}</span>
+            <span class="vs">vs</span>
+            <span class="team-name ${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team2)}</span>
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy">
+          </div>
+        </td>
+        <td><strong>${escapeHtml(res.score)}</strong></td>
+        <td>${escapeHtml(res.competition)}</td>
+        <td>${resultBadge}</td>
+      </tr>
+    `;
+  }).join('');
+};
+
+// ============================================
+// ESTADOS DE CARREGAMENTO
+// ============================================
+const showLoading = () => {
+  const cardsContainer = document.getElementById('resultsCards');
+  if (cardsContainer) {
+    cardsContainer.innerHTML = `
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Carregando resultados...</p>
+      </div>
+    `;
+  }
+};
+
+const showError = () => {
+  const cardsContainer = document.getElementById('resultsCards');
+  if (cardsContainer) {
+    cardsContainer.innerHTML = `
+      <div class="error-state">
+        <i class="fas fa-exclamation-triangle"></i>
+        <p>Erro ao carregar resultados.</p>
+        <button class="btn-retry" onclick="loadResultados()">
+          <i class="fas fa-sync-alt"></i> Tentar Novamente
+        </button>
+      </div>
+    `;
+  }
+};
+
+const showEmpty = () => {
+  const cardsContainer = document.getElementById('resultsCards');
+  if (cardsContainer) {
+    cardsContainer.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-inbox"></i>
+        <p>Nenhum resultado encontrado.</p>
+      </div>
+    `;
+  }
+};
+
+// ============================================
+// UTILITÁRIOS
+// ============================================
+const escapeHtml = (text) => {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+};
+
+// Exportar para uso global
+window.loadResultados = loadResultados;

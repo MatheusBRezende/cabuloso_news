@@ -665,6 +665,7 @@ const initScrollHandler = () => {
 // INITIALIZATION
 // ============================================
 
+
 const initBrasileirao = () => {
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
