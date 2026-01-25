@@ -8,7 +8,7 @@
 // ============================================
 const CONFIG = {
     webhookUrl: 'https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo',
-    agendaUrl: 'backend/agenda_cruzeiro.jso',
+    agendaUrl: './backend/agenda_cruzeiro.json',
     updateInterval: 10000, 
     redirectCountdown: 5, 
     defaultTeamLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
