@@ -603,23 +603,24 @@ const updateMatchStatus = (liveData) => {
 // ============================================
 // ATUALIZAR TIMELINE
 // ============================================
-const updateTimeline = (liveData) => {
-    const timeline = document.getElementById('timeline-container'); // Verifique se o ID está correto no HTML
-    if (!timeline || !Array.isArray(liveData)) return;
+const updateTimeline = (data) => {
+    const container = document.getElementById('timeline-container'); // veja se o ID está certo no HTML
+    if (!container) return;
 
-    timeline.innerHTML = ''; 
+    container.innerHTML = ''; // Limpa o "Carregando..."
 
-    liveData.forEach(lance => {
-        const item = document.createElement('div');
-        item.className = 'timeline-item';
-        item.innerHTML = `
+    // O n8n agora enviará um array direto [{}, {}, {}]
+    data.forEach(lance => {
+        const div = document.createElement('div');
+        div.className = 'timeline-item';
+        div.innerHTML = `
             <div class="time">${lance.lance_minuto}</div>
-            <div class="content">
+            <div class="details">
                 <strong>${lance.lance_tipo}</strong>
                 <p>${lance.lance_descricao}</p>
             </div>
         `;
-        timeline.appendChild(item);
+        container.appendChild(div);
     });
 };
 
