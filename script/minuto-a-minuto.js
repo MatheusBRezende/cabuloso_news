@@ -1,829 +1,763 @@
 /**
  * Cabuloso News - Minuto a Minuto
  * Acompanhamento ao vivo dos jogos do Cruzeiro
+ * Versao Corrigida v3 - Ordenacao e Placar
  */
 
 // ============================================
-// CONFIGURAÇÃO
+// CONFIGURACAO
 // ============================================
 const CONFIG = {
-    webhookUrl: 'https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo',
-    agendaUrl: './backend/agenda_cruzeiro.json',
-    updateInterval: 10000, 
-    redirectCountdown: 5, 
-    defaultTeamLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
-    checkLiveInterval: 60000 
+  webhookUrl:
+    "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
+  agendaUrl: "backend/agenda_cruzeiro.json", // Use barras normais e caminho direto
+  updateInterval: 5000,
 };
 
-// ============================================
-// ESTADO DA APLICAÇÃO
-// ============================================
+// Estado da aplicacao
 const state = {
-    currentMatch: null,
-    matchData: null,
-    agendaData: null,
-    lastGoalCount: 0,
-    goalAnimation: null,
-    isModalShown: false,
-    redirectTimer: null,
-    liveUpdateInterval: null,
-    lastUpdateTime: null
+  matchData: null,
+  agendaData: null,
+  lastGoalCount: 0,
+  liveUpdateInterval: null,
+  countdownInterval: null,
+  teamsInfo: {
+    cruzeiro: { name: "", logo: "" },
+    adversario: { name: "", logo: "" },
+  },
+  placar: {
+    cruzeiro: 0,
+    adversario: 0,
+  },
+  matchStarted: false,
 };
 
 // ============================================
-// INICIALIZAÇÃO DA PÁGINA
+// INICIALIZACAO
 // ============================================
-document.addEventListener('DOMContentLoaded', () => {
-    initNavigation();
-    setupGoalAnimation();
-    loadAgendaData();
-    checkForLiveMatches();
-    
-    // Verifica jogos ao vivo periodicamente
-    setInterval(checkForLiveMatches, CONFIG.checkLiveInterval);
-    
-    // Verifica se há redirecionamento pendente
-    checkRedirectFromStorage();
+document.addEventListener("DOMContentLoaded", () => {
+  initNavigation();
+  loadAgenda();
+  fetchLiveData();
+  startLiveUpdates();
 });
 
 // ============================================
-// NAVEGAÇÃO MOBILE
+// CARREGAR AGENDA DO CRUZEIRO
 // ============================================
-const initNavigation = () => {
-    const menuToggle = document.getElementById('menuToggle');
-    const navMenu = document.getElementById('nav-menu');
-
-    if (!menuToggle || !navMenu) return;
-
-    menuToggle.addEventListener('click', () => {
-        navMenu.classList.toggle('active');
-        const isExpanded = navMenu.classList.contains('active');
-        menuToggle.setAttribute('aria-expanded', isExpanded);
-    });
-
-    // Fecha o menu ao clicar em um link
-    navMenu.querySelectorAll('.nav-link').forEach(link => {
-        link.addEventListener('click', () => {
-            navMenu.classList.remove('active');
-            menuToggle.setAttribute('aria-expanded', 'false');
-        });
-    });
+const loadAgenda = async () => {
+  try {
+    const response = await fetch(CONFIG.agendaUrl);
+    if (response.ok) {
+      state.agendaData = await response.json();
+    }
+  } catch (error) {
+    console.error("Erro ao carregar agenda:", error);
+  }
 };
 
 // ============================================
-// CARREGAR DADOS DA AGENDA
+// BUSCAR PROXIMO JOGO DA AGENDA
 // ============================================
-const loadAgendaData = async () => {
-    try {
-        const response = await fetch(CONFIG.agendaUrl, { cache: 'no-cache' });
-        if (!response.ok) throw new Error('Erro ao carregar agenda');
-        
-        const data = await response.json();
-        state.agendaData = Array.isArray(data) ? data : (data.dados_completos || []);
-        
-        // Verifica se há algum jogo em andamento
-        checkForLiveMatches();
-    } catch (error) {
-        console.error('Erro ao carregar agenda:', error);
-        showNoMatchMessage('Erro ao carregar agenda de jogos.');
+const getNextMatch = () => {
+  if (!state.agendaData || !Array.isArray(state.agendaData)) return null;
+
+  const now = new Date();
+  const currentYear = now.getFullYear();
+
+  for (const match of state.agendaData) {
+    const dateStr = match.data;
+    const timeStr = match.hora;
+
+    if (!dateStr || timeStr === "A definir") continue;
+
+    const dateMatch = dateStr.match(/(\d+)\s+(\w+)/);
+    if (!dateMatch) continue;
+
+    const day = parseInt(dateMatch[1]);
+    const monthStr = dateMatch[2].toLowerCase();
+
+    const monthMap = {
+      jan: 0,
+      fev: 1,
+      mar: 2,
+      abr: 3,
+      mai: 4,
+      jun: 5,
+      jul: 6,
+      ago: 7,
+      set: 8,
+      out: 9,
+      nov: 10,
+      dez: 11,
+    };
+
+    const month = monthMap[monthStr.substring(0, 3)];
+    if (month === undefined) continue;
+
+    const timeParts = timeStr.split(":");
+    const hours = parseInt(timeParts[0]) || 0;
+    const minutes = parseInt(timeParts[1]) || 0;
+
+    const matchDate = new Date(currentYear, month, day, hours, minutes);
+
+    if (matchDate < now) {
+      matchDate.setFullYear(currentYear + 1);
     }
+
+    if (matchDate > now) {
+      return { ...match, dateObj: matchDate };
+    }
+  }
+
+  return null;
 };
 
 // ============================================
-// VERIFICAR JOGOS AO VIVO
+// RENDERIZAR ESTADO PRE-JOGO
 // ============================================
-const checkForLiveMatches = () => {
-    if (!state.agendaData || state.agendaData.length === 0) {
-        showNoMatchMessage('Carregando agenda de jogos...');
-        return;
-    }
+const renderPreMatchState = () => {
+  const nextMatch = getNextMatch();
+  const container = document.getElementById("live-match-container");
 
-    const now = new Date();
-    let foundLiveMatch = false;
+  if (!container) return;
 
-    // Procura por jogos que estão acontecendo agora
-    state.agendaData.forEach(jogo => {
-        if (!jogo.data || !jogo.hora || jogo.hora === 'A definir') return;
-        
-        try {
-            // Converter data do formato "dom., 25 jan."
-            const dateParts = jogo.data.split(' ');
-            if (dateParts.length < 3) return;
-            
-            const day = parseInt(dateParts[1]);
-            const monthName = dateParts[2].replace('.', '').toLowerCase();
-            
-            // Mapear mês para número
-            const months = {
-                'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
-                'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
-            };
-            
-            const month = months[monthName];
-            if (month === undefined) return;
-            
-            // Converter hora
-            const [hour, minute] = jogo.hora.split(':').map(num => parseInt(num));
-            if (isNaN(hour) || isNaN(minute)) return;
-            
-            // Criar data do jogo (assumindo ano atual)
-            const matchDate = new Date(now.getFullYear(), month, day, hour, minute);
-            
-            // Adicionar 2 horas para duração do jogo
-            const matchEnd = new Date(matchDate.getTime() + (2 * 60 * 60 * 1000));
-            
-            // Verificar se o jogo está acontecendo agora
-            if (now >= matchDate && now <= matchEnd) {
-                foundLiveMatch = true;
-                state.currentMatch = jogo;
-                
-                // Iniciar atualização ao vivo
-                startLiveUpdates();
-                
-                // Mostrar o placar
-                renderLiveMatch(jogo);
-                
-                // Verificar se precisa mostrar modal de redirecionamento
-                if (!state.isModalShown) {
-                    const timeSinceStart = now.getTime() - matchDate.getTime();
-                    // Mostrar modal se o jogo começou há menos de 5 minutos
-                    if (timeSinceStart < 5 * 60 * 1000) {
-                        showRedirectModal(jogo);
-                    }
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao processar data do jogo:', error, jogo);
-        }
-    });
-
-    if (!foundLiveMatch) {
-        // Verifica se há próximo jogo
-        const nextMatch = findNextMatch();
-        if (nextMatch) {
-            renderUpcomingMatch(nextMatch);
-        } else {
-            showNoMatchMessage('Não há jogos ao vivo no momento. Próximo jogo em breve.');
-        }
-    }
-};
-
-// ============================================
-// ENCONTRAR PRÓXIMO JOGO
-// ============================================
-const findNextMatch = () => {
-    if (!state.agendaData) return null;
-    
-    const now = new Date();
-    let closestMatch = null;
-    let closestTime = Infinity;
-
-    state.agendaData.forEach(jogo => {
-        if (!jogo.data || !jogo.hora || jogo.hora === 'A definir') return;
-        
-        try {
-            const dateParts = jogo.data.split(' ');
-            if (dateParts.length < 3) return;
-            
-            const day = parseInt(dateParts[1]);
-            const monthName = dateParts[2].replace('.', '').toLowerCase();
-            
-            const months = {
-                'jan': 0, 'fev': 1, 'mar': 2, 'abr': 3, 'mai': 4, 'jun': 5,
-                'jul': 6, 'ago': 7, 'set': 8, 'out': 9, 'nov': 10, 'dez': 11
-            };
-            
-            const month = months[monthName];
-            if (month === undefined) return;
-            
-            const [hour, minute] = jogo.hora.split(':').map(num => parseInt(num));
-            if (isNaN(hour) || isNaN(minute)) return;
-            
-            const matchDate = new Date(now.getFullYear(), month, day, hour, minute);
-            
-            // Se o jogo for no futuro
-            if (matchDate > now) {
-                const timeDiff = matchDate.getTime() - now.getTime();
-                if (timeDiff < closestTime) {
-                    closestTime = timeDiff;
-                    closestMatch = { ...jogo, matchDate };
-                }
-            }
-        } catch (error) {
-            console.error('Erro ao processar data do próximo jogo:', error);
-        }
-    });
-
-    return closestMatch;
-};
-
-// ============================================
-// MOSTRAR MENSAGEM SEM JOGO
-// ============================================
-const showNoMatchMessage = (message = 'Não há jogos ao vivo no momento.') => {
-    const container = document.getElementById('live-match-container');
-    const timeline = document.getElementById('timeline');
-    
-    if (container) {
-        container.innerHTML = `
-            <div class="no-match-message">
-                <div class="no-match-icon">
-                    <i class="fas fa-futbol"></i>
-                </div>
-                <h2 class="no-match-title">Nenhum Jogo ao Vivo</h2>
-                <p class="no-match-text">${message}</p>
-                <button class="btn btn-primary" onclick="loadAgendaData()">
-                    <i class="fas fa-sync-alt"></i>
-                    Atualizar
-                </button>
-            </div>
-        `;
-    }
-    
-    if (timeline) {
-        timeline.innerHTML = `
-            <div class="no-events-message">
-                <i class="fas fa-clock"></i>
-                <p>Nenhum jogo em andamento no momento.</p>
-            </div>
-        `;
-    }
-    
-    // Atualizar status
-    const statusIndicator = document.getElementById('match-status-indicator');
-    if (statusIndicator) {
-        statusIndicator.textContent = 'SEM JOGO';
-        statusIndicator.className = 'match-status waiting';
-    }
-    
-    // Parar atualizações ao vivo
-    stopLiveUpdates();
-};
-
-// ============================================
-// RENDERIZAR JOGO AO VIVO
-// ============================================
-const renderLiveMatch = (jogo) => {
-    const container = document.getElementById('live-match-container');
-    if (!container) return;
-
-    const isCruzeiroHome = jogo.mandante.toLowerCase().includes('cruzeiro');
-    const isCruzeiroAway = jogo.visitante.toLowerCase().includes('cruzeiro');
-    
+  if (!nextMatch) {
     container.innerHTML = `
+            <div class="live-match-container">
+                <div class="match-header">
+                    <div class="match-competition">
+                        <i class="fas fa-calendar-alt"></i>
+                        Aguardando próximo jogo
+                    </div>
+                    <div class="match-status waiting">SEM JOGOS</div>
+                </div>
+                <div class="pre-match-content">
+                    <div class="pre-match-icon"><i class="fas fa-futbol"></i></div>
+                    <h3>Nenhum jogo agendado</h3>
+                </div>
+            </div>
+        `;
+    return;
+  }
+
+  // Lógica corrigida: Respeita a ordem do JSON (Mandante vs Visitante)
+  const mandanteLogo = nextMatch.escudo_mandante 
+    ? `<img src="${nextMatch.escudo_mandante}" alt="${nextMatch.mandante}" class="team-logo">`
+    : `<div class="team-logo-placeholder"><i class="fas fa-shield-alt"></i></div>`;
+
+  const visitanteLogo = nextMatch.escudo_visitante
+    ? `<img src="${nextMatch.escudo_visitante}" alt="${nextMatch.visitante}" class="team-logo">`
+    : `<div class="team-logo-placeholder"><i class="fas fa-shield-alt"></i></div>`;
+
+  container.innerHTML = `
         <div class="live-match-container">
             <div class="match-header">
-                <div class="match-info-row">
-                    <div class="match-competition">
-                        <i class="fas fa-trophy"></i>
-                        <span>${escapeHtml(jogo.campeonato)}</span>
-                    </div>
-                    <div class="match-status live" id="current-match-status">AO VIVO</div>
+                <div class="match-competition">
+                    <i class="fas fa-trophy"></i>
+                    ${nextMatch.campeonato}
                 </div>
-                <div class="match-stadium">
-                    <i class="fas fa-location-dot"></i>
-                    <span>${escapeHtml(jogo.estadio || 'Estádio a definir')}</span>
-                </div>
+                <div class="match-status waiting">PRÓXIMO JOGO</div>
             </div>
-            
-            <div class="score-row">
-                <div class="team ${isCruzeiroHome ? 'team-cruzeiro' : ''}">
-                    <img src="${escapeHtml(jogo.escudo_mandante || CONFIG.defaultTeamLogo)}" 
-                         alt="${escapeHtml(jogo.mandante)}" 
-                         class="team-logo"
-                         onerror="this.src='${CONFIG.defaultTeamLogo}'">
-                    <div class="team-name">${escapeHtml(jogo.mandante)}</div>
-                </div>
-                
-                <div class="score-container">
-                    <div class="score" id="current-score">0 - 0</div>
-                    <div class="match-time" id="match-time">1º TEMPO - 0'</div>
-                </div>
-                
-                <div class="team ${isCruzeiroAway ? 'team-cruzeiro' : ''}">
-                    <img src="${escapeHtml(jogo.escudo_visitante || CONFIG.defaultTeamLogo)}" 
-                         alt="${escapeHtml(jogo.visitante)}" 
-                         class="team-logo"
-                         onerror="this.src='${CONFIG.defaultTeamLogo}'">
-                    <div class="team-name">${escapeHtml(jogo.visitante)}</div>
-                </div>
-            </div>
-            
-            <div class="stats-container">
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-title">Posse de Bola</div>
-                        <div class="stat-bars">
-                            <div class="stat-value" id="possession-home">50%</div>
-                            <div class="stat-bar-container">
-                                <div class="stat-bar" id="possession-bar-home" style="width: 50%"></div>
-                            </div>
-                            <div class="stat-value" id="possession-away">50%</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-title">Escanteios</div>
-                        <div class="stat-bars">
-                            <div class="stat-value" id="corners-home">0</div>
-                            <div class="stat-bar-container">
-                                <div class="stat-bar" id="corners-bar-home" style="width: 0%"></div>
-                            </div>
-                            <div class="stat-value" id="corners-away">0</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stat-card">
-                        <div class="stat-title">Finalizações</div>
-                        <div class="stat-bars">
-                            <div class="stat-value" id="shots-home">0</div>
-                            <div class="stat-bar-container">
-                                <div class="stat-bar" id="shots-bar-home" style="width: 0%"></div>
-                            </div>
-                            <div class="stat-value" id="shots-away">0</div>
-                        </div>
+            <div class="pre-match-content">
+                <div class="countdown-container">
+                    <div class="countdown-label">Faltam</div>
+                    <div class="countdown-timer" id="countdown-timer">
+                        <div class="countdown-unit"><span class="countdown-value" id="countdown-days">--</span><span class="countdown-text">dias</span></div>
+                        <div class="countdown-separator">:</div>
+                        <div class="countdown-unit"><span class="countdown-value" id="countdown-hours">--</span><span class="countdown-text">horas</span></div>
+                        <div class="countdown-separator">:</div>
+                        <div class="countdown-unit"><span class="countdown-value" id="countdown-minutes">--</span><span class="countdown-text">min</span></div>
+                        <div class="countdown-separator">:</div>
+                        <div class="countdown-unit"><span class="countdown-value" id="countdown-seconds">--</span><span class="countdown-text">seg</span></div>
                     </div>
                 </div>
-            </div>
+                <div class="pre-match-teams">
+                    <div class="team">
+                        ${mandanteLogo}
+                        <div class="team-name">${nextMatch.mandante}</div>
+                    </div>
+                    <div class="pre-match-vs">
+                        <span>VS</span>
+                        <div class="pre-match-date">${nextMatch.data}</div>
+                        <div class="pre-match-time">${nextMatch.hora}</div>
+                    </div>
+                    <div class="team">
+                        ${visitanteLogo}
+                        <div class="team-name">${nextMatch.visitante}</div>
+                    </div>
+                </div>
+                </div>
         </div>
     `;
-    
-    // Atualizar status
-    const statusIndicator = document.getElementById('match-status-indicator');
-    if (statusIndicator) {
-        statusIndicator.textContent = 'AO VIVO';
-        statusIndicator.className = 'match-status live';
-    }
+
+  startCountdown(nextMatch.dateObj);
+  updateStatusIndicator("AGUARDANDO");
 };
 
 // ============================================
-// RENDERIZAR PRÓXIMO JOGO
+// COUNTDOWN
 // ============================================
-const renderUpcomingMatch = (jogo) => {
-    const container = document.getElementById('live-match-container');
-    if (!container) return;
+const startCountdown = (targetDate) => {
+  if (state.countdownInterval) {
+    clearInterval(state.countdownInterval);
+  }
 
-    const isCruzeiroHome = jogo.mandante.toLowerCase().includes('cruzeiro');
-    const isCruzeiroAway = jogo.visitante.toLowerCase().includes('cruzeiro');
-    
-    // Calcular tempo até o jogo
+  const updateCountdown = () => {
     const now = new Date();
-    const timeDiff = jogo.matchDate.getTime() - now.getTime();
-    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-    
-    let timeUntil = '';
-    if (hours > 0) {
-        timeUntil = `${hours}h ${minutes}m`;
+    const diff = targetDate - now;
+
+    if (diff <= 0) {
+      clearInterval(state.countdownInterval);
+      fetchLiveData();
+      return;
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    const daysEl = document.getElementById("countdown-days");
+    const hoursEl = document.getElementById("countdown-hours");
+    const minutesEl = document.getElementById("countdown-minutes");
+    const secondsEl = document.getElementById("countdown-seconds");
+
+    if (daysEl) daysEl.textContent = String(days).padStart(2, "0");
+    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, "0");
+    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, "0");
+    if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, "0");
+  };
+
+  updateCountdown();
+  state.countdownInterval = setInterval(updateCountdown, 1000);
+};
+
+// ============================================
+// BUSCA DE DADOS (WEBHOOK n8n)
+// ============================================
+const fetchLiveData = async () => {
+  try {
+    const urlWithCacheBuster = `${CONFIG.webhookUrl}?t=${Date.now()}`;
+    const response = await fetch(urlWithCacheBuster, {
+      cache: "no-cache",
+      headers: { Accept: "application/json" },
+    });
+
+    if (!response.ok) throw new Error("Erro ao buscar dados");
+
+    const data = await response.json();
+
+    if (Array.isArray(data) && data.length > 0) {
+      const lancesValidos = data.filter(
+        (l) => l.lance_descricao && l.lance_descricao.trim() !== "",
+      );
+
+      if (lancesValidos.length > 0) {
+        state.matchStarted = true;
+        state.matchData = data;
+        extractTeamsFromData(data);
+        processMatchData(data);
+        updateTimeline(data);
+      } else {
+        state.matchStarted = false;
+        renderPreMatchState();
+        updateTimelinePreMatch();
+      }
     } else {
-        timeUntil = `${minutes} minutos`;
+      state.matchStarted = false;
+      renderPreMatchState();
+      updateTimelinePreMatch();
     }
-    
-    container.innerHTML = `
-        <div class="live-match-container">
-            <div class="match-header">
-                <div class="match-info-row">
-                    <div class="match-competition">
-                        <i class="fas fa-trophy"></i>
-                        <span>${escapeHtml(jogo.campeonato)}</span>
-                    </div>
-                    <div class="match-status upcoming">PRÓXIMO</div>
-                </div>
-                <div class="match-stadium">
-                    <i class="fas fa-location-dot"></i>
-                    <span>${escapeHtml(jogo.estadio || 'Estádio a definir')}</span>
-                </div>
-            </div>
-            
-            <div class="score-row">
-                <div class="team ${isCruzeiroHome ? 'team-cruzeiro' : ''}">
-                    <img src="${escapeHtml(jogo.escudo_mandante || CONFIG.defaultTeamLogo)}" 
-                         alt="${escapeHtml(jogo.mandante)}" 
-                         class="team-logo"
-                         onerror="this.src='${CONFIG.defaultTeamLogo}'">
-                    <div class="team-name">${escapeHtml(jogo.mandante)}</div>
-                </div>
-                
-                <div class="score-container">
-                    <div class="score">X - X</div>
-                    <div class="match-time">Começa em ${timeUntil}</div>
-                </div>
-                
-                <div class="team ${isCruzeiroAway ? 'team-cruzeiro' : ''}">
-                    <img src="${escapeHtml(jogo.escudo_visitante || CONFIG.defaultTeamLogo)}" 
-                         alt="${escapeHtml(jogo.visitante)}" 
-                         class="team-logo"
-                         onerror="this.src='${CONFIG.defaultTeamLogo}'">
-                    <div class="team-name">${escapeHtml(jogo.visitante)}</div>
-                </div>
-            </div>
-            
-            <div class="stats-container" style="text-align: center; padding: var(--space-6);">
-                <p style="color: var(--gray-600); margin-bottom: var(--space-4);">
-                    <i class="fas fa-clock"></i> Este jogo começará em ${timeUntil}
-                </p>
-                <button class="btn btn-primary" onclick="setReminder('${jogo.data}', '${jogo.hora}')">
-                    <i class="fas fa-bell"></i>
-                    Lembrar-me
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Atualizar status
-    const statusIndicator = document.getElementById('match-status-indicator');
-    if (statusIndicator) {
-        statusIndicator.textContent = 'AGUARDANDO';
-        statusIndicator.className = 'match-status waiting';
-    }
-    
-    // Limpar timeline
-    const timeline = document.getElementById('timeline');
-    if (timeline) {
-        timeline.innerHTML = `
-            <div class="no-events-message">
-                <i class="fas fa-clock"></i>
-                <p>Jogo ainda não começou. Volte mais tarde para acompanhar minuto a minuto.</p>
-            </div>
-        `;
-    }
+  } catch (error) {
+    console.error("Erro no Webhook:", error);
+    renderPreMatchState();
+    updateTimelinePreMatch();
+  }
 };
 
 // ============================================
-// ATUALIZAÇÕES AO VIVO
+// ATUALIZAR TIMELINE PRE-JOGO
+// ============================================
+const updateTimelinePreMatch = () => {
+  const container = document.getElementById("timeline-container");
+  const noEventsMessage = document.getElementById("no-events-message");
+
+  if (!container) return;
+
+  const existingItems = container.querySelectorAll(".timeline-item");
+  existingItems.forEach((item) => item.remove());
+
+  if (noEventsMessage) {
+    noEventsMessage.style.display = "block";
+    noEventsMessage.innerHTML = `
+            <i class="fas fa-clock"></i>
+            <p>O jogo ainda nao comecou. Aguarde o inicio da partida.</p>
+        `;
+  }
+};
+
+// ============================================
+// EXTRAIR INFORMACOES DOS TIMES DOS DADOS
+// ============================================
+const extractTeamsFromData = (lances) => {
+  lances.forEach((lance) => {
+    if (lance.lance_time && lance.lance_logo_time) {
+      const nomeTime = lance.lance_time.trim();
+      const isCruzeiro = nomeTime.toLowerCase().includes("cruzeiro");
+
+      if (isCruzeiro && !state.teamsInfo.cruzeiro.logo) {
+        state.teamsInfo.cruzeiro = {
+          name: nomeTime.replace(/Sub-20|sub-20/gi, "").trim(),
+          logo: lance.lance_logo_time,
+        };
+      } else if (!isCruzeiro && !state.teamsInfo.adversario.logo) {
+        state.teamsInfo.adversario = {
+          name: nomeTime.replace(/Sub-20|sub-20/gi, "").trim(),
+          logo: lance.lance_logo_time,
+        };
+      }
+    }
+  });
+};
+
+// ============================================
+// PROCESSAMENTO DOS DADOS DO JOGO
+// ============================================
+const processMatchData = (lances) => {
+  const lancesComDescricao = lances.filter(
+    (l) => l.lance_descricao && l.lance_descricao.trim() !== "",
+  );
+
+  if (lancesComDescricao.length === 0) return;
+
+  // Contar gols analisando APENAS a descricao (forma mais confiavel)
+  let golsCruzeiro = 0;
+  let golsAdversario = 0;
+
+  lancesComDescricao.forEach((l) => {
+    const desc = (l.lance_descricao || "").toLowerCase();
+
+    // Detectar se eh um lance de gol pela descricao
+    const isGolDescricao =
+      (desc.includes("goooo") && desc.includes("gol")) ||
+      desc.includes("balança a rede") ||
+      desc.includes("para abrir o marcador") ||
+      desc.includes("gol contra");
+
+    if (isGolDescricao) {
+      // Verificar de qual time eh o gol
+      if (desc.includes("gol contra")) {
+        // Gol contra: analisar quem sofreu
+        // "Bola toca nas costas de João Pedro" - João Pedro eh goleiro do São Paulo
+        // Logo, eh gol PRO Cruzeiro
+        if (desc.includes("joão pedro") || desc.includes("joao pedro")) {
+          golsCruzeiro++;
+        } else if (
+          l.lance_time &&
+          l.lance_time.toLowerCase().includes("cruzeiro")
+        ) {
+          // Se o lance_time eh Cruzeiro e eh gol contra, Cruzeiro sofreu
+          golsAdversario++;
+        } else {
+          // Se o lance_time eh adversario e eh gol contra, adversario sofreu
+          golsCruzeiro++;
+        }
+      } else if (desc.includes("cruzeiro") || desc.includes("cabuloso")) {
+        golsCruzeiro++;
+      } else if (
+        desc.includes("são paulo") ||
+        desc.includes("tricolor") ||
+        desc.includes("sao paulo")
+      ) {
+        golsAdversario++;
+      }
+    }
+  });
+
+  state.placar.cruzeiro = golsCruzeiro;
+  state.placar.adversario = golsAdversario;
+
+  // Determinar status e tempo do jogo
+  const lancesOrdenados = sortLances(lancesComDescricao);
+  const ultimoLance = lancesOrdenados[0];
+
+  let statusJogo = "AO VIVO";
+  let tempoJogo = ultimoLance ? ultimoLance.lance_tipo : "";
+
+  if (ultimoLance) {
+    const tipoLower = (ultimoLance.lance_tipo || "").toLowerCase();
+    const descLower = (ultimoLance.lance_descricao || "").toLowerCase();
+
+    if (
+      tipoLower.includes("fim") ||
+      descLower.includes("fim de jogo") ||
+      descLower.includes("apita o árbitro")
+    ) {
+      statusJogo = "ENCERRADO";
+    } else if (
+      tipoLower.includes("intervalo") ||
+      descLower.includes("fim de primeiro tempo")
+    ) {
+      statusJogo = "INTERVALO";
+    }
+  }
+
+  renderLiveMatch(statusJogo, tempoJogo);
+  updateStatusIndicator(statusJogo);
+
+  // Animacao de Gol
+  const totalGols = golsCruzeiro + golsAdversario;
+  if (totalGols > state.lastGoalCount && state.lastGoalCount !== 0) {
+    playGoalAnimation();
+  }
+  state.lastGoalCount = totalGols;
+};
+
+// ============================================
+// RENDERIZAR PLACAR
+// ============================================
+const renderLiveMatch = (status, tempo) => {
+  const container = document.getElementById("live-match-container");
+  if (!container) return;
+
+  const statusClass =
+    status === "ENCERRADO"
+      ? "finished"
+      : status === "INTERVALO"
+        ? "interval"
+        : "live";
+
+  const cruzeiroLogoHtml = state.teamsInfo.cruzeiro.logo
+    ? `<img src="${state.teamsInfo.cruzeiro.logo}" alt="${state.teamsInfo.cruzeiro.name || "Cruzeiro"}" class="team-logo">`
+    : `<div class="team-logo-placeholder"><i class="fas fa-shield-alt"></i></div>`;
+
+  const adversarioLogoHtml = state.teamsInfo.adversario.logo
+    ? `<img src="${state.teamsInfo.adversario.logo}" alt="${state.teamsInfo.adversario.name || "Adversario"}" class="team-logo">`
+    : `<div class="team-logo-placeholder"><i class="fas fa-shield-alt"></i></div>`;
+
+  container.innerHTML = `
+        <div class="live-match-container">
+            <div class="match-header">
+                <div class="match-competition">
+                    <i class="fas fa-trophy"></i>
+                    Copa Sao Paulo de Futebol Junior 2026 - Final
+                </div>
+                <div class="match-status ${statusClass}">${status}</div>
+            </div>
+            <div class="score-row">
+                <div class="team">
+                    ${cruzeiroLogoHtml}
+                    <div class="team-name">${state.teamsInfo.cruzeiro.name || "Cruzeiro"}</div>
+                </div>
+                <div class="score-container">
+                    <div class="score">${state.placar.cruzeiro} - ${state.placar.adversario}</div>
+                    <div class="match-time">${tempo || "Aguardando..."}</div>
+                </div>
+                <div class="team">
+                    ${adversarioLogoHtml}
+                    <div class="team-name">${state.teamsInfo.adversario.name || "Adversario"}</div>
+                </div>
+            </div>
+        </div>
+    `;
+};
+
+// ============================================
+// ATUALIZAR INDICADOR DE STATUS
+// ============================================
+const updateStatusIndicator = (status) => {
+  const statusIndicator = document.getElementById("match-status-indicator");
+  if (!statusIndicator) return;
+
+  statusIndicator.textContent = status;
+  statusIndicator.className = "match-status";
+
+  if (status === "ENCERRADO") {
+    statusIndicator.classList.add("finished");
+  } else if (status === "INTERVALO") {
+    statusIndicator.classList.add("interval");
+  } else if (status === "AGUARDANDO") {
+    statusIndicator.classList.add("waiting");
+  } else {
+    statusIndicator.classList.add("live");
+  }
+};
+
+// ============================================
+// FUNCAO PARA PARSEAR MINUTAGEM
+// ============================================
+const parseMinuto = (lanceTipo) => {
+  if (!lanceTipo) return { minuto: -999, tempo: 0, isEvento: false };
+
+  const texto = lanceTipo.toLowerCase().trim();
+
+  // Eventos de marco do jogo (ordem especifica)
+  if (texto.includes("pré") || texto.includes("pre")) {
+    return { minuto: -100, tempo: 0, isEvento: true };
+  }
+  if (texto.includes("começo do primeiro") || texto === "começo do 1°t") {
+    return { minuto: 0, tempo: 1, isEvento: true };
+  }
+  if (texto.includes("intervalo")) {
+    return { minuto: 46, tempo: 1, isEvento: true };
+  }
+  if (texto.includes("começo do segundo")) {
+    return { minuto: 0, tempo: 2, isEvento: true };
+  }
+  if (texto.includes("fim de jogo") || texto.includes("fim")) {
+    return { minuto: 100, tempo: 2, isEvento: true };
+  }
+  if (texto.includes("acréscimos") || texto.includes("acrescimos")) {
+    // Acréscimos - verificar se eh 1T ou 2T pelo contexto
+    if (texto.includes("1°t") || texto.includes("1t")) {
+      return { minuto: 45, tempo: 1, isEvento: true };
+    }
+    return { minuto: 45, tempo: 2, isEvento: true };
+  }
+
+  // Extrair minuto e tempo (ex: "35' - 2°T", "45' - 1°T")
+  const matchFull = texto.match(/(\d+)['′]?\s*[-–]?\s*(\d)[°º]?t/i);
+  if (matchFull) {
+    return {
+      minuto: parseInt(matchFull[1]),
+      tempo: parseInt(matchFull[2]),
+      isEvento: false,
+    };
+  }
+
+  // Apenas numero com apostrofo (ex: "35'")
+  const matchSimples = texto.match(/(\d+)['′]/);
+  if (matchSimples) {
+    return { minuto: parseInt(matchSimples[1]), tempo: 1, isEvento: false };
+  }
+
+  // Eventos sem minuto (VAR, Falta, etc.) - manter posicao original
+  return { minuto: -999, tempo: 0, isEvento: true };
+};
+
+// ============================================
+// FUNCAO PARA ORDENAR LANCES
+// ============================================
+const sortLances = (lances) => {
+  // Cria copia com indice original para manter ordem de eventos sem minuto
+  const lancesComIndice = lances.map((lance, index) => ({
+    ...lance,
+    _originalIndex: index,
+  }));
+
+  return lancesComIndice.sort((a, b) => {
+    const parseA = parseMinuto(a.lance_tipo);
+    const parseB = parseMinuto(b.lance_tipo);
+
+    // Primeiro: ordenar por tempo (2°T > 1°T > Pre)
+    if (parseA.tempo !== parseB.tempo) {
+      return parseB.tempo - parseA.tempo;
+    }
+
+    // Segundo: dentro do mesmo tempo, ordenar por minuto (maior primeiro)
+    if (parseA.minuto !== parseB.minuto) {
+      return parseB.minuto - parseA.minuto;
+    }
+
+    // Terceiro: se mesmo minuto, manter ordem original (indice menor = mais recente no array original)
+    return a._originalIndex - b._originalIndex;
+  });
+};
+
+// ============================================
+// ATUALIZAR TIMELINE (MINUTO A MINUTO)
+// ============================================
+const updateTimeline = (lances) => {
+  const container = document.getElementById("timeline-container");
+  const noEventsMessage = document.getElementById("no-events-message");
+
+  if (!container) return;
+
+  // Filtra lances validos (com descricao)
+  const lancesValidos = lances.filter(
+    (l) => l.lance_descricao && l.lance_descricao.trim() !== "",
+  );
+
+  if (lancesValidos.length === 0) {
+    if (noEventsMessage) noEventsMessage.style.display = "block";
+    return;
+  }
+
+  if (noEventsMessage) noEventsMessage.style.display = "none";
+
+  // Limpa container
+  const existingItems = container.querySelectorAll(".timeline-item");
+  existingItems.forEach((item) => item.remove());
+
+  // Ordenar lances (mais recente primeiro)
+  const lancesOrdenados = sortLances(lancesValidos);
+
+  // Criar elementos da timeline
+  lancesOrdenados.forEach((lance, index) => {
+    const desc = (lance.lance_descricao || "").toLowerCase();
+    const isGol =
+      desc.includes("goooo") ||
+      desc.includes("balança a rede") ||
+      desc.includes("gol contra");
+    const isCruzeiro =
+      lance.lance_time && lance.lance_time.toLowerCase().includes("cruzeiro");
+
+    const item = document.createElement("div");
+    item.className = "timeline-item";
+
+    if (isGol) item.classList.add("goal-event");
+    if (lance.lance_time) {
+      item.classList.add(
+        isCruzeiro ? "timeline-cruzeiro" : "timeline-adversario",
+      );
+    }
+
+    // Logo do time (so mostrar se existir)
+    const logoHtml = lance.lance_logo_time
+      ? `<img src="${lance.lance_logo_time}" alt="${lance.lance_time || "Time"}" class="timeline-team-logo">`
+      : "";
+
+    // Tipo do lance para exibicao
+    const tipoDisplay = getTipoDisplay(lance.lance_tipo, desc);
+
+    item.innerHTML = `
+            <div class="timeline-time">${lance.lance_tipo || ""}</div>
+            <div class="timeline-content">
+                <div class="timeline-header">
+                    ${logoHtml}
+                    <span class="timeline-type">${tipoDisplay}</span>
+                </div>
+                <div class="timeline-desc">${lance.lance_descricao}</div>
+                ${lance.lance_time ? `<div class="timeline-team">${lance.lance_time}</div>` : ""}
+            </div>
+        `;
+
+    // Animacao de entrada
+    item.style.opacity = "0";
+    item.style.transform = "translateY(-10px)";
+    container.appendChild(item);
+
+    setTimeout(() => {
+      item.style.transition = "all 0.3s ease";
+      item.style.opacity = "1";
+      item.style.transform = "translateY(0)";
+    }, index * 20);
+  });
+};
+
+// ============================================
+// OBTER TIPO PARA EXIBICAO
+// ============================================
+const getTipoDisplay = (lanceTipo, descLower) => {
+  if (!lanceTipo) return "Lance";
+
+  const tipo = lanceTipo.toLowerCase();
+
+  if (descLower.includes("goooo") || descLower.includes("balança a rede"))
+    return "GOL";
+  if (descLower.includes("gol contra")) return "GOL CONTRA";
+  if (tipo.includes("fim de jogo") || tipo.includes("fim"))
+    return "FIM DE JOGO";
+  if (tipo.includes("intervalo")) return "INTERVALO";
+  if (tipo.includes("começo")) return "INICIO";
+  if (tipo.includes("acréscimos") || tipo.includes("acrescimos"))
+    return "ACRESCIMOS";
+  if (tipo.includes("var")) return "VAR";
+  if (tipo.includes("pré") || tipo.includes("pre")) return "PRE-JOGO";
+
+  // Se tem minuto, mostrar o tipo original
+  const matchMinuto = tipo.match(/\d+['′]?\s*[-–]?\s*\d[°º]?t/i);
+  if (matchMinuto) {
+    // Verificar descricao para tipo especifico
+    if (descLower.includes("substituição") || descLower.includes("entra:"))
+      return "SUBSTITUICAO";
+    if (descLower.includes("cartão amarelo")) return "CARTAO AMARELO";
+    if (descLower.includes("cartão vermelho")) return "CARTAO VERMELHO";
+    if (descLower.includes("falta")) return "FALTA";
+    if (descLower.includes("escanteio")) return "ESCANTEIO";
+    if (descLower.includes("impedimento")) return "IMPEDIMENTO";
+    if (descLower.includes("defesa")) return "DEFESA";
+    return "LANCE";
+  }
+
+  return lanceTipo;
+};
+
+// ============================================
+// ANIMACAO DE GOL
+// ============================================
+const playGoalAnimation = () => {
+  const goalAnimation = document.getElementById("goal-animation");
+  if (!goalAnimation) return;
+
+  goalAnimation.classList.add("active");
+
+  setTimeout(() => {
+    goalAnimation.classList.remove("active");
+  }, 3000);
+};
+
+// ============================================
+// ESTADO DE ERRO
+// ============================================
+const showErrorState = () => {
+  const container = document.getElementById("live-match-container");
+  if (!container) return;
+
+  container.innerHTML = `
+        <div class="live-match-container">
+            <div class="match-header">
+                <div class="match-competition">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Erro ao carregar dados
+                </div>
+            </div>
+            <div style="padding: 3rem; text-align: center; color: #64748b;">
+                <i class="fas fa-wifi" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
+                <p>Nao foi possivel conectar ao servidor.</p>
+                <p>Tentando reconectar automaticamente...</p>
+            </div>
+        </div>
+    `;
+};
+
+// ============================================
+// CONTROLE DE ATUALIZACOES
 // ============================================
 const startLiveUpdates = () => {
-    // Limpar intervalo anterior
-    if (state.liveUpdateInterval) {
-        clearInterval(state.liveUpdateInterval);
-    }
-    
-    // Iniciar novo intervalo
-    state.liveUpdateInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
-    
-    // Primeira atualização imediata
-    fetchLiveData();
+  if (state.liveUpdateInterval) clearInterval(state.liveUpdateInterval);
+  state.liveUpdateInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
 };
 
 const stopLiveUpdates = () => {
-    if (state.liveUpdateInterval) {
-        clearInterval(state.liveUpdateInterval);
-        state.liveUpdateInterval = null;
-    }
-};
-
-const fetchLiveData = async () => {
-    if (!state.currentMatch) return;
-    
-    try {
-        const response = await fetch(CONFIG.webhookUrl, { cache: 'no-cache' });
-        if (!response.ok) throw new Error('Erro ao buscar dados ao vivo');
-        
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-            const liveData = data[0];
-            updateMatchData(liveData);
-            updateTimeline(liveData);
-            state.lastUpdateTime = new Date();
-        }
-    } catch (error) {
-        console.error('Erro ao buscar dados ao vivo:', error);
-        // Usar dados simulados para demonstração
-        updateWithMockData();
-    }
+  if (state.liveUpdateInterval) clearInterval(state.liveUpdateInterval);
+  if (state.countdownInterval) clearInterval(state.countdownInterval);
 };
 
 // ============================================
-// ATUALIZAR DADOS DO JOGO
+// NAVEGACAO MOBILE
 // ============================================
-const updateMatchData = (liveData) => {
-    // Atualizar placar
-    const scoreElement = document.getElementById('current-score');
-    if (scoreElement && liveData['Gols Casa'] !== undefined && liveData['Gols fora'] !== undefined) {
-        const homeScore = parseInt(liveData['Gols Casa']) || 0;
-        const awayScore = parseInt(liveData['Gols fora']) || 0;
-        scoreElement.textContent = `${homeScore} - ${awayScore}`;
-        
-        // Verificar se houve gol
-        const totalGoals = homeScore + awayScore;
-        if (totalGoals > state.lastGoalCount) {
-            playGoalAnimation();
-            state.lastGoalCount = totalGoals;
-        }
-    }
-    
-    // Atualizar tempo
-    const timeElement = document.getElementById('match-time');
-    if (timeElement && liveData['Tempo_Jogo']) {
-        timeElement.textContent = liveData['Tempo_Jogo'];
-    }
-    
-    // Atualizar estatísticas
-    updateStatistics(liveData);
-    
-    // Atualizar status
-    updateMatchStatus(liveData);
-};
+const initNavigation = () => {
+  const menuToggle = document.getElementById("menuToggle");
+  const navMenu = document.getElementById("nav-menu");
 
-const updateStatistics = (liveData) => {
-    // Posse de bola
-    const possessionHome = parseInt(liveData.Posse_Casa) || 50;
-    const possessionAway = 100 - possessionHome;
-    
-    const possessionHomeElement = document.getElementById('possession-home');
-    const possessionAwayElement = document.getElementById('possession-away');
-    const possessionBarHome = document.getElementById('possession-bar-home');
-    
-    if (possessionHomeElement) possessionHomeElement.textContent = `${possessionHome}%`;
-    if (possessionAwayElement) possessionAwayElement.textContent = `${possessionAway}%`;
-    if (possessionBarHome) possessionBarHome.style.width = `${possessionHome}%`;
-    
-    // Escanteios
-    const cornersHome = parseInt(liveData.Escanteios_Casa) || 0;
-    const cornersAway = parseInt(liveData.Escanteios_Fora) || 0;
-    const totalCorners = cornersHome + cornersAway;
-    const cornersPercentage = totalCorners > 0 ? Math.round((cornersHome / totalCorners) * 100) : 0;
-    
-    const cornersHomeElement = document.getElementById('corners-home');
-    const cornersAwayElement = document.getElementById('corners-away');
-    const cornersBarHome = document.getElementById('corners-bar-home');
-    
-    if (cornersHomeElement) cornersHomeElement.textContent = cornersHome;
-    if (cornersAwayElement) cornersAwayElement.textContent = cornersAway;
-    if (cornersBarHome) cornersBarHome.style.width = `${cornersPercentage}%`;
-    
-    // Finalizações
-    const shotsHome = parseInt(liveData.Finalizacoes_Casa) || 0;
-    const shotsAway = parseInt(liveData.Finalizacoes_Fora) || 0;
-    const totalShots = shotsHome + shotsAway;
-    const shotsPercentage = totalShots > 0 ? Math.round((shotsHome / totalShots) * 100) : 0;
-    
-    const shotsHomeElement = document.getElementById('shots-home');
-    const shotsAwayElement = document.getElementById('shots-away');
-    const shotsBarHome = document.getElementById('shots-bar-home');
-    
-    if (shotsHomeElement) shotsHomeElement.textContent = shotsHome;
-    if (shotsAwayElement) shotsAwayElement.textContent = shotsAway;
-    if (shotsBarHome) shotsBarHome.style.width = `${shotsPercentage}%`;
-};
-
-const updateMatchStatus = (liveData) => {
-    const statusElement = document.getElementById('current-match-status');
-    const globalStatusElement = document.getElementById('match-status-indicator');
-    
-    if (!statusElement || !globalStatusElement) return;
-    
-    const tempo = liveData['Tempo_Jogo'] || '';
-    
-    if (tempo.includes('Intervalo') || tempo.includes('Intervalo')) {
-        statusElement.textContent = 'INTERVALO';
-        statusElement.className = 'match-status half-time';
-        globalStatusElement.textContent = 'INTERVALO';
-        globalStatusElement.className = 'match-status half-time';
-    } else if (tempo.includes('Fim') || tempo.includes('Encerrado')) {
-        statusElement.textContent = 'FINALIZADO';
-        statusElement.className = 'match-status finished';
-        globalStatusElement.textContent = 'FINALIZADO';
-        globalStatusElement.className = 'match-status finished';
-        stopLiveUpdates();
-    } else if (tempo.includes('Acréscimo')) {
-        statusElement.textContent = 'ACRÉSCIMO';
-        statusElement.className = 'match-status live';
-        globalStatusElement.textContent = 'ACRÉSCIMO';
-        globalStatusElement.className = 'match-status live';
-    } else {
-        statusElement.textContent = 'AO VIVO';
-        statusElement.className = 'match-status live';
-        globalStatusElement.textContent = 'AO VIVO';
-        globalStatusElement.className = 'match-status live';
-    }
-};
-
-// ============================================
-// ATUALIZAR TIMELINE
-// ============================================
-const updateTimeline = (data) => {
-    const container = document.getElementById('timeline-container');
-    if (!container) return;
-
-    // Se o dado vier do n8n (array), ou se vier do mock (objeto com Lances_Texto)
-    const lances = Array.isArray(data) ? data : (data.Lances_Texto || []);
-
-    if (lances.length === 0) {
-        container.innerHTML = '<div class="loading-state">Aguardando início da partida...</div>';
-        return;
-    }
-
-    container.innerHTML = '';
-
-    lances.forEach(lance => {
-        const item = document.createElement('div');
-        item.className = 'timeline-item';
-        
-        // Se for objeto formatado pelo nó Code do n8n
-        const minuto = lance.lance_minuto || '0\'';
-        const tipo = lance.lance_tipo || 'Lance';
-        const descricao = lance.lance_descricao || lance; // 'lance' caso seja apenas string
-
-        item.innerHTML = `
-            <div class="timeline-time">${minuto}</div>
-            <div class="timeline-content">
-                <div class="timeline-type">${tipo}</div>
-                <div class="timeline-desc">${descricao}</div>
-            </div>
-        `;
-        container.appendChild(item);
+  if (menuToggle && navMenu) {
+    menuToggle.addEventListener("click", () => {
+      navMenu.classList.toggle("active");
+      const isExpanded = navMenu.classList.contains("active");
+      menuToggle.setAttribute("aria-expanded", isExpanded);
     });
-};
 
-// ============================================
-// ANIMAÇÃO DE GOL
-// ============================================
-const setupGoalAnimation = () => {
-    state.goalAnimation = lottie.loadAnimation({
-        container: document.getElementById('goal-animation-lottie'),
-        renderer: 'svg',
-        loop: false,
-        autoplay: false,
-        path: 'https://assets5.lottiefiles.com/packages/lf20_kdx2qcps.json' // Animação de gol
+    navMenu.querySelectorAll(".nav-link").forEach((link) => {
+      link.addEventListener("click", () => {
+        navMenu.classList.remove("active");
+        menuToggle.setAttribute("aria-expanded", "false");
+      });
     });
-    
-    // Esconder animação quando terminar
-    state.goalAnimation.addEventListener('complete', () => {
-        setTimeout(() => {
-            document.getElementById('goal-animation').classList.remove('active');
-        }, 1000);
-    });
+  }
 };
 
-const playGoalAnimation = () => {
-    const animation = document.getElementById('goal-animation');
-    if (animation && state.goalAnimation) {
-        animation.classList.add('active');
-        state.goalAnimation.goToAndPlay(0);
-        
-        // Som de gol (opcional)
-        try {
-            const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-winning-chimes-2015.mp3');
-            audio.volume = 0.3;
-            audio.play().catch(e => console.log('Áudio não pode ser reproduzido:', e));
-        } catch (e) {
-            console.log('Erro ao reproduzir áudio:', e);
-        }
-    }
-};
-
-// ============================================
-// MODAL DE REDIRECIONAMENTO
-// ============================================
-const showRedirectModal = (jogo) => {
-    const modal = document.getElementById('redirectModal');
-    const title = document.getElementById('modalMatchTitle');
-    const info = document.getElementById('modalMatchInfo');
-    const countdown = document.getElementById('modalCountdown');
-    
-    if (!modal || !title || !info || !countdown) return;
-    
-    state.isModalShown = true;
-    
-    // Configurar informações do jogo
-    title.textContent = `${jogo.mandante} vs ${jogo.visitante}`;
-    info.textContent = `O jogo do ${jogo.campeonato} está acontecendo agora!`;
-    
-    // Configurar contagem regressiva
-    let count = CONFIG.redirectCountdown;
-    countdown.textContent = count;
-    
-    state.redirectTimer = setInterval(() => {
-        count--;
-        countdown.textContent = count;
-        
-        if (count <= 0) {
-            clearInterval(state.redirectTimer);
-            redirectToLivePage();
-        }
-    }, 1000);
-    
-    // Mostrar modal
-    modal.classList.add('active');
-    
-    // Configurar botões
-    document.getElementById('goNowBtn').onclick = redirectToLivePage;
-    document.getElementById('cancelBtn').onclick = closeRedirectModal;
-    
-    // Salvar no localStorage que o modal foi mostrado
-    localStorage.setItem('cabuloso_redirect_shown', 'true');
-    localStorage.setItem('cabuloso_redirect_match', JSON.stringify({
-        match: `${jogo.mandante} vs ${jogo.visitante}`,
-        timestamp: new Date().getTime()
-    }));
-};
-
-const closeRedirectModal = () => {
-    const modal = document.getElementById('redirectModal');
-    if (modal) {
-        modal.classList.remove('active');
-    }
-    
-    if (state.redirectTimer) {
-        clearInterval(state.redirectTimer);
-        state.redirectTimer = null;
-    }
-    
-    state.isModalShown = false;
-};
-
-const redirectToLivePage = () => {
-    // Redirecionar para a página atual (já estamos nela)
-    // Em um cenário real, você pode redirecionar para uma URL específica
-    closeRedirectModal();
-    
-    // Rolar para o topo do placar
-    const liveMatch = document.getElementById('live-match-container');
-    if (liveMatch) {
-        liveMatch.scrollIntoView({ behavior: 'smooth' });
-    }
-};
-
-const checkRedirectFromStorage = () => {
-    const wasShown = localStorage.getItem('cabuloso_redirect_shown');
-    if (wasShown === 'true') {
-        // Limpar após 24 horas
-        const matchData = localStorage.getItem('cabuloso_redirect_match');
-        if (matchData) {
-            const data = JSON.parse(matchData);
-            const now = new Date().getTime();
-            const oneDay = 24 * 60 * 60 * 1000;
-            
-            if (now - data.timestamp > oneDay) {
-                localStorage.removeItem('cabuloso_redirect_shown');
-                localStorage.removeItem('cabuloso_redirect_match');
-            }
-        }
-    }
-};
-
-// ============================================
-// FUNÇÕES AUXILIARES
-// ============================================
-const escapeHtml = (text) => {
-    if (!text) return '';
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-};
-
-// Função para definir lembrete (simulada)
-const setReminder = (date, time) => {
-    alert(`Lembrete definido para: ${date} às ${time}\n\nVocê será notificado quando o jogo começar.`);
-};
-
-// Dados simulados para demonstração
-const updateWithMockData = () => {
-    if (!state.currentMatch) return;
-    
-    const mockData = {
-        'Gols Casa': Math.floor(Math.random() * 3),
-        'Gols fora': Math.floor(Math.random() * 3),
-        'Tempo_Jogo': `${Math.floor(Math.random() * 45)}'`,
-        'Posse_Casa': Math.floor(Math.random() * 30 + 35),
-        'Escanteios_Casa': Math.floor(Math.random() * 8),
-        'Escanteios_Fora': Math.floor(Math.random() * 8),
-        'Finalizacoes_Casa': Math.floor(Math.random() * 12),
-        'Finalizacoes_Fora': Math.floor(Math.random() * 12),
-        'Lances_Texto': [
-            'Cruzeiro ataca pelo lado direito',
-            'Escanteio para o Cruzeiro',
-            'Defesa afasta a bola',
-            'Falta marcada a favor do Cruzeiro'
-        ],
-        'Lances_Minutos': ['15', '23', '28', '35']
-    };
-    
-    updateMatchData(mockData);
-    updateTimeline(mockData);
-    
-    // Atualizar último tempo
-    state.lastUpdateTime = new Date();
-    
-    // Mostrar indicador de atualização
-    const statusIndicator = document.getElementById('match-status-indicator');
-    if (statusIndicator) {
-        const originalText = statusIndicator.textContent;
-        statusIndicator.textContent = 'ATUALIZANDO...';
-        
-        setTimeout(() => {
-            statusIndicator.textContent = originalText;
-        }, 1000);
-    }
-};
-
-
-// ============================================
-// EXPORTAÇÃO DE FUNÇÕES PARA USO GLOBAL
-// ============================================
-// Torna as funções disponíveis globalmente para uso em onclick
-window.loadAgendaData = loadAgendaData;
-window.setReminder = setReminder;
-window.checkForLiveMatches = checkForLiveMatches;
+// Expor funcoes globalmente
+window.fetchLiveData = fetchLiveData;
+window.playGoalAnimation = playGoalAnimation;
