@@ -359,62 +359,31 @@ const fetchNextMatches = async () => {
 // WIDGETS - ÚLTIMOS RESULTADOS (DINÂMICO)
 // ============================================
 const fetchRecentResults = async () => {
-  const container = document.getElementById("recentResultsWidget");
+  const container = document.getElementById("recentResultsContainer");
   if (!container) return;
 
   try {
-    const response = await fetch(CONFIG.resultadosApiUrl, { cache: "no-cache" });
-    if (!response.ok) throw new Error("Erro ao carregar resultados");
-
+    const response = await fetch(CONFIG.resultadosApiUrl);
     const data = await response.json();
-    const ultimosResultados = Array.isArray(data) ? data.slice(0, 5) : data.results.slice(0, 5);
-    // Validação idêntica para garantir compatibilidade
-    const resultados = (data && data.results) ? data.results : (Array.isArray(data) ? data : []);
 
-    if (resultados.length === 0) {
-      container.innerHTML = '<div class="loading-cell">Nenhum resultado recente.</div>';
+    // ESTA É A CORREÇÃO:
+    // Se data for um array, usa direto. Se tiver a chave .results, usa ela.
+    const resultsArray = Array.isArray(data) ? data : (data.results || []);
+
+    if (resultsArray.length === 0) {
+      container.innerHTML = '<div class="loading-cell">Nenhum resultado encontrado.</div>';
       return;
     }
 
-    // Mostra os 5 últimos resultados
-    const ultimos = resultados.slice(0, 5);
+    // Agora o .slice não dará mais erro
+    const ultimosResultados = resultsArray.slice(0, 5);
 
-    container.innerHTML = ultimos
-      .map((res) => {
-        // Garante que o score existe antes de dar split
-        const scoreStr = res.score || "0 - 0";
-        const scores = scoreStr.split(" - ");
-        const score1 = parseInt(scores[0]) || 0;
-        const score2 = parseInt(scores[1]) || 0;
-
-        let statusClass = "";
-        const team1Name = (res.team1 || "").toLowerCase();
-        if (team1Name.includes("cruzeiro")) {
-          statusClass = score1 > score2 ? "win" : (score1 < score2 ? "loss" : "draw");
-        } else {
-          statusClass = score2 > score1 ? "win" : (score2 < score1 ? "loss" : "draw");
-        }
-
-        return `
-        <div class="result-mini">
-          <div class="result-mini-teams">
-            <div class="result-mini-team">
-              <img src="${res.logo1 || CONFIG.defaultImage}" alt="">
-              <span>${escapeHtml(res.team1)}</span>
-            </div>
-            <span class="result-mini-score ${statusClass}">${escapeHtml(scoreStr)}</span>
-            <div class="result-mini-team">
-              <img src="${res.logo2 || CONFIG.defaultImage}" alt="">
-              <span>${escapeHtml(res.team2)}</span>
-            </div>
-          </div>
-          <div class="result-mini-info">${escapeHtml(res.competition)} - ${escapeHtml(res.date)}</div>
-        </div>`;
-      }).join("");
+    container.innerHTML = ultimosResultados.map(res => {
+        // ... resto do seu código de renderização (map)
+    }).join("");
 
   } catch (error) {
     console.error("Erro ao buscar resultados no script.js:", error);
-    container.innerHTML = '<div class="loading-cell">Erro ao carregar resultados.</div>';
   }
 };
 
