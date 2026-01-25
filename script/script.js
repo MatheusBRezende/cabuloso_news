@@ -366,7 +366,7 @@ const fetchRecentResults = async () => {
     const response = await fetch(CONFIG.resultadosApiUrl);
     const data = await response.json();
 
-    // Garante que funciona se for Array direto ou se estiver dentro de .results
+    // Correção para ler o objeto {"results": [...]}
     const resultsArray = Array.isArray(data) ? data : (data.results || []);
 
     if (resultsArray.length === 0) {
@@ -377,13 +377,16 @@ const fetchRecentResults = async () => {
     const ultimosResultados = resultsArray.slice(0, 5);
 
     container.innerHTML = ultimosResultados.map(res => {
-        const scoreStr = res.score || "v";
+        const scoreStr = res.score || "0 - 0";
         const isCruzeiroMandante = res.team1.toLowerCase().includes("cruzeiro");
         
-        // Lógica de cores (Vitória/Derrota) baseada no placar
+        // Lógica de cores baseada no placar
         let statusClass = "draw";
         if (scoreStr.includes("-")) {
-          const [s1, s2] = scoreStr.split("-").map(s => parseInt(s.trim()));
+          const parts = scoreStr.split("-").map(s => parseInt(s.trim()));
+          const s1 = parts[0];
+          const s2 = parts[1];
+          
           if (!isNaN(s1) && !isNaN(s2)) {
             if (s1 === s2) statusClass = "draw";
             else if (isCruzeiroMandante) {
