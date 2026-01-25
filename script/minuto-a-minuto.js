@@ -247,7 +247,8 @@ const fetchLiveData = async () => {
     if (!response.ok) throw new Error("Erro ao buscar dados");
 
     const data = await response.json();
-
+    state.allResults = Array.isArray(data) ? data : data.results;
+    
     if (Array.isArray(data) && data.length > 0) {
       const lancesValidos = data.filter(
         (l) => l.lance_descricao && l.lance_descricao.trim() !== "",

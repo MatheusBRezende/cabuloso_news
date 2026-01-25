@@ -367,7 +367,7 @@ const fetchRecentResults = async () => {
     if (!response.ok) throw new Error("Erro ao carregar resultados");
 
     const data = await response.json();
-    
+    const ultimosResultados = Array.isArray(data) ? data.slice(0, 5) : data.results.slice(0, 5);
     // Validação idêntica para garantir compatibilidade
     const resultados = (data && data.results) ? data.results : (Array.isArray(data) ? data : []);
 
