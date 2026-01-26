@@ -1,17 +1,15 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão Final Integrada com n8n v4
- * Correções: Placar vindo do servidor, Limpeza de texto e Cache-busting
+ * Versão Final v5 - Correção JSON Array e Funções Auxiliares
  */
 
 // ============================================
 // CONFIGURACAO
 // ============================================
 const CONFIG = {
-  // Seu link de produção do Hugging Face
   webhookUrl: "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
   agendaUrl: "backend/agenda_cruzeiro.json",
-  updateInterval: 10000, // 10 segundos para não sobrecarregar
+  updateInterval: 10000,
 };
 
 // Estado da aplicacao
@@ -38,19 +36,18 @@ const state = {
 document.addEventListener("DOMContentLoaded", () => {
   initNavigation();
   loadAgenda();
-  fetchLiveData(); // Busca imediata ao carregar
+  fetchLiveData();
   startLiveUpdates();
 });
 
 // ============================================
-// CARREGAR AGENDA DO CRUZEIRO
+// CARREGAR AGENDA
 // ============================================
 const loadAgenda = async () => {
   try {
     const response = await fetch(CONFIG.agendaUrl);
     if (response.ok) {
       state.agendaData = await response.json();
-      // Renderiza estado inicial, mas fetchLiveData pode sobrescrever se tiver jogo
       if (!state.matchStarted) renderPreMatchState();
     }
   } catch (error) {
@@ -59,18 +56,16 @@ const loadAgenda = async () => {
 };
 
 // ============================================
-// BUSCAR PROXIMO JOGO DA AGENDA
+// BUSCAR PROXIMO JOGO
 // ============================================
 const getNextMatch = () => {
   if (!state.agendaData || !Array.isArray(state.agendaData)) return null;
-
   const now = new Date();
   const currentYear = now.getFullYear();
 
   for (const match of state.agendaData) {
     const dateStr = match.data;
     const timeStr = match.hora;
-
     if (!dateStr || timeStr === "A definir") continue;
 
     const dateMatch = dateStr.match(/(\d+)\s+(\w+)/);
@@ -78,54 +73,39 @@ const getNextMatch = () => {
 
     const day = parseInt(dateMatch[1]);
     const monthStr = dateMatch[2].toLowerCase();
-
-    const monthMap = {
-      jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5,
-      jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11,
-    };
-
+    const monthMap = { jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5, jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11 };
+    
     const month = monthMap[monthStr.substring(0, 3)];
     if (month === undefined) continue;
 
     const timeParts = timeStr.split(":");
-    const hours = parseInt(timeParts[0]) || 0;
-    const minutes = parseInt(timeParts[1]) || 0;
+    const matchDate = new Date(currentYear, month, day, parseInt(timeParts[0])||0, parseInt(timeParts[1])||0);
 
-    const matchDate = new Date(currentYear, month, day, hours, minutes);
-
-    if (matchDate < now) {
-      matchDate.setFullYear(currentYear + 1);
-    }
-    
-    // Retorna o próximo jogo futuro
-    if (matchDate > now) {
-      return { ...match, dateObj: matchDate };
-    }
+    if (matchDate < now) matchDate.setFullYear(currentYear + 1);
+    if (matchDate > now) return { ...match, dateObj: matchDate };
   }
   return null;
 };
 
 // ============================================
-// BUSCA DE DADOS (WEBHOOK n8n) - CORRIGIDO
+// BUSCA DE DADOS (WEBHOOK) - CORRIGIDO
 // ============================================
 const fetchLiveData = async () => {
   try {
-    // Adicionado timestamp para evitar cache do navegador
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    
     if (!response.ok) throw new Error("Erro na comunicação com n8n");
     
-    const data = await response.json();
+    const rawData = await response.json();
     
-    // Tratamento robusto dos dados vindos do n8n
+    // CORREÇÃO CRÍTICA: O n8n manda [ {resultados: ...} ]
+    // Precisamos pegar o primeiro item se for um array
+    const data = Array.isArray(rawData) ? rawData[0] : rawData;
+    
     const lances = data.resultados || [];
     const placarServer = data.placar || { home: 0, away: 0 };
 
-    // Se temos lances, consideramos que o jogo está valendo (ou foi o último)
     if (lances.length > 0) {
       state.matchStarted = true;
-      
-      // Para o countdown se ele estiver rodando, pois o jogo "começou" (ou estamos testando)
       if (state.countdownInterval) clearInterval(state.countdownInterval);
 
       processMatchData(lances, placarServer);
@@ -133,40 +113,25 @@ const fetchLiveData = async () => {
       const loading = document.getElementById("loading-lances");
       if (loading) loading.classList.add("hidden");
     } else {
-      // Se não tem lances, mantém o estado de pré-jogo
-      if (state.matchStarted === false) {
-          renderPreMatchState();
-      }
+      // Se array vazio, chama a função que estava faltando
+      showEmptyState();
     }
   } catch (error) {
     console.error("Erro no Webhook:", error);
-    // Não mostra erro na tela se for apenas um falha pontual de rede, mantém o último estado
+    // showEmptyState(); // Opcional: mostrar vazio se der erro
   }
 };
 
 // ============================================
-// PROCESSAMENTO DOS DADOS DO JOGO
+// PROCESSAMENTO
 // ============================================
 const processMatchData = (lances, placarServer) => {
-  // Atualiza informações dos times baseado nos logos vindos do n8n
   extractTeamsFromData(lances);
-
-  // Lógica de Placar: Sincroniza com o n8n
-  // No seu teste (Atlético x Cruzeiro): Home=Atlético, Away=Cruzeiro
-  // O código tenta descobrir quem é o Cruzeiro na agenda
   
   const currentMatch = getNextMatch();
-  let isCruzeiroMandante = false;
+  // Lógica de teste Atlético x Cruzeiro (Atlético Mandante)
+  let isCruzeiroMandante = currentMatch ? currentMatch.mandante.toLowerCase().includes("cruzeiro") : false;
 
-  if (currentMatch) {
-      isCruzeiroMandante = currentMatch.mandante.toLowerCase().includes("cruzeiro");
-  } else {
-      // Fallback: Se não tem agenda, assume que Cruzeiro é VISITANTE (padrão conservador)
-      // ou tenta deduzir pelo nome do time nos lances
-      isCruzeiroMandante = false; 
-  }
-
-  // Atribui o placar correto
   if (isCruzeiroMandante) {
       state.placar.cruzeiro = placarServer.home;
       state.placar.adversario = placarServer.away;
@@ -175,7 +140,6 @@ const processMatchData = (lances, placarServer) => {
       state.placar.adversario = placarServer.home;
   }
 
-  // Detecta status do jogo pelo último lance
   const lancesOrdenados = sortLances(lances);
   const ultimoLance = lancesOrdenados[0];
   
@@ -185,7 +149,7 @@ const processMatchData = (lances, placarServer) => {
   if (ultimoLance) {
     const tipo = (ultimoLance.lance_tipo || "").toLowerCase();
     const desc = (ultimoLance.lance_descricao || "").toLowerCase();
-    tempoJogo = ultimoLance.lance_tipo; // Ex: "45' - 2T"
+    tempoJogo = ultimoLance.lance_tipo;
 
     if (tipo.includes("fim") || desc.includes("fim de jogo") || placarServer.status === "Finalizado") {
       statusJogo = "ENCERRADO";
@@ -196,11 +160,9 @@ const processMatchData = (lances, placarServer) => {
 
   renderLiveMatch(statusJogo, tempoJogo);
   updateStatusIndicator(statusJogo);
-  
-  // Renderiza a timeline
   updateTimeline(lancesOrdenados);
 
-  // Animação de Gol (se o placar mudou)
+  // Animação Gol
   const totalGols = state.placar.cruzeiro + state.placar.adversario;
   if (totalGols > state.lastGoalCount && state.lastGoalCount !== 0) {
     playGoalAnimation();
@@ -209,115 +171,80 @@ const processMatchData = (lances, placarServer) => {
 };
 
 // ============================================
-// EXTRAIR INFORMACOES DOS TIMES
+// AUXILIARES (Extração e Ordenação)
 // ============================================
 const extractTeamsFromData = (lances) => {
-  // Tenta preencher logos e nomes se estiverem vazios
   lances.forEach((lance) => {
     if (lance.lance_time && lance.lance_logo_time) {
       const nomeTime = lance.lance_time.trim();
       const isCruzeiro = nomeTime.toLowerCase().includes("cruzeiro");
-
       if (isCruzeiro) {
-        state.teamsInfo.cruzeiro = {
-          name: nomeTime.replace(/Sub-20|sub-20/gi, "").trim(),
-          logo: lance.lance_logo_time,
-        };
-      } else if (!isCruzeiro) {
-        state.teamsInfo.adversario = {
-          name: nomeTime.replace(/Sub-20|sub-20/gi, "").trim(),
-          logo: lance.lance_logo_time,
-        };
+        state.teamsInfo.cruzeiro = { name: nomeTime, logo: lance.lance_logo_time };
+      } else {
+        state.teamsInfo.adversario = { name: nomeTime, logo: lance.lance_logo_time };
       }
     }
   });
 };
 
+const sortLances = (lances) => lances; // Já vem ordenado do n8n
+
 // ============================================
-// RENDERIZAR PLACAR E CABEÇALHO
+// RENDERIZAÇÃO
 // ============================================
 const renderLiveMatch = (status, tempo) => {
   const container = document.getElementById("live-match-container");
   if (!container) return;
 
   const currentMatch = getNextMatch();
-  
-  // Definição de nomes e logos (Prioridade: Agenda > Lances > Padrão)
-  const nomeMandante = currentMatch ? currentMatch.mandante : 
-      (state.teamsInfo.cruzeiro.name.includes("Cruzeiro") ? "Adversário" : state.teamsInfo.cruzeiro.name); // Lógica invertida pro teste se sem agenda
-      
-  // Simplificação: Se temos dados de lances, usamos eles
-  let mandanteObj = { name: "Mandante", logo: "" };
-  let visitanteObj = { name: "Visitante", logo: "" };
+  // Fallback para teste sem agenda
+  let mandante = currentMatch ? {name: currentMatch.mandante, logo: currentMatch.escudo_mandante} 
+                              : (state.teamsInfo.adversario.name ? state.teamsInfo.adversario : {name: "Atlético-MG", logo: ""});
+  let visitante = currentMatch ? {name: currentMatch.visitante, logo: currentMatch.escudo_visitante} 
+                               : (state.teamsInfo.cruzeiro.name ? state.teamsInfo.cruzeiro : {name: "Cruzeiro", logo: ""});
 
-  if (currentMatch) {
-      mandanteObj = { name: currentMatch.mandante, logo: currentMatch.escudo_mandante };
-      visitanteObj = { name: currentMatch.visitante, logo: currentMatch.escudo_visitante };
-  } else {
-      // Modo sem agenda (Teste): Assume Cruzeiro e Adversário extraídos
-      // No teste Atlético x Cruzeiro -> Atlético é Mandante
-      mandanteObj = state.teamsInfo.adversario.name ? state.teamsInfo.adversario : {name: "Atlético-MG", logo: ""}; 
-      visitanteObj = state.teamsInfo.cruzeiro.name ? state.teamsInfo.cruzeiro : {name: "Cruzeiro", logo: ""};
-  }
-
-  // Placar: Cruzeiro é Visitante no teste
-  // Se Cruzeiro é visitante, placar.adversario (Home) - placar.cruzeiro (Away)
   const placarTexto = `${state.placar.adversario} - ${state.placar.cruzeiro}`;
 
   container.innerHTML = `
         <div class="live-match-container">
             <div class="match-header">
-                <div class="match-competition">
-                    <i class="fas fa-trophy"></i>
-                    ${currentMatch?.campeonato || "Acompanhamento ao Vivo"}
-                </div>
+                <div class="match-competition"><i class="fas fa-trophy"></i> ${currentMatch?.campeonato || "Ao Vivo"}</div>
                 <div class="match-status ${status === "ENCERRADO" ? "finished" : "live"}">${status}</div>
             </div>
             <div class="score-row">
                 <div class="team">
-                    <img src="${mandanteObj.logo || 'img/placeholder.png'}" class="team-logo" onerror="this.src='https://via.placeholder.com/60'">
-                    <div class="team-name">${mandanteObj.name}</div>
+                    <img src="${mandante.logo}" class="team-logo" onerror="this.style.display='none'">
+                    <div class="team-name">${mandante.name}</div>
                 </div>
                 <div class="score-container">
                     <div class="score">${placarTexto}</div>
-                    <div class="match-time">${tempo || "Ao Vivo"}</div>
+                    <div class="match-time">${tempo}</div>
                 </div>
                 <div class="team">
-                    <img src="${visitanteObj.logo || 'img/placeholder.png'}" class="team-logo" onerror="this.src='https://via.placeholder.com/60'">
-                    <div class="team-name">${visitanteObj.name}</div>
+                    <img src="${visitante.logo}" class="team-logo" onerror="this.style.display='none'">
+                    <div class="team-name">${visitante.name}</div>
                 </div>
             </div>
         </div>
     `;
 };
 
-// ============================================
-// RENDERIZAR TIMELINE (Minuto a Minuto)
-// ============================================
 const updateTimeline = (lances) => {
-  const container = document.getElementById("timeline-container"); // ID ajustado para seu HTML padrão
-  const backupContainer = document.getElementById("lances-container"); // ID alternativo
-  const target = container || backupContainer;
-  
+  const container = document.getElementById("timeline-container") || document.getElementById("lances-container");
   const noEventsMessage = document.getElementById("no-events-message");
-
-  if (!target) return;
+  
+  if (!container) return;
 
   if (lances.length === 0) {
-    if (noEventsMessage) noEventsMessage.style.display = "block";
-    return;
+      if (noEventsMessage) noEventsMessage.style.display = "block";
+      return;
   }
   if (noEventsMessage) noEventsMessage.style.display = "none";
 
-  // Renderização Limpa
-  target.innerHTML = lances.map((lance, index) => {
+  container.innerHTML = lances.map((lance, index) => {
     const isGol = lance.is_gol === "GOOOLLLLL";
-    // Identifica se é Cruzeiro para cor diferente
     const isCruzeiro = lance.lance_time && lance.lance_time.toLowerCase().includes("cruzeiro");
-    
-    // Tratamento de tipos especiais para CSS
-    let classeExtra = "";
-    if (isGol) classeExtra = "goal-event";
+    let classeExtra = isGol ? "goal-event" : "";
     if (isCruzeiro) classeExtra += " timeline-cruzeiro";
 
     return `
@@ -336,71 +263,62 @@ const updateTimeline = (lances) => {
 };
 
 // ============================================
-// FUNÇÕES AUXILIARES DE ORDENAÇÃO
+// FUNÇÕES QUE FALTAVAM (CORREÇÃO DO ERRO)
 // ============================================
-const parseMinuto = (lanceTipo) => {
-  if (!lanceTipo) return { minuto: -999, tempo: 0 };
-  const texto = lanceTipo.toLowerCase().trim();
-  
-  if (texto.includes("fim")) return { minuto: 100, tempo: 2 };
-  if (texto.includes("intervalo")) return { minuto: 46, tempo: 1 };
-  
-  const match = texto.match(/(\d+)/);
-  if (match) return { minuto: parseInt(match[1]), tempo: texto.includes("2") ? 2 : 1 };
-  
-  return { minuto: 0, tempo: 0 };
+
+// 1. A função que causava o erro ReferenceError
+const showEmptyState = () => {
+    const container = document.getElementById("timeline-container") || document.getElementById("lances-container");
+    const noEventsMessage = document.getElementById("no-events-message");
+    
+    // Se ainda não começou o jogo e não tem dados
+    if (container) container.innerHTML = "";
+    if (noEventsMessage) {
+        noEventsMessage.style.display = "block";
+        noEventsMessage.innerHTML = "<p>Aguardando início da partida ou lances...</p>";
+    } else if (container) {
+        container.innerHTML = "<div style='text-align:center; padding:20px; color:#888;'>Aguardando lances...</div>";
+    }
+    
+    if (!state.matchStarted) renderPreMatchState();
 };
 
-const sortLances = (lances) => {
-  return lances.sort((a, b) => {
-    // Mantém a ordem que vem do n8n (geralmente já é a correta: mais recente em cima)
-    // Se precisar forçar: return parseMinuto(b.lance_tipo).minuto - parseMinuto(a.lance_tipo).minuto;
-    return 0; 
-  });
-};
-
-// ============================================
-// PRE-MATCH E STATUS (Legado mantido para compatibilidade)
-// ============================================
 const renderPreMatchState = () => {
-  const nextMatch = getNextMatch();
-  const container = document.getElementById("live-match-container");
-  if (!container) return;
-  
-  if (!nextMatch) {
-      container.innerHTML = `<div class="live-match-container"><div class="match-status waiting">SEM JOGOS AGENDADOS</div></div>`;
-      return;
-  }
-  
-  // Renderiza Countdown normal...
-  // (Mantive simplificado aqui para focar no ao vivo, mas usa lógica padrão)
-  container.innerHTML = `
-    <div class="live-match-container">
-        <div class="match-header">
-            <div class="match-competition">${nextMatch.campeonato}</div>
-            <div class="match-status waiting">EM BREVE</div>
-        </div>
-        <div class="pre-match-content">
-            <h3>${nextMatch.mandante} x ${nextMatch.visitante}</h3>
-            <div id="countdown-timer" class="countdown-timer">Carregando...</div>
-        </div>
-    </div>`;
-  startCountdown(nextMatch.dateObj);
+    const nextMatch = getNextMatch();
+    const container = document.getElementById("live-match-container");
+    if (!container) return;
+
+    if (!nextMatch) {
+        container.innerHTML = `<div class="live-match-container"><div class="match-status waiting">SEM JOGOS</div></div>`;
+        return;
+    }
+    
+    container.innerHTML = `
+      <div class="live-match-container">
+          <div class="match-header">
+              <div class="match-competition">${nextMatch.campeonato}</div>
+              <div class="match-status waiting">EM BREVE</div>
+          </div>
+          <div class="pre-match-content" style="text-align:center;">
+              <h3 style="color:#fff; margin-bottom:10px;">${nextMatch.mandante} x ${nextMatch.visitante}</h3>
+              <div id="countdown-timer" class="countdown-timer" style="font-size:1.5rem; font-weight:bold; color:#fbbf24;">Carregando...</div>
+          </div>
+      </div>`;
+    startCountdown(nextMatch.dateObj);
 };
 
 const startCountdown = (targetDate) => {
     if (state.countdownInterval) clearInterval(state.countdownInterval);
     const update = () => {
-        const now = new Date();
-        const diff = targetDate - now;
+        const diff = targetDate - new Date();
         const el = document.getElementById("countdown-timer");
         if (el) {
             if (diff <= 0) {
                 el.innerText = "A bola vai rolar!";
                 fetchLiveData(); 
             } else {
-                const h = Math.floor(diff / (1000 * 60 * 60));
-                const m = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+                const h = Math.floor(diff / 36e5);
+                const m = Math.floor((diff % 36e5) / 6e4);
                 el.innerText = `Faltam ${h}h ${m}m`;
             }
         }
@@ -410,19 +328,11 @@ const startCountdown = (targetDate) => {
 };
 
 const updateStatusIndicator = (status) => {
-  const el = document.getElementById("match-status-indicator");
-  if (el) {
-      el.innerText = status;
-      el.className = `match-status ${status === "ENCERRADO" ? "finished" : "live"}`;
-  }
-};
-
-const initNavigation = () => {
-  const menuToggle = document.getElementById("menuToggle");
-  const navMenu = document.getElementById("nav-menu");
-  if (menuToggle && navMenu) {
-    menuToggle.addEventListener("click", () => navMenu.classList.toggle("active"));
-  }
+    const el = document.getElementById("match-status-indicator");
+    if (el) {
+        el.innerText = status;
+        el.className = `match-status ${status === "ENCERRADO" ? "finished" : "live"}`;
+    }
 };
 
 const playGoalAnimation = () => {
@@ -433,8 +343,13 @@ const playGoalAnimation = () => {
     }
 };
 
-// Controle de loop
+const initNavigation = () => {
+    const t = document.getElementById("menuToggle");
+    const n = document.getElementById("nav-menu");
+    if (t && n) t.addEventListener("click", () => n.classList.toggle("active"));
+};
+
 const startLiveUpdates = () => {
-  if (state.liveUpdateInterval) clearInterval(state.liveUpdateInterval);
-  state.liveUpdateInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
+    if (state.liveUpdateInterval) clearInterval(state.liveUpdateInterval);
+    state.liveUpdateInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
 };
