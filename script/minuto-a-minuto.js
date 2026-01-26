@@ -237,42 +237,34 @@ const startCountdown = (targetDate) => {
 // ============================================
 const fetchLiveData = async () => {
   try {
-    const urlWithCacheBuster = `${CONFIG.webhookUrl}?t=${Date.now()}`;
-    const response = await fetch(urlWithCacheBuster, {
-      cache: "no-cache",
-      headers: { Accept: "application/json" },
-    });
-
+    const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
     if (!response.ok) throw new Error("Erro ao buscar dados");
-
-    const data = await response.json();
-    state.allResults = Array.isArray(data) ? data : data.results;
     
-    if (Array.isArray(data) && data.length > 0) {
-      const lancesValidos = data.filter(
-        (l) => l.lance_descricao && l.lance_descricao.trim() !== "",
-      );
+    const data = await response.json();
+    
+    // 1. Pega os lances e o placar do novo formato do n8n
+    const lancesValidos = data.resultados || [];
+    const placarReal = data.placar || { home: 0, away: 0 };
 
-      if (lancesValidos.length > 0) {
-        state.matchStarted = true;
-        state.matchData = data;
-        extractTeamsFromData(data);
-        processMatchData(data);
-        updateTimeline(data);
-      } else {
-        state.matchStarted = false;
-        renderPreMatchState();
-        updateTimelinePreMatch();
-      }
+    if (lancesValidos.length > 0) {
+      state.matchStarted = true;
+      
+      // 2. Atualiza o placar no estado (ajusta quem é home/away)
+      // Se o Cruzeiro for o visitante na agenda, ele pega placarReal.away
+      state.placar.cruzeiro = (state.teamsInfo.cruzeiro.name === HOME_TEAM) ? placarReal.home : placarReal.away;
+      state.placar.adversario = (state.teamsInfo.cruzeiro.name === HOME_TEAM) ? placarReal.away : placarReal.home;
+
+      // 3. Renderiza na tela
+      renderLances(lancesValidos);
+      updatePlacarUI();
+      
+      document.getElementById("loading-lances").classList.add("hidden");
     } else {
-      state.matchStarted = false;
-      renderPreMatchState();
-      updateTimelinePreMatch();
+      showEmptyState();
     }
   } catch (error) {
     console.error("Erro no Webhook:", error);
-    renderPreMatchState();
-    updateTimelinePreMatch();
+    showErrorState();
   }
 };
 
