@@ -359,33 +359,38 @@ const fetchNextMatches = async () => {
 // WIDGETS - ÚLTIMOS RESULTADOS (DINÂMICO)
 // ============================================
 const fetchRecentResults = async () => {
-  const container = document.getElementById("recentResultsContainer");
-  if (!container) return;
+  // AQUI ESTAVA O ERRO: Mudamos de "recentResultsContainer" para "recentResultsWidget"
+  const container = document.getElementById("recentResultsWidget"); 
+  
+  if (!container) {
+    console.error("ERRO: Elemento 'recentResultsWidget' não encontrado no HTML.");
+    return;
+  }
 
   try {
-    const response = await fetch(CONFIG.resultadosApiUrl);
-    const data = await response.json();
+    const response = await fetch(`${CONFIG.resultadosApiUrl}?v=${Date.now()}`);
+    
+    if (!response.ok) throw new Error("Erro ao carregar arquivo de resultados");
 
-    // Correção para ler o objeto {"results": [...]}
+    const data = await response.json();
     const resultsArray = Array.isArray(data) ? data : (data.results || []);
 
     if (resultsArray.length === 0) {
-      container.innerHTML = '<div class="loading-cell">Nenhum resultado encontrado.</div>';
+      container.innerHTML = '<div class="loading-cell">Nenhum resultado.</div>';
       return;
     }
 
+    // Pega apenas os 5 últimos
     const ultimosResultados = resultsArray.slice(0, 5);
 
     container.innerHTML = ultimosResultados.map(res => {
         const scoreStr = res.score || "0 - 0";
-        const isCruzeiroMandante = res.team1.toLowerCase().includes("cruzeiro");
+        // Verifica se Cruzeiro é o time 1 ou 2 para pintar a bolinha de verde/vermelho
+        const isCruzeiroMandante = (res.team1 || "").toLowerCase().includes("cruzeiro");
         
-        // Lógica de cores baseada no placar
-        let statusClass = "draw";
+        let statusClass = "draw"; // Padrão empate
         if (scoreStr.includes("-")) {
-          const parts = scoreStr.split("-").map(s => parseInt(s.trim()));
-          const s1 = parts[0];
-          const s2 = parts[1];
+          const [s1, s2] = scoreStr.split("-").map(s => parseInt(s.trim()));
           
           if (!isNaN(s1) && !isNaN(s2)) {
             if (s1 === s2) statusClass = "draw";
@@ -401,22 +406,22 @@ const fetchRecentResults = async () => {
         <div class="result-mini">
           <div class="result-mini-teams">
             <div class="result-mini-team">
-              <img src="${res.logo1 || CONFIG.defaultImage}" alt="${res.team1}">
+              <img src="${escapeHtml(res.logo1 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team1)}">
               <span>${escapeHtml(res.team1)}</span>
             </div>
             <span class="result-mini-score ${statusClass}">${escapeHtml(scoreStr)}</span>
             <div class="result-mini-team">
-              <img src="${res.logo2 || CONFIG.defaultImage}" alt="${res.team2}">
+              <img src="${escapeHtml(res.logo2 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team2)}">
               <span>${escapeHtml(res.team2)}</span>
             </div>
           </div>
-          <div class="result-mini-info">${escapeHtml(res.competition)} - ${escapeHtml(res.date)}</div>
+          <div class="result-mini-info">${escapeHtml(res.competition)}</div>
         </div>`;
     }).join("");
 
   } catch (error) {
-    console.error("Erro ao buscar resultados no script.js:", error);
-    container.innerHTML = '<div class="loading-cell">Erro ao carregar resultados.</div>';
+    console.error("Erro resultados:", error);
+    container.innerHTML = '<div class="loading-cell">Indisponível</div>';
   }
 };
 
