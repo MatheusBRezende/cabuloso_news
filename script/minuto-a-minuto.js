@@ -1,6 +1,6 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão Final Corrigida: Erro JSON + Próximo Jogo + Logos
+ * Versão Melhorada: Contador Premium com Dias, Horas, Minutos e Segundos
  */
 
 // ============================================
@@ -92,7 +92,7 @@ const fetchLiveData = async () => {
 };
 
 // ============================================
-// LÓGICA DO PRÓXIMO JOGO E CONTADOR
+// LÓGICA DO PRÓXIMO JOGO E CONTADOR MELHORADO
 // ============================================
 const getNextMatch = () => {
   if (!state.agendaData || !Array.isArray(state.agendaData)) return null;
@@ -113,7 +113,7 @@ const getNextMatch = () => {
       const [hour, min] = match.hora.split(":").map(Number);
       
       const matchDate = new Date(currentYear, month, day, hour || 0, min || 0);
-      if (matchDate < new Date(now.getTime() - 10800000)) matchDate.setFullYear(currentYear + 1); // Se já passou muito tempo, joga pro ano que vem
+      if (matchDate < new Date(now.getTime() - 10800000)) matchDate.setFullYear(currentYear + 1);
       
       return { ...match, dateObj: matchDate };
     } catch (e) { return null; }
@@ -122,27 +122,62 @@ const getNextMatch = () => {
   return matches.length > 0 ? matches[0] : null;
 };
 
+// Função para formatar o tempo restante
+const formatTimeRemaining = (diff) => {
+  if (diff <= 0) {
+    return { days: 0, hours: 0, minutes: 0, seconds: 0, isStarting: true };
+  }
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+  return { days, hours, minutes, seconds, isStarting: false };
+};
+
+// Função para atualizar o countdown visualmente
+const updateCountdownDisplay = (time) => {
+  const daysEl = document.getElementById("countdown-days");
+  const hoursEl = document.getElementById("countdown-hours");
+  const minutesEl = document.getElementById("countdown-minutes");
+  const secondsEl = document.getElementById("countdown-seconds");
+  const wrapperEl = document.getElementById("countdown-wrapper");
+
+  if (time.isStarting) {
+    if (wrapperEl) {
+      wrapperEl.innerHTML = `
+        <div class="countdown-starting">
+          <div class="countdown-starting-text">
+            <i class="fas fa-futbol fa-spin" style="margin-right: 12px;"></i>
+            O JOGO VAI COMEÇAR!
+          </div>
+        </div>
+      `;
+    }
+    return;
+  }
+
+  if (daysEl) daysEl.textContent = String(time.days).padStart(2, "0");
+  if (hoursEl) hoursEl.textContent = String(time.hours).padStart(2, "0");
+  if (minutesEl) minutesEl.textContent = String(time.minutes).padStart(2, "0");
+  if (secondsEl) secondsEl.textContent = String(time.seconds).padStart(2, "0");
+};
+
 const startCountdown = (targetDate) => {
   if (state.countdownInterval) clearInterval(state.countdownInterval);
   
   const update = () => {
     const now = new Date();
     const diff = targetDate - now;
-    const el = document.getElementById("countdown-timer");
+    const time = formatTimeRemaining(diff);
 
-    if (!el) return;
+    updateCountdownDisplay(time);
 
-    if (diff <= 0) {
-      el.innerText = "O JOGO VAI COMEÇAR!";
+    if (time.isStarting) {
       clearInterval(state.countdownInterval);
-      fetchLiveData();
-      return;
+      setTimeout(() => fetchLiveData(), 1000);
     }
-
-    const h = Math.floor(diff / 36e5);
-    const m = Math.floor((diff % 36e5) / 6e4);
-    const s = Math.floor((diff % 6e4) / 1000);
-    el.innerText = `Começa em: ${h}h ${m}m ${s}s`;
   };
 
   update();
@@ -156,34 +191,83 @@ const renderPreMatchState = () => {
   
   if (!container || !nextMatch) return;
 
+  // Formatar data de exibição
+  const matchDate = nextMatch.dateObj;
+  const dateOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+  const formattedDate = matchDate.toLocaleDateString('pt-BR', dateOptions);
+  const formattedTime = nextMatch.hora;
+
   container.innerHTML = `
     <div class="live-match-container">
       <div class="match-header">
-        <div class="match-competition"><i class="fas fa-calendar"></i> Próxima Partida</div>
+        <div class="match-competition">
+          <i class="fas fa-calendar-alt"></i> 
+          <span>Próxima Partida</span>
+        </div>
         <div class="match-status waiting">AGUARDANDO</div>
       </div>
+      
       <div class="score-row">
         <div class="team">
-          <img src="${nextMatch.escudo_mandante}" class="team-logo" onerror="this.src='assets/logo.png'">
+          <img src="${nextMatch.escudo_mandante}" class="team-logo" alt="${nextMatch.mandante}" onerror="this.src='assets/logo.png'">
           <div class="team-name">${nextMatch.mandante}</div>
         </div>
         <div class="score-container">
           <div class="score">VS</div>
-          <div id="countdown-timer" class="match-time">Calculando...</div>
+          <div class="match-time">
+            <i class="fas fa-clock" style="margin-right: 6px;"></i>
+            ${formattedTime}
+          </div>
         </div>
         <div class="team">
-          <img src="${nextMatch.escudo_visitante}" class="team-logo" onerror="this.src='assets/logo.png'">
+          <img src="${nextMatch.escudo_visitante}" class="team-logo" alt="${nextMatch.visitante}" onerror="this.src='assets/logo.png'">
           <div class="team-name">${nextMatch.visitante}</div>
+        </div>
+      </div>
+
+      <div id="countdown-wrapper" class="countdown-wrapper">
+        <div class="countdown-label">
+          <i class="fas fa-stopwatch" style="margin-right: 8px;"></i>
+          Tempo para o início
+        </div>
+        <div class="countdown-grid">
+          <div class="countdown-unit">
+            <span id="countdown-days" class="countdown-value">00</span>
+            <span class="countdown-text">Dias</span>
+          </div>
+          <span class="countdown-separator">:</span>
+          <div class="countdown-unit">
+            <span id="countdown-hours" class="countdown-value">00</span>
+            <span class="countdown-text">Horas</span>
+          </div>
+          <span class="countdown-separator">:</span>
+          <div class="countdown-unit">
+            <span id="countdown-minutes" class="countdown-value">00</span>
+            <span class="countdown-text">Min</span>
+          </div>
+          <span class="countdown-separator">:</span>
+          <div class="countdown-unit">
+            <span id="countdown-seconds" class="countdown-value">00</span>
+            <span class="countdown-text">Seg</span>
+          </div>
         </div>
       </div>
     </div>
   `;
 
   if (timeline) {
-    timeline.innerHTML = `<div class="no-events-message"><p>O minuto a minuto começará assim que a bola rolar!</p></div>`;
+    timeline.innerHTML = `
+      <div class="no-events-message">
+        <div class="no-events-icon">
+          <i class="fas fa-futbol"></i>
+        </div>
+        <p>O minuto a minuto começará assim que a bola rolar!</p>
+        <span>${formattedDate} às ${formattedTime}</span>
+      </div>
+    `;
   }
 
-  startCountdown(nextMatch.dateObj);
+  startCountdown(matchDate);
 };
 
 // ============================================
@@ -203,7 +287,7 @@ const isRealGoal = (lance) => {
 };
 
 const processMatchData = (lances) => {
-  const lancesOrdenados = lances; // Já vem ordenado do n8n
+  const lancesOrdenados = lances;
   const statusEl = document.getElementById("match-status-indicator");
   
   // Atualiza Logos conforme o texto para evitar erro de troca de lado
@@ -218,6 +302,7 @@ const processMatchData = (lances) => {
   if (statusEl) {
       const isFim = lancesOrdenados[0].lance_descricao.toLowerCase().includes("fim de jogo");
       statusEl.innerText = isFim ? "ENCERRADO" : "AO VIVO";
+      statusEl.className = `match-status ${isFim ? 'finished' : 'live'}`;
   }
 };
 
@@ -232,8 +317,8 @@ const updateTimeline = (lances) => {
         <div class="timeline-time">${lance.lance_tipo}</div>
         <div class="timeline-content">
           <div class="timeline-header">
-            <img src="${lance.logo_final || lance.lance_logo_time}" class="timeline-team-logo" onerror="this.src='assets/logo.png'">
-            <span class="timeline-type">${ehGol ? 'GOL!' : 'LANCE'}</span>
+            <img src="${lance.logo_final || lance.lance_logo_time}" class="timeline-team-logo" alt="Time" onerror="this.src='assets/logo.png'">
+            <span class="timeline-type">${ehGol ? '⚽ GOL!' : 'LANCE'}</span>
           </div>
           <div class="timeline-desc">${lance.lance_descricao}</div>
         </div>
@@ -248,9 +333,16 @@ const showEmptyState = () => {
 };
 
 const initNavigation = () => {
-  const t = document.getElementById("menuToggle");
-  const n = document.getElementById("nav-menu");
-  if (t && n) t.addEventListener("click", () => n.classList.toggle("active"));
+  const toggle = document.getElementById("menuToggle");
+  const nav = document.getElementById("nav-menu");
+  
+  if (toggle && nav) {
+    toggle.addEventListener("click", () => {
+      nav.classList.toggle("active");
+      const isExpanded = nav.classList.contains("active");
+      toggle.setAttribute("aria-expanded", isExpanded);
+    });
+  }
 };
 
 const startLiveUpdates = () => {

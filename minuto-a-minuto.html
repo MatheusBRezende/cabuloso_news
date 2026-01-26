@@ -15,7 +15,7 @@
 
     <!-- Fontes -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -113,10 +113,12 @@
     <section class="hero" aria-labelledby="hero-title">
       <div class="hero-background" aria-hidden="true">
         <div class="hero-pattern"></div>
+        <div class="hero-particles"></div>
       </div>
       <div class="container">
         <div class="hero-content">
           <div class="hero-badge">
+            <span class="badge-pulse"></span>
             <i class="fas fa-play-circle" aria-hidden="true"></i>
             <span>Ao Vivo</span>
           </div>
@@ -152,8 +154,11 @@
           <div class="timeline" id="timeline-container">
             <!-- Conteúdo será preenchido por JavaScript -->
             <div class="no-events-message" id="no-events-message">
-              <i class="fas fa-clock"></i>
-              <p>Nenhum lance registrado ainda. O jogo ainda não começou.</p>
+              <div class="no-events-icon">
+                <i class="fas fa-futbol"></i>
+              </div>
+              <p>Nenhum lance registrado ainda.</p>
+              <span>O jogo ainda não começou.</span>
             </div>
           </div>
         </div>
