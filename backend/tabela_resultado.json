@@ -18,20 +18,33 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 1,
-      "nome": "Palmeiras",
-      "sigla": "PAL",
-      "pontos": 3,
-      "vitorias": 1,
-      "empates": 0,
+      "posicao": 2,
+      "nome": "Atlético-MG",
+      "sigla": "CAM",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
       "derrotas": 0,
-      "saldo_gols": 1,
+      "saldo_gols": 0,
       "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg",
-      "aproveitamento": 100
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg",
+      "aproveitamento": 33
     },
     {
-      "posicao": 3,
+      "posicao": 2,
+      "nome": "Palmeiras",
+      "sigla": "PAL",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 4,
       "nome": "Fluminense",
       "sigla": "FLU",
       "pontos": 1,
@@ -44,7 +57,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 3,
+      "posicao": 4,
       "nome": "Grêmio",
       "sigla": "GRE",
       "pontos": 1,
@@ -57,7 +70,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 5,
+      "posicao": 6,
       "nome": "Bragantino",
       "sigla": "RBB",
       "pontos": 1,
@@ -70,20 +83,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 5,
-      "nome": "Coritiba",
-      "sigla": "CFC",
-      "pontos": 1,
-      "vitorias": 0,
-      "empates": 1,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg",
-      "aproveitamento": 33
-    },
-    {
-      "posicao": 5,
+      "posicao": 7,
       "nome": "Remo",
       "sigla": "REM",
       "pontos": 1,
@@ -96,7 +96,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 5,
+      "posicao": 7,
       "nome": "Vitória",
       "sigla": "VIT",
       "pontos": 1,
@@ -110,6 +110,19 @@
     },
     {
       "posicao": 9,
+      "nome": "Coritiba",
+      "sigla": "CFC",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 10,
       "nome": "Bahia",
       "sigla": "BAH",
       "pontos": 0,
@@ -122,7 +135,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Botafogo",
       "sigla": "BOT",
       "pontos": 0,
@@ -135,7 +148,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Chapecoense",
       "sigla": "CHA",
       "pontos": 0,
@@ -148,7 +161,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Corinthians",
       "sigla": "COR",
       "pontos": 0,
@@ -161,7 +174,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 0,
@@ -174,7 +187,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Flamengo",
       "sigla": "FLA",
       "pontos": 0,
@@ -187,7 +200,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Mirassol",
       "sigla": "MIR",
       "pontos": 0,
@@ -200,7 +213,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Santos",
       "sigla": "SAN",
       "pontos": 0,
@@ -213,7 +226,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "São Paulo",
       "sigla": "SAO",
       "pontos": 0,
@@ -226,7 +239,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 10,
       "nome": "Vasco",
       "sigla": "VAS",
       "pontos": 0,
@@ -239,20 +252,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 19,
-      "nome": "Atlético-MG",
-      "sigla": "CAM",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 1,
-      "saldo_gols": -1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 19,
+      "posicao": 20,
       "nome": "Internacional",
       "sigla": "INT",
       "pontos": 0,
@@ -272,7 +272,7 @@
       "mandante": "Atlético-MG",
       "mandante_sigla": "CAM",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2018/03/10/atletico-mg.svg",
-      "placar_mandante": 0,
+      "placar_mandante": 1,
       "visitante": "Palmeiras",
       "visitante_sigla": "PAL",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2019/07/06/Palmeiras.svg",
