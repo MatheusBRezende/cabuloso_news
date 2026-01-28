@@ -45,6 +45,45 @@
     },
     {
       "posicao": 4,
+      "nome": "Bahia",
+      "sigla": "BAH",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 4,
+      "nome": "Chapecoense",
+      "sigla": "CHA",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 4,
+      "nome": "Corinthians",
+      "sigla": "COR",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 4,
       "nome": "Fluminense",
       "sigla": "FLU",
       "pontos": 1,
@@ -70,7 +109,20 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 6,
+      "posicao": 4,
+      "nome": "Santos",
+      "sigla": "SAN",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 10,
       "nome": "Bragantino",
       "sigla": "RBB",
       "pontos": 1,
@@ -83,7 +135,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 7,
+      "posicao": 10,
       "nome": "Remo",
       "sigla": "REM",
       "pontos": 1,
@@ -96,7 +148,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 7,
+      "posicao": 10,
       "nome": "Vitória",
       "sigla": "VIT",
       "pontos": 1,
@@ -109,7 +161,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 9,
+      "posicao": 13,
       "nome": "Coritiba",
       "sigla": "CFC",
       "pontos": 1,
@@ -122,20 +174,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 10,
-      "nome": "Bahia",
-      "sigla": "BAH",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 10,
+      "posicao": 14,
       "nome": "Botafogo",
       "sigla": "BOT",
       "pontos": 0,
@@ -148,33 +187,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
-      "nome": "Chapecoense",
-      "sigla": "CHA",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 10,
-      "nome": "Corinthians",
-      "sigla": "COR",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 10,
+      "posicao": 14,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 0,
@@ -187,7 +200,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
+      "posicao": 14,
       "nome": "Flamengo",
       "sigla": "FLA",
       "pontos": 0,
@@ -200,7 +213,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
+      "posicao": 14,
       "nome": "Mirassol",
       "sigla": "MIR",
       "pontos": 0,
@@ -213,20 +226,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
-      "nome": "Santos",
-      "sigla": "SAN",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 10,
+      "posicao": 14,
       "nome": "São Paulo",
       "sigla": "SAO",
       "pontos": 0,
@@ -239,7 +239,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
+      "posicao": 14,
       "nome": "Vasco",
       "sigla": "VAS",
       "pontos": 0,
@@ -337,11 +337,11 @@
       "mandante": "Corinthians",
       "mandante_sigla": "COR",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
-      "placar_mandante": null,
+      "placar_mandante": 0,
       "visitante": "Bahia",
       "visitante_sigla": "BAH",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
-      "placar_visitante": null,
+      "placar_visitante": 0,
       "estadio": "Vila Belmiro"
     },
     {
@@ -350,11 +350,11 @@
       "mandante": "Chapecoense",
       "mandante_sigla": "CHA",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
-      "placar_mandante": null,
+      "placar_mandante": 0,
       "visitante": "Santos",
       "visitante_sigla": "SAN",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
-      "placar_visitante": null,
+      "placar_visitante": 0,
       "estadio": "Arena Condá"
     },
     {
