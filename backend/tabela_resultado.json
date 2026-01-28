@@ -8,17 +8,17 @@
       "posicao": 1,
       "nome": "Athletico-PR",
       "sigla": "CAP",
-      "pontos": 1,
-      "vitorias": 0,
-      "empates": 1,
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
       "derrotas": 0,
-      "saldo_gols": 0,
+      "saldo_gols": 1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg",
-      "aproveitamento": 33
+      "aproveitamento": 100
     },
     {
-      "posicao": 1,
+      "posicao": 2,
       "nome": "Atlético-MG",
       "sigla": "CAM",
       "pontos": 1,
@@ -31,7 +31,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 1,
+      "posicao": 2,
       "nome": "Bragantino",
       "sigla": "RBB",
       "pontos": 1,
@@ -44,7 +44,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 1,
+      "posicao": 2,
       "nome": "Coritiba",
       "sigla": "CFC",
       "pontos": 1,
@@ -57,20 +57,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 1,
-      "nome": "Internacional",
-      "sigla": "INT",
-      "pontos": 1,
-      "vitorias": 0,
-      "empates": 1,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg",
-      "aproveitamento": 33
-    },
-    {
-      "posicao": 1,
+      "posicao": 2,
       "nome": "Palmeiras",
       "sigla": "PAL",
       "pontos": 1,
@@ -83,7 +70,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 1,
+      "posicao": 2,
       "nome": "Remo",
       "sigla": "REM",
       "pontos": 1,
@@ -96,7 +83,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 1,
+      "posicao": 2,
       "nome": "Vitória",
       "sigla": "VIT",
       "pontos": 1,
@@ -109,7 +96,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Bahia",
       "sigla": "BAH",
       "pontos": 0,
@@ -122,7 +109,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Botafogo",
       "sigla": "BOT",
       "pontos": 0,
@@ -135,7 +122,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Chapecoense",
       "sigla": "CHA",
       "pontos": 0,
@@ -148,7 +135,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Corinthians",
       "sigla": "COR",
       "pontos": 0,
@@ -161,7 +148,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 0,
@@ -174,7 +161,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Flamengo",
       "sigla": "FLA",
       "pontos": 0,
@@ -187,7 +174,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Fluminense",
       "sigla": "FLU",
       "pontos": 0,
@@ -200,7 +187,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Grêmio",
       "sigla": "GRE",
       "pontos": 0,
@@ -213,7 +200,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Mirassol",
       "sigla": "MIR",
       "pontos": 0,
@@ -226,7 +213,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Santos",
       "sigla": "SAN",
       "pontos": 0,
@@ -239,7 +226,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "São Paulo",
       "sigla": "SAO",
       "pontos": 0,
@@ -252,7 +239,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Vasco",
       "sigla": "VAS",
       "pontos": 0,
@@ -262,6 +249,19 @@
       "saldo_gols": 0,
       "jogos": 0,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 20,
+      "nome": "Internacional",
+      "sigla": "INT",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/internacional.svg",
       "aproveitamento": 0
     }
   ],
@@ -289,7 +289,7 @@
       "visitante": "Athletico-PR",
       "visitante_sigla": "CAP",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg",
-      "placar_visitante": 0,
+      "placar_visitante": 1,
       "estadio": "Beira-Rio"
     },
     {
