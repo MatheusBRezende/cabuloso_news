@@ -32,19 +32,6 @@
     },
     {
       "posicao": 3,
-      "nome": "Bahia",
-      "sigla": "BAH",
-      "pontos": 3,
-      "vitorias": 1,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
-      "aproveitamento": 100
-    },
-    {
-      "posicao": 3,
       "nome": "Santos",
       "sigla": "SAN",
       "pontos": 3,
@@ -54,6 +41,19 @@
       "saldo_gols": 1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
+      "aproveitamento": 100
+    },
+    {
+      "posicao": 4,
+      "nome": "Bahia",
+      "sigla": "BAH",
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
+      "derrotas": 0,
+      "saldo_gols": 1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/bahia.svg",
       "aproveitamento": 100
     },
     {
@@ -110,6 +110,32 @@
     },
     {
       "posicao": 9,
+      "nome": "Flamengo",
+      "sigla": "FLA",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 9,
+      "nome": "São Paulo",
+      "sigla": "SAO",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 11,
       "nome": "Botafogo",
       "sigla": "BOT",
       "pontos": 0,
@@ -122,7 +148,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
+      "posicao": 11,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 0,
@@ -135,20 +161,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
-      "nome": "Flamengo",
-      "sigla": "FLA",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 9,
+      "posicao": 11,
       "nome": "Mirassol",
       "sigla": "MIR",
       "pontos": 0,
@@ -161,20 +174,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 9,
-      "nome": "São Paulo",
-      "sigla": "SAO",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/sao-paulo.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 9,
+      "posicao": 11,
       "nome": "Vasco",
       "sigla": "VAS",
       "pontos": 0,
@@ -184,19 +184,6 @@
       "saldo_gols": 0,
       "jogos": 0,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 15,
-      "nome": "Corinthians",
-      "sigla": "COR",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 1,
-      "saldo_gols": -1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
       "aproveitamento": 0
     },
     {
@@ -213,7 +200,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 17,
+      "posicao": 16,
       "nome": "Chapecoense",
       "sigla": "CHA",
       "pontos": 0,
@@ -223,6 +210,19 @@
       "saldo_gols": -1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 16,
+      "nome": "Corinthians",
+      "sigla": "COR",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
       "aproveitamento": 0
     },
     {
@@ -354,7 +354,7 @@
       "visitante": "Santos",
       "visitante_sigla": "SAN",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
-      "placar_visitante": 1,
+      "placar_visitante": 2,
       "estadio": "Arena Condá"
     },
     {
