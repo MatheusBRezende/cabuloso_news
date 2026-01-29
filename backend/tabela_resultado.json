@@ -376,11 +376,11 @@
       "mandante": "Mirassol",
       "mandante_sigla": "MIR",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2024/08/20/mirassol-novo-svg-71690.svg",
-      "placar_mandante": null,
+      "placar_mandante": 0,
       "visitante": "Vasco",
       "visitante_sigla": "VAS",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
-      "placar_visitante": null,
+      "placar_visitante": 0,
       "estadio": "Maião"
     },
     {
