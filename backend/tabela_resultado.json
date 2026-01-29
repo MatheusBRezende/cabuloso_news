@@ -6,6 +6,19 @@
   "classificacao": [
     {
       "posicao": 1,
+      "nome": "Chapecoense",
+      "sigla": "CHA",
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
+      "derrotas": 0,
+      "saldo_gols": 2,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
+      "aproveitamento": 100
+    },
+    {
+      "posicao": 2,
       "nome": "Vitória",
       "sigla": "VIT",
       "pontos": 3,
@@ -15,19 +28,6 @@
       "saldo_gols": 2,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2025/12/18/Vitoria_2025.svg",
-      "aproveitamento": 100
-    },
-    {
-      "posicao": 2,
-      "nome": "Chapecoense",
-      "sigla": "CHA",
-      "pontos": 3,
-      "vitorias": 1,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
       "aproveitamento": 100
     },
     {
@@ -188,19 +188,6 @@
     },
     {
       "posicao": 15,
-      "nome": "Santos",
-      "sigla": "SAN",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 1,
-      "saldo_gols": -1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 16,
       "nome": "Grêmio",
       "sigla": "GRE",
       "pontos": 0,
@@ -213,7 +200,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 17,
+      "posicao": 16,
       "nome": "Corinthians",
       "sigla": "COR",
       "pontos": 0,
@@ -226,7 +213,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 18,
+      "posicao": 17,
       "nome": "Internacional",
       "sigla": "INT",
       "pontos": 0,
@@ -239,7 +226,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 19,
+      "posicao": 18,
       "nome": "Coritiba",
       "sigla": "CFC",
       "pontos": 0,
@@ -249,6 +236,19 @@
       "saldo_gols": -1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/coritiba.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 19,
+      "nome": "Santos",
+      "sigla": "SAN",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -2,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
       "aproveitamento": 0
     },
     {
@@ -350,7 +350,7 @@
       "mandante": "Chapecoense",
       "mandante_sigla": "CHA",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
-      "placar_mandante": 3,
+      "placar_mandante": 4,
       "visitante": "Santos",
       "visitante_sigla": "SAN",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
