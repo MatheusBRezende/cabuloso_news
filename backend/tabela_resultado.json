@@ -19,6 +19,19 @@
     },
     {
       "posicao": 2,
+      "nome": "Chapecoense",
+      "sigla": "CHA",
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
+      "derrotas": 0,
+      "saldo_gols": 1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
+      "aproveitamento": 100
+    },
+    {
+      "posicao": 3,
       "nome": "Fluminense",
       "sigla": "FLU",
       "pontos": 3,
@@ -31,7 +44,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 3,
+      "posicao": 4,
       "nome": "Bahia",
       "sigla": "BAH",
       "pontos": 3,
@@ -44,7 +57,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 4,
+      "posicao": 5,
       "nome": "Athletico-PR",
       "sigla": "CAP",
       "pontos": 3,
@@ -57,7 +70,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 5,
+      "posicao": 6,
       "nome": "Bragantino",
       "sigla": "RBB",
       "pontos": 3,
@@ -70,20 +83,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 6,
-      "nome": "Chapecoense",
-      "sigla": "CHA",
-      "pontos": 1,
-      "vitorias": 0,
-      "empates": 1,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
-      "aproveitamento": 33
-    },
-    {
-      "posicao": 6,
+      "posicao": 7,
       "nome": "Palmeiras",
       "sigla": "PAL",
       "pontos": 1,
@@ -96,20 +96,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 6,
-      "nome": "Santos",
-      "sigla": "SAN",
-      "pontos": 1,
-      "vitorias": 0,
-      "empates": 1,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
-      "aproveitamento": 33
-    },
-    {
-      "posicao": 9,
+      "posicao": 8,
       "nome": "Atlético-MG",
       "sigla": "CAM",
       "pontos": 1,
@@ -122,7 +109,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 10,
+      "posicao": 9,
       "nome": "Flamengo",
       "sigla": "FLA",
       "pontos": 1,
@@ -135,7 +122,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 10,
+      "posicao": 9,
       "nome": "São Paulo",
       "sigla": "SAO",
       "pontos": 1,
@@ -148,7 +135,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 12,
+      "posicao": 11,
       "nome": "Botafogo",
       "sigla": "BOT",
       "pontos": 0,
@@ -161,7 +148,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 12,
+      "posicao": 11,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 0,
@@ -174,7 +161,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 12,
+      "posicao": 11,
       "nome": "Mirassol",
       "sigla": "MIR",
       "pontos": 0,
@@ -187,7 +174,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 12,
+      "posicao": 11,
       "nome": "Vasco",
       "sigla": "VAS",
       "pontos": 0,
@@ -197,6 +184,19 @@
       "saldo_gols": 0,
       "jogos": 0,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 15,
+      "nome": "Santos",
+      "sigla": "SAN",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
       "aproveitamento": 0
     },
     {
@@ -350,7 +350,7 @@
       "mandante": "Chapecoense",
       "mandante_sigla": "CHA",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2021/06/21/CHAPECOENSE-2018.svg",
-      "placar_mandante": 2,
+      "placar_mandante": 3,
       "visitante": "Santos",
       "visitante_sigla": "SAN",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
