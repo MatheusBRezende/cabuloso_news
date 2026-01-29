@@ -123,6 +123,32 @@
     },
     {
       "posicao": 10,
+      "nome": "Mirassol",
+      "sigla": "MIR",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/08/20/mirassol-novo-svg-71690.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 10,
+      "nome": "Vasco",
+      "sigla": "VAS",
+      "pontos": 1,
+      "vitorias": 0,
+      "empates": 1,
+      "derrotas": 0,
+      "saldo_gols": 0,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
+      "aproveitamento": 33
+    },
+    {
+      "posicao": 12,
       "nome": "Botafogo",
       "sigla": "BOT",
       "pontos": 0,
@@ -135,7 +161,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
+      "posicao": 12,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 0,
@@ -148,46 +174,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 10,
-      "nome": "Mirassol",
-      "sigla": "MIR",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/08/20/mirassol-novo-svg-71690.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 10,
-      "nome": "Vasco",
-      "sigla": "VAS",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 0,
-      "jogos": 0,
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/09/04/vasco_SVG.svg",
-      "aproveitamento": 0
-    },
-    {
       "posicao": 14,
-      "nome": "Flamengo",
-      "sigla": "FLA",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 1,
-      "saldo_gols": -1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 15,
       "nome": "Grêmio",
       "sigla": "GRE",
       "pontos": 0,
@@ -200,7 +187,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 16,
+      "posicao": 15,
       "nome": "Corinthians",
       "sigla": "COR",
       "pontos": 0,
@@ -210,6 +197,19 @@
       "saldo_gols": -1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2024/10/09/Corinthians_2024_Q4ahot4.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 16,
+      "nome": "Flamengo",
+      "sigla": "FLA",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2018/04/10/Flamengo-2018.svg",
       "aproveitamento": 0
     },
     {
