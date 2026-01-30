@@ -19,6 +19,19 @@
     },
     {
       "posicao": 2,
+      "nome": "Botafogo",
+      "sigla": "BOT",
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
+      "derrotas": 0,
+      "saldo_gols": 2,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
+      "aproveitamento": 100
+    },
+    {
+      "posicao": 2,
       "nome": "Vitória",
       "sigla": "VIT",
       "pontos": 3,
@@ -31,7 +44,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 3,
+      "posicao": 4,
       "nome": "São Paulo",
       "sigla": "SAO",
       "pontos": 3,
@@ -44,7 +57,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 4,
+      "posicao": 5,
       "nome": "Fluminense",
       "sigla": "FLU",
       "pontos": 3,
@@ -57,7 +70,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 5,
+      "posicao": 6,
       "nome": "Mirassol",
       "sigla": "MIR",
       "pontos": 3,
@@ -70,7 +83,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 6,
+      "posicao": 7,
       "nome": "Bahia",
       "sigla": "BAH",
       "pontos": 3,
@@ -83,7 +96,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 7,
+      "posicao": 8,
       "nome": "Athletico-PR",
       "sigla": "CAP",
       "pontos": 3,
@@ -93,19 +106,6 @@
       "saldo_gols": 1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2026/01/07/Athletico-PR.svg",
-      "aproveitamento": 100
-    },
-    {
-      "posicao": 7,
-      "nome": "Botafogo",
-      "sigla": "BOT",
-      "pontos": 3,
-      "vitorias": 1,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
       "aproveitamento": 100
     },
     {
@@ -201,19 +201,6 @@
     },
     {
       "posicao": 16,
-      "nome": "Cruzeiro",
-      "sigla": "CRU",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 1,
-      "saldo_gols": -1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 17,
       "nome": "Internacional",
       "sigla": "INT",
       "pontos": 0,
@@ -226,7 +213,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 18,
+      "posicao": 17,
       "nome": "Coritiba",
       "sigla": "CFC",
       "pontos": 0,
@@ -239,7 +226,7 @@
       "aproveitamento": 0
     },
     {
-      "posicao": 19,
+      "posicao": 18,
       "nome": "Santos",
       "sigla": "SAN",
       "pontos": 0,
@@ -249,6 +236,19 @@
       "saldo_gols": -2,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2018/03/12/santos.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 19,
+      "nome": "Cruzeiro",
+      "sigla": "CRU",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -2,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
       "aproveitamento": 0
     },
     {
@@ -389,7 +389,7 @@
       "mandante": "Botafogo",
       "mandante_sigla": "BOT",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
-      "placar_mandante": 1,
+      "placar_mandante": 2,
       "visitante": "Cruzeiro",
       "visitante_sigla": "CRU",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
