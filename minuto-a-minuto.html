@@ -133,26 +133,37 @@
     </section>
 
     <!-- Conteúdo Principal -->
-    <main class="main-content" id="main-content" role="main">
-      <div class="container">
-        <!-- Placar ao Vivo -->
-        <div id="live-match-container">
-          <!-- Conteúdo será preenchido por JavaScript -->
-        </div>
+<main class="main-content" id="main-content" role="main">
+  <div class="container">
+    
+    <div id="live-match-container">
+      </div>
 
-        <!-- Timeline de lances -->
+    <div class="match-layout">
+      
+      <aside class="stats-column home-stats">
+        <div class="stats-card">
+          <div class="stats-header" id="stats-home-header">
+            <i class="fas fa-chart-bar"></i> Estatísticas
+          </div>
+          <div id="home-stats-list" class="stats-list">
+            <div class="loading-stats">Aguardando dados...</div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="timeline-column">
         <div class="timeline-container">
           <div class="timeline-header">
             <h2>
               <i class="fas fa-list-ul"></i>
-              Linha do Tempo do Jogo
+              Linha do Tempo
             </h2>
             <div class="match-status" id="match-status-indicator">
-              AGUARDANDO JOGO
+              AGUARDANDO
             </div>
           </div>
           <div class="timeline" id="timeline-container">
-            <!-- Conteúdo será preenchido por JavaScript -->
             <div class="no-events-message" id="no-events-message">
               <div class="no-events-icon">
                 <i class="fas fa-futbol"></i>
@@ -163,7 +174,50 @@
           </div>
         </div>
       </div>
-    </main>
+
+      <aside class="stats-column away-stats">
+        <div class="stats-card">
+          <div class="stats-header" id="stats-away-header">
+            Estatísticas <i class="fas fa-chart-pie"></i>
+          </div>
+          <div id="away-stats-list" class="stats-list">
+            <div class="loading-stats">Aguardando dados...</div>
+          </div>
+        </div>
+      </aside>
+
+      <div class="lineup-section container">
+    <div class="section-title">
+        <h2><i class="fas fa-users"></i> Escalação</h2>
+    </div>
+    
+    <div class="match-layout">
+        <aside class="stats-column">
+            <div class="stats-card">
+                <div class="stats-header" id="home-team-name-lineup">Mandante</div>
+                <div id="home-lineup-content" class="stats-list">
+                    </div>
+            </div>
+        </aside>
+
+        <div class="referee-column">
+            <div class="referee-card" id="match-referee-info">
+                </div>
+        </div>
+
+        <aside class="stats-column">
+            <div class="stats-card">
+                <div class="stats-header" id="away-team-name-lineup" style="justify-content: flex-end;">Visitante</div>
+                <div id="away-lineup-content" class="stats-list">
+                    </div>
+            </div>
+        </aside>
+    </div>
+</div>
+
+    </div>
+  </div>
+</main>
 
     <!-- Animação de Gol -->
     <div id="goal-animation">
