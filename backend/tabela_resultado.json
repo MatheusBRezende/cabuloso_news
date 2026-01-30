@@ -32,19 +32,6 @@
     },
     {
       "posicao": 3,
-      "nome": "Mirassol",
-      "sigla": "MIR",
-      "pontos": 3,
-      "vitorias": 1,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 1,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2024/08/20/mirassol-novo-svg-71690.svg",
-      "aproveitamento": 100
-    },
-    {
-      "posicao": 3,
       "nome": "São Paulo",
       "sigla": "SAO",
       "pontos": 3,
@@ -57,7 +44,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 5,
+      "posicao": 4,
       "nome": "Fluminense",
       "sigla": "FLU",
       "pontos": 3,
@@ -67,6 +54,19 @@
       "saldo_gols": 1,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2018/03/11/fluminense.svg",
+      "aproveitamento": 100
+    },
+    {
+      "posicao": 5,
+      "nome": "Mirassol",
+      "sigla": "MIR",
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
+      "derrotas": 0,
+      "saldo_gols": 1,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2024/08/20/mirassol-novo-svg-71690.svg",
       "aproveitamento": 100
     },
     {
@@ -148,7 +148,7 @@
       "aproveitamento": 33
     },
     {
-      "posicao": 11,
+      "posicao": 12,
       "nome": "Cruzeiro",
       "sigla": "CRU",
       "pontos": 1,
