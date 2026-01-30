@@ -7,7 +7,7 @@ const LiveMatchDetector = (() => {
     countdownSeconds: 10,
     storageKey: 'cabuloso_live_match_dismissed',
 
-    testMode: true, // Mude para true para testar
+    testMode: false, // Mude para true para testar
     testMatchData: {
       mandante: 'Cruzeiro',
       visitante: 'Atlético-MG',
