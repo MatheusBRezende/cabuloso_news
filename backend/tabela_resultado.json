@@ -12,7 +12,7 @@
       "vitorias": 1,
       "empates": 0,
       "derrotas": 0,
-      "saldo_gols": 3,
+      "saldo_gols": 4,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
       "aproveitamento": 100
@@ -259,7 +259,7 @@
       "vitorias": 0,
       "empates": 0,
       "derrotas": 1,
-      "saldo_gols": -3,
+      "saldo_gols": -4,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
       "aproveitamento": 0
