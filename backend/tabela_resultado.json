@@ -138,27 +138,27 @@
       "posicao": 11,
       "nome": "Botafogo",
       "sigla": "BOT",
-      "pontos": 0,
+      "pontos": 1,
       "vitorias": 0,
-      "empates": 0,
+      "empates": 1,
       "derrotas": 0,
       "saldo_gols": 0,
-      "jogos": 0,
+      "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
-      "aproveitamento": 0
+      "aproveitamento": 33
     },
     {
       "posicao": 11,
       "nome": "Cruzeiro",
       "sigla": "CRU",
-      "pontos": 0,
+      "pontos": 1,
       "vitorias": 0,
-      "empates": 0,
+      "empates": 1,
       "derrotas": 0,
       "saldo_gols": 0,
-      "jogos": 0,
+      "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
-      "aproveitamento": 0
+      "aproveitamento": 33
     },
     {
       "posicao": 13,
