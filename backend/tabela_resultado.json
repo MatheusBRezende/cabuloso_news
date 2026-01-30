@@ -6,6 +6,19 @@
   "classificacao": [
     {
       "posicao": 1,
+      "nome": "Botafogo",
+      "sigla": "BOT",
+      "pontos": 3,
+      "vitorias": 1,
+      "empates": 0,
+      "derrotas": 0,
+      "saldo_gols": 4,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
+      "aproveitamento": 100
+    },
+    {
+      "posicao": 2,
       "nome": "Chapecoense",
       "sigla": "CHA",
       "pontos": 3,
@@ -18,20 +31,7 @@
       "aproveitamento": 100
     },
     {
-      "posicao": 2,
-      "nome": "Botafogo",
-      "sigla": "BOT",
-      "pontos": 3,
-      "vitorias": 1,
-      "empates": 0,
-      "derrotas": 0,
-      "saldo_gols": 2,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
-      "aproveitamento": 100
-    },
-    {
-      "posicao": 2,
+      "posicao": 3,
       "nome": "Vitória",
       "sigla": "VIT",
       "pontos": 3,
@@ -240,19 +240,6 @@
     },
     {
       "posicao": 19,
-      "nome": "Cruzeiro",
-      "sigla": "CRU",
-      "pontos": 0,
-      "vitorias": 0,
-      "empates": 0,
-      "derrotas": 1,
-      "saldo_gols": -2,
-      "jogos": 1,
-      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
-      "aproveitamento": 0
-    },
-    {
-      "posicao": 20,
       "nome": "Remo",
       "sigla": "REM",
       "pontos": 0,
@@ -262,6 +249,19 @@
       "saldo_gols": -2,
       "jogos": 1,
       "escudo": "https://s.sde.globo.com/media/organizations/2021/02/25/Remo-PA.svg",
+      "aproveitamento": 0
+    },
+    {
+      "posicao": 20,
+      "nome": "Cruzeiro",
+      "sigla": "CRU",
+      "pontos": 0,
+      "vitorias": 0,
+      "empates": 0,
+      "derrotas": 1,
+      "saldo_gols": -4,
+      "jogos": 1,
+      "escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
       "aproveitamento": 0
     }
   ],
@@ -389,7 +389,7 @@
       "mandante": "Botafogo",
       "mandante_sigla": "BOT",
       "mandante_escudo": "https://s.sde.globo.com/media/organizations/2019/02/04/botafogo-svg.svg",
-      "placar_mandante": 2,
+      "placar_mandante": 4,
       "visitante": "Cruzeiro",
       "visitante_sigla": "CRU",
       "visitante_escudo": "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
