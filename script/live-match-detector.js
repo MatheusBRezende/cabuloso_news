@@ -3,7 +3,7 @@ const LiveMatchDetector = (() => {
   const CONFIG = {
     checkInterval: 5000, 
     webhookUrl: 'https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo',
-    minutoAMinutoUrl: '../minuto-a-minuto.html', // CORRIGIDO: adicionado ./
+    minutoAMinutoUrl: '/minuto-a-minuto.html', 
     countdownSeconds: 10,
     storageKey: 'cabuloso_live_match_dismissed',
 
