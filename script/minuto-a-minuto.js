@@ -70,22 +70,23 @@ const fetchLiveData = async () => {
     rawData.forEach((item, index) => {
       if (state.logsEnabled) console.log(`Item ${index}:`, Object.keys(item));
       
-      // Item 0: Resultados e placar
+      // Item de Resultados e placar
       if (item.resultados && item.placar) {
         placarData = item.placar;
         resultadosData = item.resultados;
         state.cachedData.resultados = resultadosData;
       }
       
-      // Item 1: Estatísticas
+      // Item de Estatísticas
       if (item.estatisticas) {
         estatisticasData = item.estatisticas;
         state.cachedData.estatisticas = estatisticasData;
       }
       
-      // Item 2: Escalação
-      if (item.escalacao) {
-        escalacaoData = item.escalacao;
+      // CORREÇÃO AQUI: Verifica se o item contém 'partida' ou 'escalacao'
+      if (item.partida || item.escalacao) {
+        // Se o JSON vier direto como o que você mandou, o item é a própria escalação
+        escalacaoData = item; 
         state.cachedData.escalacao = escalacaoData;
       }
     });
@@ -130,111 +131,17 @@ const fetchLiveData = async () => {
       renderStats(state.cachedData.estatisticas);
     }
     
-    if (escalacaoData) {
-      renderLineups(escalacaoData);
-    } else if (state.cachedData.escalacao) {
-      renderLineups(state.cachedData.escalacao);
-    }
+if (escalacaoData) {
+  updateLineups(escalacaoData);
+} else if (state.cachedData.escalacao) {
+  updateLineups(state.cachedData.escalacao);
+}
 
   } catch (error) {
     if (state.logsEnabled) console.error("Erro ao buscar dados:", error);
   }
 };
 
-const renderLineups = (escalacaoData) => {
-  // CORREÇÃO: O ID dos containers provavelmente não existe no seu HTML
-  // Vamos criar os containers dinamicamente ou usar os existentes
-  
-  // Verifica se os containers existem
-  const homeContainer = document.getElementById("home-lineup-content") || 
-                       document.getElementById("home-stats-list");
-  const awayContainer = document.getElementById("away-lineup-content") || 
-                       document.getElementById("away-stats-list");
-  
-  if (!homeContainer || !awayContainer) {
-    if (state.logsEnabled) console.log("Containers de escalação não encontrados");
-    // Cria os containers dinamicamente se necessário
-    createLineupContainers();
-    return;
-  }
-
-  // CORREÇÃO: Verifica se escalacaoData tem a estrutura correta
-  if (!escalacaoData || !escalacaoData.mandante || !escalacaoData.visitante) {
-    if (state.logsEnabled) console.log("Dados de escalação incompletos:", escalacaoData);
-    return;
-  }
-
-  // Função interna para montar a lista de jogadores
-  const buildList = (equipe, isHome) => {
-    let html = `<div style="font-weight: 700; color: ${isHome ? '#c41e3a' : '#0047AB'}; margin-bottom: 10px;">
-                  ${equipe.time}
-                </div>`;
-    
-    html += '<div style="font-size: 0.9rem; color: #666; margin-bottom: 8px;">TITULARES</div>';
-    
-    // Titulares
-    equipe.titulares.forEach(p => {
-      html += `
-        <div class="stat-row" style="padding: 6px 0; border-bottom: 1px solid #f0f0f0;">
-          <span class="stat-label" style="font-size: 0.9rem;">${p.nome}</span>
-          <span class="stat-value" style="font-size: 0.8rem; color: #666;">${p.numero_posicao}</span>
-        </div>`;
-    });
-
-    // Reservas
-    html += '<div style="font-size: 0.9rem; color: #666; margin: 12px 0 8px;">RESERVAS</div>';
-    equipe.reservas.forEach(p => {
-      html += `
-        <div class="stat-row" style="padding: 4px 0; opacity: 0.8;">
-          <span class="stat-label" style="font-size: 0.85rem;">${p.nome}</span>
-          <span class="stat-value" style="font-size: 0.75rem; color: #888;">${p.numero_posicao}</span>
-        </div>`;
-    });
-
-    // Técnico
-    html += `<div style="margin-top: 15px; padding-top: 10px; border-top: 1px dashed #ddd;">
-              <div style="font-size: 0.85rem;">
-                <strong>Técnico:</strong> ${equipe.tecnico}
-              </div>
-            </div>`;
-    return html;
-  };
-
-  // CORREÇÃO: Substitui o conteúdo dos containers
-  homeContainer.innerHTML = buildList(escalacaoData.mandante, true);
-  awayContainer.innerHTML = buildList(escalacaoData.visitante, false);
-};
-
-const createLineupContainers = () => {
-  const timelineColumn = document.querySelector('.timeline-column');
-  if (!timelineColumn) return;
-  
-  // Cria uma nova seção para escalações
-  const lineupSection = document.createElement('div');
-  lineupSection.className = 'lineup-section';
-  lineupSection.innerHTML = `
-    <div class="stats-card">
-      <div class="stats-header">
-        <i class="fas fa-users"></i> Escalações
-      </div>
-      <div class="match-layout" style="display: flex; gap: 20px; padding: 15px;">
-        <div style="flex: 1;">
-          <div id="home-lineup-content" style="min-height: 300px;">
-            <div class="loading-stats">Carregando escalação...</div>
-          </div>
-        </div>
-        <div style="flex: 1;">
-          <div id="away-lineup-content" style="min-height: 300px;">
-            <div class="loading-stats">Carregando escalação...</div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  // Insere após a timeline
-  timelineColumn.parentNode.insertBefore(lineupSection, timelineColumn.nextSibling);
-};
 
 const renderStats = (statsData) => {
   const homeList = document.getElementById("home-stats-list");
@@ -380,6 +287,133 @@ const renderLiveMatch = (lances) => {
     }
   }
 };
+
+const updateLineups = (data) => {
+  // DEBUG EXTENSIVO
+  console.log("🔧 updateLineups CHAMADA!");
+  console.log("📦 Dados recebidos:", data);
+  console.log("📦 Tipo:", typeof data);
+  
+  if (!data) {
+    console.error("❌ Dados são null/undefined");
+    return;
+  }
+  
+  // Pega o primeiro item do array (seu JSON vem em uma lista [])
+  const payload = Array.isArray(data) ? data[0] : data;
+  console.log("📦 Payload extraído:", payload);
+  
+  const partida = payload.partida;
+  const arbitragem = payload.arbitragem;
+  
+  console.log("📦 Partida:", partida);
+  console.log("📦 Arbitragem:", arbitragem);
+
+  if (!partida) {
+    console.error("❌ Não há partida nos dados");
+    return;
+  }
+
+  console.log("✅ Dados válidos encontrados!");
+  console.log("🏠 Mandante:", partida.mandante.time);
+  console.log("✈️ Visitante:", partida.visitante.time);
+  console.log("👨‍🏫 Técnico mandante:", partida.mandante.tecnico);
+  console.log("👨‍🏫 Técnico visitante:", partida.visitante.tecnico);
+  
+  // DEBUG: Verificar se os elementos HTML existem
+  const homeTitle = document.getElementById('home-team-name-lineup');
+  const awayTitle = document.getElementById('away-team-name-lineup');
+  const homeContent = document.getElementById('home-lineup-content');
+  const awayContent = document.getElementById('away-lineup-content');
+  const refCard = document.getElementById('match-referee-info');
+  
+  console.log("🔍 Elementos HTML encontrados:");
+  console.log("home-team-name-lineup:", homeTitle ? "✅" : "❌");
+  console.log("away-team-name-lineup:", awayTitle ? "✅" : "❌");
+  console.log("home-lineup-content:", homeContent ? "✅" : "❌");
+  console.log("away-lineup-content:", awayContent ? "✅" : "❌");
+  console.log("match-referee-info:", refCard ? "✅" : "❌");
+
+  // Resto da função continua igual...
+  const renderPlayersList = (players) => {
+    if (!players || !players.length) return '<div style="color: #666; padding: 5px;">Não disponível</div>';
+    
+    return `
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 5px 0;">
+        ${players.map(p => {
+          const [numero, ...posicaoArray] = p.numero_posicao.split(' ');
+          const posicao = posicaoArray.join(' ');
+          
+          return `
+            <div class="player-item-min">
+              <span class="player-number">${numero}</span>
+              <div class="player-info-text">
+                <span class="player-name">${p.nome}</span>
+                <span class="player-pos">${posicao}</span>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+};
+
+  // 1. Atualizar Nomes dos Times nos Cabeçalhos
+  if (homeTitle) {
+    console.log(`🏠 Atualizando título mandante para: ${partida.mandante.time}`);
+    homeTitle.innerText = partida.mandante.time.toUpperCase();
+  }
+  
+  if (awayTitle) {
+    console.log(`✈️ Atualizando título visitante para: ${partida.visitante.time}`);
+    awayTitle.innerText = partida.visitante.time.toUpperCase();
+  }
+
+
+  if (homeContent) {
+    homeContent.innerHTML = `
+      <div ">Titulares</div>
+      ${renderPlayersList(partida.mandante.titulares)}
+      <div ">Reservas</div>
+      ${renderPlayersList(partida.mandante.reservas)}
+      <div ;">
+        <strong">Técnico:</strong> ${partida.mandante.tecnico}
+      </div>
+    `;
+  }
+
+  // 3. Injetar Titulares e Reservas do Visitante
+  if (awayContent) {
+    console.log("✈️ Renderizando escalação do visitante...");
+    awayContent.innerHTML = `
+      <div ">Titulares</div>
+      ${renderPlayersList(partida.visitante.titulares)}
+      <div ">Reservas</div>
+      ${renderPlayersList(partida.visitante.reservas)}
+      <div">
+        <strong>Técnico:</strong> ${partida.visitante.tecnico}
+      </div>
+    `;
+    console.log("✅ Escalação do visitante renderizada!");
+  }
+
+  // 4. Atualizar o Árbitro
+  if (refCard && arbitragem) {
+    console.log("⚖️ Renderizando arbitragem...");
+    refCard.innerHTML = `
+      <div style="text-align: center; padding: 10px;">
+        <i class="fas fa-gavel""></i>
+        <div">${arbitragem.funcao}</div>
+        <div ">${arbitragem.nome}</div>
+        <div ">${arbitragem.categoria}</div>
+      </div>
+    `;
+    console.log("✅ Arbitragem renderizada!");
+  }
+  
+  console.log("🎉 updateLineups finalizada com sucesso!");
+};
+
 
 // --- FUNÇÕES DE AGENDA E CRONÔMETRO ---
 
