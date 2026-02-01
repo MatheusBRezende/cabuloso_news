@@ -4,7 +4,8 @@
  */
 
 const CONFIG = {
- webhookUrl: 'https://directions-bali-cannon-change.trycloudflare.com/webhook/placar-ao-vivo',
+  webhookUrl:
+    "https://directions-bali-cannon-change.trycloudflare.com/webhook/placar-ao-vivo",
   agendaUrl: "./backend/agenda_cruzeiro.json",
   updateInterval: 10000,
 };
@@ -39,13 +40,19 @@ document.addEventListener("DOMContentLoaded", () => {
 const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    const rawData = await response.json();
+    let rawData = await response.json();
 
-    if (!rawData.tem_jogo_ao_vivo) {
-      document.getElementById("modal-placar").style.display = "none"; // Se estiver no index
+    // AJUSTE 1: Se for um array, pega o primeiro item para as verificações iniciais
+    const data = Array.isArray(rawData) ? rawData[0] : rawData;
+
+    // AJUSTE 2: Verifica a propriedade dentro do objeto extraído
+    if (!data || data.tem_jogo_ao_vivo === false) {
       if (window.location.pathname.includes("minuto-a-minuto")) {
-        document.body.innerHTML =
-          "<h1 style='color:white; text-align:center; margin-top:50px;'>Aguardando início da partida (20:00)...</h1>";
+        // Mantém a mensagem de espera se não houver jogo
+        const container = document.getElementById("live-match-container");
+        if (container)
+          container.innerHTML =
+            "<h1 style='color:white; text-align:center; margin-top:50px;'>Aguardando início da partida...</h1>";
       }
       return;
     }
