@@ -11,6 +11,7 @@ const CONFIG = {
   tabelaApiUrl: "./backend/tabela_resultado.json",
   agendaApiUrl: "./backend/agenda_cruzeiro.json",
   resultadosApiUrl: "./backend/resultados.json",
+  webhookUrl: 'https://mistress-departments-dec-organized.trycloudflare.com/webhook/placar-ao-vivo',
 };
 
 // ============================================
