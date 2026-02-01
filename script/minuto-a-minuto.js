@@ -4,7 +4,8 @@
  */
 
 const CONFIG = {
-  webhookUrl: 'https://mistress-departments-dec-organized.trycloudflare.com/webhook/placar-ao-vivo',
+  webhookUrl:
+    "https://mistress-departments-dec-organized.trycloudflare.com/webhook/placar-ao-vivo",
   agendaUrl: "./backend/agenda_cruzeiro.json",
   updateInterval: 10000,
 };
@@ -25,8 +26,8 @@ const state = {
   cachedData: {
     resultados: null,
     estatisticas: null,
-    escalacao: null
-  }
+    escalacao: null,
+  },
 };
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -39,13 +40,17 @@ document.addEventListener("DOMContentLoaded", () => {
 const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    if (!response.ok) {
-      if (state.logsEnabled) console.log("Webhook não disponível");
+    const rawData = await response.json();
+
+    if (!rawData.tem_jogo_ao_vivo) {
+      document.getElementById("modal-placar").style.display = "none"; // Se estiver no index
+      if (window.location.pathname.includes("minuto-a-minuto")) {
+        document.body.innerHTML =
+          "<h1 style='color:white; text-align:center; margin-top:50px;'>Aguardando início da partida (20:00)...</h1>";
+      }
       return;
     }
 
-    const rawData = await response.json();
-    
     if (state.logsEnabled) {
       console.log("📥 Dados brutos recebidos:", rawData);
       console.log("Tipo:", Array.isArray(rawData) ? "Array" : "Objeto");
@@ -68,24 +73,24 @@ const fetchLiveData = async () => {
 
     rawData.forEach((item, index) => {
       if (state.logsEnabled) console.log(`Item ${index}:`, Object.keys(item));
-      
+
       // Item de Resultados e placar
       if (item.resultados && item.placar) {
         placarData = item.placar;
         resultadosData = item.resultados;
         state.cachedData.resultados = resultadosData;
       }
-      
+
       // Item de Estatísticas
       if (item.estatisticas) {
         estatisticasData = item.estatisticas;
         state.cachedData.estatisticas = estatisticasData;
       }
-      
+
       // CORREÇÃO AQUI: Verifica se o item contém 'partida' ou 'escalacao'
       if (item.partida || item.escalacao) {
         // Se o JSON vier direto como o que você mandou, o item é a própria escalação
-        escalacaoData = item; 
+        escalacaoData = item;
         state.cachedData.escalacao = escalacaoData;
       }
     });
@@ -122,25 +127,23 @@ const fetchLiveData = async () => {
 
     // Renderiza os componentes
     renderLiveMatch(resultadosData);
-    
+
     // CORREÇÃO: Usa os dados cacheados/processados
     if (estatisticasData) {
       renderStats(estatisticasData);
     } else if (state.cachedData.estatisticas) {
       renderStats(state.cachedData.estatisticas);
     }
-    
-if (escalacaoData) {
-  updateLineups(escalacaoData);
-} else if (state.cachedData.escalacao) {
-  updateLineups(state.cachedData.escalacao);
-}
 
+    if (escalacaoData) {
+      updateLineups(escalacaoData);
+    } else if (state.cachedData.escalacao) {
+      updateLineups(state.cachedData.escalacao);
+    }
   } catch (error) {
     if (state.logsEnabled) console.error("Erro ao buscar dados:", error);
   }
 };
-
 
 const renderStats = (statsData) => {
   const homeList = document.getElementById("home-stats-list");
@@ -151,8 +154,14 @@ const renderStats = (statsData) => {
   if (!homeList || !awayList) {
     if (state.logsEnabled) {
       console.log("Containers de estatísticas não encontrados.");
-      console.log("Procurando por home-stats-list:", document.getElementById("home-stats-list"));
-      console.log("Procurando por away-stats-list:", document.getElementById("away-stats-list"));
+      console.log(
+        "Procurando por home-stats-list:",
+        document.getElementById("home-stats-list"),
+      );
+      console.log(
+        "Procurando por away-stats-list:",
+        document.getElementById("away-stats-list"),
+      );
     }
     return;
   }
@@ -179,8 +188,10 @@ const renderStats = (statsData) => {
   }
 
   if (!statsArray || !Array.isArray(statsArray) || statsArray.length === 0) {
-    homeList.innerHTML = '<div class="loading-stats">Estatísticas indisponíveis</div>';
-    awayList.innerHTML = '<div class="loading-stats">Estatísticas indisponíveis</div>';
+    homeList.innerHTML =
+      '<div class="loading-stats">Estatísticas indisponíveis</div>';
+    awayList.innerHTML =
+      '<div class="loading-stats">Estatísticas indisponíveis</div>';
     return;
   }
 
@@ -266,7 +277,8 @@ const renderLiveMatch = (lances) => {
     } else {
       timeline.innerHTML = lances
         .map((lance) => {
-          const tipoFormatado = lance.minuto || lance.tipo_formatado || lance.lance_tipo || "Lance";
+          const tipoFormatado =
+            lance.minuto || lance.tipo_formatado || lance.lance_tipo || "Lance";
           const icone = lance.icone || "📝";
           const classe = lance.classe || "lance-normal";
 
@@ -292,19 +304,19 @@ const updateLineups = (data) => {
   console.log("🔧 updateLineups CHAMADA!");
   console.log("📦 Dados recebidos:", data);
   console.log("📦 Tipo:", typeof data);
-  
+
   if (!data) {
     console.error("❌ Dados são null/undefined");
     return;
   }
-  
+
   // Pega o primeiro item do array (seu JSON vem em uma lista [])
   const payload = Array.isArray(data) ? data[0] : data;
   console.log("📦 Payload extraído:", payload);
-  
+
   const partida = payload.partida;
   const arbitragem = payload.arbitragem;
-  
+
   console.log("📦 Partida:", partida);
   console.log("📦 Arbitragem:", arbitragem);
 
@@ -318,14 +330,14 @@ const updateLineups = (data) => {
   console.log("✈️ Visitante:", partida.visitante.time);
   console.log("👨‍🏫 Técnico mandante:", partida.mandante.tecnico);
   console.log("👨‍🏫 Técnico visitante:", partida.visitante.tecnico);
-  
+
   // DEBUG: Verificar se os elementos HTML existem
-  const homeTitle = document.getElementById('home-team-name-lineup');
-  const awayTitle = document.getElementById('away-team-name-lineup');
-  const homeContent = document.getElementById('home-lineup-content');
-  const awayContent = document.getElementById('away-lineup-content');
-  const refCard = document.getElementById('match-referee-info');
-  
+  const homeTitle = document.getElementById("home-team-name-lineup");
+  const awayTitle = document.getElementById("away-team-name-lineup");
+  const homeContent = document.getElementById("home-lineup-content");
+  const awayContent = document.getElementById("away-lineup-content");
+  const refCard = document.getElementById("match-referee-info");
+
   console.log("🔍 Elementos HTML encontrados:");
   console.log("home-team-name-lineup:", homeTitle ? "✅" : "❌");
   console.log("away-team-name-lineup:", awayTitle ? "✅" : "❌");
@@ -335,15 +347,17 @@ const updateLineups = (data) => {
 
   // Resto da função continua igual...
   const renderPlayersList = (players) => {
-    if (!players || !players.length) return '<div style="color: #666; padding: 5px;">Não disponível</div>';
-    
+    if (!players || !players.length)
+      return '<div style="color: #666; padding: 5px;">Não disponível</div>';
+
     return `
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding: 5px 0;">
-        ${players.map(p => {
-          const [numero, ...posicaoArray] = p.numero_posicao.split(' ');
-          const posicao = posicaoArray.join(' ');
-          
-          return `
+        ${players
+          .map((p) => {
+            const [numero, ...posicaoArray] = p.numero_posicao.split(" ");
+            const posicao = posicaoArray.join(" ");
+
+            return `
             <div class="player-item-min">
               <span class="player-number">${numero}</span>
               <div class="player-info-text">
@@ -352,22 +366,26 @@ const updateLineups = (data) => {
               </div>
             </div>
           `;
-        }).join('')}
+          })
+          .join("")}
       </div>
     `;
-};
+  };
 
   // 1. Atualizar Nomes dos Times nos Cabeçalhos
   if (homeTitle) {
-    console.log(`🏠 Atualizando título mandante para: ${partida.mandante.time}`);
+    console.log(
+      `🏠 Atualizando título mandante para: ${partida.mandante.time}`,
+    );
     homeTitle.innerText = partida.mandante.time.toUpperCase();
   }
-  
+
   if (awayTitle) {
-    console.log(`✈️ Atualizando título visitante para: ${partida.visitante.time}`);
+    console.log(
+      `✈️ Atualizando título visitante para: ${partida.visitante.time}`,
+    );
     awayTitle.innerText = partida.visitante.time.toUpperCase();
   }
-
 
   if (homeContent) {
     homeContent.innerHTML = `
@@ -409,10 +427,9 @@ const updateLineups = (data) => {
     `;
     console.log("✅ Arbitragem renderizada!");
   }
-  
+
   console.log("🎉 updateLineups finalizada com sucesso!");
 };
-
 
 // --- FUNÇÕES DE AGENDA E CRONÔMETRO ---
 
