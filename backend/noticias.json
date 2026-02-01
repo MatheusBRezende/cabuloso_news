@@ -1,26 +1,5 @@
 [
   {
-    "title": "Cruzeiro joga mal e é goleado por Botafogo",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-joga-mal-e-e-goleado-por-botafogo/",
-    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
-    "date": "",
-    "fonte": "Zeiro"
-  },
-  {
-    "title": "Tite tem duas dúvidas importantes para escalar o Cruzeiro diante do Betim",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-tite-duvidas/",
-    "image": "https://zeiro.com.br/wp-content/uploads/2026/01/55060404032_00305872be_k-300x200.jpg",
-    "date": "",
-    "fonte": "Zeiro"
-  },
-  {
-    "title": "Diretoria do Cruzeiro bate o martelo sobre demissão de Tite",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-tite-demissao/",
-    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
-    "date": "",
-    "fonte": "Zeiro"
-  },
-  {
     "title": "Situação de Kaiki ganha novidade neste sábado e Cruzeiro aguarda decisão",
     "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-kaiki-situacao-novida/",
     "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
@@ -35,27 +14,6 @@
     "fonte": "Samuca TV"
   },
   {
-    "title": "Cruzeiro avança em conversas e jogador fica perto de time alemão",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-avanca-em-conversas-e-jogador-fica-perto-de-time-alemao/",
-    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
-    "date": "",
-    "fonte": "Zeiro"
-  },
-  {
-    "title": "Botafogo x Cruzeiro; saiba todas as informações da partida desta quinta-feira",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-botafogo-info-26/",
-    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
-    "date": "",
-    "fonte": "Zeiro"
-  },
-  {
-    "title": "URGENTE! Cruzeiro encaminha venda de titular ABSOLUTO para a Europa",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/urgente-cruzeiro-encaminha-venda-de-titular-absoluto-para-a-europa/",
-    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
-    "date": "",
-    "fonte": "Zeiro"
-  },
-  {
     "title": "Merece ser titular? Os números de Arroyo pelo Cruzeiro no início da ‘era Tite’",
     "url": "https://www.centraldatoca.com.br/estatisticas/2026/01/31/merece-ser-titular-os-numeros-de-arroyo-pelo-cruzeiro-no-inicio-da-era-tite/",
     "image": "https://static.centraldatoca.com/2026/01/QzAsnW7G-arroyoviagemcruzeiro-300x188.jpg",
@@ -63,11 +21,32 @@
     "fonte": "Samuca TV"
   },
   {
-    "title": "Cruzeiro recua sobre transferência de Kaiki, que pode não ser vendido a clube italiano",
-    "url": "https://www.centraldatoca.com.br/mercado/2026/01/31/cruzeiro-recua-sobre-transferencia-de-kaiki-que-pode-nao-ser-vendido-a-clube-italiano/",
-    "image": "https://static.centraldatoca.com/2026/01/EyjnGqFr-kaikicruzeironiltonsantos-300x188.jpg",
-    "date": "31/01/2026 · 20h42",
+    "title": "Cruzeiro avança em conversas e jogador fica perto de time alemão",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-avanca-em-conversas-e-jogador-fica-perto-de-time-alemao/",
+    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
+    "date": "",
+    "fonte": "Zeiro"
+  },
+  {
+    "title": "Ex-Cruzeiro, Jardim entra em top 10 dos melhores técnicos portugueses do século; veja lista",
+    "url": "https://www.centraldatoca.com.br/ex-cruzeiro/2026/01/31/ex-cruzeiro-jardim-entra-em-top-10-dos-melhores-tecnicos-portugueses-do-seculo-veja-lista/",
+    "image": "https://static.centraldatoca.com/2025/10/Nz0jxYdt-escalacaocruzeiroleonardojardim-300x188.jpg",
+    "date": "31/01/2026 · 18h27",
     "fonte": "Samuca TV"
+  },
+  {
+    "title": "Diretoria do Cruzeiro bate o martelo sobre demissão de Tite",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-tite-demissao/",
+    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
+    "date": "",
+    "fonte": "Zeiro"
+  },
+  {
+    "title": "Cruzeiro joga mal e é goleado por Botafogo",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-joga-mal-e-e-goleado-por-botafogo/",
+    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
+    "date": "",
+    "fonte": "Zeiro"
   },
   {
     "title": "Cruzeiro amplia parceria com patrocinador, que passa a ter espaço no uniforme",
@@ -84,8 +63,15 @@
     "fonte": "Samuca TV"
   },
   {
-    "title": "Kaio Jorge pede desculpas por derrota do Cruzeiro e afirma: “pode ter certeza que…”",
-    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-kaio-jorge-desculpas/",
+    "title": "URGENTE! Cruzeiro encaminha venda de titular ABSOLUTO para a Europa",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/urgente-cruzeiro-encaminha-venda-de-titular-absoluto-para-a-europa/",
+    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
+    "date": "",
+    "fonte": "Zeiro"
+  },
+  {
+    "title": "Botafogo x Cruzeiro; saiba todas as informações da partida desta quinta-feira",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-botafogo-info-26/",
     "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
     "date": "",
     "fonte": "Zeiro"
@@ -96,6 +82,13 @@
     "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
     "date": "",
     "fonte": "Zeiro"
+  },
+  {
+    "title": "Cruzeiro recua sobre transferência de Kaiki, que pode não ser vendido a clube italiano",
+    "url": "https://www.centraldatoca.com.br/mercado/2026/01/31/cruzeiro-recua-sobre-transferencia-de-kaiki-que-pode-nao-ser-vendido-a-clube-italiano/",
+    "image": "https://static.centraldatoca.com/2026/01/EyjnGqFr-kaikicruzeironiltonsantos-300x188.jpg",
+    "date": "31/01/2026 · 20h42",
+    "fonte": "Samuca TV"
   },
   {
     "title": "Cruzeiro fica perto de ter reforço importante no elenco",
@@ -112,6 +105,13 @@
     "fonte": "Zeiro"
   },
   {
+    "title": "Tite tem duas dúvidas importantes para escalar o Cruzeiro diante do Betim",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-tite-duvidas/",
+    "image": "https://zeiro.com.br/wp-content/uploads/2026/01/55060404032_00305872be_k-300x200.jpg",
+    "date": "",
+    "fonte": "Zeiro"
+  },
+  {
     "title": "Trio participa de treino, e Cruzeiro fecha preparação para enfrentar o Betim",
     "url": "https://www.centraldatoca.com.br/treino/2026/01/31/trio-participa-de-treino-e-cruzeiro-fecha-preparacao-para-enfrentar-o-betim/",
     "image": "https://static.centraldatoca.com/2026/01/hLyi9j4e-treinocruzeirogersonbetim-300x188.jpg",
@@ -119,17 +119,17 @@
     "fonte": "Samuca TV"
   },
   {
+    "title": "Kaio Jorge pede desculpas por derrota do Cruzeiro e afirma: “pode ter certeza que…”",
+    "url": "https://zeiro.com.br/noticias-do-cruzeiro/cruzeiro-kaio-jorge-desculpas/",
+    "image": "https://zeiro.com.br/wp-content/uploads/2024/02/logo-cruzeiro.svg",
+    "date": "",
+    "fonte": "Zeiro"
+  },
+  {
     "title": "Cruzeiro tem ‘missão’ no Mineiro e tenta evitar marca negativa que não acontece há quase 3 anos",
     "url": "https://www.centraldatoca.com.br/estatisticas/2026/01/31/cruzeiro-tem-missao-no-mineiro-e-tenta-evitar-marca-negativa-que-nao-acontece-ha-quase-3-anos/",
     "image": "https://static.centraldatoca.com/2026/01/MbzOVPVJ-FotoJet-81-1-300x188.jpg",
     "date": "31/01/2026 · 04h23",
-    "fonte": "Samuca TV"
-  },
-  {
-    "title": "Ex-Cruzeiro, Jardim entra em top 10 dos melhores técnicos portugueses do século; veja lista",
-    "url": "https://www.centraldatoca.com.br/ex-cruzeiro/2026/01/31/ex-cruzeiro-jardim-entra-em-top-10-dos-melhores-tecnicos-portugueses-do-seculo-veja-lista/",
-    "image": "https://static.centraldatoca.com/2025/10/Nz0jxYdt-escalacaocruzeiroleonardojardim-300x188.jpg",
-    "date": "31/01/2026 · 18h27",
     "fonte": "Samuca TV"
   }
 ]
