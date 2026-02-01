@@ -4,8 +4,7 @@
  */
 
 const CONFIG = {
-  webhookUrl:
-    "https://mistress-departments-dec-organized.trycloudflare.com/webhook/placar-ao-vivo",
+ webhookUrl: 'https://engineers-automotive-handheld-legislature.trycloudflare.com/webhook/placar-ao-vivo',
   agendaUrl: "./backend/agenda_cruzeiro.json",
   updateInterval: 10000,
 };
