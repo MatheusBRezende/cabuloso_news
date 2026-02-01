@@ -4,6 +4,7 @@
  */
 
 const CONFIG = {
+  webhookUrl: "https://let-therapist-removal-river.trycloudflare.com/webhook/placar-ao-vivo",
   agendaUrl: "./backend/agenda_cruzeiro.json",
   updateInterval: 10000,
 };

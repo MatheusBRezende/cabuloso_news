@@ -1,6 +1,7 @@
 
 const LiveMatchDetector = (() => {
   const CONFIG = {
+    webhookUrl: 'https://let-therapist-removal-river.trycloudflare.com/webhook/placar-ao-vivo',
     checkInterval: 5000, 
     minutoAMinutoUrl: '/minuto-a-minuto.html', 
     countdownSeconds: 10,
