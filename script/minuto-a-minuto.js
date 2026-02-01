@@ -4,9 +4,7 @@
  */
 
 const CONFIG = {
-  webhookUrl:
-    "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
-  agendaUrl: "backend/agenda_cruzeiro.json",
+  agendaUrl: "./backend/agenda_cruzeiro.json",
   updateInterval: 10000,
 };
 
