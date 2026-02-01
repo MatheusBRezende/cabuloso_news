@@ -3,7 +3,7 @@ const LiveMatchDetector = (() => {
   const CONFIG = {
     webhookUrl: 'https://directions-bali-cannon-change.trycloudflare.com/webhook/placar-ao-vivo',
     checkInterval: 5000, 
-    minutoAMinutoUrl: '/minuto-a-minuto.html', 
+    minutoAMinutoUrl: '../minuto-a-minuto.html', 
     countdownSeconds: 10,
     storageKey: 'cabuloso_live_match_dismissed',
 
