@@ -1,7 +1,7 @@
 
 const LiveMatchDetector = (() => {
   const CONFIG = {
-    webhookUrl: 'https://directions-bali-cannon-change.trycloudflare.com/webhook/placar-ao-vivo',
+    webhookUrl: 'https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo',
     checkInterval: 5000, 
     minutoAMinutoUrl: '../minuto-a-minuto.html', 
     countdownSeconds: 10,
