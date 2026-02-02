@@ -41,43 +41,62 @@ document.addEventListener("DOMContentLoaded", () => {
 const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    const data = await response.json();
+    
+    // Verifica se a resposta foi bem sucedida antes de tentar ler o JSON
+    if (!response.ok) {
+      throw new Error("Resposta do servidor não foi OK");
+    }
 
-    if (state.logsEnabled) console.log("📥 Dados recebidos:", data);
-
-    // SE O N8N RETORNAR QUE NÃO HÁ JOGO (success: false)
-    if (!data.success) {
-      if (state.logsEnabled) console.log("ℹ️ Sem jogo ao vivo. Verificando próxima partida...");
+    const text = await response.text();
+    if (!text) {
+      if (state.logsEnabled) console.log("ℹ️ Resposta vazia do servidor.");
       state.matchStarted = false;
-      renderProximaPartida(); // CHAMA O CONTADOR
+      renderCountdown(); // Nome correto da função no seu arquivo
       return;
     }
 
-    // Se houver dados, atualiza o estado e a tela
+    const data = JSON.parse(text);
+
+    if (state.logsEnabled) console.log("📥 Dados recebidos:", data);
+
+    // Se o n8n retornar sucesso falso ou não houver dados de placar
+    if (!data.success || !data.placar) {
+      state.matchStarted = false;
+      renderCountdown();
+      return;
+    }
+
+    // Se chegou aqui, tem jogo!
     state.matchStarted = true;
-    state.match.home.name = data.placar.home_name;
-    state.match.away.name = data.placar.away_name;
-    state.match.score.home = data.placar.home;
-    state.match.score.away = data.placar.away;
-    state.match.status = data.placar.status;
+    state.match.home.name = data.placar.home_name || "Mandante";
+    state.match.away.name = data.placar.away_name || "Visitante";
+    state.match.score.home = data.placar.home || 0;
+    state.match.score.away = data.placar.away || 0;
+    state.match.status = data.placar.status || "AO VIVO";
 
     updateHeader();
 
-    // Cache para as abas
-    state.cachedData.resultados = data.narracao;
-    state.cachedData.estatisticas = data.estatisticas;
-    state.cachedData.escalacao = data.escalacao;
+    // Guardar dados no cache
+    state.cachedData.resultados = data.narracao || [];
+    state.cachedData.estatisticas = data.estatisticas || {};
+    state.cachedData.escalacao = data.escalacao || {};
 
-    // Renderiza a aba ativa
-    const activeTab = document.querySelector(".tab-btn.active").dataset.tab;
-    if (activeTab === "lances") renderLances(data.narracao);
-    if (activeTab === "estatisticas") renderEstatisticas(data.estatisticas);
-    if (activeTab === "escalacao") renderEscalacao(data.escalacao);
+    // Renderiza o que estiver aberto
+    const activeTabBtn = document.querySelector(".tab-btn.active");
+    if (activeTabBtn) {
+      const activeTab = activeTabBtn.dataset.tab;
+      if (activeTab === "lances") renderLances(state.cachedData.resultados);
+      if (activeTab === "estatisticas") renderEstatisticas(state.cachedData.estatisticas);
+      if (activeTab === "escalacao") renderEscalacao(state.cachedData.escalacao);
+    }
 
   } catch (error) {
     console.error("❌ Erro ao buscar dados:", error);
-    // Se der erro de conexão (n8n offline), também tenta mostrar a próxima partida
-    renderProximaPartida();
+    state.matchStarted = false;
+    // Tenta renderizar o contador mesmo em caso de erro de rede
+    if (typeof renderCountdown === "function") {
+       renderCountdown();
+    }
   }
 };
 
