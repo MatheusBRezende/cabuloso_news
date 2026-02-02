@@ -109,69 +109,27 @@ const NEWS_PER_PAGE = 6;
 // BUSCAR E ORGANIZAR NOTÍCIAS
 // ============================================
 const fetchNews = async () => {
-  const container = document.getElementById("newsContainer");
-  if (!container) return;
-
   try {
-    const response = await fetch(`${CONFIG.newsApiUrl}?v=${Date.now()}`);
-    
-    if (!response.ok) {
-      console.error(`ERRO ${response.status}: Caminho falhou -> ${CONFIG.newsApiUrl}`);
-      throw new Error("Arquivo não encontrado");
+    const response = await fetch(CONFIG.newsApiUrl);
+    let data = await response.json();
+
+    // Se a API retornar um Array [ {...} ], pegamos o primeiro item
+    if (Array.isArray(data)) {
+      data = data[0];
     }
 
-    const news = await response.json();
-    
-    // DEBUG: Mostra as datas originais e convertidas
-    console.log("Notícias antes da ordenação:");
-    news.forEach(item => {
-      console.log(`${item.date} -> ${parseNewsDate(item.date)} -> ${new Date(parseNewsDate(item.date)).toLocaleDateString()}`);
-    });
-    
-    // 1. ORDENAÇÃO: Mais recente primeiro (decrescente)
-    news.sort((a, b) => parseNewsDate(b.date) - parseNewsDate(a.date));
-    
-    // DEBUG: Mostra após ordenação
-    console.log("Notícias após ordenação:");
-    news.forEach(item => {
-      console.log(item.date);
-    });
-    
-    // 2. Salva todas as notícias para paginação
-    allNews = news;
-    
-    // 3. Reseta contador
-    displayedNewsCount = 0;
-    
-    // 4. Limpa container
-    container.innerHTML = '';
-    
-    // 5. Renderiza primeiro lote
-    renderMoreNews();
-    
-    // 6. Mostra/Esconde botão "Carregar mais"
-    const loadMoreContainer = document.getElementById("loadMoreContainer");
-    if (loadMoreContainer) {
-      if (allNews.length > NEWS_PER_PAGE) {
-        loadMoreContainer.style.display = "block";
-        
-        // Configura evento do botão
-        const btnLoadMore = document.getElementById("btnLoadMore");
-        if (btnLoadMore) {
-          btnLoadMore.onclick = renderMoreNews;
-        }
-      } else {
-        loadMoreContainer.style.display = "none";
-      }
+    // Agora acessamos a chave 'noticias' dentro do objeto
+    const news = data.noticias;
+
+    if (!news || !Array.isArray(news)) {
+      throw new Error("Formato de notícias inválido: chave 'noticias' não encontrada");
     }
 
+    renderNews(news);
   } catch (error) {
-    console.error("Erro detalhado:", error);
-    container.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: white;">
-        <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ff4444;"></i>
-        <p>Não foi possível carregar as notícias. Verifique se a pasta 'backend' está na raiz do site.</p>
-      </div>`;
+    console.error("Erro notícias:", error);
+    const container = document.getElementById("newsContainer");
+    if (container) container.innerHTML = '<div class="error-cell">Erro ao carregar notícias</div>';
   }
 };
 
@@ -237,55 +195,26 @@ const renderMoreNews = () => {
 // WIDGETS - MINI TABELA
 // ============================================
 const fetchMiniTable = async () => {
-  const tbody = document.getElementById("miniTableBody");
-
-  if (!tbody) return;
-
+  const container = document.getElementById("miniTableBody");
   try {
-    const response = await fetch(CONFIG.tabelaApiUrl, { cache: "no-cache" });
+    const response = await fetch(CONFIG.tabelaApiUrl);
+    let data = await response.json();
 
-    if (!response.ok) throw new Error("Erro ao carregar tabela");
-
-    const data = await response.json();
-
-    if (!data.classificacao) throw new Error("Dados inválidos");
-
-    // Pegar top 5 times
-    const top5 = data.classificacao.slice(0, 5);
-
-    tbody.innerHTML = top5
-      .map((time) => {
-        const isCruzeiro = time.nome?.toLowerCase().includes("cruzeiro");
-
-        return `
-        <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
-          <td>${time.posicao}º</td>
-          <td>
-            <div class="team-cell">
-              <img src="${time.escudo || CONFIG.defaultImage}" alt="" class="team-logo" loading="lazy">
-              <span>${escapeHtml(time.nome)}</span>
-            </div>
-          </td>
-          <td><strong>${time.pontos}</strong></td>
-        </tr>
-      `;
-      })
-      .join("");
-
-    // Atualizar stat de posição
-    const cruzeiro = data.classificacao.find((t) =>
-      t.nome?.toLowerCase().includes("cruzeiro"),
-    );
-
-    const statPosition = document.getElementById("statPosition");
-    if (statPosition && cruzeiro) {
-      statPosition.textContent = `${cruzeiro.posicao}º lugar`;
+    if (Array.isArray(data)) {
+      data = data[0];
     }
-  } catch (error) {
-    console.error("Erro ao buscar mini tabela:", error);
 
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="loading-cell">Erro ao carregar</td></tr>';
+    // Acessa 'tabela_brasileiro' e depois 'classificacao'
+    const tabelaWrap = data.tabela_brasileiro;
+    
+    if (!tabelaWrap || !tabelaWrap.classificacao) {
+      throw new Error("Dados da tabela não encontrados no JSON");
+    }
+
+    renderMiniTable(tabelaWrap.classificacao);
+  } catch (error) {
+    console.error("Erro mini tabela:", error);
+    if (container) container.innerHTML = '<tr><td colspan="3">Erro ao carregar</td></tr>';
   }
 };
 
@@ -293,65 +222,20 @@ const fetchMiniTable = async () => {
 // WIDGETS - PRÓXIMOS JOGOS
 // ============================================
 const fetchNextMatches = async () => {
-  const container = document.getElementById("nextMatchesWidget");
-
-  if (!container) return;
-
   try {
-    const response = await fetch(CONFIG.agendaApiUrl, { cache: "no-cache" });
+    const response = await fetch(CONFIG.agendaApiUrl);
+    let data = await response.json();
 
-    if (!response.ok) throw new Error("Erro ao carregar agenda");
-
-    const data = await response.json();
-
-    const jogos = data.dados_completos || data || [];
-
-    if (!Array.isArray(jogos) || jogos.length === 0) {
-      container.innerHTML =
-        '<div class="loading-cell">Nenhum jogo agendado.</div>';
-      return;
+    if (Array.isArray(data)) {
+      data = data[0];
     }
 
-    const proximos = jogos.slice(0, 3);
+    const agenda = data.agenda;
+    if (!agenda) throw new Error("Agenda não encontrada no JSON");
 
-    container.innerHTML = proximos
-      .map(
-        (jogo) => `
-      <div class="match-item">
-        <div class="match-item-date">
-          <i class="far fa-calendar"></i>
-          ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}
-        </div>
-        <div class="match-item-teams">
-          <div class="match-team-widget">
-            <img src="${jogo.escudo_mandante || CONFIG.defaultImage}" alt="">
-            <span>${escapeHtml(jogo.mandante)}</span>
-          </div>
-          <span class="match-score-widget">X</span>
-          <div class="match-team-widget">
-            <span>${escapeHtml(jogo.visitante)}</span>
-            <img src="${jogo.escudo_visitante || CONFIG.defaultImage}" alt="">
-          </div>
-        </div>
-        <div class="match-item-competition">${escapeHtml(jogo.campeonato)}</div>
-      </div>
-    `,
-      )
-      .join("");
-
-    // Atualizar stat de próximo jogo
-    const statNextGame = document.getElementById("statNextGame");
-    if (statNextGame && proximos.length > 0) {
-      const prox = proximos[0];
-      const opponent = prox.mandante?.toLowerCase().includes("cruzeiro")
-        ? prox.visitante
-        : prox.mandante;
-      statNextGame.textContent = `${prox.data?.split(" ")[0] || ""} vs ${opponent || "Adversário"}`;
-    }
+    renderNextMatches(agenda);
   } catch (error) {
-    console.error("Erro ao buscar próximos jogos:", error);
-    container.innerHTML =
-      '<div class="loading-cell">Erro ao carregar jogos.</div>';
+    console.error("Erro agenda:", error);
   }
 };
 
@@ -359,69 +243,20 @@ const fetchNextMatches = async () => {
 // WIDGETS - ÚLTIMOS RESULTADOS (DINÂMICO)
 // ============================================
 const fetchRecentResults = async () => {
-  // AQUI ESTAVA O ERRO: Mudamos de "recentResultsContainer" para "recentResultsWidget"
-  const container = document.getElementById("recentResultsWidget"); 
-  
-  if (!container) {
-    console.error("ERRO: Elemento 'recentResultsWidget' não encontrado no HTML.");
-    return;
-  }
-
   try {
-    const response = await fetch(`${CONFIG.resultadosApiUrl}?v=${Date.now()}`);
-    
-    if (!response.ok) throw new Error("Erro ao carregar arquivo de resultados");
+    const response = await fetch(CONFIG.resultadosApiUrl);
+    let data = await response.json();
 
-    const data = await response.json();
-    const resultsArray = Array.isArray(data) ? data : (data.results || []);
-
-    if (resultsArray.length === 0) {
-      container.innerHTML = '<div class="loading-cell">Nenhum resultado.</div>';
-      return;
+    if (Array.isArray(data)) {
+      data = data[0];
     }
 
-    // Pega apenas os 5 últimos
-    const ultimosResultados = resultsArray.slice(0, 5);
+    const resultados = data.resultados;
+    if (!resultados) throw new Error("Resultados não encontrados no JSON");
 
-    container.innerHTML = ultimosResultados.map(res => {
-        const scoreStr = res.score || "0 - 0";
-        // Verifica se Cruzeiro é o time 1 ou 2 para pintar a bolinha de verde/vermelho
-        const isCruzeiroMandante = (res.team1 || "").toLowerCase().includes("cruzeiro");
-        
-        let statusClass = "draw"; // Padrão empate
-        if (scoreStr.includes("-")) {
-          const [s1, s2] = scoreStr.split("-").map(s => parseInt(s.trim()));
-          
-          if (!isNaN(s1) && !isNaN(s2)) {
-            if (s1 === s2) statusClass = "draw";
-            else if (isCruzeiroMandante) {
-              statusClass = s1 > s2 ? "win" : "loss";
-            } else {
-              statusClass = s2 > s1 ? "win" : "loss";
-            }
-          }
-        }
-
-        return `
-        <div class="result-mini">
-          <div class="result-mini-teams">
-            <div class="result-mini-team">
-              <img src="${escapeHtml(res.logo1 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team1)}">
-              <span>${escapeHtml(res.team1)}</span>
-            </div>
-            <span class="result-mini-score ${statusClass}">${escapeHtml(scoreStr)}</span>
-            <div class="result-mini-team">
-              <img src="${escapeHtml(res.logo2 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team2)}">
-              <span>${escapeHtml(res.team2)}</span>
-            </div>
-          </div>
-          <div class="result-mini-info">${escapeHtml(res.competition)}</div>
-        </div>`;
-    }).join("");
-
+    renderRecentResults(resultados);
   } catch (error) {
     console.error("Erro resultados:", error);
-    container.innerHTML = '<div class="loading-cell">Indisponível</div>';
   }
 };
 
