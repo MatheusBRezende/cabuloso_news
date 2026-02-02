@@ -3,6 +3,178 @@
  * COM CACHE LOCAL PARA REDUZIR REQUESTS
  */
 
+// Adicione isso NO INÍCIO do arquivo script.js, antes da constante CONFIG:
+
+// ============================================
+// VARIÁVEIS GLOBAIS E FUNÇÕES AUXILIARES
+// ============================================
+let allNews = [];
+let displayedNewsCount = 0;
+const NEWS_PER_PAGE = 6;
+
+// Função para converter data das notícias
+function parseNewsDate(dateString) {
+  if (!dateString) return new Date();
+  
+  // Tenta diferentes formatos de data
+  const date = new Date(dateString);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+  
+  // Fallback para data atual
+  return new Date();
+}
+
+// Função para escapar HTML
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Função para renderizar mais notícias
+function renderMoreNews() {
+  const container = document.getElementById("newsContainer");
+  if (!container) return;
+  
+  const newsToShow = allNews.slice(displayedNewsCount, displayedNewsCount + NEWS_PER_PAGE);
+  
+  if (newsToShow.length === 0) {
+    const loadMoreContainer = document.getElementById("loadMoreContainer");
+    if (loadMoreContainer) {
+      loadMoreContainer.style.display = "none";
+    }
+    return;
+  }
+  
+  newsToShow.forEach(noticia => {
+    const newsCard = document.createElement("article");
+    newsCard.className = "news-card";
+    newsCard.onclick = () => window.open(noticia.link, '_blank');
+    
+    // Determinar badge
+    let badgeClass = "news-badge";
+    let badgeText = "Notícia";
+    if (noticia.categoria) {
+      badgeText = noticia.categoria;
+      if (noticia.categoria.toLowerCase().includes("samuca")) {
+        badgeClass += " news-badge--samuca";
+      }
+    }
+    
+    newsCard.innerHTML = `
+      <div class="news-image">
+        <img src="${noticia.image || CONFIG.defaultImage}" 
+             alt="${escapeHtml(noticia.title)}"
+             loading="lazy"
+             onerror="this.src='${CONFIG.defaultImage}'">
+        <div class="${badgeClass}">${escapeHtml(badgeText)}</div>
+      </div>
+      <div class="news-content">
+        <div class="news-date">
+          <i class="far fa-clock"></i>
+          ${escapeHtml(noticia.date || 'Data não informada')}
+        </div>
+        <h3 class="news-title">${escapeHtml(noticia.title)}</h3>
+        <div class="news-footer">
+          <span class="read-more">
+            Ler mais <i class="fas fa-arrow-right"></i>
+          </span>
+        </div>
+      </div>
+    `;
+    
+    container.appendChild(newsCard);
+  });
+  
+  displayedNewsCount += newsToShow.length;
+  
+  // Esconde botão se não há mais notícias
+  const loadMoreContainer = document.getElementById("loadMoreContainer");
+  if (loadMoreContainer && displayedNewsCount >= allNews.length) {
+    loadMoreContainer.style.display = "none";
+  }
+}
+
+// ============================================
+// REMOVER LOADING SCREEN
+// ============================================
+function hideLoadingScreen() {
+  const loadingScreen = document.getElementById('loadingScreen');
+  if (loadingScreen) {
+    // Pequeno delay para garantir que tudo carregou
+    setTimeout(() => {
+      loadingScreen.classList.add('hidden');
+      
+      // Remove completamente do DOM após animação
+      setTimeout(() => {
+        if (loadingScreen.parentNode) {
+          loadingScreen.style.display = 'none';
+        }
+      }, 500);
+    }, 1000);
+  }
+}
+
+// ============================================
+// INICIALIZAR TODOS OS DADOS
+// ============================================
+async function initializePage() {
+  console.log("🚀 Inicializando Cabuloso News...");
+  
+  try {
+    // Carrega todos os dados em paralelo
+    await Promise.allSettled([
+      fetchNews(),
+      fetchMiniTable(),
+      fetchNextMatches(),
+      fetchRecentResults()
+    ]);
+    
+    console.log("✅ Todos os dados carregados");
+    
+  } catch (error) {
+    console.error("❌ Erro na inicialização:", error);
+  } finally {
+    // SEMPRE remove o loading screen
+    hideLoadingScreen();
+  }
+}
+
+// ============================================
+// EXECUTAR QUANDO A PÁGINA CARREGAR
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  console.log("📄 DOM carregado");
+  
+  // Configurar menu mobile
+  const menuToggle = document.getElementById('menuToggle');
+  const navMenu = document.getElementById('navMenu');
+  
+  if (menuToggle && navMenu) {
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      navMenu.classList.toggle('active');
+    });
+    
+    // Fechar menu ao clicar em um link
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        menuToggle.classList.remove('active');
+        navMenu.classList.remove('active');
+      });
+    });
+  }
+  
+  // Iniciar carregamento dos dados
+  initializePage();
+  
+  // Fallback: sempre remover loading após 5 segundos (segurança)
+  setTimeout(hideLoadingScreen, 5000);
+});
+
 const CONFIG = {
   newsApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   tabelaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
