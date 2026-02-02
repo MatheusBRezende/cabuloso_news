@@ -4,7 +4,7 @@
  */
 
 const CONFIG = {
-  webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  webhookUrl: "",
   agendaUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   updateInterval: 10000,
 };
