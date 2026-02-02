@@ -949,6 +949,35 @@ ul { list-style: none; }
 }
 
 
+/* --- ESTADOS DE VISIBILIDADE --- */
+
+/* Esconde elementos de forma absoluta */
+.hidden {
+    display: none !important;
+}
+
+/* Quando não há jogo, fazemos a agenda ocupar a largura toda */
+main.container.no-match {
+    display: block; /* Sai do grid para não criar buracos vazios */
+}
+
+#agenda-container.active-full {
+    display: block;
+    width: 100%;
+    max-width: 800px;
+    margin: 20px auto;
+}
+
+/* Estilo para a mensagem de "Sem jogo" */
+.no-game-alert {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--white);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-6);
+}
+
 /* === FOOTER === */
 .footer {
     background: linear-gradient(180deg, var(--gray-900) 0%, var(--gray-950) 100%);
