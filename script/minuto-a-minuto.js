@@ -41,83 +41,43 @@ document.addEventListener("DOMContentLoaded", () => {
 const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    let rawData = await response.json();
+    const data = await response.json();
 
-    // REMOVA esta linha que tenta pegar o primeiro item do array
-    // const data = Array.isArray(rawData) ? rawData[0] : rawData;
+    if (state.logsEnabled) console.log("📥 Dados recebidos:", data);
 
-    // Em vez disso, verifique se o objeto tem a propriedade 'tem_jogo_ao_vivo'
-    // Se não existir, assuma que é um jogo ao vivo
-    const hasLiveGameFlag = rawData.tem_jogo_ao_vivo !== undefined;
-    
-    // Se tiver a flag e for false, ou se não houver narracao/placar, mostra pré-jogo
-    if ((hasLiveGameFlag && rawData.tem_jogo_ao_vivo === false) || 
-        (!rawData.narracao && !rawData.placar)) {
-      if (!state.matchStarted) {
-        renderPreMatchState();
-      }
+    // SE O N8N RETORNAR QUE NÃO HÁ JOGO (success: false)
+    if (!data.success) {
+      if (state.logsEnabled) console.log("ℹ️ Sem jogo ao vivo. Verificando próxima partida...");
+      state.matchStarted = false;
+      renderProximaPartida(); // CHAMA O CONTADOR
       return;
     }
 
-    if (state.logsEnabled) console.log("📥 Dados ao vivo recebidos:", rawData);
-
-    // AGORA TRATE O FORMATO ATUAL (objeto único)
-    let placarData = rawData.placar || null;
-    let resultadosData = rawData.narracao || null; // 'narracao' ao invés de 'resultados'
-    let estatisticasData = rawData.estatisticas || null;
-    let escalacaoData = rawData.escalacao || null;
-    let arbitragemData = rawData.arbitragem || null;
-
-    if (resultadosData) {
-      state.cachedData.resultados = resultadosData;
-    }
-    if (estatisticasData) {
-      state.cachedData.estatisticas = estatisticasData;
-    }
-    if (escalacaoData) {
-      state.cachedData.escalacao = {
-        partida: {
-          mandante: escalacaoData.home || escalacaoData.mandante,
-          visitante: escalacaoData.away || escalacaoData.visitante
-        },
-        arbitragem: arbitragemData ? { nome: arbitragemData, funcao: "Árbitro Principal" } : null
-      };
-    }
-
-    if (!placarData || !resultadosData) return;
-
-    // O jogo começou: limpa o cronómetro da agenda
-    if (state.countdownInterval) {
-      clearInterval(state.countdownInterval);
-      state.countdownInterval = null;
-    }
-
+    // Se houver dados, atualiza o estado e a tela
     state.matchStarted = true;
+    state.match.home.name = data.placar.home_name;
+    state.match.away.name = data.placar.away_name;
+    state.match.score.home = data.placar.home;
+    state.match.score.away = data.placar.away;
+    state.match.status = data.placar.status;
 
-    // Atualiza o estado da partida com o formato atual
-    state.match.home.name = placarData.home_name || placarData.mandante || "Mandante";
-    state.match.home.logo = placarData.home_logo || "assets/logo.png";
-    state.match.away.name = placarData.away_name || placarData.visitante || "Cruzeiro";
-    state.match.away.logo = placarData.away_logo || "https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/cruzeiro.png";
-    state.match.score.home = placarData.home ?? 0;
-    state.match.score.away = placarData.away ?? 0;
-    state.match.status = placarData.status || "AO VIVO";
+    updateHeader();
 
-    // Renderiza os componentes da UI
-    renderLiveMatch(resultadosData);
-    
-    // Estatísticas
-    if (estatisticasData || state.cachedData.estatisticas) {
-      renderStats(estatisticasData || state.cachedData.estatisticas);
-    }
+    // Cache para as abas
+    state.cachedData.resultados = data.narracao;
+    state.cachedData.estatisticas = data.estatisticas;
+    state.cachedData.escalacao = data.escalacao;
 
-    // Escalações
-    if (escalacaoData || state.cachedData.escalacao) {
-      updateLineups(state.cachedData.escalacao);
-    }
+    // Renderiza a aba ativa
+    const activeTab = document.querySelector(".tab-btn.active").dataset.tab;
+    if (activeTab === "lances") renderLances(data.narracao);
+    if (activeTab === "estatisticas") renderEstatisticas(data.estatisticas);
+    if (activeTab === "escalacao") renderEscalacao(data.escalacao);
 
   } catch (error) {
-    if (state.logsEnabled) console.error("Erro no LiveData:", error);
+    console.error("❌ Erro ao buscar dados:", error);
+    // Se der erro de conexão (n8n offline), também tenta mostrar a próxima partida
+    renderProximaPartida();
   }
 };
 
