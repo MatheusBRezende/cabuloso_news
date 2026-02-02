@@ -1,5 +1,6 @@
 /**
  * Cabuloso News - Script Principal (Design Original + Worker Fix)
+ * COM CACHE LOCAL PARA REDUZIR REQUESTS
  */
 
 const CONFIG = {
@@ -7,102 +8,129 @@ const CONFIG = {
   tabelaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   agendaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   resultadosApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  defaultImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png'
-};
-
-const escapeHtml = (str) => {
-  if (!str) return "";
-  const div = document.createElement("div");
-  div.textContent = str;
-  return div.innerHTML;
-};
-
-// ============================================
-// UTILITÁRIOS DE DATA (DO ANTIGO)
-// ============================================
-const parseNewsDate = (dateStr) => {
-  if (!dateStr) return 0;
+  defaultImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
   
-  try {
-    let cleanDate = dateStr.split('·')[0].trim().toLowerCase();
-    
-    if (cleanDate.includes('/')) {
-      const [dia, mes, ano] = cleanDate.split('/');
-      return new Date(ano, mes - 1, dia).getTime();
-    }
-    
-    const meses = {
-      "janeiro": 0, "fevereiro": 1, "março": 2, "abril": 3, "maio": 4, "junho": 5,
-      "julho": 6, "agosto": 7, "setembro": 8, "outubro": 9, "novembro": 10, "dezembro": 11
-    };
-    
-    const partes = cleanDate.split(' de ');
-    if (partes.length >= 3) {
-      const d = parseInt(partes[0]);
-      const m = meses[partes[1]] || 0;
-      const a = parseInt(partes[2]);
-      return new Date(a, m, d).getTime();
-    }
-    
-    return new Date(cleanDate).getTime() || 0;
-  } catch (e) { 
-    console.warn(`Erro ao converter data: ${dateStr}`, e);
-    return 0; 
+  // Configurações de cache local (em milissegundos)
+  CACHE_TTL: {
+    NEWS: 10 * 60 * 1000,     // 10 minutos
+    TABLE: 30 * 60 * 1000,    // 30 minutos
+    MATCHES: 60 * 60 * 1000,  // 1 hora
+    RESULTS: 30 * 60 * 1000   // 30 minutos
   }
 };
 
 // ============================================
-// VARIÁVEIS PARA PAGINAÇÃO (DO ANTIGO)
+// SISTEMA DE CACHE LOCAL
 // ============================================
-let allNews = [];
-let displayedNewsCount = 0;
-const NEWS_PER_PAGE = 6;
+const LocalCache = {
+  set(key, data, ttl) {
+    const item = {
+      data,
+      timestamp: Date.now(),
+      ttl
+    };
+    localStorage.setItem(`cache_${key}`, JSON.stringify(item));
+  },
+
+  get(key) {
+    const raw = localStorage.getItem(`cache_${key}`);
+    if (!raw) return null;
+    
+    const item = JSON.parse(raw);
+    const now = Date.now();
+    
+    // Verifica se o cache expirou
+    if (now - item.timestamp > item.ttl) {
+      localStorage.removeItem(`cache_${key}`);
+      return null;
+    }
+    
+    return item.data;
+  },
+
+  clear(key) {
+    if (key) {
+      localStorage.removeItem(`cache_${key}`);
+    } else {
+      // Remove todos os caches
+      Object.keys(localStorage).forEach(k => {
+        if (k.startsWith('cache_')) {
+          localStorage.removeItem(k);
+        }
+      });
+    }
+  }
+};
 
 // ============================================
-// BUSCA DE DADOS (AJUSTADO PARA A ESTRUTURA DA WORKER)
+// FUNÇÕES COM CACHE
 // ============================================
+const fetchWithCache = async (url, cacheKey, ttl) => {
+  // 1. Tenta pegar do cache local primeiro
+  const cached = LocalCache.get(cacheKey);
+  if (cached) {
+    console.log(`✅ Usando cache local: ${cacheKey}`);
+    return cached;
+  }
 
+  // 2. Se não tiver cache, faz request
+  try {
+    const response = await fetch(url);
+    let data = await response.json();
+    
+    // Worker retorna array, pega primeiro item
+    if (Array.isArray(data)) {
+      data = data[0];
+    }
+    
+    // 3. Salva no cache local
+    LocalCache.set(cacheKey, data, ttl);
+    
+    return data;
+  } catch (error) {
+    console.error(`Erro ao buscar ${cacheKey}:`, error);
+    
+    // 4. Em caso de erro, tenta retornar cache expirado como fallback
+    const expiredCache = localStorage.getItem(`cache_${cacheKey}`);
+    if (expiredCache) {
+      const item = JSON.parse(expiredCache);
+      console.log(`⚠️ Usando cache expirado como fallback: ${cacheKey}`);
+      return item.data;
+    }
+    
+    throw error;
+  }
+};
+
+// ============================================
+// FUNÇÕES ATUALIZADAS COM CACHE
+// ============================================
 const fetchNews = async () => {
   const container = document.getElementById("newsContainer");
   if (!container) return;
 
   try {
-    const response = await fetch(CONFIG.newsApiUrl);
-    let data = await response.json();
-    if (Array.isArray(data)) data = data[0]; 
+    const data = await fetchWithCache(
+      CONFIG.newsApiUrl,
+      'news',
+      CONFIG.CACHE_TTL.NEWS
+    );
 
     if (!data || !data.noticias) {
       throw new Error("Dados de notícias não encontrados");
     }
 
-    // DEBUG: Mostra as datas originais e convertidas
-    console.log("Notícias antes da ordenação:");
-    data.noticias.forEach(item => {
-      console.log(`${item.date} -> ${parseNewsDate(item.date)} -> ${new Date(parseNewsDate(item.date)).toLocaleDateString()}`);
-    });
-    
-    // 1. ORDENAÇÃO: Mais recente primeiro (decrescente)
+    // Resto do seu código permanece igual...
     data.noticias.sort((a, b) => parseNewsDate(b.date) - parseNewsDate(a.date));
-    
-    // 2. Salva todas as notícias para paginação
     allNews = data.noticias;
-    
-    // 3. Reseta contador
     displayedNewsCount = 0;
-    
-    // 4. Limpa container
     container.innerHTML = '';
-    
-    // 5. Renderiza primeiro lote
     renderMoreNews();
-    
-    // 6. Mostra/Esconde botão "Carregar mais"
+
     const loadMoreContainer = document.getElementById("loadMoreContainer");
     if (loadMoreContainer) {
       if (allNews.length > NEWS_PER_PAGE) {
         loadMoreContainer.style.display = "block";
-        
-        // Configura evento do botão
         const btnLoadMore = document.getElementById("btnLoadMore");
         if (btnLoadMore) {
           btnLoadMore.onclick = renderMoreNews;
@@ -114,93 +142,39 @@ const fetchNews = async () => {
 
   } catch (error) {
     console.error("Erro detalhado:", error);
+    // Mostra mensagem de erro
     container.innerHTML = `
       <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: white;">
         <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ff4444;"></i>
         <p>Não foi possível carregar as notícias.</p>
+        <button onclick="fetchNews()" style="margin-top: 10px; padding: 8px 16px; background: #2E8B57; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Tentar novamente
+        </button>
       </div>`;
-  }
-};
-
-// ============================================
-// FUNÇÃO PARA RENDERIZAR MAIS NOTÍCIAS (ESTILO ANTIGO)
-// ============================================
-const renderMoreNews = () => {
-  const container = document.getElementById("newsContainer");
-  const loadMoreContainer = document.getElementById("loadMoreContainer");
-
-  if (!container || allNews.length === 0) return;
-
-  const nextBatch = allNews.slice(
-    displayedNewsCount,
-    displayedNewsCount + NEWS_PER_PAGE,
-  );
-
-  nextBatch.forEach((item) => {
-    const card = document.createElement("article");
-    card.className = "news-card";
-    
-    // Define classe do badge baseado na fonte
-    let badgeClass = "";
-    if (item.fonte === "Samuca TV") {
-      badgeClass = "news-badge--samuca";
-    } else if (item.fonte === "Zeiro") {
-      badgeClass = "news-badge--zeiro";
-    }
-
-    card.innerHTML = `
-      <div class="news-image">
-        <img src="${escapeHtml(item.image || CONFIG.defaultImage)}" 
-             alt="${escapeHtml(item.title)}" 
-             loading="lazy" 
-             onerror="this.src='${CONFIG.defaultImage}'">
-        <span class="news-badge ${badgeClass}">${escapeHtml(item.fonte || "Notícia")}</span>
-      </div>
-      <div class="news-content">
-        <span class="news-date"><i class="far fa-clock"></i> ${escapeHtml(item.date || "")}</span>
-        <h3 class="news-title">${escapeHtml(item.title)}</h3>
-        <div class="news-footer">
-          <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="read-more">
-            Ler notícia <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </div>
-    `;
-    
-    container.appendChild(card);
-  });
-
-  displayedNewsCount += nextBatch.length;
-  
-  // Atualiza visibilidade do botão
-  if (loadMoreContainer) {
-    if (displayedNewsCount >= allNews.length) {
-      loadMoreContainer.style.display = "none";
-    }
   }
 };
 
 const fetchMiniTable = async () => {
   const tbody = document.getElementById("miniTableBody");
-
   if (!tbody) return;
 
   try {
-    const response = await fetch(CONFIG.tabelaApiUrl);
-    let data = await response.json();
-    if (Array.isArray(data)) data = data[0];
+    const data = await fetchWithCache(
+      CONFIG.tabelaApiUrl,
+      'table',
+      CONFIG.CACHE_TTL.TABLE
+    );
 
     if (!data || !data.tabela_brasileiro || !data.tabela_brasileiro.classificacao) {
       throw new Error("Dados de tabela não encontrados");
     }
 
-    // Pegar top 5 times
+    // Resto do seu código permanece igual...
     const top5 = data.tabela_brasileiro.classificacao.slice(0, 5);
 
     tbody.innerHTML = top5
       .map((time, index) => {
         const isCruzeiro = time.nome?.toLowerCase().includes("cruzeiro");
-
         return `
         <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
           <td>${index + 1}º</td>
@@ -216,7 +190,6 @@ const fetchMiniTable = async () => {
       })
       .join("");
 
-    // Atualizar stat de posição
     const cruzeiro = data.tabela_brasileiro.classificacao.find((t) =>
       t.nome?.toLowerCase().includes("cruzeiro"),
     );
@@ -225,29 +198,31 @@ const fetchMiniTable = async () => {
     if (statPosition && cruzeiro) {
       statPosition.textContent = `${cruzeiro.posicao || "?"}º lugar`;
     }
+
   } catch (error) {
     console.error("Erro ao buscar mini tabela:", error);
-
     tbody.innerHTML =
       '<tr><td colspan="3" class="loading-cell">Erro ao carregar</td></tr>';
   }
 };
 
 const fetchNextMatches = async () => {
-  const container = document.getElementById("nextMatchesWidget"); // MUDADO para nextMatchesWidget
-
+  const container = document.getElementById("nextMatchesWidget");
   if (!container) return;
 
   try {
-    const response = await fetch(CONFIG.agendaApiUrl);
-    let data = await response.json();
-    if (Array.isArray(data)) data = data[0];
-    
+    const data = await fetchWithCache(
+      CONFIG.agendaApiUrl,
+      'matches',
+      CONFIG.CACHE_TTL.MATCHES
+    );
+
     if (!data || !data.agenda) {
       throw new Error("Dados de agenda não encontrados");
     }
 
-    const proximos = data.agenda.slice(0, 3); // MUDADO para 3 jogos como no antigo
+    // Resto do seu código permanece igual...
+    const proximos = data.agenda.slice(0, 3);
 
     container.innerHTML = proximos
       .map(
@@ -274,7 +249,6 @@ const fetchNextMatches = async () => {
       )
       .join("");
 
-    // Atualizar stat de próximo jogo
     const statNextGame = document.getElementById("statNextGame");
     if (statNextGame && proximos.length > 0) {
       const prox = proximos[0];
@@ -283,6 +257,7 @@ const fetchNextMatches = async () => {
         : prox.mandante;
       statNextGame.textContent = `${prox.data?.split(" ")[0] || ""} vs ${opponent || "Adversário"}`;
     }
+
   } catch (error) {
     console.error("Erro ao buscar próximos jogos:", error);
     container.innerHTML =
@@ -291,107 +266,204 @@ const fetchNextMatches = async () => {
 };
 
 const fetchRecentResults = async () => {
-  const container = document.getElementById("recentResultsWidget"); // MUDADO para recentResultsWidget
-  
+  const container = document.getElementById("recentResultsWidget");
   if (!container) {
     console.error("ERRO: Elemento 'recentResultsWidget' não encontrado no HTML.");
     return;
   }
 
   try {
-    const response = await fetch(CONFIG.resultadosApiUrl);
-    let data = await response.json();
-    if (Array.isArray(data)) data = data[0];
+    const data = await fetchWithCache(
+      CONFIG.resultadosApiUrl,
+      'results',
+      CONFIG.CACHE_TTL.RESULTS
+    );
+
+    console.log("📊 Dados de resultados recebidos:", data); // DEBUG
+
+    // Verifica diferentes estruturas possíveis
+    let resultados = [];
     
-    if (!data || !data.resultados) {
-      throw new Error("Dados de resultados não encontrados");
+    if (data && data.resultados) {
+      resultados = data.resultados;
+      console.log("✅ Usando data.resultados");
+    } else if (data && data.dados_completos) {
+      resultados = data.dados_completos;
+      console.log("✅ Usando data.dados_completos");
+    } else if (Array.isArray(data)) {
+      resultados = data;
+      console.log("✅ Usando array direto");
+    } else {
+      throw new Error("Estrutura de dados desconhecida");
     }
 
-    // Pega apenas os 5 últimos (como no antigo)
-    const ultimosResultados = data.resultados.slice(0, 5);
+    if (!Array.isArray(resultados) || resultados.length === 0) {
+      console.warn("⚠️ Nenhum resultado encontrado");
+      container.innerHTML = '<div class="loading-cell">Nenhum resultado recente</div>';
+      return;
+    }
 
-    container.innerHTML = ultimosResultados.map(res => {
-        const isCruzeiroMandante = (res.team1 || "").toLowerCase().includes("cruzeiro");
+    console.log(`📋 Total de resultados: ${resultados.length}`);
+
+    // Pega apenas os 5 últimos (como no antigo)
+    const ultimosResultados = resultados.slice(0, 5);
+
+    container.innerHTML = ultimosResultados.map((res, index) => {
+        console.log(`🏁 Resultado ${index + 1}:`, res); // DEBUG
         
-        let statusClass = "draw"; // Padrão empate
-        const s1 = parseInt(res.score1 || 0);
-        const s2 = parseInt(res.score2 || 0);
+        // Tenta diferentes formatos de placar
+        let score1 = "0";
+        let score2 = "0";
+        
+        if (res.score1 !== undefined && res.score2 !== undefined) {
+          // Formato: score1 e score2 separados
+          score1 = res.score1.toString();
+          score2 = res.score2.toString();
+        } else if (res.score) {
+          // Formato: "2 x 1" ou "2-1"
+          const scoreParts = res.score.split(/[x\-]/).map(s => s.trim());
+          if (scoreParts.length >= 2) {
+            score1 = scoreParts[0];
+            score2 = scoreParts[1];
+          }
+        } else if (res.placar) {
+          // Formato: placar objeto
+          const scoreParts = res.placar.split(/[x\-]/).map(s => s.trim());
+          if (scoreParts.length >= 2) {
+            score1 = scoreParts[0];
+            score2 = scoreParts[1];
+          }
+        }
+        
+        // Determina qual time é o Cruzeiro
+        const team1 = res.team1 || res.mandante || "Time 1";
+        const team2 = res.team2 || res.visitante || "Time 2";
+        const logo1 = res.logo1 || res.escudo_mandante || CONFIG.defaultImage;
+        const logo2 = res.logo2 || res.escudo_visitante || CONFIG.defaultImage;
+        
+        const isCruzeiroMandante = team1.toLowerCase().includes("cruzeiro");
+        const isCruzeiroVisitante = team2.toLowerCase().includes("cruzeiro");
+        const isCruzeiro = isCruzeiroMandante || isCruzeiroVisitante;
+        
+        let statusClass = "draw";
+        const s1 = parseInt(score1) || 0;
+        const s2 = parseInt(score2) || 0;
         
         if (!isNaN(s1) && !isNaN(s2)) {
           if (s1 === s2) {
             statusClass = "draw";
           } else if (isCruzeiroMandante) {
             statusClass = s1 > s2 ? "win" : "loss";
-          } else {
+          } else if (isCruzeiroVisitante) {
             statusClass = s2 > s1 ? "win" : "loss";
+          } else {
+            // Se Cruzeiro não está jogando (dados de outros times)
+            statusClass = "neutral";
           }
         }
+
+        // Determina competição
+        const competition = res.competition || res.campeonato || res.torneio || "Amistoso";
 
         return `
         <div class="result-mini">
           <div class="result-mini-teams">
             <div class="result-mini-team">
-              <img src="${escapeHtml(res.logo1 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team1)}" loading="lazy">
-              <span>${escapeHtml(res.team1)}</span>
+              <img src="${escapeHtml(logo1)}" alt="${escapeHtml(team1)}" loading="lazy" 
+                   onerror="this.src='${CONFIG.defaultImage}'">
+              <span>${escapeHtml(team1)}</span>
             </div>
-            <span class="result-mini-score ${statusClass}">${escapeHtml(res.score1)} x ${escapeHtml(res.score2)}</span>
+            <span class="result-mini-score ${statusClass}">${escapeHtml(score1)} x ${escapeHtml(score2)}</span>
             <div class="result-mini-team">
-              <img src="${escapeHtml(res.logo2 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team2)}" loading="lazy">
-              <span>${escapeHtml(res.team2)}</span>
+              <img src="${escapeHtml(logo2)}" alt="${escapeHtml(team2)}" loading="lazy"
+                   onerror="this.src='${CONFIG.defaultImage}'">
+              <span>${escapeHtml(team2)}</span>
             </div>
           </div>
-          <div class="result-mini-info">${escapeHtml(res.competition || '')}</div>
+          <div class="result-mini-info">${escapeHtml(competition)}</div>
+          ${res.data ? `<div class="result-mini-date"><i class="far fa-calendar"></i> ${escapeHtml(res.data)}</div>` : ''}
         </div>`;
     }).join("");
 
+    // Se ainda estiver vazio após tentar renderizar
+    if (container.innerHTML.trim() === "") {
+      container.innerHTML = `
+        <div class="loading-cell" style="text-align: center; padding: 20px;">
+          <i class="fas fa-futbol" style="font-size: 2rem; color: #666; margin-bottom: 10px;"></i>
+          <p>Resultados em breve</p>
+        </div>`;
+    }
+
   } catch (error) {
-    console.error("Erro resultados:", error);
-    container.innerHTML = '<div class="loading-cell">Indisponível</div>';
+    console.error("❌ Erro em fetchRecentResults:", error);
+    
+    // Tenta mostrar dados de fallback do cache expirado
+    const expiredCache = localStorage.getItem('cache_results');
+    if (expiredCache) {
+      try {
+        const oldData = JSON.parse(expiredCache);
+        if (oldData.data && oldData.data.resultados) {
+          console.log("⚠️ Tentando usar cache expirado...");
+          
+          const resultados = oldData.data.resultados.slice(0, 3);
+          container.innerHTML = resultados.map(res => `
+            <div class="result-mini">
+              <div class="result-mini-teams">
+                <div class="result-mini-team">
+                  <img src="${escapeHtml(res.logo1 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team1)}">
+                  <span>${escapeHtml(res.team1)}</span>
+                </div>
+                <span class="result-mini-score">${escapeHtml(res.score1 || '0')} x ${escapeHtml(res.score2 || '0')}</span>
+                <div class="result-mini-team">
+                  <img src="${escapeHtml(res.logo2 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team2)}">
+                  <span>${escapeHtml(res.team2)}</span>
+                </div>
+              </div>
+              <div class="result-mini-info">${escapeHtml(res.competition || '')}</div>
+              <div class="result-mini-date" style="color: #888; font-size: 0.8rem; margin-top: 5px;">
+                <i class="fas fa-exclamation-triangle"></i> Dados podem estar desatualizados
+              </div>
+            </div>
+          `).join('');
+          return;
+        }
+      } catch (cacheError) {
+        console.error("Erro ao usar cache expirado:", cacheError);
+      }
+    }
+    
+    container.innerHTML = `
+      <div class="loading-cell" style="text-align: center; padding: 20px;">
+        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ffcc00; margin-bottom: 10px;"></i>
+        <p>Não foi possível carregar os resultados</p>
+        <button onclick="fetchRecentResults()" 
+                style="margin-top: 10px; padding: 8px 16px; background: #2E8B57; color: white; border: none; border-radius: 4px; cursor: pointer;">
+          Tentar novamente
+        </button>
+      </div>`;
   }
 };
 
 // ============================================
-// INICIALIZAÇÃO E MENU MOBILE
+// FUNÇÃO PARA FORÇAR ATUALIZAÇÃO MANUAL
 // ============================================
-const initMobileMenu = () => {
-  const toggle = document.getElementById("menuToggle");
-  const menu = document.getElementById("navMenu");
+const forceRefreshAll = () => {
+  // Limpa todos os caches
+  LocalCache.clear();
   
-  if (!toggle || !menu) return;
-
-  toggle.addEventListener("click", () => {
-    toggle.classList.toggle("active");
-    menu.classList.toggle("active");
-  });
-
-  menu.querySelectorAll(".nav-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      toggle.classList.remove("active");
-      menu.classList.remove("active");
-    });
-  });
-};
-
-const hideLoadingScreen = () => {
-  const screen = document.getElementById("loadingScreen");
-  if (screen) {
-    setTimeout(() => {
-      screen.classList.add("hidden");
-    }, 800);
-  }
-};
-
-const init = () => {
-  initMobileMenu();
-  hideLoadingScreen();
+  // Recarrega os dados
   fetchNews();
   fetchMiniTable();
   fetchNextMatches();
   fetchRecentResults();
+  
+  // Feedback visual
+  alert("Dados atualizados com sucesso!");
+  
+  // Pode adicionar um toast/notificação no seu site
+  // showToast("Dados atualizados!", "success");
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+// Adiciona botão de refresh no console para debug
+console.log("%c🔧 Cabuloso News Debug", "color: #2E8B57; font-weight: bold;");
+console.log("%cDigite forceRefreshAll() para atualizar manualmente", "color: #666;");
