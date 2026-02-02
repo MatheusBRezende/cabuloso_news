@@ -1,6 +1,6 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão: 2.5 - Otimizado com Worker Unificada e Correção de Cache
+ * Versão: 3.0 - Sistema de Contador para Próxima Partida
  */
 
 const CONFIG = {
@@ -15,10 +15,10 @@ const state = {
   agendaData: null,
   countdownInterval: null,
   match: {
-    home: { name: "Mandante", logo: "" },
-    away: { name: "Visitante", logo: "" },
+    home: { name: "Cruzeiro", logo: "./assets/logo.png" },
+    away: { name: "Adversário", logo: "" },
     score: { home: 0, away: 0 },
-    status: "AO VIVO",
+    status: "AGUARDANDO",
   },
   logsEnabled: true,
   agendaLoaded: false,
@@ -47,31 +47,19 @@ const fetchLiveData = async () => {
 
     const text = await response.text();
 
-    // Se a resposta vier vazia (o erro que deu no seu console)
+    // Se a resposta vier vazia
     if (!text || text.trim() === "") {
       if (state.logsEnabled) console.log("ℹ️ Resposta vazia do servidor.");
-      renderCountdown();
+      showNextMatchCountdown();
       return;
     }
 
     const data = JSON.parse(text);
 
-    if (data.success) {
-      // Remove as classes de "esconder" caso existam
-      document
-        .querySelector(".scoreboard-container")
-        ?.classList.remove("hidden");
-      document.querySelector(".tabs-nav")?.classList.remove("hidden");
-      document.querySelector(".tab-content")?.classList.remove("hidden");
-      document.querySelector("main.container")?.classList.remove("no-match");
-      document
-        .getElementById("agenda-container")
-        ?.classList.remove("active-full");
-      document.querySelector(".no-game-alert")?.remove();
-    }
-    // Se o n8n enviar sucesso: false (indicando que não achou jogo)
+    // Se não há jogo ativo
     if (!data.success) {
-      renderCountdown();
+      if (state.logsEnabled) console.log("📅 Não há jogo em andamento.");
+      showNextMatchCountdown();
       return;
     }
 
@@ -83,318 +71,608 @@ const fetchLiveData = async () => {
     state.match.score.away = data.placar.away;
     state.match.status = data.placar.status;
 
+    updateLiveMatch();
     updateHeader();
 
     state.cachedData.resultados = data.narracao;
     state.cachedData.estatisticas = data.estatisticas;
     state.cachedData.escalacao = data.escalacao;
 
-    const activeTab = document.querySelector(".tab-btn.active")?.dataset.tab;
-    if (activeTab === "lances") renderLances(data.narracao);
-    if (activeTab === "estatisticas") renderEstatisticas(data.estatisticas);
-    if (activeTab === "escalacao") renderEscalacao(data.escalacao);
+    renderLances(data.narracao);
+    renderStats(data.estatisticas);
+    renderLineup(data.escalacao);
+    
   } catch (error) {
     if (state.logsEnabled) console.error("❌ Erro ao buscar dados:", error);
-    renderCountdown();
-  }
-};
-
-const renderCountdown = () => {
-  if (state.logsEnabled)
-    console.log("⏳ Renderizando contador de próxima partida...");
-
-  state.matchStarted = false;
-
-  // 1. Seleciona os blocos principais
-  const mainContainer = document.querySelector("main.container");
-  const scoreboard = document.querySelector(".scoreboard-container");
-  const tabsNav = document.querySelector(".tabs-nav");
-  const tabContent = document.querySelector(".tab-content");
-  const agendaContainer = document.getElementById("agenda-container");
-
-  // 2. Esconde o que é do "jogo ao vivo"
-  if (scoreboard) scoreboard.classList.add("hidden");
-  if (tabsNav) tabsNav.classList.add("hidden");
-  if (tabContent) tabContent.classList.add("hidden");
-
-  // 3. Ajusta o container principal
-  if (mainContainer) {
-    mainContainer.classList.add("no-match");
-  }
-
-  // 4. Mostra e destaca a Agenda
-  if (agendaContainer) {
-    agendaContainer.classList.remove("hidden");
-    agendaContainer.classList.add("active-full");
-
-    // Opcional: Adiciona uma mensagem amigável antes da agenda
-    if (!document.querySelector(".no-game-alert")) {
-      const alert = document.createElement("div");
-      alert.className = "no-game-alert";
-      alert.innerHTML = `
-            <i class="fas fa-info-circle" style="font-size: 2rem; color: var(--primary); margin-bottom: 15px;"></i>
-            <h2 style="font-family: 'Bebas Neue'; font-size: 2.5rem; color: var(--primary-dark);">O CABULOSO NÃO ESTÁ A JOGAR AGORA</h2>
-            <p style="color: var(--gray-600);">Confira abaixo a data e o cronómetro para a próxima partida.</p>
-        `;
-      agendaContainer.prepend(alert);
-    }
-  }
-
-  // 5. Executa a lógica da agenda que já tens no código
-  if (typeof renderAgenda === "function") {
-    renderAgenda();
+    showNextMatchCountdown();
   }
 };
 
 /**
- * Renderiza o placar e lances
+ * Mostra o contador para próxima partida
  */
-const renderLiveMatch = (lances) => {
-  const container = document.getElementById("live-match-container");
+const showNextMatchCountdown = () => {
+  if (state.logsEnabled) console.log("⏳ Mostrando contador para próxima partida...");
+
+  state.matchStarted = false;
+
+  // Remove qualquer mensagem anterior de "sem jogo"
+  const existingAlert = document.querySelector('.no-game-alert');
+  if (existingAlert) existingAlert.remove();
+
+  // Mostra o container principal
+  const mainContainer = document.querySelector(".main-content");
+  if (mainContainer) mainContainer.classList.remove("hidden");
+
+  // Atualiza o título do hero
+  const heroTitle = document.querySelector(".title-main");
+  const heroSubtitle = document.querySelector(".title-sub");
+  if (heroTitle) heroTitle.textContent = "Próxima Partida";
+  if (heroSubtitle) heroSubtitle.textContent = "Contagem regressiva para o próximo jogo do Cruzeiro";
+
+  // Atualiza o badge do hero
+  const heroBadge = document.querySelector(".hero-badge");
+  if (heroBadge) {
+    heroBadge.innerHTML = `
+      <span class="badge-pulse" style="background: var(--primary)"></span>
+      <i class="far fa-calendar-alt" aria-hidden="true"></i>
+      <span>Próximo Jogo</span>
+    `;
+  }
+
+  // Renderiza o contador no container do placar
+  const liveMatchContainer = document.getElementById("live-match-container");
+  
+  // Primeiro, carrega a agenda se necessário
+  if (!state.agendaLoaded) {
+    loadAgenda(() => {
+      renderNextMatchCountdown(liveMatchContainer);
+    });
+  } else {
+    renderNextMatchCountdown(liveMatchContainer);
+  }
+
+  // Esconde elementos que só fazem sentido durante o jogo
+  const timelineHeader = document.querySelector(".timeline-header h2");
+  if (timelineHeader) {
+    timelineHeader.innerHTML = '<i class="fas fa-history"></i> ÚLTIMOS JOGOS';
+  }
+
+  // Mostra mensagem na timeline
   const timeline = document.getElementById("timeline-container");
-  if (!container) return;
+  if (timeline) {
+    timeline.innerHTML = `
+      <div class="no-events-message">
+        <div class="no-events-icon">
+          <i class="far fa-clock"></i>
+        </div>
+        <p>Nenhum jogo em andamento no momento.</p>
+        <span>Aguarde o início da próxima partida.</span>
+      </div>
+    `;
+  }
+
+  // Esconde estatísticas e escalações
+  const statsColumns = document.querySelectorAll('.stats-column');
+  statsColumns.forEach(col => col.classList.add('hidden'));
+  
+  const lineupSection = document.querySelector('.lineup-section');
+  if (lineupSection) lineupSection.classList.add('hidden');
+};
+
+/**
+ * Renderiza o contador da próxima partida
+ */
+const renderNextMatchCountdown = (container) => {
+  const nextMatch = getNextMatchFromAgenda();
+  
+  if (!nextMatch) {
+    container.innerHTML = `
+      <div class="match-card">
+        <div class="match-info">
+          <div class="match-championship">CAMPEONATO BRASILEIRO SÉRIE A</div>
+          <div class="match-date">
+            <i class="far fa-calendar"></i>
+            <span>Próximo jogo a ser definido</span>
+          </div>
+        </div>
+        <div class="score-row">
+          <div class="team">
+            <img src="./assets/logo.png" class="team-logo" alt="Cruzeiro">
+            <div class="team-name">Cruzeiro</div>
+          </div>
+          <div class="countdown-wrapper">
+            <div class="countdown-label">PRÓXIMO JOGO</div>
+            <div class="countdown-grid">
+              <div class="countdown-unit">
+                <div class="countdown-value">--</div>
+                <div class="countdown-text">DIAS</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-value">--</div>
+                <div class="countdown-text">HORAS</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-value">--</div>
+                <div class="countdown-text">MIN</div>
+              </div>
+              <div class="countdown-unit">
+                <div class="countdown-value">--</div>
+                <div class="countdown-text">SEG</div>
+              </div>
+            </div>
+            <div class="match-status-badge" style="background: var(--gray-600)">
+              <i class="far fa-clock"></i>
+              <span>AGENDADO</span>
+            </div>
+          </div>
+          <div class="team">
+            <div class="team-logo-placeholder">
+              <i class="fas fa-question"></i>
+            </div>
+            <div class="team-name">A DEFINIR</div>
+          </div>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
+  // Formata a data
+  const matchDate = nextMatch.dateObj;
+  const options = { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' };
+  const formattedDate = matchDate.toLocaleDateString('pt-BR', options);
+  const formattedTime = matchDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
   container.innerHTML = `
-    <div class="live-match-container fade-in">
-      <div class="match-header">
-        <div class="match-competition"><i class="fas fa-trophy"></i> CRUZEIRO AO VIVO</div>
-        <div class="match-status ${state.match.status.toLowerCase().includes("encerrado") ? "finished" : "live"}">
-          ${state.match.status.toUpperCase() === "AO VIVO" ? '<span class="blink-dot"></span>' : ""} ${state.match.status}
+    <div class="match-card">
+      <div class="match-info">
+        <div class="match-championship">${nextMatch.campeonato || 'CAMPEONATO BRASILEIRO SÉRIE A'}</div>
+        <div class="match-date">
+          <i class="far fa-calendar"></i>
+          <span>${formattedDate} • ${formattedTime}</span>
         </div>
       </div>
       <div class="score-row">
         <div class="team">
-          <img src="${state.match.home.logo}" class="team-logo" onerror="this.src='assets/logo.png'">
-          <div class="team-name">${state.match.home.name}</div>
+          <img src="${nextMatch.escudo_mandante || './assets/logo.png'}" class="team-logo" alt="${nextMatch.mandante}" onerror="this.src='./assets/logo.png'">
+          <div class="team-name">${nextMatch.mandante}</div>
         </div>
-        <div class="score-container">
-          <div class="score">${state.match.score.home} <span>x</span> ${state.match.score.away}</div>
-          <div class="match-time">Tempo Real</div>
+        <div class="countdown-wrapper">
+          <div class="countdown-label">A BOLA ROLA EM</div>
+          <div class="countdown-grid" id="countdown-grid">
+            <div class="countdown-unit">
+              <div class="countdown-value" id="countdown-days">00</div>
+              <div class="countdown-text">DIAS</div>
+            </div>
+            <div class="countdown-unit">
+              <div class="countdown-value" id="countdown-hours">00</div>
+              <div class="countdown-text">HORAS</div>
+            </div>
+            <div class="countdown-unit">
+              <div class="countdown-value" id="countdown-minutes">00</div>
+              <div class="countdown-text">MIN</div>
+            </div>
+            <div class="countdown-unit">
+              <div class="countdown-value" id="countdown-seconds">00</div>
+              <div class="countdown-text">SEG</div>
+            </div>
+          </div>
+          <div class="match-status-badge" style="background: var(--primary)">
+            <span class="status-pulse"></span>
+            <span>PRÓXIMA PARTIDA</span>
+          </div>
         </div>
         <div class="team">
-          <img src="${state.match.away.logo}" class="team-logo" onerror="this.src='assets/logo.png'">
-          <div class="team-name">${state.match.away.name}</div>
+          <img src="${nextMatch.escudo_visitante || ''}" class="team-logo" alt="${nextMatch.visitante}" onerror="this.src='./assets/logo.png'">
+          <div class="team-name">${nextMatch.visitante}</div>
         </div>
       </div>
-    </div>`;
+    </div>
+  `;
 
-  if (timeline) {
-    if (!lances || lances.length === 0) {
-      timeline.innerHTML = `<p class="no-events">Aguardando lances...</p>`;
-    } else {
-      timeline.innerHTML = lances
-        .map(
-          (lance) => `
-        <div class="timeline-item ${lance.is_gol ? "goal-event" : ""}">
-          <div class="timeline-time">${lance.minuto || "---"}</div>
-          <div class="timeline-content">
-            <div class="timeline-desc">${lance.descricao}</div>
-          </div>
-        </div>`,
-        )
-        .join("");
-    }
-  }
+  // Inicia o contador
+  startNextMatchCountdown(matchDate);
 };
 
 /**
- * Atualiza Estatísticas
+ * Inicia o contador regressivo
+ */
+const startNextMatchCountdown = (targetDate) => {
+  // Limpa intervalo anterior
+  if (state.countdownInterval) {
+    clearInterval(state.countdownInterval);
+  }
+
+  const updateCountdown = () => {
+    const now = new Date();
+    const diff = targetDate - now;
+
+    if (diff <= 0) {
+      // Tempo esgotado, atualiza para mostrar o jogo
+      clearInterval(state.countdownInterval);
+      fetchLiveData(); // Verifica se o jogo já começou
+      return;
+    }
+
+    // Calcula dias, horas, minutos, segundos
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    // Atualiza os elementos
+    const daysEl = document.getElementById('countdown-days');
+    const hoursEl = document.getElementById('countdown-hours');
+    const minutesEl = document.getElementById('countdown-minutes');
+    const secondsEl = document.getElementById('countdown-seconds');
+
+    if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+    if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
+  };
+
+  // Atualiza imediatamente e a cada segundo
+  updateCountdown();
+  state.countdownInterval = setInterval(updateCountdown, 1000);
+};
+
+/**
+ * Atualiza o placar ao vivo
+ */
+const updateLiveMatch = () => {
+  const container = document.getElementById("live-match-container");
+  if (!container) return;
+
+  const statusClass = state.match.status.includes("AO VIVO") ? "live" : 
+                     state.match.status.includes("INTERVALO") ? "half-time" : 
+                     state.match.status.includes("ENCERRADO") ? "finished" : "scheduled";
+
+  container.innerHTML = `
+    <div class="match-card">
+      <div class="match-info">
+        <div class="match-championship">CAMPEONATO BRASILEIRO SÉRIE A</div>
+        <div class="match-date">
+          <i class="far fa-calendar"></i>
+          <span>${new Date().toLocaleDateString('pt-BR')} • Tempo Real</span>
+        </div>
+      </div>
+      <div class="score-row">
+        <div class="team">
+          <img src="${state.match.home.logo}" class="team-logo" alt="${state.match.home.name}" onerror="this.src='./assets/logo.png'">
+          <div class="team-name">${state.match.home.name}</div>
+        </div>
+        <div class="score-display">
+          <div class="score">${state.match.score.home}</div>
+          <div class="score-separator">:</div>
+          <div class="score">${state.match.score.away}</div>
+        </div>
+        <div class="team">
+          <img src="${state.match.away.logo}" class="team-logo" alt="${state.match.away.name}" onerror="this.src='./assets/logo.png'">
+          <div class="team-name">${state.match.away.name}</div>
+        </div>
+      </div>
+      <div class="match-status-badge ${statusClass}">
+        <span class="status-pulse"></span>
+        <span>${state.match.status}</span>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Renderiza os lances na timeline
+ */
+const renderLances = (lances) => {
+  const timeline = document.getElementById("timeline-container");
+  if (!timeline) return;
+
+  // Mostra estatísticas e escalações
+  const statsColumns = document.querySelectorAll('.stats-column');
+  statsColumns.forEach(col => col.classList.remove('hidden'));
+  
+  const lineupSection = document.querySelector('.lineup-section');
+  if (lineupSection) lineupSection.classList.remove('hidden');
+
+  // Atualiza o status no header
+  const statusIndicator = document.getElementById("match-status-indicator");
+  if (statusIndicator) {
+    statusIndicator.textContent = state.match.status;
+    statusIndicator.style.background = state.match.status.includes("AO VIVO") ? "var(--live-red)" :
+                                      state.match.status.includes("INTERVALO") ? "var(--half-time)" :
+                                      state.match.status.includes("ENCERRADO") ? "var(--finished)" : "var(--primary)";
+  }
+
+  if (!lances || lances.length === 0) {
+    timeline.innerHTML = `
+      <div class="no-events-message">
+        <div class="no-events-icon">
+          <i class="fas fa-futbol"></i>
+        </div>
+        <p>Nenhum lance registrado ainda.</p>
+        <span>Aguardando o início do jogo.</span>
+      </div>
+    `;
+    return;
+  }
+
+  timeline.innerHTML = lances
+    .slice() // Cria uma cópia para não alterar o array original
+    .reverse() // Mostra os mais recentes primeiro
+    .map(lance => {
+      const isCruzeiro = lance.time === "Cruzeiro" || lance.time?.includes("Cruzeiro");
+      const isGoal = lance.is_gol || lance.descricao?.toLowerCase().includes("gol");
+      
+      return `
+        <div class="timeline-item ${isCruzeiro ? '' : 'timeline-adversario'} ${isGoal ? 'goal-event' : ''}">
+          <div class="timeline-time">${lance.minuto || '--'}'</div>
+          <div class="timeline-content">
+            <div class="timeline-desc">${lance.descricao || lance.evento || 'Lance'}</div>
+            <div class="timeline-team">
+              <i class="fas fa-user"></i>
+              ${lance.jogador || lance.time || 'Jogador'}
+            </div>
+          </div>
+        </div>
+      `;
+    })
+    .join('');
+};
+
+/**
+ * Atualiza estatísticas
  */
 const renderStats = (statsData) => {
   const homeList = document.getElementById("home-stats-list");
   const awayList = document.getElementById("away-stats-list");
-  if (!homeList || !awayList) return;
+  const homeHeader = document.getElementById("stats-home-header");
+  const awayHeader = document.getElementById("stats-away-header");
 
-  // Crie um array de estatísticas manualmente baseado no formato atual
-  const statsArray = [
-    {
-      metrica: "Posse de Bola",
-      mandante: statsData.posse_home || "0%",
-      visitante: statsData.posse_away || "0%",
-    },
-    {
-      metrica: "Escanteios",
-      mandante: statsData.escanteios_home || "0",
-      visitante: statsData.escanteios_away || "0",
-    },
-    {
-      metrica: "Finalizações",
-      mandante: statsData.finalizacoes_home || "0",
-      visitante: statsData.finalizacoes_away || "0",
-    },
-    {
-      metrica: "Faltas",
-      mandante: statsData.faltas_home || "0",
-      visitante: statsData.faltas_away || "0",
-    },
+  if (!statsData) {
+    if (homeList) homeList.innerHTML = '<div class="loading-stats">Aguardando estatísticas...</div>';
+    if (awayList) awayList.innerHTML = '<div class="loading-stats">Aguardando estatísticas...</div>';
+    return;
+  }
+
+  // Atualiza headers com nomes dos times
+  if (homeHeader) homeHeader.innerHTML = `<i class="fas fa-chart-bar"></i> <span>${state.match.home.name.toUpperCase()}</span>`;
+  if (awayHeader) awayHeader.innerHTML = `<span>${state.match.away.name.toUpperCase()}</span> <i class="fas fa-chart-pie"></i>`;
+
+  // Estatísticas padrão
+  const stats = [
+    { label: "POSSE DE BOLA", home: statsData.posse_home || "0%", away: statsData.posse_away || "0%" },
+    { label: "FINALIZAÇÕES", home: statsData.finalizacoes_home || "0", away: statsData.finalizacoes_away || "0" },
+    { label: "FINALIZAÇÕES NO GOL", home: statsData.finalizacoes_gol_home || "0", away: statsData.finalizacoes_gol_away || "0" },
+    { label: "ESCANTEIOS", home: statsData.escanteios_home || "0", away: statsData.escanteios_away || "0" },
+    { label: "FALTAS", home: statsData.faltas_home || "0", away: statsData.faltas_away || "0" },
+    { label: "IMPEÇÕES", home: statsData.impedimentos_home || "0", away: statsData.impedimentos_away || "0" },
   ];
 
-  let homeHTML = "";
-  let awayHTML = "";
+  if (homeList) {
+    homeList.innerHTML = stats.map(stat => `
+      <div class="stat-row">
+        <span class="stat-value">${stat.home}</span>
+        <span class="stat-label">${stat.label}</span>
+        <div class="stat-bar">
+          <div class="stat-fill" style="width: ${parseInt(stat.home) || 0}%"></div>
+        </div>
+      </div>
+    `).join('');
+  }
 
-  statsArray.forEach((stat) => {
-    const label = stat.metrica || stat.item || "";
-    homeHTML += `<div class="stat-row"><span class="stat-value">${stat.mandante || stat.home || 0}</span><span class="stat-label">${label}</span></div>`;
-    awayHTML += `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value">${stat.visitante || stat.away || 0}</span></div>`;
-  });
-
-  homeList.innerHTML = homeHTML;
-  awayList.innerHTML = awayHTML;
+  if (awayList) {
+    awayList.innerHTML = stats.map(stat => `
+      <div class="stat-row">
+        <span class="stat-label">${stat.label}</span>
+        <span class="stat-value">${stat.away}</span>
+        <div class="stat-bar">
+          <div class="stat-fill" style="width: ${parseInt(stat.away) || 0}%"></div>
+        </div>
+      </div>
+    `).join('');
+  }
 };
 
 /**
- * Atualiza Escalações e Árbitro
+ * Renderiza escalações
  */
-const updateLineups = (data) => {
-  if (!data || !data.partida) return;
-
+const renderLineup = (lineupData) => {
   const homeContent = document.getElementById("home-lineup-content");
   const awayContent = document.getElementById("away-lineup-content");
   const refCard = document.getElementById("match-referee-info");
+  const homeHeader = document.getElementById("home-team-name-lineup");
+  const awayHeader = document.getElementById("away-team-name-lineup");
 
-  // Função auxiliar para formatar jogadores
-  const fmtList = (players) => {
-    if (!players || !Array.isArray(players)) return "<div>Não disponível</div>";
+  if (homeHeader) homeHeader.textContent = `${state.match.home.name}`;
+  if (awayHeader) awayHeader.textContent = `${state.match.away.name}`;
 
-    return players
-      .map((p) => {
-        // Extrai número e nome (assumindo formato "1 - Jori")
-        const parts = p.toString().split(" - ");
-        const number = parts[0] || "";
-        const name = parts[1] || p;
+  if (!lineupData) {
+    if (homeContent) homeContent.innerHTML = '<div class="loading-stats">Aguardando escalações...</div>';
+    if (awayContent) awayContent.innerHTML = '<div class="loading-stats">Aguardando escalações...</div>';
+    if (refCard) refCard.innerHTML = '<div class="loading-stats">Árbitro não definido</div>';
+    return;
+  }
 
-        return `
+  // Renderiza escalação do mandante
+  if (homeContent && lineupData.mandante) {
+    const players = lineupData.mandante.titulares || [];
+    homeContent.innerHTML = players.map(player => {
+      const parts = player.split(' - ');
+      const number = parts[0] || '';
+      const name = parts.slice(1).join(' - ') || player;
+      return `
         <div class="player-item-min">
           <span class="player-number">${number}</span>
-          <span class="player-name">${name}</span>
-        </div>`;
-      })
-      .join("");
-  };
-
-  if (homeContent && data.partida.mandante) {
-    homeContent.innerHTML = `
-      <h4>Titulares</h4>
-      ${fmtList(data.partida.mandante.titulares)}
-      <h4>Técnico: ${data.partida.mandante.tecnico || "Não informado"}</h4>`;
+          <div class="player-info-text">
+            <span class="player-name">${name}</span>
+            <span class="player-pos">Jogador</span>
+          </div>
+        </div>
+      `;
+    }).join('') + `<div style="margin-top: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--gray-200);">
+      <div style="font-size: 0.8rem; color: var(--gray-600);"><strong>Técnico:</strong> ${lineupData.mandante.tecnico || 'Não informado'}</div>
+    </div>`;
   }
 
-  if (awayContent && data.partida.visitante) {
-    awayContent.innerHTML = `
-      <h4>Titulares</h4>
-      ${fmtList(data.partida.visitante.titulares)}
-      <h4>Técnico: ${data.partida.visitante.tecnico || "Não informado"}</h4>`;
+  // Renderiza escalação do visitante
+  if (awayContent && lineupData.visitante) {
+    const players = lineupData.visitante.titulares || [];
+    awayContent.innerHTML = players.map(player => {
+      const parts = player.split(' - ');
+      const number = parts[0] || '';
+      const name = parts.slice(1).join(' - ') || player;
+      return `
+        <div class="player-item-min">
+          <span class="player-number">${number}</span>
+          <div class="player-info-text">
+            <span class="player-name">${name}</span>
+            <span class="player-pos">Jogador</span>
+          </div>
+        </div>
+      `;
+    }).join('') + `<div style="margin-top: var(--space-4); padding-top: var(--space-2); border-top: 1px solid var(--gray-200);">
+      <div style="font-size: 0.8rem; color: var(--gray-600);"><strong>Técnico:</strong> ${lineupData.visitante.tecnico || 'Não informado'}</div>
+    </div>`;
   }
 
-  if (refCard && data.arbitragem) {
-    refCard.innerHTML = `<div class="ref-box"><i class="fas fa-gavel"></i> ${data.arbitragem.nome} (${data.arbitragem.funcao})</div>`;
+  // Renderiza árbitro
+  if (refCard && lineupData.arbitragem) {
+    refCard.innerHTML = `
+      <div style="text-align: center;">
+        <i class="fas fa-whistle" style="font-size: 2rem; color: var(--primary); margin-bottom: var(--space-3);"></i>
+        <div style="font-weight: 700; font-size: 1.1rem;">${lineupData.arbitragem.nome || 'Árbitro'}</div>
+        <div style="font-size: 0.85rem; color: var(--gray-600); margin-top: var(--space-1);">${lineupData.arbitragem.funcao || 'Árbitro Principal'}</div>
+      </div>
+    `;
   }
+};
+
+/**
+ * Atualiza o header
+ */
+const updateHeader = () => {
+  // Atualiza o badge do hero
+  const heroBadge = document.querySelector(".hero-badge");
+  if (heroBadge) {
+    const pulseColor = state.match.status.includes("AO VIVO") ? "var(--live-red)" : 
+                      state.match.status.includes("INTERVALO") ? "var(--half-time)" : 
+                      state.match.status.includes("ENCERRADO") ? "var(--finished)" : "var(--primary)";
+    
+    heroBadge.innerHTML = `
+      <span class="badge-pulse" style="background: ${pulseColor}"></span>
+      <i class="fas fa-play-circle" aria-hidden="true"></i>
+      <span>${state.match.status}</span>
+    `;
+  }
+
+  // Atualiza o título
+  const heroTitle = document.querySelector(".title-main");
+  const heroSubtitle = document.querySelector(".title-sub");
+  
+  if (heroTitle) heroTitle.textContent = "Minuto a Minuto";
+  if (heroSubtitle) heroSubtitle.textContent = `Acompanhe ${state.match.home.name} vs ${state.match.away.name} em tempo real`;
 };
 
 /**
  * Lógica de Agenda e Cronómetro
  */
-const loadAgenda = async () => {
-  try {
-    const response = await fetch(`${CONFIG.apiUrl}?v=${Date.now()}`);
-    if (response.ok) {
-      const data = await response.json();
+const loadAgenda = (callback = null) => {
+  fetch(`${CONFIG.apiUrl}?v=${Date.now()}`)
+    .then(response => response.json())
+    .then(data => {
       // Ajuste para o formato da sua Worker unificada
       state.agendaData = data.agenda || (Array.isArray(data) ? data : []);
       state.agendaLoaded = true;
-      if (!state.matchStarted) renderPreMatchState();
-    }
-  } catch (e) {
-    console.error("Erro ao carregar agenda:", e);
-  }
+      if (callback) callback();
+    })
+    .catch(e => {
+      console.error("Erro ao carregar agenda:", e);
+      if (callback) callback();
+    });
 };
 
-const renderPreMatchState = () => {
-  const next = getNextMatchFromAgenda();
-  const container = document.getElementById("live-match-container");
-  if (!container || !next) return;
-
-  container.innerHTML = `
-    <div class="live-match-container waiting-mode">
-      <div class="match-header"><div class="match-competition">PRÓXIMO JOGO</div></div>
-      <div class="score-row">
-        <div class="team"><img src="${next.escudo_mandante}" class="team-logo"><div>${next.mandante}</div></div>
-        <div id="countdown-wrapper" class="countdown-wrapper">
-          <div class="countdown-label">A BOLA ROLA EM</div>
-          <div class="time-display">--:--:--</div>
-        </div>
-        <div class="team"><img src="${next.escudo_visitante}" class="team-logo"><div>${next.visitante}</div></div>
-      </div>
-    </div>`;
-
-  startCountdown(next.dateObj);
-};
-
-const startCountdown = (targetDate) => {
-  if (state.countdownInterval) clearInterval(state.countdownInterval);
-
-  const update = () => {
-    const diff = targetDate - new Date();
-    const wrapper = document.getElementById("countdown-wrapper");
-    if (!wrapper || diff <= 0) {
-      clearInterval(state.countdownInterval);
-      if (diff <= 0) fetchLiveData();
-      return;
-    }
-
-    const h = Math.floor(diff / 3600000);
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
-
-    wrapper.querySelector(".time-display").innerText =
-      `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  };
-
-  state.countdownInterval = setInterval(update, 1000);
-  update();
-};
-
+/**
+ * Obtém a próxima partida da agenda
+ */
 const getNextMatchFromAgenda = () => {
-  if (!state.agendaData) return null;
-  const now = new Date();
+  if (!state.agendaData || !Array.isArray(state.agendaData) || state.agendaData.length === 0) {
+    return null;
+  }
+
   const meses = {
-    jan: 0,
-    fev: 1,
-    mar: 2,
-    abr: 3,
-    mai: 4,
-    jun: 5,
-    jul: 6,
-    ago: 7,
-    set: 8,
-    out: 9,
-    nov: 10,
-    dez: 11,
+    jan: 0, fev: 1, mar: 2, abr: 3, mai: 4, jun: 5,
+    jul: 6, ago: 7, set: 8, out: 9, nov: 10, dez: 11
   };
 
-  return state.agendaData
-    .map((m) => {
+  const now = new Date();
+  
+  // Filtra e converte datas
+  const matchesWithDates = state.agendaData
+    .filter(match => match && match.data && match.hora)
+    .map(match => {
       try {
-        const parts = m.data.trim().split(" ");
-        const day = parseInt(parts[1]);
-        const month = meses[parts[2].replace(/[.,]/g, "").toLowerCase()];
-        const [hh, mm] = m.hora.split(":").map(Number);
-        let d = new Date();
-        d.setMonth(month, day);
-        d.setHours(hh, mm, 0, 0);
-        if (d < now) d.setFullYear(d.getFullYear() + 1);
-        return { ...m, dateObj: d };
+        // Formato esperado: "16 fev" ou "16 fev."
+        const dateStr = match.data.trim().replace(/\./g, '');
+        const [dayStr, monthStr] = dateStr.split(' ');
+        const day = parseInt(dayStr);
+        const month = meses[monthStr.toLowerCase()];
+        
+        if (isNaN(day) || month === undefined) return null;
+
+        const [hours, minutes] = match.hora.split(':').map(Number);
+        
+        const matchDate = new Date();
+        matchDate.setMonth(month, day);
+        matchDate.setHours(hours, minutes || 0, 0, 0);
+        
+        // Se a data já passou este ano, considera para o próximo ano
+        if (matchDate < now) {
+          matchDate.setFullYear(matchDate.getFullYear() + 1);
+        }
+        
+        return {
+          ...match,
+          dateObj: matchDate
+        };
       } catch (e) {
+        console.error('Erro ao processar data do jogo:', match, e);
         return null;
       }
     })
-    .filter((m) => m && m.dateObj > now)
-    .sort((a, b) => a.dateObj - b.dateObj)[0];
+    .filter(match => match !== null && match.dateObj > now)
+    .sort((a, b) => a.dateObj - b.dateObj);
+
+  return matchesWithDates[0] || null;
 };
 
+/**
+ * Inicializa navegação mobile
+ */
 const initNavigation = () => {
   const toggle = document.getElementById("menuToggle");
-  const nav = document.getElementById("nav-menu");
-  if (toggle && nav)
-    toggle.addEventListener("click", () => nav.classList.toggle("active"));
+  const nav = document.getElementById("navMenu");
+  
+  if (toggle && nav) {
+    toggle.addEventListener("click", () => {
+      nav.classList.toggle("active");
+      toggle.classList.toggle("active");
+    });
+  }
+
+  // Fecha menu ao clicar em um link
+  const navLinks = document.querySelectorAll(".nav-link");
+  navLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      nav.classList.remove("active");
+      toggle.classList.remove("active");
+    });
+  });
 };
+
+// Inicializa mostrando o contador
+setTimeout(() => {
+  if (!state.matchStarted) {
+    showNextMatchCountdown();
+  }
+}, 100);
