@@ -1,198 +1,30 @@
 /**
- * Cabuloso News - Script Principal (Design Original + Worker Fix)
- * COM CACHE LOCAL PARA REDUZIR REQUESTS
+ * Cabuloso News - Script Principal (OTIMIZADO: Single Request + Worker Fix)
+ * Reduz requisições à Cloudflare de 4 para 1 por visita.
  */
 
-// Adicione isso NO INÍCIO do arquivo script.js, antes da constante CONFIG:
+// ============================================
+// CONFIGURAÇÃO
+// ============================================
+const CONFIG = {
+  // Uma única URL para tudo (Worker unificada)
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  
+  defaultImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
+  
+  // Cache global de 10 minutos (alinha com a atualização de notícias)
+  CACHE_TTL: 10 * 60 * 1000 
+};
 
 // ============================================
-// VARIÁVEIS GLOBAIS E FUNÇÕES AUXILIARES
+// VARIÁVEIS GLOBAIS
 // ============================================
 let allNews = [];
 let displayedNewsCount = 0;
 const NEWS_PER_PAGE = 6;
 
-// Função para converter data das notícias
-function parseNewsDate(dateString) {
-  if (!dateString) return new Date();
-  
-  // Tenta diferentes formatos de data
-  const date = new Date(dateString);
-  if (!isNaN(date.getTime())) {
-    return date;
-  }
-  
-  // Fallback para data atual
-  return new Date();
-}
-
-// Função para escapar HTML
-function escapeHtml(text) {
-  if (!text) return '';
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Função para renderizar mais notícias
-function renderMoreNews() {
-  const container = document.getElementById("newsContainer");
-  if (!container) return;
-  
-  const newsToShow = allNews.slice(displayedNewsCount, displayedNewsCount + NEWS_PER_PAGE);
-  
-  if (newsToShow.length === 0) {
-    const loadMoreContainer = document.getElementById("loadMoreContainer");
-    if (loadMoreContainer) {
-      loadMoreContainer.style.display = "none";
-    }
-    return;
-  }
-  
-  newsToShow.forEach(noticia => {
-    const newsCard = document.createElement("article");
-    newsCard.className = "news-card";
-    newsCard.onclick = () => window.open(noticia.link, '_blank');
-    
-    // Determinar badge
-    let badgeClass = "news-badge";
-    let badgeText = "Notícia";
-    if (noticia.categoria) {
-      badgeText = noticia.categoria;
-      if (noticia.categoria.toLowerCase().includes("samuca")) {
-        badgeClass += " news-badge--samuca";
-      }
-    }
-    
-    newsCard.innerHTML = `
-      <div class="news-image">
-        <img src="${noticia.image || CONFIG.defaultImage}" 
-             alt="${escapeHtml(noticia.title)}"
-             loading="lazy"
-             onerror="this.src='${CONFIG.defaultImage}'">
-        <div class="${badgeClass}">${escapeHtml(badgeText)}</div>
-      </div>
-      <div class="news-content">
-        <div class="news-date">
-          <i class="far fa-clock"></i>
-          ${escapeHtml(noticia.date || 'Data não informada')}
-        </div>
-        <h3 class="news-title">${escapeHtml(noticia.title)}</h3>
-        <div class="news-footer">
-          <span class="read-more">
-            Ler mais <i class="fas fa-arrow-right"></i>
-          </span>
-        </div>
-      </div>
-    `;
-    
-    container.appendChild(newsCard);
-  });
-  
-  displayedNewsCount += newsToShow.length;
-  
-  // Esconde botão se não há mais notícias
-  const loadMoreContainer = document.getElementById("loadMoreContainer");
-  if (loadMoreContainer && displayedNewsCount >= allNews.length) {
-    loadMoreContainer.style.display = "none";
-  }
-}
-
 // ============================================
-// REMOVER LOADING SCREEN
-// ============================================
-function hideLoadingScreen() {
-  const loadingScreen = document.getElementById('loadingScreen');
-  if (loadingScreen) {
-    // Pequeno delay para garantir que tudo carregou
-    setTimeout(() => {
-      loadingScreen.classList.add('hidden');
-      
-      // Remove completamente do DOM após animação
-      setTimeout(() => {
-        if (loadingScreen.parentNode) {
-          loadingScreen.style.display = 'none';
-        }
-      }, 500);
-    }, 1000);
-  }
-}
-
-// ============================================
-// INICIALIZAR TODOS OS DADOS
-// ============================================
-async function initializePage() {
-  console.log("🚀 Inicializando Cabuloso News...");
-  
-  try {
-    // Carrega todos os dados em paralelo
-    await Promise.allSettled([
-      fetchNews(),
-      fetchMiniTable(),
-      fetchNextMatches(),
-      fetchRecentResults()
-    ]);
-    
-    console.log("✅ Todos os dados carregados");
-    
-  } catch (error) {
-    console.error("❌ Erro na inicialização:", error);
-  } finally {
-    // SEMPRE remove o loading screen
-    hideLoadingScreen();
-  }
-}
-
-// ============================================
-// EXECUTAR QUANDO A PÁGINA CARREGAR
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-  console.log("📄 DOM carregado");
-  
-  // Configurar menu mobile
-  const menuToggle = document.getElementById('menuToggle');
-  const navMenu = document.getElementById('navMenu');
-  
-  if (menuToggle && navMenu) {
-    menuToggle.addEventListener('click', () => {
-      menuToggle.classList.toggle('active');
-      navMenu.classList.toggle('active');
-    });
-    
-    // Fechar menu ao clicar em um link
-    document.querySelectorAll('.nav-link').forEach(link => {
-      link.addEventListener('click', () => {
-        menuToggle.classList.remove('active');
-        navMenu.classList.remove('active');
-      });
-    });
-  }
-  
-  // Iniciar carregamento dos dados
-  initializePage();
-  
-  // Fallback: sempre remover loading após 5 segundos (segurança)
-  setTimeout(hideLoadingScreen, 5000);
-});
-
-const CONFIG = {
-  newsApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  tabelaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  agendaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  resultadosApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  defaultImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
-  
-  // Configurações de cache local (em milissegundos)
-  CACHE_TTL: {
-    NEWS: 10 * 60 * 1000,     // 10 minutos
-    TABLE: 30 * 60 * 1000,    // 30 minutos
-    MATCHES: 60 * 60 * 1000,  // 1 hora
-    RESULTS: 30 * 60 * 1000   // 30 minutos
-  }
-};
-
-// ============================================
-// SISTEMA DE CACHE LOCAL
+// SISTEMA DE CACHE LOCAL (Mantido do original)
 // ============================================
 const LocalCache = {
   set(key, data, ttl) {
@@ -211,7 +43,6 @@ const LocalCache = {
     const item = JSON.parse(raw);
     const now = Date.now();
     
-    // Verifica se o cache expirou
     if (now - item.timestamp > item.ttl) {
       localStorage.removeItem(`cache_${key}`);
       return null;
@@ -220,422 +51,353 @@ const LocalCache = {
     return item.data;
   },
 
-  clear(key) {
-    if (key) {
-      localStorage.removeItem(`cache_${key}`);
-    } else {
-      // Remove todos os caches
-      Object.keys(localStorage).forEach(k => {
-        if (k.startsWith('cache_')) {
-          localStorage.removeItem(k);
-        }
-      });
-    }
+  clear() {
+    Object.keys(localStorage).forEach(k => {
+      if (k.startsWith('cache_')) localStorage.removeItem(k);
+    });
   }
 };
 
 // ============================================
-// FUNÇÕES COM CACHE
+// UTILITÁRIOS
 // ============================================
-const fetchWithCache = async (url, cacheKey, ttl) => {
-  // 1. Tenta pegar do cache local primeiro
-  const cached = LocalCache.get(cacheKey);
-  if (cached) {
-    console.log(`✅ Usando cache local: ${cacheKey}`);
-    return cached;
-  }
+function parseNewsDate(dateString) {
+  if (!dateString) return new Date();
+  const date = new Date(dateString);
+  return !isNaN(date.getTime()) ? date : new Date();
+}
 
-  // 2. Se não tiver cache, faz request
-  try {
-    const response = await fetch(url);
-    let data = await response.json();
-    
-    // Worker retorna array, pega primeiro item
-    if (Array.isArray(data)) {
-      data = data[0];
-    }
-    
-    // 3. Salva no cache local
-    LocalCache.set(cacheKey, data, ttl);
-    
-    return data;
-  } catch (error) {
-    console.error(`Erro ao buscar ${cacheKey}:`, error);
-    
-    // 4. Em caso de erro, tenta retornar cache expirado como fallback
-    const expiredCache = localStorage.getItem(`cache_${cacheKey}`);
-    if (expiredCache) {
-      const item = JSON.parse(expiredCache);
-      console.log(`⚠️ Usando cache expirado como fallback: ${cacheKey}`);
-      return item.data;
-    }
-    
-    throw error;
+function escapeHtml(text) {
+  if (!text) return '';
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function hideLoadingScreen() {
+  const loadingScreen = document.getElementById('loadingScreen');
+  if (loadingScreen) {
+    setTimeout(() => {
+      loadingScreen.classList.add('hidden');
+      setTimeout(() => {
+        if (loadingScreen.parentNode) loadingScreen.style.display = 'none';
+      }, 500);
+    }, 800);
   }
-};
+}
 
 // ============================================
-// FUNÇÕES ATUALIZADAS COM CACHE
+// LÓGICA MESTRE DE DADOS (SINGLE FETCH)
 // ============================================
-const fetchNews = async () => {
-  const container = document.getElementById("newsContainer");
-  if (!container) return;
-
+async function loadMasterData() {
+  console.log("🚀 Iniciando carga mestre de dados...");
+  
   try {
-    const data = await fetchWithCache(
-      CONFIG.newsApiUrl,
-      'news',
-      CONFIG.CACHE_TTL.NEWS
-    );
-
-    if (!data || !data.noticias) {
-      throw new Error("Dados de notícias não encontrados");
-    }
-
-    // Resto do seu código permanece igual...
-    data.noticias.sort((a, b) => parseNewsDate(b.date) - parseNewsDate(a.date));
-    allNews = data.noticias;
-    displayedNewsCount = 0;
-    container.innerHTML = '';
-    renderMoreNews();
-
-    const loadMoreContainer = document.getElementById("loadMoreContainer");
-    if (loadMoreContainer) {
-      if (allNews.length > NEWS_PER_PAGE) {
-        loadMoreContainer.style.display = "block";
-        const btnLoadMore = document.getElementById("btnLoadMore");
-        if (btnLoadMore) {
-          btnLoadMore.onclick = renderMoreNews;
-        }
-      } else {
-        loadMoreContainer.style.display = "none";
-      }
-    }
-
-  } catch (error) {
-    console.error("Erro detalhado:", error);
-    // Mostra mensagem de erro
-    container.innerHTML = `
-      <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: white;">
-        <i class="fas fa-exclamation-circle" style="font-size: 2rem; color: #ff4444;"></i>
-        <p>Não foi possível carregar as notícias.</p>
-        <button onclick="fetchNews()" style="margin-top: 10px; padding: 8px 16px; background: #2E8B57; color: white; border: none; border-radius: 4px; cursor: pointer;">
-          Tentar novamente
-        </button>
-      </div>`;
-  }
-};
-
-const fetchMiniTable = async () => {
-  const tbody = document.getElementById("miniTableBody");
-  if (!tbody) return;
-
-  try {
-    const data = await fetchWithCache(
-      CONFIG.tabelaApiUrl,
-      'table',
-      CONFIG.CACHE_TTL.TABLE
-    );
-
-    if (!data || !data.tabela_brasileiro || !data.tabela_brasileiro.classificacao) {
-      throw new Error("Dados de tabela não encontrados");
-    }
-
-    // Resto do seu código permanece igual...
-    const top5 = data.tabela_brasileiro.classificacao.slice(0, 5);
-
-    tbody.innerHTML = top5
-      .map((time, index) => {
-        const isCruzeiro = time.nome?.toLowerCase().includes("cruzeiro");
-        return `
-        <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
-          <td>${index + 1}º</td>
-          <td>
-            <div class="team-cell">
-              <img src="${time.escudo || CONFIG.defaultImage}" alt="" class="team-logo" loading="lazy">
-              <span>${escapeHtml(time.nome)}</span>
-            </div>
-          </td>
-          <td><strong>${time.pontos}</strong></td>
-        </tr>
-      `;
-      })
-      .join("");
-
-    const cruzeiro = data.tabela_brasileiro.classificacao.find((t) =>
-      t.nome?.toLowerCase().includes("cruzeiro"),
-    );
-
-    const statPosition = document.getElementById("statPosition");
-    if (statPosition && cruzeiro) {
-      statPosition.textContent = `${cruzeiro.posicao || "?"}º lugar`;
-    }
-
-  } catch (error) {
-    console.error("Erro ao buscar mini tabela:", error);
-    tbody.innerHTML =
-      '<tr><td colspan="3" class="loading-cell">Erro ao carregar</td></tr>';
-  }
-};
-
-const fetchNextMatches = async () => {
-  const container = document.getElementById("nextMatchesWidget");
-  if (!container) return;
-
-  try {
-    const data = await fetchWithCache(
-      CONFIG.agendaApiUrl,
-      'matches',
-      CONFIG.CACHE_TTL.MATCHES
-    );
-
-    if (!data || !data.agenda) {
-      throw new Error("Dados de agenda não encontrados");
-    }
-
-    // Resto do seu código permanece igual...
-    const proximos = data.agenda.slice(0, 3);
-
-    container.innerHTML = proximos
-      .map(
-        (jogo) => `
-      <div class="match-item">
-        <div class="match-item-date">
-          <i class="far fa-calendar"></i>
-          ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}
-        </div>
-        <div class="match-item-teams">
-          <div class="match-team-widget">
-            <img src="${jogo.escudo_mandante || CONFIG.defaultImage}" alt="" loading="lazy">
-            <span>${escapeHtml(jogo.mandante)}</span>
-          </div>
-          <span class="match-score-widget">X</span>
-          <div class="match-team-widget">
-            <span>${escapeHtml(jogo.visitante)}</span>
-            <img src="${jogo.escudo_visitante || CONFIG.defaultImage}" alt="" loading="lazy">
-          </div>
-        </div>
-        <div class="match-item-competition">${escapeHtml(jogo.campeonato)}</div>
-      </div>
-    `
-      )
-      .join("");
-
-    const statNextGame = document.getElementById("statNextGame");
-    if (statNextGame && proximos.length > 0) {
-      const prox = proximos[0];
-      const opponent = prox.mandante?.toLowerCase().includes("cruzeiro")
-        ? prox.visitante
-        : prox.mandante;
-      statNextGame.textContent = `${prox.data?.split(" ")[0] || ""} vs ${opponent || "Adversário"}`;
-    }
-
-  } catch (error) {
-    console.error("Erro ao buscar próximos jogos:", error);
-    container.innerHTML =
-      '<div class="loading-cell">Erro ao carregar jogos.</div>';
-  }
-};
-
-const fetchRecentResults = async () => {
-  const container = document.getElementById("recentResultsWidget");
-  if (!container) {
-    console.error("ERRO: Elemento 'recentResultsWidget' não encontrado no HTML.");
-    return;
-  }
-
-  try {
-    const data = await fetchWithCache(
-      CONFIG.resultadosApiUrl,
-      'results',
-      CONFIG.CACHE_TTL.RESULTS
-    );
-
-    console.log("📊 Dados de resultados recebidos:", data); // DEBUG
-
-    // Verifica diferentes estruturas possíveis
-    let resultados = [];
-    
-    if (data && data.resultados) {
-      resultados = data.resultados;
-      console.log("✅ Usando data.resultados");
-    } else if (data && data.dados_completos) {
-      resultados = data.dados_completos;
-      console.log("✅ Usando data.dados_completos");
-    } else if (Array.isArray(data)) {
-      resultados = data;
-      console.log("✅ Usando array direto");
-    } else {
-      throw new Error("Estrutura de dados desconhecida");
-    }
-
-    if (!Array.isArray(resultados) || resultados.length === 0) {
-      console.warn("⚠️ Nenhum resultado encontrado");
-      container.innerHTML = '<div class="loading-cell">Nenhum resultado recente</div>';
+    // 1. Tenta pegar do Cache Local primeiro
+    const cachedData = LocalCache.get('master_data');
+    if (cachedData) {
+      console.log("📦 Usando dados do cache local (Economia de Request!)");
+      distributeData(cachedData);
       return;
     }
 
-    console.log(`📋 Total de resultados: ${resultados.length}`);
+    // 2. Se não tem cache, busca na Worker (Gasta 1 request)
+    console.log("🌐 Buscando novos dados na Nuvem...");
+    const response = await fetch(CONFIG.apiUrl);
+    let data = await response.json();
 
-    // Pega apenas os 5 últimos (como no antigo)
-    const ultimosResultados = resultados.slice(0, 5);
+    // 3. Corrige formato do n8n (Array -> Objeto)
+    if (Array.isArray(data)) {
+      data = data[0];
+    }
 
-    container.innerHTML = ultimosResultados.map((res, index) => {
-        console.log(`🏁 Resultado ${index + 1}:`, res); // DEBUG
-        
-        // Tenta diferentes formatos de placar
-        let score1 = "0";
-        let score2 = "0";
-        
-        if (res.score1 !== undefined && res.score2 !== undefined) {
-          // Formato: score1 e score2 separados
-          score1 = res.score1.toString();
-          score2 = res.score2.toString();
-        } else if (res.score) {
-          // Formato: "2 x 1" ou "2-1"
-          const scoreParts = res.score.split(/[x\-]/).map(s => s.trim());
-          if (scoreParts.length >= 2) {
-            score1 = scoreParts[0];
-            score2 = scoreParts[1];
-          }
-        } else if (res.placar) {
-          // Formato: placar objeto
-          const scoreParts = res.placar.split(/[x\-]/).map(s => s.trim());
-          if (scoreParts.length >= 2) {
-            score1 = scoreParts[0];
-            score2 = scoreParts[1];
-          }
-        }
-        
-        // Determina qual time é o Cruzeiro
-        const team1 = res.team1 || res.mandante || "Time 1";
-        const team2 = res.team2 || res.visitante || "Time 2";
-        const logo1 = res.logo1 || res.escudo_mandante || CONFIG.defaultImage;
-        const logo2 = res.logo2 || res.escudo_visitante || CONFIG.defaultImage;
-        
-        const isCruzeiroMandante = team1.toLowerCase().includes("cruzeiro");
-        const isCruzeiroVisitante = team2.toLowerCase().includes("cruzeiro");
-        const isCruzeiro = isCruzeiroMandante || isCruzeiroVisitante;
-        
-        let statusClass = "draw";
-        const s1 = parseInt(score1) || 0;
-        const s2 = parseInt(score2) || 0;
-        
-        if (!isNaN(s1) && !isNaN(s2)) {
-          if (s1 === s2) {
-            statusClass = "draw";
-          } else if (isCruzeiroMandante) {
-            statusClass = s1 > s2 ? "win" : "loss";
-          } else if (isCruzeiroVisitante) {
-            statusClass = s2 > s1 ? "win" : "loss";
-          } else {
-            // Se Cruzeiro não está jogando (dados de outros times)
-            statusClass = "neutral";
-          }
-        }
-
-        // Determina competição
-        const competition = res.competition || res.campeonato || res.torneio || "Amistoso";
-
-        return `
-        <div class="result-mini">
-          <div class="result-mini-teams">
-            <div class="result-mini-team">
-              <img src="${escapeHtml(logo1)}" alt="${escapeHtml(team1)}" loading="lazy" 
-                   onerror="this.src='${CONFIG.defaultImage}'">
-              <span>${escapeHtml(team1)}</span>
-            </div>
-            <span class="result-mini-score ${statusClass}">${escapeHtml(score1)} x ${escapeHtml(score2)}</span>
-            <div class="result-mini-team">
-              <img src="${escapeHtml(logo2)}" alt="${escapeHtml(team2)}" loading="lazy"
-                   onerror="this.src='${CONFIG.defaultImage}'">
-              <span>${escapeHtml(team2)}</span>
-            </div>
-          </div>
-          <div class="result-mini-info">${escapeHtml(competition)}</div>
-          ${res.data ? `<div class="result-mini-date"><i class="far fa-calendar"></i> ${escapeHtml(res.data)}</div>` : ''}
-        </div>`;
-    }).join("");
-
-    // Se ainda estiver vazio após tentar renderizar
-    if (container.innerHTML.trim() === "") {
-      container.innerHTML = `
-        <div class="loading-cell" style="text-align: center; padding: 20px;">
-          <i class="fas fa-futbol" style="font-size: 2rem; color: #666; margin-bottom: 10px;"></i>
-          <p>Resultados em breve</p>
-        </div>`;
+    // 4. Salva no Cache e Distribui
+    if (data) {
+      LocalCache.set('master_data', data, CONFIG.CACHE_TTL);
+      distributeData(data);
+    } else {
+      throw new Error("Dados vazios recebidos da API");
     }
 
   } catch (error) {
-    console.error("❌ Erro em fetchRecentResults:", error);
-    
-    // Tenta mostrar dados de fallback do cache expirado
-    const expiredCache = localStorage.getItem('cache_results');
-    if (expiredCache) {
-      try {
-        const oldData = JSON.parse(expiredCache);
-        if (oldData.data && oldData.data.resultados) {
-          console.log("⚠️ Tentando usar cache expirado...");
-          
-          const resultados = oldData.data.resultados.slice(0, 3);
-          container.innerHTML = resultados.map(res => `
-            <div class="result-mini">
-              <div class="result-mini-teams">
-                <div class="result-mini-team">
-                  <img src="${escapeHtml(res.logo1 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team1)}">
-                  <span>${escapeHtml(res.team1)}</span>
-                </div>
-                <span class="result-mini-score">${escapeHtml(res.score1 || '0')} x ${escapeHtml(res.score2 || '0')}</span>
-                <div class="result-mini-team">
-                  <img src="${escapeHtml(res.logo2 || CONFIG.defaultImage)}" alt="${escapeHtml(res.team2)}">
-                  <span>${escapeHtml(res.team2)}</span>
-                </div>
-              </div>
-              <div class="result-mini-info">${escapeHtml(res.competition || '')}</div>
-              <div class="result-mini-date" style="color: #888; font-size: 0.8rem; margin-top: 5px;">
-                <i class="fas fa-exclamation-triangle"></i> Dados podem estar desatualizados
-              </div>
-            </div>
-          `).join('');
-          return;
-        }
-      } catch (cacheError) {
-        console.error("Erro ao usar cache expirado:", cacheError);
-      }
+    console.error("❌ Erro na carga mestre:", error);
+    // Tenta usar cache expirado como fallback de emergência
+    const expired = localStorage.getItem('cache_master_data');
+    if (expired) {
+      console.warn("⚠️ Usando cache expirado como fallback");
+      distributeData(JSON.parse(expired).data);
     }
-    
-    container.innerHTML = `
-      <div class="loading-cell" style="text-align: center; padding: 20px;">
-        <i class="fas fa-exclamation-triangle" style="font-size: 2rem; color: #ffcc00; margin-bottom: 10px;"></i>
-        <p>Não foi possível carregar os resultados</p>
-        <button onclick="fetchRecentResults()" 
-                style="margin-top: 10px; padding: 8px 16px; background: #2E8B57; color: white; border: none; border-radius: 4px; cursor: pointer;">
-          Tentar novamente
-        </button>
-      </div>`;
+  } finally {
+    hideLoadingScreen();
   }
-};
+}
+
+// Distribui os dados para cada seção do site
+function distributeData(data) {
+  // Notícias
+  if (data.noticias) {
+    initNews(data.noticias);
+  }
+  
+  // Tabela
+  if (data.tabela_brasileiro && data.tabela_brasileiro.classificacao) {
+    renderMiniTable(data.tabela_brasileiro.classificacao);
+  }
+  
+  // Agenda
+  if (data.agenda) {
+    renderNextMatches(data.agenda);
+  }
+  
+  // Resultados
+  if (data.resultados) {
+    renderRecentResults(data.resultados);
+  }
+}
 
 // ============================================
-// FUNÇÃO PARA FORÇAR ATUALIZAÇÃO MANUAL
+// RENDERIZADORES (UI)
 // ============================================
+
+// --- 1. NOTÍCIAS ---
+function initNews(noticiasData) {
+  const container = document.getElementById("newsContainer");
+  if (!container) return;
+
+  // Ordena e salva na variável global
+  noticiasData.sort((a, b) => parseNewsDate(b.date) - parseNewsDate(a.date));
+  allNews = noticiasData;
+  displayedNewsCount = 0;
+  
+  container.innerHTML = '';
+  renderMoreNews(); // Chama a função original de paginação
+
+  // Configura botão "Carregar Mais"
+  const loadMoreContainer = document.getElementById("loadMoreContainer");
+  if (loadMoreContainer) {
+    if (allNews.length > NEWS_PER_PAGE) {
+      loadMoreContainer.style.display = "block";
+      const btnLoadMore = document.getElementById("btnLoadMore");
+      if (btnLoadMore) btnLoadMore.onclick = renderMoreNews;
+    } else {
+      loadMoreContainer.style.display = "none";
+    }
+  }
+}
+
+function renderMoreNews() {
+  const container = document.getElementById("newsContainer");
+  if (!container) return;
+  
+  const newsToShow = allNews.slice(displayedNewsCount, displayedNewsCount + NEWS_PER_PAGE);
+  
+  if (newsToShow.length === 0) {
+    const loadMoreContainer = document.getElementById("loadMoreContainer");
+    if (loadMoreContainer) loadMoreContainer.style.display = "none";
+    return;
+  }
+  
+  newsToShow.forEach(noticia => {
+    const newsCard = document.createElement("article");
+    newsCard.className = "news-card";
+    newsCard.onclick = () => window.open(noticia.url || noticia.link, '_blank');
+    
+    let badgeClass = "news-badge";
+    let badgeText = noticia.fonte || "Notícia";
+    
+    // Tratamento de imagem
+    const imgUrl = noticia.image || CONFIG.defaultImage;
+
+    newsCard.innerHTML = `
+      <div class="news-image">
+        <img src="${imgUrl}" 
+             alt="${escapeHtml(noticia.title)}"
+             loading="lazy"
+             onerror="this.src='${CONFIG.defaultImage}'">
+        <div class="${badgeClass}">${escapeHtml(badgeText)}</div>
+      </div>
+      <div class="news-content">
+        <div class="news-date">
+          <i class="far fa-clock"></i>
+          ${escapeHtml(noticia.date || '')}
+        </div>
+        <h3 class="news-title">${escapeHtml(noticia.title)}</h3>
+        <div class="news-footer">
+          <span class="read-more">
+            Ler mais <i class="fas fa-arrow-right"></i>
+          </span>
+        </div>
+      </div>
+    `;
+    container.appendChild(newsCard);
+  });
+  
+  displayedNewsCount += newsToShow.length;
+  
+  const loadMoreContainer = document.getElementById("loadMoreContainer");
+  if (loadMoreContainer && displayedNewsCount >= allNews.length) {
+    loadMoreContainer.style.display = "none";
+  }
+}
+
+// --- 2. MINI TABELA ---
+function renderMiniTable(classificacao) {
+  const tbody = document.getElementById("miniTableBody");
+  if (!tbody) return;
+
+  const top5 = classificacao.slice(0, 5);
+
+  tbody.innerHTML = top5.map((time, index) => {
+    const isCruzeiro = time.nome?.toLowerCase().includes("cruzeiro");
+    return `
+      <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
+        <td>${index + 1}º</td>
+        <td>
+          <div class="team-cell">
+            <img src="${time.escudo || CONFIG.defaultImage}" alt="" class="team-logo" loading="lazy">
+            <span>${escapeHtml(time.nome)}</span>
+          </div>
+        </td>
+        <td><strong>${time.pontos}</strong></td>
+      </tr>
+    `;
+  }).join("");
+
+  // Atualiza posição no header se existir elemento
+  const cruzeiro = classificacao.find(t => t.nome?.toLowerCase().includes("cruzeiro"));
+  const statPosition = document.getElementById("statPosition");
+  if (statPosition && cruzeiro) {
+    statPosition.textContent = `${cruzeiro.posicao || "?"}º lugar`;
+  }
+}
+
+// --- 3. PRÓXIMOS JOGOS ---
+function renderNextMatches(agenda) {
+  const container = document.getElementById("nextMatchesWidget");
+  if (!container) return;
+
+  const proximos = agenda.slice(0, 3);
+
+  container.innerHTML = proximos.map(jogo => `
+    <div class="match-item">
+      <div class="match-item-date">
+        <i class="far fa-calendar"></i>
+        ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}
+      </div>
+      <div class="match-item-teams">
+        <div class="match-team-widget">
+          <img src="${jogo.escudo_mandante || CONFIG.defaultImage}" alt="" loading="lazy">
+          <span>${escapeHtml(jogo.mandante)}</span>
+        </div>
+        <span class="match-score-widget">X</span>
+        <div class="match-team-widget">
+          <span>${escapeHtml(jogo.visitante)}</span>
+          <img src="${jogo.escudo_visitante || CONFIG.defaultImage}" alt="" loading="lazy">
+        </div>
+      </div>
+      <div class="match-item-competition">${escapeHtml(jogo.campeonato)}</div>
+    </div>
+  `).join("");
+
+  // Atualiza próximo jogo no header
+  const statNextGame = document.getElementById("statNextGame");
+  if (statNextGame && proximos.length > 0) {
+    const prox = proximos[0];
+    const opponent = prox.mandante?.toLowerCase().includes("cruzeiro")
+      ? prox.visitante
+      : prox.mandante;
+    statNextGame.textContent = `${prox.data?.split(" ")[0] || ""} vs ${opponent || "Adversário"}`;
+  }
+}
+
+// --- 4. RESULTADOS RECENTES ---
+function renderRecentResults(resultados) {
+  const container = document.getElementById("recentResultsWidget");
+  if (!container) return;
+
+  const ultimosResultados = resultados.slice(0, 5);
+
+  if (ultimosResultados.length === 0) {
+    container.innerHTML = '<div class="loading-cell">Nenhum resultado recente</div>';
+    return;
+  }
+
+  container.innerHTML = ultimosResultados.map(res => {
+    // Lógica de placar robusta (mantida do original)
+    let score1 = "0", score2 = "0";
+    
+    if (res.score1 !== undefined && res.score2 !== undefined) {
+      score1 = res.score1; score2 = res.score2;
+    } else if (res.score) {
+      const parts = res.score.split(/[x\-]/);
+      if (parts.length >= 2) { score1 = parts[0].trim(); score2 = parts[1].trim(); }
+    }
+
+    const team1 = res.team1 || res.mandante || "Time 1";
+    const team2 = res.team2 || res.visitante || "Time 2";
+    const isCruzeiroMandante = team1.toLowerCase().includes("cruzeiro");
+    const isCruzeiroVisitante = team2.toLowerCase().includes("cruzeiro");
+    
+    // Define cores (win/loss/draw)
+    let statusClass = "neutral";
+    const s1 = parseInt(score1), s2 = parseInt(score2);
+    
+    if (!isNaN(s1) && !isNaN(s2)) {
+      if (s1 === s2) statusClass = "draw";
+      else if (isCruzeiroMandante) statusClass = s1 > s2 ? "win" : "loss";
+      else if (isCruzeiroVisitante) statusClass = s2 > s1 ? "win" : "loss";
+    }
+
+    return `
+      <div class="result-mini">
+        <div class="result-mini-teams">
+          <div class="result-mini-team">
+            <img src="${res.logo1 || CONFIG.defaultImage}" alt="${team1}" loading="lazy" onerror="this.src='${CONFIG.defaultImage}'">
+            <span>${escapeHtml(team1)}</span>
+          </div>
+          <span class="result-mini-score ${statusClass}">${score1} x ${score2}</span>
+          <div class="result-mini-team">
+            <img src="${res.logo2 || CONFIG.defaultImage}" alt="${team2}" loading="lazy" onerror="this.src='${CONFIG.defaultImage}'">
+            <span>${escapeHtml(team2)}</span>
+          </div>
+        </div>
+        <div class="result-mini-info">${escapeHtml(res.competition || 'Campeonato')}</div>
+        ${res.data ? `<div class="result-mini-date"><i class="far fa-calendar"></i> ${escapeHtml(res.data)}</div>` : ''}
+      </div>`;
+  }).join("");
+}
+
+// ============================================
+// INICIALIZAÇÃO E EVENTOS
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  
+  // Menu Mobile
+  const menuToggle = document.getElementById('menuToggle');
+  const navMenu = document.getElementById('navMenu');
+  if (menuToggle && navMenu) {
+    menuToggle.addEventListener('click', () => {
+      menuToggle.classList.toggle('active');
+      navMenu.classList.toggle('active');
+    });
+    document.querySelectorAll('.nav-link').forEach(link => {
+      link.addEventListener('click', () => {
+        menuToggle.classList.remove('active');
+        navMenu.classList.remove('active');
+      });
+    });
+  }
+
+  // Iniciar Carga Única
+  loadMasterData();
+
+  // Fallback de segurança para remover loading
+  setTimeout(hideLoadingScreen, 4000);
+});
+
+// Função para debug manual no console
 const forceRefreshAll = () => {
-  // Limpa todos os caches
   LocalCache.clear();
-  
-  // Recarrega os dados
-  fetchNews();
-  fetchMiniTable();
-  fetchNextMatches();
-  fetchRecentResults();
-  
-  // Feedback visual
-  alert("Dados atualizados com sucesso!");
-  
-  // Pode adicionar um toast/notificação no seu site
-  // showToast("Dados atualizados!", "success");
+  loadMasterData();
+  alert("Cache limpo e dados recarregados!");
 };
-
-// Adiciona botão de refresh no console para debug
-console.log("%c🔧 Cabuloso News Debug", "color: #2E8B57; font-weight: bold;");
-console.log("%cDigite forceRefreshAll() para atualizar manualmente", "color: #666;");
