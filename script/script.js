@@ -1,22 +1,15 @@
 /**
- * Cabuloso News - Script Principal
- * Portal do Cruzeiro Esporte Clube
+ * Cabuloso News - Script Principal (VERSÃO CORRIGIDA WORKER)
  */
 
-// ============================================
-// CONFIGURAÇÕES
-// ============================================
 const CONFIG = {
   newsApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   tabelaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   agendaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   resultadosApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  webhookUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/', 
+  defaultImage: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png'
 };
 
-// ============================================
-// UTILITÁRIOS
-// ============================================
 const escapeHtml = (str) => {
   if (!str) return "";
   const div = document.createElement("div");
@@ -25,255 +18,147 @@ const escapeHtml = (str) => {
 };
 
 // ============================================
-// LOADING SCREEN
+// BUSCA DE DADOS (CORRIGIDO PARA ARRAY [0])
 // ============================================
-const hideLoadingScreen = () => {
-  const screen = document.getElementById("loadingScreen");
-  if (screen) {
-    setTimeout(() => {
-      screen.classList.add("hidden");
-    }, 800);
-  }
-};
 
-// ============================================
-// NAVEGAÇÃO MOBILE
-// ============================================
-const initMobileMenu = () => {
-  const toggle = document.getElementById("menuToggle");
-  const menu = document.getElementById("navMenu");
-
-  if (!toggle || !menu) return;
-
-  toggle.addEventListener("click", () => {
-    toggle.classList.toggle("active");
-    menu.classList.toggle("active");
-  });
-
-  menu.querySelectorAll(".nav-link").forEach((link) => {
-    link.addEventListener("click", () => {
-      toggle.classList.remove("active");
-      menu.classList.remove("active");
-    });
-  });
-};
-
-// ============================================
-// FUNÇÃO DE CONVERSÃO DE DATA (MELHORADA)
-// ============================================
-const parseNewsDate = (dateStr) => {
-  if (!dateStr) return 0;
-  
-  try {
-    // Remove qualquer texto após "·" (incluindo a hora)
-    let cleanDate = dateStr.split('·')[0].trim().toLowerCase();
-    
-    // Se ainda tiver números com barras (formato DD/MM/YYYY)
-    if (cleanDate.includes('/')) {
-      const [dia, mes, ano] = cleanDate.split('/');
-      // Retorna timestamp para comparação
-      return new Date(ano, mes - 1, dia).getTime();
-    }
-    
-    // Formato "de janeiro de"
-    const meses = {
-      "janeiro": 0, "fevereiro": 1, "março": 2, "abril": 3, "maio": 4, "junho": 5,
-      "julho": 6, "agosto": 7, "setembro": 8, "outubro": 9, "novembro": 10, "dezembro": 11
-    };
-    
-    // Formato "23 de janeiro de 2026"
-    const partes = cleanDate.split(' de ');
-    if (partes.length >= 3) {
-      const d = parseInt(partes[0]);
-      const m = meses[partes[1]] || 0;
-      const a = parseInt(partes[2]);
-      return new Date(a, m, d).getTime();
-    }
-    
-    // Tenta qualquer outro formato que o Date reconheça
-    return new Date(cleanDate).getTime() || 0;
-  } catch (e) { 
-    console.warn(`Erro ao converter data: ${dateStr}`, e);
-    return 0; 
-  }
-};
-
-// ============================================
-// VARIÁVEIS GLOBAIS PARA PAGINAÇÃO
-// ============================================
-let allNews = [];
-let displayedNewsCount = 0;
-const NEWS_PER_PAGE = 6;
-
-// ============================================
-// BUSCAR E ORGANIZAR NOTÍCIAS
-// ============================================
 const fetchNews = async () => {
   try {
     const response = await fetch(CONFIG.newsApiUrl);
     let data = await response.json();
+    if (Array.isArray(data)) data = data[0]; // Trata o formato do n8n
 
-    // Se a API retornar um Array [ {...} ], pegamos o primeiro item
-    if (Array.isArray(data)) {
-      data = data[0];
-    }
-
-    // Agora acessamos a chave 'noticias' dentro do objeto
     const news = data.noticias;
-
-    if (!news || !Array.isArray(news)) {
-      throw new Error("Formato de notícias inválido: chave 'noticias' não encontrada");
-    }
-
+    if (!news) throw new Error("Notícias não encontradas");
+    
     renderNews(news);
   } catch (error) {
     console.error("Erro notícias:", error);
-    const container = document.getElementById("newsContainer");
-    if (container) container.innerHTML = '<div class="error-cell">Erro ao carregar notícias</div>';
   }
 };
 
-// ============================================
-// FUNÇÃO PARA RENDERIZAR MAIS NOTÍCIAS
-// ============================================
-const renderMoreNews = () => {
-  const container = document.getElementById("newsContainer");
-  const loadMoreContainer = document.getElementById("loadMoreContainer");
-
-  if (!container || allNews.length === 0) return;
-
-  const nextBatch = allNews.slice(
-    displayedNewsCount,
-    displayedNewsCount + NEWS_PER_PAGE,
-  );
-
-  nextBatch.forEach((item) => {
-    const card = document.createElement("article");
-    card.className = "news-card";
-    
-    // Define classe do badge baseado na fonte
-    let badgeClass = "";
-    if (item.fonte === "Samuca TV") {
-      badgeClass = "news-badge--samuca";
-    } else if (item.fonte === "Zeiro") {
-      badgeClass = "news-badge--zeiro";
-    }
-
-    card.innerHTML = `
-      <div class="news-image">
-        <img src="${escapeHtml(item.image || CONFIG.defaultImage)}" 
-             alt="${escapeHtml(item.title)}" 
-             loading="lazy" 
-             onerror="this.src='${CONFIG.defaultImage}'">
-        <span class="news-badge ${badgeClass}">${escapeHtml(item.fonte || "Notícia")}</span>
-      </div>
-      <div class="news-content">
-        <span class="news-date"><i class="far fa-clock"></i> ${escapeHtml(item.date || "")}</span>
-        <h3 class="news-title">${escapeHtml(item.title)}</h3>
-        <div class="news-footer">
-          <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener" class="read-more">
-            Ler notícia <i class="fas fa-arrow-right"></i>
-          </a>
-        </div>
-      </div>
-    `;
-    
-    container.appendChild(card);
-  });
-
-  displayedNewsCount += nextBatch.length;
-  
-  // Atualiza visibilidade do botão
-  if (loadMoreContainer) {
-    if (displayedNewsCount >= allNews.length) {
-      loadMoreContainer.style.display = "none";
-    }
-  }
-};
-
-// ============================================
-// WIDGETS - MINI TABELA
-// ============================================
 const fetchMiniTable = async () => {
-  const container = document.getElementById("miniTableBody");
   try {
     const response = await fetch(CONFIG.tabelaApiUrl);
     let data = await response.json();
+    if (Array.isArray(data)) data = data[0];
 
-    if (Array.isArray(data)) {
-      data = data[0];
+    const tabela = data.tabela_brasileiro;
+    if (tabela && tabela.classificacao) {
+      renderMiniTable(tabela.classificacao);
     }
-
-    // Acessa 'tabela_brasileiro' e depois 'classificacao'
-    const tabelaWrap = data.tabela_brasileiro;
-    
-    if (!tabelaWrap || !tabelaWrap.classificacao) {
-      throw new Error("Dados da tabela não encontrados no JSON");
-    }
-
-    renderMiniTable(tabelaWrap.classificacao);
   } catch (error) {
     console.error("Erro mini tabela:", error);
-    if (container) container.innerHTML = '<tr><td colspan="3">Erro ao carregar</td></tr>';
   }
 };
 
-// ============================================
-// WIDGETS - PRÓXIMOS JOGOS
-// ============================================
 const fetchNextMatches = async () => {
   try {
     const response = await fetch(CONFIG.agendaApiUrl);
     let data = await response.json();
-
-    if (Array.isArray(data)) {
-      data = data[0];
-    }
-
-    const agenda = data.agenda;
-    if (!agenda) throw new Error("Agenda não encontrada no JSON");
-
-    renderNextMatches(agenda);
+    if (Array.isArray(data)) data = data[0];
+    
+    if (data.agenda) renderNextMatches(data.agenda);
   } catch (error) {
     console.error("Erro agenda:", error);
   }
 };
 
-// ============================================
-// WIDGETS - ÚLTIMOS RESULTADOS (DINÂMICO)
-// ============================================
 const fetchRecentResults = async () => {
   try {
     const response = await fetch(CONFIG.resultadosApiUrl);
     let data = await response.json();
-
-    if (Array.isArray(data)) {
-      data = data[0];
-    }
-
-    const resultados = data.resultados;
-    if (!resultados) throw new Error("Resultados não encontrados no JSON");
-
-    renderRecentResults(resultados);
+    if (Array.isArray(data)) data = data[0];
+    
+    if (data.resultados) renderRecentResults(data.resultados);
   } catch (error) {
     console.error("Erro resultados:", error);
   }
 };
 
 // ============================================
+// FUNÇÕES DE RENDERIZAÇÃO (O QUE ESTAVA FALTANDO)
+// ============================================
+
+const renderNews = (news) => {
+  const container = document.getElementById("newsContainer");
+  if (!container) return;
+
+  container.innerHTML = news.map(item => `
+    <article class="news-card">
+      <a href="${item.url}" target="_blank">
+        <img src="${item.image || CONFIG.defaultImage}" alt="${escapeHtml(item.title)}">
+        <div class="news-content">
+          <span class="news-source">${escapeHtml(item.fonte)}</span>
+          <h3>${escapeHtml(item.title)}</h3>
+          <span class="news-date">${escapeHtml(item.date || '')}</span>
+        </div>
+      </a>
+    </article>
+  `).join("");
+};
+
+const renderMiniTable = (classificacao) => {
+  const container = document.getElementById("miniTableBody");
+  if (!container) return;
+
+  container.innerHTML = classificacao.slice(0, 5).map((team, index) => `
+    <tr>
+      <td>${index + 1}º</td>
+      <td class="team-cell">
+        <img src="${team.escudo}" alt="${team.nome}">
+        <span>${team.nome}</span>
+      </td>
+      <td><strong>${team.pontos}</strong></td>
+    </tr>
+  `).join("");
+};
+
+const renderNextMatches = (agenda) => {
+  const container = document.getElementById("nextMatchesContainer");
+  if (!container) return;
+  
+  const proximos = agenda.slice(0, 2);
+  container.innerHTML = proximos.map(jogo => `
+    <div class="match-mini">
+      <div class="match-mini-header">${escapeHtml(jogo.campeonato)}</div>
+      <div class="match-mini-teams">
+        <span>${escapeHtml(jogo.mandante)}</span>
+        <span>vs</span>
+        <span>${escapeHtml(jogo.visitante)}</span>
+      </div>
+      <div class="match-mini-footer">${jogo.data} - ${jogo.hora}</div>
+    </div>
+  `).join("");
+};
+
+const renderRecentResults = (resultados) => {
+  const container = document.getElementById("recentResultsContainer");
+  if (!container) return;
+
+  const ultimos = resultados.slice(0, 2);
+  container.innerHTML = ultimos.map(res => `
+    <div class="result-mini">
+       <div class="result-mini-teams">
+          <span>${res.team1} ${res.score1} x ${res.score2} ${res.team2}</span>
+       </div>
+    </div>
+  `).join("");
+};
+
+// ============================================
 // INICIALIZAÇÃO
 // ============================================
 const init = () => {
-  initMobileMenu();
-  hideLoadingScreen();
   fetchNews();
   fetchMiniTable();
   fetchNextMatches();
   fetchRecentResults();
+  
+  // Esconde o loading após 1 segundo
+  setTimeout(() => {
+    const screen = document.getElementById("loadingScreen");
+    if (screen) screen.classList.add("hidden");
+  }, 1000);
 };
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", init);
-} else {
-  init();
-}
+document.addEventListener("DOMContentLoaded", init);
