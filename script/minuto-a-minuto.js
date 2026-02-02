@@ -1,6 +1,6 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão: 2.5 - Otimizado com Worker Unificada e Correção de Cache
+ * Versão: 3.0 - Contador de Tempo Melhorado
  */
 
 const CONFIG = {
@@ -43,14 +43,8 @@ const fetchLiveData = async () => {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
     let rawData = await response.json();
 
-    // REMOVA esta linha que tenta pegar o primeiro item do array
-    // const data = Array.isArray(rawData) ? rawData[0] : rawData;
-
-    // Em vez disso, verifique se o objeto tem a propriedade 'tem_jogo_ao_vivo'
-    // Se não existir, assuma que é um jogo ao vivo
     const hasLiveGameFlag = rawData.tem_jogo_ao_vivo !== undefined;
     
-    // Se tiver a flag e for false, ou se não houver narracao/placar, mostra pré-jogo
     if ((hasLiveGameFlag && rawData.tem_jogo_ao_vivo === false) || 
         (!rawData.narracao && !rawData.placar)) {
       if (!state.matchStarted) {
@@ -59,11 +53,10 @@ const fetchLiveData = async () => {
       return;
     }
 
-    if (state.logsEnabled) console.log("📥 Dados ao vivo recebidos:", rawData);
+    if (state.logsEnabled) console.log("🔥 Dados ao vivo recebidos:", rawData);
 
-    // AGORA TRATE O FORMATO ATUAL (objeto único)
     let placarData = rawData.placar || null;
-    let resultadosData = rawData.narracao || null; // 'narracao' ao invés de 'resultados'
+    let resultadosData = rawData.narracao || null;
     let estatisticasData = rawData.estatisticas || null;
     let escalacaoData = rawData.escalacao || null;
     let arbitragemData = rawData.arbitragem || null;
@@ -86,7 +79,6 @@ const fetchLiveData = async () => {
 
     if (!placarData || !resultadosData) return;
 
-    // O jogo começou: limpa o cronómetro da agenda
     if (state.countdownInterval) {
       clearInterval(state.countdownInterval);
       state.countdownInterval = null;
@@ -94,7 +86,6 @@ const fetchLiveData = async () => {
 
     state.matchStarted = true;
 
-    // Atualiza o estado da partida com o formato atual
     state.match.home.name = placarData.home_name || placarData.mandante || "Mandante";
     state.match.home.logo = placarData.home_logo || "assets/logo.png";
     state.match.away.name = placarData.away_name || placarData.visitante || "Cruzeiro";
@@ -103,15 +94,12 @@ const fetchLiveData = async () => {
     state.match.score.away = placarData.away ?? 0;
     state.match.status = placarData.status || "AO VIVO";
 
-    // Renderiza os componentes da UI
     renderLiveMatch(resultadosData);
     
-    // Estatísticas
     if (estatisticasData || state.cachedData.estatisticas) {
       renderStats(estatisticasData || state.cachedData.estatisticas);
     }
 
-    // Escalações
     if (escalacaoData || state.cachedData.escalacao) {
       updateLineups(state.cachedData.escalacao);
     }
@@ -120,7 +108,6 @@ const fetchLiveData = async () => {
     if (state.logsEnabled) console.error("Erro no LiveData:", error);
   }
 };
-
 
 /**
  * Renderiza o placar e lances
@@ -177,7 +164,6 @@ const renderStats = (statsData) => {
   const awayList = document.getElementById("away-stats-list");
   if (!homeList || !awayList) return;
 
-  // Crie um array de estatísticas manualmente baseado no formato atual
   const statsArray = [
     { metrica: "Posse de Bola", mandante: statsData.posse_home || "0%", visitante: statsData.posse_away || "0%" },
     { metrica: "Escanteios", mandante: statsData.escanteios_home || "0", visitante: statsData.escanteios_away || "0" },
@@ -208,12 +194,10 @@ const updateLineups = (data) => {
   const awayContent = document.getElementById("away-lineup-content");
   const refCard = document.getElementById("match-referee-info");
 
-  // Função auxiliar para formatar jogadores
   const fmtList = (players) => {
     if (!players || !Array.isArray(players)) return "<div>Não disponível</div>";
     
     return players.map(p => {
-      // Extrai número e nome (assumindo formato "1 - Jori")
       const parts = p.toString().split(' - ');
       const number = parts[0] || '';
       const name = parts[1] || p;
@@ -246,14 +230,13 @@ const updateLineups = (data) => {
 };
 
 /**
- * Lógica de Agenda e Cronómetro
+ * Lógica de Agenda e Cronômetro MELHORADO
  */
 const loadAgenda = async () => {
   try {
     const response = await fetch(`${CONFIG.apiUrl}?v=${Date.now()}`);
     if (response.ok) {
       const data = await response.json();
-      // Ajuste para o formato da sua Worker unificada
       state.agendaData = data.agenda || (Array.isArray(data) ? data : []);
       state.agendaLoaded = true;
       if (!state.matchStarted) renderPreMatchState();
@@ -268,16 +251,67 @@ const renderPreMatchState = () => {
   const container = document.getElementById("live-match-container");
   if (!container || !next) return;
 
+  // Formata a data do jogo
+  const matchDate = formatMatchDate(next.dateObj);
+  
   container.innerHTML = `
     <div class="live-match-container waiting-mode">
-      <div class="match-header"><div class="match-competition">PRÓXIMO JOGO</div></div>
-      <div class="score-row">
-        <div class="team"><img src="${next.escudo_mandante}" class="team-logo"><div>${next.mandante}</div></div>
-        <div id="countdown-wrapper" class="countdown-wrapper">
-          <div class="countdown-label">A BOLA ROLA EM</div>
-          <div class="time-display">--:--:--</div>
+      <div class="match-header">
+        <div class="match-competition">
+          <i class="fas fa-calendar-alt"></i> PRÓXIMO JOGO
         </div>
-        <div class="team"><img src="${next.escudo_visitante}" class="team-logo"><div>${next.visitante}</div></div>
+        <div class="match-date">${matchDate}</div>
+      </div>
+      <div class="score-row">
+        <div class="team">
+          <img src="${next.escudo_mandante}" class="team-logo" onerror="this.src='assets/logo.png'">
+          <div class="team-name">${next.mandante}</div>
+        </div>
+        <div id="countdown-wrapper" class="countdown-wrapper-enhanced">
+          <div class="countdown-label">
+            <i class="fas fa-clock"></i>
+            A BOLA ROLA EM
+          </div>
+          <div class="countdown-grid" id="countdown-grid">
+            <div class="countdown-block">
+              <div class="countdown-number" id="days">--</div>
+              <div class="countdown-unit">DIAS</div>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-block">
+              <div class="countdown-number" id="hours">--</div>
+              <div class="countdown-unit">HORAS</div>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-block">
+              <div class="countdown-number" id="minutes">--</div>
+              <div class="countdown-unit">MIN</div>
+            </div>
+            <div class="countdown-separator">:</div>
+            <div class="countdown-block">
+              <div class="countdown-number" id="seconds">--</div>
+              <div class="countdown-unit">SEG</div>
+            </div>
+          </div>
+          <div class="match-info">
+            <div class="match-info-item">
+              <i class="fas fa-trophy"></i>
+              <span>${next.campeonato}</span>
+            </div>
+            <div class="match-info-item">
+              <i class="fas fa-map-marker-alt"></i>
+              <span>${next.estadio}</span>
+            </div>
+            <div class="match-info-item">
+              <i class="fas fa-clock"></i>
+              <span>${next.hora}</span>
+            </div>
+          </div>
+        </div>
+        <div class="team">
+          <img src="${next.escudo_visitante}" class="team-logo" onerror="this.src='assets/logo.png'">
+          <div class="team-name">${next.visitante}</div>
+        </div>
       </div>
     </div>`;
   
@@ -288,24 +322,54 @@ const startCountdown = (targetDate) => {
   if (state.countdownInterval) clearInterval(state.countdownInterval);
   
   const update = () => {
-    const diff = targetDate - new Date();
-    const wrapper = document.getElementById("countdown-wrapper");
-    if (!wrapper || diff <= 0) {
+    const now = new Date();
+    const diff = targetDate - now;
+    
+    if (diff <= 0) {
       clearInterval(state.countdownInterval);
-      if (diff <= 0) fetchLiveData();
+      fetchLiveData();
       return;
     }
 
-    const h = Math.floor((diff / 3600000));
-    const m = Math.floor((diff % 3600000) / 60000);
-    const s = Math.floor((diff % 60000) / 1000);
+    // Calcula dias, horas, minutos e segundos
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
     
-    wrapper.querySelector(".time-display").innerText = 
-      `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    // Atualiza os elementos
+    const daysEl = document.getElementById("days");
+    const hoursEl = document.getElementById("hours");
+    const minutesEl = document.getElementById("minutes");
+    const secondsEl = document.getElementById("seconds");
+    
+    if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
+    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
+    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
+    if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
+    
+    // Adiciona animação de pulso nos segundos
+    if (secondsEl) {
+      secondsEl.style.animation = 'none';
+      setTimeout(() => {
+        secondsEl.style.animation = 'pulse 1s ease-in-out';
+      }, 10);
+    }
   };
 
   state.countdownInterval = setInterval(update, 1000);
   update();
+};
+
+const formatMatchDate = (date) => {
+  const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+  
+  const dayName = days[date.getDay()];
+  const day = date.getDate();
+  const month = months[date.getMonth()];
+  
+  return `${dayName}, ${day} ${month}`;
 };
 
 const getNextMatchFromAgenda = () => {
@@ -320,10 +384,13 @@ const getNextMatchFromAgenda = () => {
       const month = meses[parts[2].replace(/[.,]/g, "").toLowerCase()];
       const [hh, mm] = m.hora.split(":").map(Number);
       let d = new Date();
-      d.setMonth(month, day); d.setHours(hh, mm, 0, 0);
+      d.setMonth(month, day); 
+      d.setHours(hh, mm, 0, 0);
       if (d < now) d.setFullYear(d.getFullYear() + 1);
       return { ...m, dateObj: d };
-    } catch(e) { return null; }
+    } catch(e) { 
+      return null; 
+    }
   }).filter(m => m && m.dateObj > now).sort((a,b) => a.dateObj - b.dateObj)[0];
 };
 
