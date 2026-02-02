@@ -4,9 +4,7 @@
  */
 
 const CONFIG = {
-  // Webhook para dados em tempo real (n8n)
   webhookUrl: "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
-  // Worker para dados da agenda/calendário
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   updateInterval: 10000,
 };
@@ -45,11 +43,16 @@ const fetchLiveData = async () => {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
     let rawData = await response.json();
 
-    // Se vier um array, validamos o primeiro item
-    const data = Array.isArray(rawData) ? rawData[0] : rawData;
+    // REMOVA esta linha que tenta pegar o primeiro item do array
+    // const data = Array.isArray(rawData) ? rawData[0] : rawData;
 
-    // Se não houver jogo ativo no webhook
-    if (!data || data.tem_jogo_ao_vivo === false) {
+    // Em vez disso, verifique se o objeto tem a propriedade 'tem_jogo_ao_vivo'
+    // Se não existir, assuma que é um jogo ao vivo
+    const hasLiveGameFlag = rawData.tem_jogo_ao_vivo !== undefined;
+    
+    // Se tiver a flag e for false, ou se não houver narracao/placar, mostra pré-jogo
+    if ((hasLiveGameFlag && rawData.tem_jogo_ao_vivo === false) || 
+        (!rawData.narracao && !rawData.placar)) {
       if (!state.matchStarted) {
         renderPreMatchState();
       }
@@ -58,28 +61,27 @@ const fetchLiveData = async () => {
 
     if (state.logsEnabled) console.log("📥 Dados ao vivo recebidos:", rawData);
 
-    // Processamento do Payload do Webhook (Array de objetos)
-    let placarData = null;
-    let resultadosData = null;
-    let estatisticasData = null;
-    let escalacaoData = null;
+    // AGORA TRATE O FORMATO ATUAL (objeto único)
+    let placarData = rawData.placar || null;
+    let resultadosData = rawData.narracao || null; // 'narracao' ao invés de 'resultados'
+    let estatisticasData = rawData.estatisticas || null;
+    let escalacaoData = rawData.escalacao || null;
+    let arbitragemData = rawData.arbitragem || null;
 
-    if (Array.isArray(rawData)) {
-      rawData.forEach((item) => {
-        if (item.resultados && item.placar) {
-          placarData = item.placar;
-          resultadosData = item.resultados;
-          state.cachedData.resultados = resultadosData;
-        }
-        if (item.estatisticas) {
-          estatisticasData = item.estatisticas;
-          state.cachedData.estatisticas = estatisticasData;
-        }
-        if (item.partida || item.escalacao) {
-          escalacaoData = item;
-          state.cachedData.escalacao = escalacaoData;
-        }
-      });
+    if (resultadosData) {
+      state.cachedData.resultados = resultadosData;
+    }
+    if (estatisticasData) {
+      state.cachedData.estatisticas = estatisticasData;
+    }
+    if (escalacaoData) {
+      state.cachedData.escalacao = {
+        partida: {
+          mandante: escalacaoData.home || escalacaoData.mandante,
+          visitante: escalacaoData.away || escalacaoData.visitante
+        },
+        arbitragem: arbitragemData ? { nome: arbitragemData, funcao: "Árbitro Principal" } : null
+      };
     }
 
     if (!placarData || !resultadosData) return;
@@ -92,10 +94,10 @@ const fetchLiveData = async () => {
 
     state.matchStarted = true;
 
-    // Atualiza o estado da partida
-    state.match.home.name = placarData.home_name || "Mandante";
+    // Atualiza o estado da partida com o formato atual
+    state.match.home.name = placarData.home_name || placarData.mandante || "Mandante";
     state.match.home.logo = placarData.home_logo || "assets/logo.png";
-    state.match.away.name = placarData.away_name || "Cruzeiro";
+    state.match.away.name = placarData.away_name || placarData.visitante || "Cruzeiro";
     state.match.away.logo = placarData.away_logo || "https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/cruzeiro.png";
     state.match.score.home = placarData.home ?? 0;
     state.match.score.away = placarData.away ?? 0;
@@ -111,13 +113,14 @@ const fetchLiveData = async () => {
 
     // Escalações
     if (escalacaoData || state.cachedData.escalacao) {
-      updateLineups(escalacaoData || state.cachedData.escalacao);
+      updateLineups(state.cachedData.escalacao);
     }
 
   } catch (error) {
     if (state.logsEnabled) console.error("Erro no LiveData:", error);
   }
 };
+
 
 /**
  * Renderiza o placar e lances
@@ -174,7 +177,13 @@ const renderStats = (statsData) => {
   const awayList = document.getElementById("away-stats-list");
   if (!homeList || !awayList) return;
 
-  let statsArray = Array.isArray(statsData) ? statsData : (statsData.estatisticas || []);
+  // Crie um array de estatísticas manualmente baseado no formato atual
+  const statsArray = [
+    { metrica: "Posse de Bola", mandante: statsData.posse_home || "0%", visitante: statsData.posse_away || "0%" },
+    { metrica: "Escanteios", mandante: statsData.escanteios_home || "0", visitante: statsData.escanteios_away || "0" },
+    { metrica: "Finalizações", mandante: statsData.finalizacoes_home || "0", visitante: statsData.finalizacoes_away || "0" },
+    { metrica: "Faltas", mandante: statsData.faltas_home || "0", visitante: statsData.faltas_away || "0" }
+  ];
   
   let homeHTML = "";
   let awayHTML = "";
@@ -193,28 +202,46 @@ const renderStats = (statsData) => {
  * Atualiza Escalações e Árbitro
  */
 const updateLineups = (data) => {
-  const payload = Array.isArray(data) ? data[0] : data;
-  const partida = payload.partida;
-  if (!partida) return;
+  if (!data || !data.partida) return;
 
   const homeContent = document.getElementById("home-lineup-content");
   const awayContent = document.getElementById("away-lineup-content");
   const refCard = document.getElementById("match-referee-info");
 
-  const fmtList = (players) => (players || []).map(p => `
-    <div class="player-item-min">
-      <span class="player-number">${p.numero_posicao.split(' ')[0]}</span>
-      <span class="player-name">${p.nome}</span>
-    </div>`).join("");
+  // Função auxiliar para formatar jogadores
+  const fmtList = (players) => {
+    if (!players || !Array.isArray(players)) return "<div>Não disponível</div>";
+    
+    return players.map(p => {
+      // Extrai número e nome (assumindo formato "1 - Jori")
+      const parts = p.toString().split(' - ');
+      const number = parts[0] || '';
+      const name = parts[1] || p;
+      
+      return `
+        <div class="player-item-min">
+          <span class="player-number">${number}</span>
+          <span class="player-name">${name}</span>
+        </div>`;
+    }).join("");
+  };
 
-  if (homeContent) {
-    homeContent.innerHTML = `<h4>Titulares</h4>${fmtList(partida.mandante.titulares)}<h4>Técnico: ${partida.mandante.tecnico}</h4>`;
+  if (homeContent && data.partida.mandante) {
+    homeContent.innerHTML = `
+      <h4>Titulares</h4>
+      ${fmtList(data.partida.mandante.titulares)}
+      <h4>Técnico: ${data.partida.mandante.tecnico || "Não informado"}</h4>`;
   }
-  if (awayContent) {
-    awayContent.innerHTML = `<h4>Titulares</h4>${fmtList(partida.visitante.titulares)}<h4>Técnico: ${partida.visitante.tecnico}</h4>`;
+  
+  if (awayContent && data.partida.visitante) {
+    awayContent.innerHTML = `
+      <h4>Titulares</h4>
+      ${fmtList(data.partida.visitante.titulares)}
+      <h4>Técnico: ${data.partida.visitante.tecnico || "Não informado"}</h4>`;
   }
-  if (refCard && payload.arbitragem) {
-    refCard.innerHTML = `<div class="ref-box"><i class="fas fa-gavel"></i> ${payload.arbitragem.nome} (${payload.arbitragem.funcao})</div>`;
+  
+  if (refCard && data.arbitragem) {
+    refCard.innerHTML = `<div class="ref-box"><i class="fas fa-gavel"></i> ${data.arbitragem.nome} (${data.arbitragem.funcao})</div>`;
   }
 };
 
