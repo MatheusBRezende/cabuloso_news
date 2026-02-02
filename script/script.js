@@ -1,5 +1,5 @@
 /**
- * Cabuloso News - Script Principal (VERSÃO CORRIGIDA WORKER)
+ * Cabuloso News - Script Principal (Design Original + Worker Fix)
  */
 
 const CONFIG = {
@@ -18,19 +18,16 @@ const escapeHtml = (str) => {
 };
 
 // ============================================
-// BUSCA DE DADOS (CORRIGIDO PARA ARRAY [0])
+// BUSCA DE DADOS (AJUSTADO PARA A ESTRUTURA DA WORKER)
 // ============================================
 
 const fetchNews = async () => {
   try {
     const response = await fetch(CONFIG.newsApiUrl);
     let data = await response.json();
-    if (Array.isArray(data)) data = data[0]; // Trata o formato do n8n
+    if (Array.isArray(data)) data = data[0]; 
 
-    const news = data.noticias;
-    if (!news) throw new Error("Notícias não encontradas");
-    
-    renderNews(news);
+    if (data.noticias) renderNews(data.noticias);
   } catch (error) {
     console.error("Erro notícias:", error);
   }
@@ -42,9 +39,8 @@ const fetchMiniTable = async () => {
     let data = await response.json();
     if (Array.isArray(data)) data = data[0];
 
-    const tabela = data.tabela_brasileiro;
-    if (tabela && tabela.classificacao) {
-      renderMiniTable(tabela.classificacao);
+    if (data.tabela_brasileiro && data.tabela_brasileiro.classificacao) {
+      renderMiniTable(data.tabela_brasileiro.classificacao);
     }
   } catch (error) {
     console.error("Erro mini tabela:", error);
@@ -76,7 +72,7 @@ const fetchRecentResults = async () => {
 };
 
 // ============================================
-// FUNÇÕES DE RENDERIZAÇÃO (O QUE ESTAVA FALTANDO)
+// RENDERIZAÇÃO (DESIGN ORIGINAL RESTAURADO)
 // ============================================
 
 const renderNews = (news) => {
@@ -117,16 +113,26 @@ const renderNextMatches = (agenda) => {
   const container = document.getElementById("nextMatchesContainer");
   if (!container) return;
   
+  // Design Original dos Cards de Próximos Jogos
   const proximos = agenda.slice(0, 2);
   container.innerHTML = proximos.map(jogo => `
     <div class="match-mini">
       <div class="match-mini-header">${escapeHtml(jogo.campeonato)}</div>
       <div class="match-mini-teams">
-        <span>${escapeHtml(jogo.mandante)}</span>
-        <span>vs</span>
-        <span>${escapeHtml(jogo.visitante)}</span>
+        <div class="match-mini-team">
+            <img src="${jogo.escudo_mandante || CONFIG.defaultImage}" alt="${jogo.mandante}">
+            <span>${escapeHtml(jogo.mandante)}</span>
+        </div>
+        <span class="vs">vs</span>
+        <div class="match-mini-team">
+            <img src="${jogo.escudo_visitante || CONFIG.defaultImage}" alt="${jogo.visitante}">
+            <span>${escapeHtml(jogo.visitante)}</span>
+        </div>
       </div>
-      <div class="match-mini-footer">${jogo.data} - ${jogo.hora}</div>
+      <div class="match-mini-footer">
+        <span><i class="far fa-calendar-alt"></i> ${jogo.data}</span>
+        <span><i class="far fa-clock"></i> ${jogo.hora}</span>
+      </div>
     </div>
   `).join("");
 };
@@ -136,29 +142,61 @@ const renderRecentResults = (resultados) => {
   if (!container) return;
 
   const ultimos = resultados.slice(0, 2);
-  container.innerHTML = ultimos.map(res => `
+  container.innerHTML = ultimos.map(res => {
+    // Lógica de cores (win/loss/draw) baseada no seu script original
+    const s1 = parseInt(res.score1);
+    const s2 = parseInt(res.score2);
+    let statusClass = "draw";
+    if (res.team1.includes("Cruzeiro")) {
+        statusClass = s1 > s2 ? "win" : (s1 < s2 ? "loss" : "draw");
+    } else {
+        statusClass = s2 > s1 ? "win" : (s2 < s1 ? "loss" : "draw");
+    }
+
+    return `
     <div class="result-mini">
-       <div class="result-mini-teams">
-          <span>${res.team1} ${res.score1} x ${res.score2} ${res.team2}</span>
-       </div>
-    </div>
-  `).join("");
+      <div class="result-mini-teams">
+        <div class="result-mini-team">
+          <img src="${res.logo1 || CONFIG.defaultImage}" alt="${res.team1}">
+          <span>${escapeHtml(res.team1)}</span>
+        </div>
+        <span class="result-mini-score ${statusClass}">${res.score1} x ${res.score2}</span>
+        <div class="result-mini-team">
+          <img src="${res.logo2 || CONFIG.defaultImage}" alt="${res.team2}">
+          <span>${escapeHtml(res.team2)}</span>
+        </div>
+      </div>
+      <div class="result-mini-info">${escapeHtml(res.competition || '')}</div>
+    </div>`;
+  }).join("");
 };
 
 // ============================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO E MENU MOBILE
 // ============================================
+const initMobileMenu = () => {
+  const toggle = document.getElementById("menuToggle");
+  const menu = document.getElementById("navMenu");
+  if (toggle && menu) {
+    toggle.addEventListener("click", () => {
+      toggle.classList.toggle("active");
+      menu.classList.toggle("active");
+    });
+  }
+};
+
 const init = () => {
+  initMobileMenu();
   fetchNews();
   fetchMiniTable();
   fetchNextMatches();
   fetchRecentResults();
   
-  // Esconde o loading após 1 segundo
-  setTimeout(() => {
-    const screen = document.getElementById("loadingScreen");
-    if (screen) screen.classList.add("hidden");
-  }, 1000);
+  // Esconde o loading screen
+  const screen = document.getElementById("loadingScreen");
+  if (screen) {
+    setTimeout(() => screen.classList.add("hidden"), 800);
+  }
 };
 
 document.addEventListener("DOMContentLoaded", init);
