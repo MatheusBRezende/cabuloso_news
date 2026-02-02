@@ -1,15 +1,16 @@
 /**
  * Cabuloso News - Script de Resultados
- * Página de resultados completos dos jogos
+ * VERSÃO OTIMIZADA: Single Request + Worker Fix + Cache Local
  */
 
 // ============================================
 // CONFIGURAÇÃO
 // ============================================
 const CONFIG_RESULTADOS = {
-  resultadosUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/',
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
   itemsPerPage: 12,
-  defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png'
+  defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
+  CACHE_TTL: 10 * 60 * 1000 // 10 minutos
 };
 
 // ============================================
@@ -26,6 +27,26 @@ const state = {
     vitorias: 0,
     empates: 0,
     derrotas: 0
+  }
+};
+
+// ============================================
+// SISTEMA DE CACHE LOCAL (Igual ao script.js)
+// ============================================
+const LocalCacheResultados = {
+  set(key, data, ttl) {
+    const item = { data, timestamp: Date.now(), ttl };
+    localStorage.setItem(`cache_res_${key}`, JSON.stringify(item));
+  },
+  get(key) {
+    const raw = localStorage.getItem(`cache_res_${key}`);
+    if (!raw) return null;
+    const item = JSON.parse(raw);
+    if (Date.now() - item.timestamp > item.ttl) {
+      localStorage.removeItem(`cache_res_${key}`);
+      return null;
+    }
+    return item.data;
   }
 };
 
@@ -72,10 +93,8 @@ const initViewToggle = () => {
   viewBtns.forEach(btn => {
     btn.addEventListener('click', () => {
       const view = btn.dataset.view;
-
       viewBtns.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
       state.currentView = view;
       renderResults();
     });
@@ -91,10 +110,8 @@ const initCompetitionTabs = () => {
   tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       const competition = tab.dataset.competition;
-
       tabs.forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-
       state.currentCompetition = competition;
       filterByCompetition();
       updateStatsCards();
@@ -139,35 +156,50 @@ const updatePagination = () => {
   const prevBtn = document.getElementById('prevPage');
   const nextBtn = document.getElementById('nextPage');
 
-  if (pageInfo) {
-    pageInfo.textContent = `Página ${state.currentPage} de ${totalPages}`;
-  }
-
-  if (prevBtn) {
-    prevBtn.disabled = state.currentPage === 1;
-  }
-
-  if (nextBtn) {
-    nextBtn.disabled = state.currentPage >= totalPages;
-  }
+  if (pageInfo) pageInfo.textContent = `Página ${state.currentPage} de ${totalPages || 1}`;
+  if (prevBtn) prevBtn.disabled = state.currentPage === 1;
+  if (nextBtn) nextBtn.disabled = state.currentPage >= totalPages;
 };
 
-const scrollToTop = () => {
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-};
+const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
 // ============================================
-// CARREGAR RESULTADOS
+// CARREGAR RESULTADOS (OTIMIZADO)
 // ============================================
 const loadResultados = async () => {
   showLoading();
 
   try {
-    const response = await fetch(CONFIG_RESULTADOS.resultadosUrl, { cache: 'no-cache' });
-    if (!response.ok) throw new Error('Erro ao carregar resultados');
+    let finalData = [];
 
-    const data = await response.json();
-    state.allResults = data.results || data || [];
+    // 1. Tenta pegar do Cache Local
+    const cached = LocalCacheResultados.get('resultados_page');
+    
+    if (cached) {
+      console.log("📦 Usando cache local para resultados");
+      finalData = cached;
+    } else {
+      // 2. Busca na Worker (API Única)
+      console.log("🌐 Buscando resultados na nuvem...");
+      const response = await fetch(CONFIG_RESULTADOS.apiUrl);
+      if (!response.ok) throw new Error('Erro ao carregar dados');
+
+      let rawData = await response.json();
+
+      // 3. Tratamento do pacote n8n [ { ... } ]
+      if (Array.isArray(rawData)) rawData = rawData[0];
+
+      // 4. Extrai a chave 'resultados'
+      if (rawData.resultados) {
+        finalData = rawData.resultados;
+        // Salva no cache
+        LocalCacheResultados.set('resultados_page', finalData, CONFIG_RESULTADOS.CACHE_TTL);
+      } else {
+        throw new Error("Chave 'resultados' não encontrada no JSON");
+      }
+    }
+
+    state.allResults = finalData;
 
     if (state.allResults.length === 0) {
       showEmpty();
@@ -195,11 +227,11 @@ const filterByCompetition = () => {
   if (state.currentCompetition === 'all') {
     state.filteredResults = [...state.allResults];
   } else {
-    state.filteredResults = state.allResults.filter(
-      r => r.competition === state.currentCompetition
+    // Filtro mais flexível (case insensitive)
+    state.filteredResults = state.allResults.filter(r => 
+      r.competition && r.competition.toLowerCase().includes(state.currentCompetition.toLowerCase())
     );
   }
-
   state.currentPage = 1;
   renderResults();
   updatePagination();
@@ -209,24 +241,31 @@ const filterByCompetition = () => {
 // CALCULAR ESTATÍSTICAS
 // ============================================
 const calculateStats = () => {
-  const stats = {
-    total: state.allResults.length,
-    vitorias: 0,
-    empates: 0,
-    derrotas: 0
-  };
+  const stats = { total: state.allResults.length, vitorias: 0, empates: 0, derrotas: 0 };
 
   state.allResults.forEach(res => {
-    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
-    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    let s1 = 0, s2 = 0;
+    
+    // Tratamento robusto do placar
+    if (res.score1 !== undefined) {
+       s1 = parseInt(res.score1); s2 = parseInt(res.score2);
+    } else if (res.score) {
+       const parts = res.score.split(/[\sx\-]+/); // Separa por espaço, x ou hífen
+       if (parts.length >= 2) { s1 = parseInt(parts[0]); s2 = parseInt(parts[1]); }
+    }
+
+    const team1 = res.team1 || res.mandante || "";
+    const isCruzeiroHome = team1.toLowerCase().includes('cruzeiro');
+
+    if (isNaN(s1) || isNaN(s2)) return;
 
     if (isCruzeiroHome) {
-      if (score1 > score2) stats.vitorias++;
-      else if (score1 < score2) stats.derrotas++;
+      if (s1 > s2) stats.vitorias++;
+      else if (s1 < s2) stats.derrotas++;
       else stats.empates++;
     } else {
-      if (score2 > score1) stats.vitorias++;
-      else if (score2 < score1) stats.derrotas++;
+      if (s2 > s1) stats.vitorias++;
+      else if (s2 < s1) stats.derrotas++;
       else stats.empates++;
     }
   });
@@ -258,64 +297,45 @@ const updateStatsCards = () => {
   const container = document.getElementById('statsGridContainer');
   if (!container) return;
 
-  const filtered = state.currentCompetition === 'all' 
-    ? state.allResults 
-    : state.allResults.filter(r => r.competition === state.currentCompetition);
-
+  const filtered = state.filteredResults;
   let vitorias = 0, empates = 0, derrotas = 0, golsMarcados = 0, golsSofridos = 0;
 
   filtered.forEach(res => {
-    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
-    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    let s1 = 0, s2 = 0;
+    if (res.score1 !== undefined) {
+       s1 = parseInt(res.score1); s2 = parseInt(res.score2);
+    } else if (res.score) {
+       const parts = res.score.split(/[\sx\-]+/);
+       if (parts.length >= 2) { s1 = parseInt(parts[0]); s2 = parseInt(parts[1]); }
+    }
+
+    if (isNaN(s1) || isNaN(s2)) return;
+
+    const team1 = res.team1 || res.mandante || "";
+    const isCruzeiroHome = team1.toLowerCase().includes('cruzeiro');
 
     if (isCruzeiroHome) {
-      golsMarcados += score1;
-      golsSofridos += score2;
-      if (score1 > score2) vitorias++;
-      else if (score1 < score2) derrotas++;
-      else empates++;
+      golsMarcados += s1; golsSofridos += s2;
+      if (s1 > s2) vitorias++; else if (s1 < s2) derrotas++; else empates++;
     } else {
-      golsMarcados += score2;
-      golsSofridos += score1;
-      if (score2 > score1) vitorias++;
-      else if (score2 < score1) derrotas++;
-      else empates++;
+      golsMarcados += s2; golsSofridos += s1;
+      if (s2 > s1) vitorias++; else if (s2 < s1) derrotas++; else empates++;
     }
   });
 
-  const aproveitamento = filtered.length > 0 
-    ? Math.round((vitorias * 3 + empates) / (filtered.length * 3) * 100) 
+  const totalJogos = vitorias + empates + derrotas;
+  const aproveitamento = totalJogos > 0 
+    ? Math.round((vitorias * 3 + empates) / (totalJogos * 3) * 100) 
     : 0;
 
   container.innerHTML = `
-    <div class="stat-card-item">
-      <span class="value">${filtered.length}</span>
-      <span class="label">Jogos</span>
-    </div>
-    <div class="stat-card-item">
-      <span class="value">${vitorias}</span>
-      <span class="label">Vitórias</span>
-    </div>
-    <div class="stat-card-item">
-      <span class="value">${empates}</span>
-      <span class="label">Empates</span>
-    </div>
-    <div class="stat-card-item">
-      <span class="value">${derrotas}</span>
-      <span class="label">Derrotas</span>
-    </div>
-    <div class="stat-card-item">
-      <span class="value">${golsMarcados}</span>
-      <span class="label">Gols Marcados</span>
-    </div>
-    <div class="stat-card-item">
-      <span class="value">${golsSofridos}</span>
-      <span class="label">Gols Sofridos</span>
-    </div>
-    <div class="stat-card-item">
-      <span class="value">${aproveitamento}%</span>
-      <span class="label">Aproveitamento</span>
-    </div>
+    <div class="stat-card-item"><span class="value">${totalJogos}</span><span class="label">Jogos</span></div>
+    <div class="stat-card-item"><span class="value">${vitorias}</span><span class="label">Vitórias</span></div>
+    <div class="stat-card-item"><span class="value">${empates}</span><span class="label">Empates</span></div>
+    <div class="stat-card-item"><span class="value">${derrotas}</span><span class="label">Derrotas</span></div>
+    <div class="stat-card-item"><span class="value">${golsMarcados}</span><span class="label">Gols Pró</span></div>
+    <div class="stat-card-item"><span class="value">${golsSofridos}</span><span class="label">Gols Contra</span></div>
+    <div class="stat-card-item"><span class="value">${aproveitamento}%</span><span class="label">Aproveitamento</span></div>
   `;
 };
 
@@ -329,14 +349,20 @@ const renderHorizontalHistory = () => {
   const recent = state.allResults.slice(0, 10);
 
   container.innerHTML = recent.map(res => {
-    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
-    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    let s1 = 0, s2 = 0;
+    if (res.score) {
+       const parts = res.score.split(/[\sx\-]+/);
+       if (parts.length >= 2) { s1 = parseInt(parts[0]); s2 = parseInt(parts[1]); }
+    }
+
+    const team1 = res.team1 || res.mandante || "Time 1";
+    const team2 = res.team2 || res.visitante || "Time 2";
+    const isCruzeiroHome = team1.toLowerCase().includes('cruzeiro');
     
-    let resultClass = '';
-    if (isCruzeiroHome) {
-      resultClass = score1 > score2 ? 'vitoria' : (score1 < score2 ? 'derrota' : 'empate');
-    } else {
-      resultClass = score2 > score1 ? 'vitoria' : (score2 < score1 ? 'derrota' : 'empate');
+    let resultClass = 'empate';
+    if (!isNaN(s1) && !isNaN(s2)) {
+        if (isCruzeiroHome) resultClass = s1 > s2 ? 'vitoria' : (s1 < s2 ? 'derrota' : 'empate');
+        else resultClass = s2 > s1 ? 'vitoria' : (s2 < s1 ? 'derrota' : 'empate');
     }
 
     return `
@@ -348,12 +374,12 @@ const renderHorizontalHistory = () => {
         <div class="horizontal-card-teams">
           <div class="horizontal-card-team">
             <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy">
-            <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team1)}</span>
+            <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
           </div>
           <span class="horizontal-card-score">${escapeHtml(res.score)}</span>
           <div class="horizontal-card-team">
             <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy">
-            <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team2)}</span>
+            <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
           </div>
         </div>
       </div>
@@ -362,18 +388,15 @@ const renderHorizontalHistory = () => {
 };
 
 // ============================================
-// RENDERIZAR RESULTADOS
+// RENDERIZAR RESULTADOS (CARDS E TABELA)
 // ============================================
 const renderResults = () => {
   const start = (state.currentPage - 1) * CONFIG_RESULTADOS.itemsPerPage;
   const end = start + CONFIG_RESULTADOS.itemsPerPage;
   const pageResults = state.filteredResults.slice(start, end);
 
-  if (state.currentView === 'cards') {
-    renderCardsView(pageResults);
-  } else {
-    renderTableView(pageResults);
-  }
+  if (state.currentView === 'cards') renderCardsView(pageResults);
+  else renderTableView(pageResults);
 };
 
 const renderCardsView = (results) => {
@@ -382,18 +405,23 @@ const renderCardsView = (results) => {
 
   if (cardsContainer) cardsContainer.style.display = 'grid';
   if (tableContainer) tableContainer.style.display = 'none';
-
   if (!cardsContainer) return;
 
   cardsContainer.innerHTML = results.map(res => {
-    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
-    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    let s1 = 0, s2 = 0;
+    if (res.score) {
+       const parts = res.score.split(/[\sx\-]+/);
+       if (parts.length >= 2) { s1 = parseInt(parts[0]); s2 = parseInt(parts[1]); }
+    }
+
+    const team1 = res.team1 || res.mandante || "Time 1";
+    const team2 = res.team2 || res.visitante || "Time 2";
+    const isCruzeiroHome = team1.toLowerCase().includes('cruzeiro');
     
-    let resultClass = '';
-    if (isCruzeiroHome) {
-      resultClass = score1 > score2 ? 'vitoria' : (score1 < score2 ? 'derrota' : 'empate');
-    } else {
-      resultClass = score2 > score1 ? 'vitoria' : (score2 < score1 ? 'derrota' : 'empate');
+    let resultClass = 'empate';
+    if (!isNaN(s1) && !isNaN(s2)) {
+        if (isCruzeiroHome) resultClass = s1 > s2 ? 'vitoria' : (s1 < s2 ? 'derrota' : 'empate');
+        else resultClass = s2 > s1 ? 'vitoria' : (s2 < s1 ? 'derrota' : 'empate');
     }
 
     return `
@@ -405,12 +433,12 @@ const renderCardsView = (results) => {
         <div class="card-teams">
           <div class="card-team">
             <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
-            <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team1)}</span>
+            <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
           </div>
           <span class="card-score">${escapeHtml(res.score)}</span>
           <div class="card-team">
             <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
-            <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team2)}</span>
+            <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
           </div>
         </div>
       </div>
@@ -425,22 +453,30 @@ const renderTableView = (results) => {
 
   if (cardsContainer) cardsContainer.style.display = 'none';
   if (tableContainer) tableContainer.style.display = 'block';
-
   if (!tableBody) return;
 
   tableBody.innerHTML = results.map(res => {
-    const [score1, score2] = res.score.split(' - ').map(s => parseInt(s) || 0);
-    const isCruzeiroHome = res.team1.toLowerCase().includes('cruzeiro');
+    let s1 = 0, s2 = 0;
+    if (res.score) {
+       const parts = res.score.split(/[\sx\-]+/);
+       if (parts.length >= 2) { s1 = parseInt(parts[0]); s2 = parseInt(parts[1]); }
+    }
+
+    const team1 = res.team1 || res.mandante || "Time 1";
+    const team2 = res.team2 || res.visitante || "Time 2";
+    const isCruzeiroHome = team1.toLowerCase().includes('cruzeiro');
     
     let resultBadge = '';
-    if (isCruzeiroHome) {
-      if (score1 > score2) resultBadge = '<span class="result-badge vitoria"><i class="fas fa-check"></i> Vitória</span>';
-      else if (score1 < score2) resultBadge = '<span class="result-badge derrota"><i class="fas fa-times"></i> Derrota</span>';
-      else resultBadge = '<span class="result-badge empate"><i class="fas fa-minus"></i> Empate</span>';
-    } else {
-      if (score2 > score1) resultBadge = '<span class="result-badge vitoria"><i class="fas fa-check"></i> Vitória</span>';
-      else if (score2 < score1) resultBadge = '<span class="result-badge derrota"><i class="fas fa-times"></i> Derrota</span>';
-      else resultBadge = '<span class="result-badge empate"><i class="fas fa-minus"></i> Empate</span>';
+    if (!isNaN(s1) && !isNaN(s2)) {
+        if (isCruzeiroHome) {
+          if (s1 > s2) resultBadge = '<span class="result-badge vitoria"><i class="fas fa-check"></i> Vitória</span>';
+          else if (s1 < s2) resultBadge = '<span class="result-badge derrota"><i class="fas fa-times"></i> Derrota</span>';
+          else resultBadge = '<span class="result-badge empate"><i class="fas fa-minus"></i> Empate</span>';
+        } else {
+          if (s2 > s1) resultBadge = '<span class="result-badge vitoria"><i class="fas fa-check"></i> Vitória</span>';
+          else if (s2 < s1) resultBadge = '<span class="result-badge derrota"><i class="fas fa-times"></i> Derrota</span>';
+          else resultBadge = '<span class="result-badge empate"><i class="fas fa-minus"></i> Empate</span>';
+        }
     }
 
     return `
@@ -449,9 +485,9 @@ const renderTableView = (results) => {
         <td>
           <div class="match-teams">
             <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy">
-            <span class="team-name ${isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team1)}</span>
+            <span class="team-name ${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
             <span class="vs">vs</span>
-            <span class="team-name ${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(res.team2)}</span>
+            <span class="team-name ${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
             <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy">
           </div>
         </td>
@@ -468,41 +504,17 @@ const renderTableView = (results) => {
 // ============================================
 const showLoading = () => {
   const cardsContainer = document.getElementById('resultsCards');
-  if (cardsContainer) {
-    cardsContainer.innerHTML = `
-      <div class="loading-state">
-        <div class="loading-spinner"></div>
-        <p>Carregando resultados...</p>
-      </div>
-    `;
-  }
+  if (cardsContainer) cardsContainer.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p>Carregando resultados...</p></div>`;
 };
 
 const showError = () => {
   const cardsContainer = document.getElementById('resultsCards');
-  if (cardsContainer) {
-    cardsContainer.innerHTML = `
-      <div class="error-state">
-        <i class="fas fa-exclamation-triangle"></i>
-        <p>Erro ao carregar resultados.</p>
-        <button class="btn-retry" onclick="loadResultados()">
-          <i class="fas fa-sync-alt"></i> Tentar Novamente
-        </button>
-      </div>
-    `;
-  }
+  if (cardsContainer) cardsContainer.innerHTML = `<div class="error-state"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar resultados.</p><button class="btn-retry" onclick="loadResultados()"><i class="fas fa-sync-alt"></i> Tentar Novamente</button></div>`;
 };
 
 const showEmpty = () => {
   const cardsContainer = document.getElementById('resultsCards');
-  if (cardsContainer) {
-    cardsContainer.innerHTML = `
-      <div class="empty-state">
-        <i class="fas fa-inbox"></i>
-        <p>Nenhum resultado encontrado.</p>
-      </div>
-    `;
-  }
+  if (cardsContainer) cardsContainer.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Nenhum resultado encontrado.</p></div>`;
 };
 
 // ============================================
