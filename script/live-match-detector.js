@@ -1,22 +1,21 @@
-
 const LiveMatchDetector = (() => {
   const CONFIG = {
-    webhookUrl: 'https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo',
-    checkInterval: 5000, 
-    minutoAMinutoUrl: '../minuto-a-minuto.html', 
+    webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+    checkInterval: 5000,
+    minutoAMinutoUrl: "../minuto-a-minuto.html",
     countdownSeconds: 10,
-    storageKey: 'cabuloso_live_match_dismissed',
+    storageKey: "cabuloso_live_match_dismissed",
 
-    testMode: false, 
+    testMode: false,
     testMatchData: {
-      mandante: 'Cruzeiro',
-      visitante: 'Atlético-MG',
+      mandante: "Cruzeiro",
+      visitante: "Atlético-MG",
       placar_mandante: 2,
       placar_visitante: 1,
-      tempo: '2º TEMPO - 78\'',
-      campeonato: 'Brasileirão Série A',
-      status: 'AO_VIVO'
-    }
+      tempo: "2º TEMPO - 78'",
+      campeonato: "Brasileirão Série A",
+      status: "AO_VIVO",
+    },
   };
 
   let checkIntervalId = null;
@@ -29,25 +28,25 @@ const LiveMatchDetector = (() => {
    */
   const checkLiveMatch = async () => {
     try {
-      const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`, { 
-        cache: 'no-cache',
-        method: 'GET',
+      const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`, {
+        cache: "no-cache",
+        method: "GET",
         headers: {
-          'Accept': 'application/json'
-        }
+          Accept: "application/json",
+        },
       });
-      
+
       if (!response.ok) {
-        console.log('Webhook retornou status:', response.status);
+        console.log("Webhook retornou status:", response.status);
         return null;
       }
 
       // Pega o texto da resposta primeiro
       const text = await response.text();
-      
+
       // Se vazio, retorna null
-      if (!text || text.trim() === '') {
-        console.log('Webhook retornou vazio');
+      if (!text || text.trim() === "") {
+        console.log("Webhook retornou vazio");
         return null;
       }
 
@@ -55,77 +54,90 @@ const LiveMatchDetector = (() => {
       let data;
       try {
         data = JSON.parse(text);
-        console.log('Dados recebidos do webhook:', data);
+        console.log("Dados recebidos do webhook:", data);
       } catch (parseError) {
-        console.error('Erro ao fazer parse do JSON:', parseError);
-        console.log('Resposta recebida:', text.substring(0, 200));
+        console.error("Erro ao fazer parse do JSON:", parseError);
+        console.log("Resposta recebida:", text.substring(0, 200));
         return null;
       }
-      
+
       // Verifica se é array e pega primeiro item
       const matchData = Array.isArray(data) && data.length > 0 ? data[0] : data;
-      
+
       // Se não tem dados válidos
-      if (!matchData || typeof matchData !== 'object') {
-        console.log('Dados do webhook inválidos');
+      if (!matchData || typeof matchData !== "object") {
+        console.log("Dados do webhook inválidos");
         return null;
       }
-      
+
       // LOG EXTRA: Verifica todas as chaves disponíveis
-      console.log('Chaves disponíveis:', Object.keys(matchData));
-      
+      console.log("Chaves disponíveis:", Object.keys(matchData));
+
       // CORREÇÃO: Verifica estrutura dos dados
       // Primeiro, tenta usar a estrutura do n8n (com placar e resultados)
       if (matchData.placar) {
-        console.log('Usando estrutura placar/resultados');
-        const tempo = matchData.placar.status || '';
-        const isLive = tempo && 
-                      !tempo.includes('Fim') && 
-                      !tempo.includes('Encerrado') && 
-                      !tempo.includes('FINAL') &&
-                      tempo !== '';
-        
+        console.log("Usando estrutura placar/resultados");
+        const tempo = matchData.placar.status || "";
+        const isLive =
+          tempo &&
+          !tempo.includes("Fim") &&
+          !tempo.includes("Encerrado") &&
+          !tempo.includes("FINAL") &&
+          tempo !== "";
+
         if (isLive) {
-          console.log('✅ Jogo ao vivo detectado (estrutura placar):', 
-            matchData.placar.home_name, 'vs', matchData.placar.away_name);
+          console.log(
+            "✅ Jogo ao vivo detectado (estrutura placar):",
+            matchData.placar.home_name,
+            "vs",
+            matchData.placar.away_name,
+          );
           return {
-            mandante: matchData.placar.home_name || 'Time Casa',
-            visitante: matchData.placar.away_name || 'Time Fora',
+            mandante: matchData.placar.home_name || "Time Casa",
+            visitante: matchData.placar.away_name || "Time Fora",
             placar_mandante: matchData.placar.home || 0,
             placar_visitante: matchData.placar.away || 0,
             tempo: tempo,
-            campeonato: matchData.placar.campeonato || 'Campeonato',
-            status: tempo.includes('Intervalo') ? 'INTERVALO' : 'AO_VIVO'
+            campeonato: matchData.placar.campeonato || "Campeonato",
+            status: tempo.includes("Intervalo") ? "INTERVALO" : "AO_VIVO",
           };
         }
       }
-      
+
       // Se não encontrou na estrutura placar, tenta estrutura alternativa
-      const tempoAlt = matchData['Tempo_Jogo'] || matchData.status || '';
-      const isLiveAlt = tempoAlt && 
-                       !tempoAlt.includes('Fim') && 
-                       !tempoAlt.includes('Encerrado') && 
-                       !tempoAlt.includes('FINAL') &&
-                       tempoAlt !== '';
-      
+      const tempoAlt = matchData["Tempo_Jogo"] || matchData.status || "";
+      const isLiveAlt =
+        tempoAlt &&
+        !tempoAlt.includes("Fim") &&
+        !tempoAlt.includes("Encerrado") &&
+        !tempoAlt.includes("FINAL") &&
+        tempoAlt !== "";
+
       if (isLiveAlt) {
-        console.log('✅ Jogo ao vivo detectado (estrutura alternativa):', 
-          matchData.Casa || matchData.mandante, 'vs', matchData.Fora || matchData.visitante);
+        console.log(
+          "✅ Jogo ao vivo detectado (estrutura alternativa):",
+          matchData.Casa || matchData.mandante,
+          "vs",
+          matchData.Fora || matchData.visitante,
+        );
         return {
-          mandante: matchData.Casa || matchData.mandante || 'Time Casa',
-          visitante: matchData.Fora || matchData.visitante || 'Time Fora',
-          placar_mandante: matchData['Gols Casa'] || matchData.placar_mandante || 0,
-          placar_visitante: matchData['Gols fora'] || matchData.placar_visitante || 0,
+          mandante: matchData.Casa || matchData.mandante || "Time Casa",
+          visitante: matchData.Fora || matchData.visitante || "Time Fora",
+          placar_mandante:
+            matchData["Gols Casa"] || matchData.placar_mandante || 0,
+          placar_visitante:
+            matchData["Gols fora"] || matchData.placar_visitante || 0,
           tempo: tempoAlt,
-          campeonato: matchData.Campeonato || matchData.campeonato || 'Campeonato',
-          status: tempoAlt.includes('Intervalo') ? 'INTERVALO' : 'AO_VIVO'
+          campeonato:
+            matchData.Campeonato || matchData.campeonato || "Campeonato",
+          status: tempoAlt.includes("Intervalo") ? "INTERVALO" : "AO_VIVO",
         };
       }
 
-      console.log('Jogo não está ao vivo (Status/Tempo:', tempoAlt, ')');
+      console.log("Jogo não está ao vivo (Status/Tempo:", tempoAlt, ")");
       return null;
     } catch (error) {
-      console.error('❌ Erro ao verificar jogo ao vivo:', error.message);
+      console.error("❌ Erro ao verificar jogo ao vivo:", error.message);
       return null;
     }
   };
@@ -134,10 +146,10 @@ const LiveMatchDetector = (() => {
    * Cria o CSS do modal e ícone ao vivo
    */
   const injectStyles = () => {
-    if (document.getElementById('live-match-detector-styles')) return;
+    if (document.getElementById("live-match-detector-styles")) return;
 
-    const styles = document.createElement('style');
-    styles.id = 'live-match-detector-styles';
+    const styles = document.createElement("style");
+    styles.id = "live-match-detector-styles";
     styles.textContent = `
       /* ========================================
          MODAL DE JOGO AO VIVO
@@ -473,7 +485,7 @@ const LiveMatchDetector = (() => {
    * Cria o HTML do modal
    */
   const createModal = () => {
-    if (document.getElementById('liveMatchModal')) return;
+    if (document.getElementById("liveMatchModal")) return;
 
     const modalHTML = `
       <div class="live-match-modal" id="liveMatchModal">
@@ -524,7 +536,7 @@ const LiveMatchDetector = (() => {
       </div>
     `;
 
-    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    document.body.insertAdjacentHTML("beforeend", modalHTML);
     setupModalEvents();
   };
 
@@ -532,16 +544,16 @@ const LiveMatchDetector = (() => {
    * Configura eventos do modal
    */
   const setupModalEvents = () => {
-    const modal = document.getElementById('liveMatchModal');
-    const closeBtn = document.getElementById('liveModalClose');
-    const goNowBtn = document.getElementById('liveGoNowBtn');
-    const cancelBtn = document.getElementById('liveCancelBtn');
-    const overlay = modal?.querySelector('.live-modal-overlay');
+    const modal = document.getElementById("liveMatchModal");
+    const closeBtn = document.getElementById("liveModalClose");
+    const goNowBtn = document.getElementById("liveGoNowBtn");
+    const cancelBtn = document.getElementById("liveCancelBtn");
+    const overlay = modal?.querySelector(".live-modal-overlay");
 
-    if (closeBtn) closeBtn.addEventListener('click', hideModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', hideModal);
-    if (goNowBtn) goNowBtn.addEventListener('click', redirectToLive);
-    if (overlay) overlay.addEventListener('click', hideModal);
+    if (closeBtn) closeBtn.addEventListener("click", hideModal);
+    if (cancelBtn) cancelBtn.addEventListener("click", hideModal);
+    if (goNowBtn) goNowBtn.addEventListener("click", redirectToLive);
+    if (overlay) overlay.addEventListener("click", hideModal);
   };
 
   /**
@@ -550,30 +562,36 @@ const LiveMatchDetector = (() => {
   const showModal = (matchData) => {
     // Verifica se o usuário já dispensou o modal nesta sessão
     const dismissed = sessionStorage.getItem(CONFIG.storageKey);
-    if (dismissed === 'true') {
-      console.log('Modal já foi dispensado pelo usuário');
+    if (dismissed === "true") {
+      console.log("Modal já foi dispensado pelo usuário");
       return;
     }
 
-    const modal = document.getElementById('liveMatchModal');
-    const team1 = document.getElementById('liveTeam1');
-    const team2 = document.getElementById('liveTeam2');
-    const score = document.getElementById('liveScore');
-    const time = document.getElementById('liveTime');
-    const countdown = document.getElementById('liveModalCountdown');
+    const modal = document.getElementById("liveMatchModal");
+    const team1 = document.getElementById("liveTeam1");
+    const team2 = document.getElementById("liveTeam2");
+    const score = document.getElementById("liveScore");
+    const time = document.getElementById("liveTime");
+    const countdown = document.getElementById("liveModalCountdown");
 
     if (!modal) {
-      console.error('Modal não encontrado no DOM');
+      console.error("Modal não encontrado no DOM");
       return;
     }
 
     // Atualiza informações do jogo
     if (team1) team1.textContent = matchData.mandante;
     if (team2) team2.textContent = matchData.visitante;
-    if (score) score.textContent = `${matchData.placar_mandante} - ${matchData.placar_visitante}`;
+    if (score)
+      score.textContent = `${matchData.placar_mandante} - ${matchData.placar_visitante}`;
     if (time) time.textContent = matchData.tempo;
 
-    console.log('Mostrando modal para:', matchData.mandante, 'vs', matchData.visitante);
+    console.log(
+      "Mostrando modal para:",
+      matchData.mandante,
+      "vs",
+      matchData.visitante,
+    );
 
     // Inicia contagem regressiva
     let count = CONFIG.countdownSeconds;
@@ -594,18 +612,18 @@ const LiveMatchDetector = (() => {
     }, 1000);
 
     // Mostra modal
-    modal.classList.add('active');
+    modal.classList.add("active");
     modalShown = true;
-    
+
     // Adiciona listener para tecla ESC
-    document.addEventListener('keydown', handleEscKey);
+    document.addEventListener("keydown", handleEscKey);
   };
 
   /**
    * Manipula tecla ESC para fechar modal
    */
   const handleEscKey = (e) => {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       hideModal();
     }
   };
@@ -614,9 +632,9 @@ const LiveMatchDetector = (() => {
    * Esconde o modal
    */
   const hideModal = () => {
-    const modal = document.getElementById('liveMatchModal');
+    const modal = document.getElementById("liveMatchModal");
     if (modal) {
-      modal.classList.remove('active');
+      modal.classList.remove("active");
     }
 
     if (countdownIntervalId) {
@@ -625,18 +643,18 @@ const LiveMatchDetector = (() => {
     }
 
     // Marca que o usuário dispensou o modal
-    sessionStorage.setItem(CONFIG.storageKey, 'true');
+    sessionStorage.setItem(CONFIG.storageKey, "true");
     modalShown = false;
-    
+
     // Remove listener da tecla ESC
-    document.removeEventListener('keydown', handleEscKey);
+    document.removeEventListener("keydown", handleEscKey);
   };
 
   /**
    * Redireciona para a página ao vivo
    */
   const redirectToLive = () => {
-    console.log('Redirecionando para:', CONFIG.minutoAMinutoUrl);
+    console.log("Redirecionando para:", CONFIG.minutoAMinutoUrl);
     window.location.href = CONFIG.minutoAMinutoUrl;
   };
 
@@ -645,44 +663,51 @@ const LiveMatchDetector = (() => {
    */
   const addLiveIndicators = (matchData) => {
     // Procura por cards de próximos jogos
-    const matchCards = document.querySelectorAll('.next-match, .match-item, .horizontal-match-card, .match-card');
-    
+    const matchCards = document.querySelectorAll(
+      ".next-match, .match-item, .horizontal-match-card, .match-card",
+    );
+
     if (matchCards.length === 0) {
-      console.log('Nenhum card de jogo encontrado para adicionar indicador');
+      console.log("Nenhum card de jogo encontrado para adicionar indicador");
       return;
     }
 
-    matchCards.forEach(card => {
+    matchCards.forEach((card) => {
       // Verifica se o card corresponde ao jogo ao vivo
       const cardText = card.textContent.toLowerCase();
       const mandante = matchData.mandante.toLowerCase();
       const visitante = matchData.visitante.toLowerCase();
 
       if (cardText.includes(mandante) && cardText.includes(visitante)) {
-        console.log('Adicionando indicador ao vivo no card:', mandante, 'vs', visitante);
-        
+        console.log(
+          "Adicionando indicador ao vivo no card:",
+          mandante,
+          "vs",
+          visitante,
+        );
+
         // Remove indicador antigo se existir
-        const oldIndicator = card.querySelector('.live-indicator');
+        const oldIndicator = card.querySelector(".live-indicator");
         if (oldIndicator) oldIndicator.remove();
 
         // Adiciona novo indicador
-        const indicator = document.createElement('div');
-        indicator.className = 'live-indicator';
+        const indicator = document.createElement("div");
+        indicator.className = "live-indicator";
         indicator.innerHTML = `
           <span class="live-indicator-dot"></span>
           <span class="live-indicator-text">Ao Vivo</span>
         `;
 
         // Posiciona o card como relativo
-        card.style.position = 'relative';
+        card.style.position = "relative";
         card.appendChild(indicator);
 
         // Adiciona botão "Assistir Ao Vivo"
-        const existingBtn = card.querySelector('.watch-live-btn');
+        const existingBtn = card.querySelector(".watch-live-btn");
         if (!existingBtn) {
-          const watchBtn = document.createElement('a');
+          const watchBtn = document.createElement("a");
           watchBtn.href = CONFIG.minutoAMinutoUrl;
-          watchBtn.className = 'watch-live-btn';
+          watchBtn.className = "watch-live-btn";
           watchBtn.innerHTML = `
             <i class="fas fa-play-circle"></i>
             Assistir Ao Vivo
@@ -697,11 +722,11 @@ const LiveMatchDetector = (() => {
    * Remove indicadores ao vivo quando jogo termina
    */
   const removeLiveIndicators = () => {
-    const indicators = document.querySelectorAll('.live-indicator');
-    indicators.forEach(ind => ind.remove());
+    const indicators = document.querySelectorAll(".live-indicator");
+    indicators.forEach((ind) => ind.remove());
 
-    const watchBtns = document.querySelectorAll('.watch-live-btn');
-    watchBtns.forEach(btn => btn.remove());
+    const watchBtns = document.querySelectorAll(".watch-live-btn");
+    watchBtns.forEach((btn) => btn.remove());
   };
 
   /**
@@ -710,10 +735,10 @@ const LiveMatchDetector = (() => {
   const startChecking = async () => {
     // MODO DE TESTE - Retorna dados simulados
     if (CONFIG.testMode) {
-      console.log('🧪 MODO DE TESTE ATIVADO - Simulando jogo ao vivo');
+      console.log("🧪 MODO DE TESTE ATIVADO - Simulando jogo ao vivo");
       const liveMatch = CONFIG.testMatchData;
       currentLiveMatch = liveMatch;
-      
+
       if (!modalShown) {
         showModal(liveMatch);
       }
@@ -725,7 +750,7 @@ const LiveMatchDetector = (() => {
     const liveMatch = await checkLiveMatch();
 
     if (liveMatch) {
-      console.log('Jogo ao vivo detectado:', liveMatch);
+      console.log("Jogo ao vivo detectado:", liveMatch);
       currentLiveMatch = liveMatch;
 
       // Mostra modal apenas uma vez
@@ -736,10 +761,10 @@ const LiveMatchDetector = (() => {
       // Adiciona indicadores nos cards
       addLiveIndicators(liveMatch);
     } else {
-      console.log('Nenhum jogo ao vivo detectado');
+      console.log("Nenhum jogo ao vivo detectado");
       // Remove indicadores se não há mais jogo ao vivo
       if (currentLiveMatch) {
-        console.log('Removendo indicadores - jogo terminou');
+        console.log("Removendo indicadores - jogo terminou");
         removeLiveIndicators();
         currentLiveMatch = null;
         modalShown = false;
@@ -751,11 +776,11 @@ const LiveMatchDetector = (() => {
    * Inicializa o detector
    */
   const init = () => {
-    console.log('LiveMatchDetector inicializando...');
-    
+    console.log("LiveMatchDetector inicializando...");
+
     // Limpa sessionStorage para teste (remova em produção)
     // sessionStorage.removeItem(CONFIG.storageKey);
-    
+
     // Injeta estilos
     injectStyles();
 
@@ -769,9 +794,13 @@ const LiveMatchDetector = (() => {
     if (checkIntervalId) {
       clearInterval(checkIntervalId);
     }
-    
+
     checkIntervalId = setInterval(startChecking, CONFIG.checkInterval);
-    console.log('LiveMatchDetector iniciado com intervalo de', CONFIG.checkInterval, 'ms');
+    console.log(
+      "LiveMatchDetector iniciado com intervalo de",
+      CONFIG.checkInterval,
+      "ms",
+    );
   };
 
   /**
@@ -797,13 +826,13 @@ const LiveMatchDetector = (() => {
     stop,
     checkNow: startChecking,
     // DEBUG: expõe função para teste
-    debug: () => ({ currentLiveMatch, modalShown })
+    debug: () => ({ currentLiveMatch, modalShown }),
   };
 })();
 
 // Auto-inicializa quando o DOM estiver pronto
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => LiveMatchDetector.init());
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", () => LiveMatchDetector.init());
 } else {
   LiveMatchDetector.init();
 }

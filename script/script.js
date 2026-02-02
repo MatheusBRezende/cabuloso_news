@@ -7,11 +7,11 @@
 // CONFIGURAÇÕES
 // ============================================
 const CONFIG = {
-  newsApiUrl: "./backend/noticias.json",
-  tabelaApiUrl: "./backend/tabela_resultado.json",
-  agendaApiUrl: "./backend/agenda_cruzeiro.json",
-  resultadosApiUrl: "./backend/resultados.json",
-  webhookUrl: 'https://mistress-departments-dec-organized.trycloudflare.com/webhook/placar-ao-vivo',
+  newsApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  tabelaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  agendaApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  resultadosApiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  webhookUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/', 
 };
 
 // ============================================

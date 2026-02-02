@@ -7,11 +7,10 @@
 // ============================================
 // CONFIGURATION & STATE
 // ============================================
-
 const CONFIG_BRASILEIRAO = {
-  tabelaApiUrl: './backend/tabela_resultado.json',
-  tabelaMineiroUrl: './backend/tabela_mineiro.json',
-  agendaApiUrl: './backend/agenda_cruzeiro.json',
+  tabelaApiUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/',
+  tabelaMineiroUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/',
+  agendaApiUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/',
   intervaloAtualizacao: 300000,
   defaultEscudo: 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
 };
