@@ -42,65 +42,76 @@ const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
     
-    // Verifica se a resposta foi bem sucedida antes de tentar ler o JSON
-    if (!response.ok) {
-      throw new Error("Resposta do servidor não foi OK");
-    }
+    if (!response.ok) throw new Error("Erro na rede");
 
     const text = await response.text();
-    if (!text) {
+    
+    // Se a resposta vier vazia (o erro que deu no seu console)
+    if (!text || text.trim() === "") {
       if (state.logsEnabled) console.log("ℹ️ Resposta vazia do servidor.");
-      state.matchStarted = false;
-      renderCountdown(); // Nome correto da função no seu arquivo
+      renderCountdown();
       return;
     }
 
     const data = JSON.parse(text);
 
-    if (state.logsEnabled) console.log("📥 Dados recebidos:", data);
-
-    // Se o n8n retornar sucesso falso ou não houver dados de placar
-    if (!data.success || !data.placar) {
-      state.matchStarted = false;
+    // Se o n8n enviar sucesso: false (indicando que não achou jogo)
+    if (!data.success) {
       renderCountdown();
       return;
     }
 
-    // Se chegou aqui, tem jogo!
+    // --- SE CHEGOU AQUI, TEM JOGO ATIVO ---
     state.matchStarted = true;
-    state.match.home.name = data.placar.home_name || "Mandante";
-    state.match.away.name = data.placar.away_name || "Visitante";
-    state.match.score.home = data.placar.home || 0;
-    state.match.score.away = data.placar.away || 0;
-    state.match.status = data.placar.status || "AO VIVO";
+    state.match.home.name = data.placar.home_name;
+    state.match.away.name = data.placar.away_name;
+    state.match.score.home = data.placar.home;
+    state.match.score.away = data.placar.away;
+    state.match.status = data.placar.status;
 
     updateHeader();
 
-    // Guardar dados no cache
-    state.cachedData.resultados = data.narracao || [];
-    state.cachedData.estatisticas = data.estatisticas || {};
-    state.cachedData.escalacao = data.escalacao || {};
+    state.cachedData.resultados = data.narracao;
+    state.cachedData.estatisticas = data.estatisticas;
+    state.cachedData.escalacao = data.escalacao;
 
-    // Renderiza o que estiver aberto
-    const activeTabBtn = document.querySelector(".tab-btn.active");
-    if (activeTabBtn) {
-      const activeTab = activeTabBtn.dataset.tab;
-      if (activeTab === "lances") renderLances(state.cachedData.resultados);
-      if (activeTab === "estatisticas") renderEstatisticas(state.cachedData.estatisticas);
-      if (activeTab === "escalacao") renderEscalacao(state.cachedData.escalacao);
-    }
+    const activeTab = document.querySelector(".tab-btn.active")?.dataset.tab;
+    if (activeTab === "lances") renderLances(data.narracao);
+    if (activeTab === "estatisticas") renderEstatisticas(data.estatisticas);
+    if (activeTab === "escalacao") renderEscalacao(data.escalacao);
 
   } catch (error) {
-    console.error("❌ Erro ao buscar dados:", error);
-    state.matchStarted = false;
-    // Tenta renderizar o contador mesmo em caso de erro de rede
-    if (typeof renderCountdown === "function") {
-       renderCountdown();
-    }
+    if (state.logsEnabled) console.error("❌ Erro ao buscar dados:", error);
+    renderCountdown();
   }
 };
 
 
+/**
+ * Força a exibição do contador/agenda quando não há jogo
+ */
+const renderCountdown = () => {
+  if (state.logsEnabled) console.log("⏳ Renderizando contador de próxima partida...");
+  
+  // Limpa o intervalo de busca se necessário ou apenas sinaliza o estado
+  state.matchStarted = false;
+  
+  // No seu script original, a função que inicia o relógio é a renderAgenda()
+  // que por sua vez chama o inicializador do contador.
+  if (typeof renderAgenda === "function") {
+    renderAgenda();
+  } else {
+    // Caso a função renderAgenda não esteja acessível, tentamos mostrar o container de lances vazio
+    const container = document.getElementById("lances-container");
+    if (container) {
+      container.innerHTML = `
+        <div style="text-align:center; padding: 40px; color: #666;">
+          <p>Nenhuma partida ao vivo no momento.</p>
+          <small>Verifique a aba Agenda para os próximos jogos.</small>
+        </div>`;
+    }
+  }
+};
 /**
  * Renderiza o placar e lances
  */
