@@ -112,7 +112,7 @@ function processarGol() {
 
   if (gol === "AWAY") {
     console.log("😡 GOL DELES!");
-    dispararAnimacaoFullScreen("gol-del");
+    dispararAnimacaoFullScreen("gol");
   }
 }
 
