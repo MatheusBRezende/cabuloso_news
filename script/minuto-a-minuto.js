@@ -582,39 +582,52 @@ function initNavigation() {
 }
 
 function dispararAnimacaoFullScreen(tipo) {
-  const overlay = document.getElementById("fullscreen-overlay");
-  const container = document.getElementById("lottie-fullscreen");
+    const overlay = document.getElementById("fullscreen-overlay");
+    const container = document.getElementById("lottie-fullscreen");
+    const textOverlay = document.getElementById("animation-text-overlay");
 
-  if (!overlay || !container) return;
+    if (!overlay || !container || !textOverlay) return;
 
-  // Define o caminho do arquivo JSON
-  let path = "";
-  if (tipo === "gol") path = "../assets/goal.json";
-  if (tipo === "amarelo") path = "../assets/Carto Amarelo.json";
-  if (tipo === "vermelho") path = "../assets/Cartão Vermelho.json";
-  if (tipo == "penalti") path = "../assets/Penalti.json";
+    // Reseta classes e estado
+    textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho");
+    textOverlay.innerText = "";
+    container.innerHTML = "";
+    overlay.style.display = "flex";
 
-  // Limpa animação anterior, se houver
-  container.innerHTML = "";
-  overlay.style.display = "flex";
+    // Define o texto
+    if (tipo === "amarelo") {
+        textOverlay.innerText = "CARTÃO AMARELO";
+        textOverlay.classList.add("text-amarelo");
+    } else if (tipo === "vermelho") {
+        textOverlay.innerText = "CARTÃO VERMELHO";
+        textOverlay.classList.add("text-vermelho");
+    }
 
-  const anim = lottie.loadAnimation({
-    container: container,
-    renderer: "svg",
-    loop: false, // Só passa uma vez para não cansar
-    autoplay: true,
-    path: path,
-  });
+    // Força o navegador a reconhecer o reset para reiniciar a animação CSS
+    void textOverlay.offsetWidth; 
 
-  // Quando a animação terminar (ou após 4s), fecha o overlay
-  anim.onComplete = () => {
-    overlay.style.display = "none";
-  };
+    // Dispara a animação
+    textOverlay.classList.add("jump");
 
-  // Backup para fechar caso o JSON tenha loop infinito
-  setTimeout(() => {
-    overlay.style.display = "none";
-  }, 4500);
+    // Lottie (mantendo seu código de path)
+    let path = (tipo === "amarelo") ? "../assets/Carto Amarelo.json" : "../assets/Cartão Vermelho.json";
+    if (tipo === "gol") path = "../assets/goal.json";
+
+    const anim = lottie.loadAnimation({
+        container: container,
+        renderer: "svg",
+        loop: false,
+        autoplay: true,
+        path: path,
+    });
+
+anim.onComplete = () => {
+    // Esperamos a animação de 2.8s de cores + a piscada acabar
+    setTimeout(() => {
+        overlay.style.display = "none";
+        textOverlay.classList.remove("jump");
+    }, 500); // Ajustado para dar tempo de ver o cinza final
+};
 }
 
 window.cabulosoTeste = {

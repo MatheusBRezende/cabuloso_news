@@ -359,6 +359,73 @@ ul { list-style: none; }
     min-height: 60vh;
 }
 
+.animation-text {
+    position: absolute;
+    bottom: 15%; 
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 15vw, 8rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    z-index: 10001;
+    pointer-events: none;
+    display: none;
+
+    /* EFEITO DE FRASE ATRÁS (Branca e maior) */
+    /* Usamos múltiplas sombras sem borrão para simular o texto maior atrás */
+    filter: drop-shadow(2px 2px 0 white) 
+            drop-shadow(-2px -2px 0 white) 
+            drop-shadow(2px -2px 0 white) 
+            drop-shadow(-2px 2px 0 white);
+
+    /* GRADIENTE AJUSTADO: Começa e termina com grandes blocos de cinza */
+    background: linear-gradient(to right, 
+        #333 0%, 
+        #333 30%, 
+        var(--card-color) 45%, 
+        var(--card-color) 55%, 
+        #333 70%, 
+        #333 100%
+    );
+    background-size: 300% 100%;
+    background-position: 100% 0%; /* Começa na direita (Cinza) */
+    
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.animation-text.jump {
+    display: block;
+    /* fade-in mais longo, slide mais suave e a piscada no final */
+    animation: 
+        fade-in-long 1.2s ease-out forwards,
+        slide-left-to-right 2.8s cubic-bezier(0.42, 0, 0.58, 1) forwards,
+        final-blink 0.4s ease-in-out 2.8s;
+}
+
+/* FADE IN */
+@keyframes fade-in-long {
+    0% { opacity: 0; transform: scale(0.9); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+/* MOVIMENTO DA ESQUERDA PARA A DIREITA */
+/* Mudamos as posições para garantir que o cinza (0%) cubra tudo no fim */
+@keyframes slide-left-to-right {
+    0% { background-position: 100% 0%; }   /* Início: Cinza */
+    50% { background-position: 50% 0%; }  /* Meio: Cor do Cartão */
+    100% { background-position: 0% 0%; }  /* Fim: Cinza Total */
+}
+
+/* PISCADA FINAL */
+@keyframes final-blink {
+    0% { filter: brightness(1) drop-shadow(2px 2px 0 white); }
+    50% { filter: brightness(2) drop-shadow(4px 4px 0 white); opacity: 0.8; }
+    100% { filter: brightness(1) drop-shadow(2px 2px 0 white); opacity: 1; }
+}
+
+.text-amarelo { --card-color: #FFD700; }
+.text-vermelho { --card-color: #FF2E2E; }
 
 /* CONTAINER DO ÁRBITRO SEPARADO */
 .arbitro-container {
