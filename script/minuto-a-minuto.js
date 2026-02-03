@@ -617,16 +617,22 @@ function dispararAnimacaoFullScreen(tipo) {
 }
 
 window.cabulosoTeste = {
-  gol: () => {
-    dispararAnimacaoFullScreen("gol");
-    console.log("⚽ GOOOOL EM TELA CHEIA!");
-  },
-  amarelo: () => {
-    dispararAnimacaoFullScreen("amarelo");
-    console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
-  },
-  vermelho: () => {
-    dispararAnimacaoFullScreen("vermelho");
-    console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
-  },
+    gol: () => {
+        dispararAnimacaoFullScreen('gol');
+        console.log("⚽ GOOOOL EM TELA CHEIA!");
+    },
+    amarelo: () => {
+        dispararAnimacaoFullScreen('amarelo');
+        console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
+    },
+    vermelho: () => {
+        dispararAnimacaoFullScreen('vermelho');
+        console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
+    },
+    // ADICIONE ESTA LINHA:
+    penalti: () => {
+        console.log("🎯 PÊNALTI DETECTADO!");
+        // Se você tiver o JSON, aponte para ele. Se não, ele usará o log acima.
+        dispararAnimacaoFullScreen('penalti'); 
+    }
 };
