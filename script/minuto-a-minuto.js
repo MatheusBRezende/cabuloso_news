@@ -1,13 +1,21 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão: 3.0 - Contador de Tempo Melhorado
+ * Versão: 7.0 - COMPLETA com Loop Infinito de Escalações
  */
+let ultimoLanceId = null;
 
 const CONFIG = {
   webhookUrl: "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  updateInterval: 10000,
+  updateInterval: 10000
 };
+
+const golControl = {
+  lastScore: { home: 0, away: 0 },
+  lastTrigger: 0,
+  cooldown: 12000 // 12s — ajuste se quiser
+};
+
 
 const state = {
   matchStarted: false,
@@ -18,384 +26,538 @@ const state = {
     away: { name: "Visitante", logo: "" },
     score: { home: 0, away: 0 },
     status: "AO VIVO",
+    minute: "0'"
   },
-  logsEnabled: true,
-  agendaLoaded: false,
-  cachedData: {
-    resultados: null,
-    estatisticas: null,
-    escalacao: null,
-  },
+  logsEnabled: true
 };
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
-  loadAgenda();
-  fetchLiveData();
+  await loadAgenda();
+  await fetchLiveData();
   setInterval(fetchLiveData, CONFIG.updateInterval);
 });
 
-/**
- * Busca dados dinâmicos do jogo ao vivo
- */
 const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    let rawData = await response.json();
+    const text = await response.text();
+    if (!text || text === "[]") throw new Error("Resposta vazia");
 
-    const hasLiveGameFlag = rawData.tem_jogo_ao_vivo !== undefined;
-    
-    if ((hasLiveGameFlag && rawData.tem_jogo_ao_vivo === false) || 
-        (!rawData.narracao && !rawData.placar)) {
-      if (!state.matchStarted) {
-        renderPreMatchState();
-      }
-      return;
-    }
-
-    if (state.logsEnabled) console.log("🔥 Dados ao vivo recebidos:", rawData);
-
-    let placarData = rawData.placar || null;
-    let resultadosData = rawData.narracao || null;
-    let estatisticasData = rawData.estatisticas || null;
-    let escalacaoData = rawData.escalacao || null;
-    let arbitragemData = rawData.arbitragem || null;
-
-    if (resultadosData) {
-      state.cachedData.resultados = resultadosData;
-    }
-    if (estatisticasData) {
-      state.cachedData.estatisticas = estatisticasData;
-    }
-    if (escalacaoData) {
-      state.cachedData.escalacao = {
-        partida: {
-          mandante: escalacaoData.home || escalacaoData.mandante,
-          visitante: escalacaoData.away || escalacaoData.visitante
-        },
-        arbitragem: arbitragemData ? { nome: arbitragemData, funcao: "Árbitro Principal" } : null
-      };
-    }
-
-    if (!placarData || !resultadosData) return;
-
-    if (state.countdownInterval) {
-      clearInterval(state.countdownInterval);
-      state.countdownInterval = null;
-    }
+    const data = JSON.parse(text);
 
     state.matchStarted = true;
+    showLiveMatchUI();
 
-    state.match.home.name = placarData.home_name || placarData.mandante || "Mandante";
-    state.match.home.logo = placarData.home_logo || "assets/logo.png";
-    state.match.away.name = placarData.away_name || placarData.visitante || "Cruzeiro";
-    state.match.away.logo = placarData.away_logo || "https://admin.cnnbrasil.com.br/wp-content/uploads/sites/12/cruzeiro.png";
-    state.match.score.home = placarData.home ?? 0;
-    state.match.score.away = placarData.away ?? 0;
-    state.match.status = placarData.status || "AO VIVO";
+    updateMatchState(data);
+    processarGol();
+    detectarNovoLance(data);
+    renderAllComponents(data);
 
-    renderLiveMatch(resultadosData);
-    
-    if (estatisticasData || state.cachedData.estatisticas) {
-      renderStats(estatisticasData || state.cachedData.estatisticas);
-    }
-
-    if (escalacaoData || state.cachedData.escalacao) {
-      updateLineups(state.cachedData.escalacao);
-    }
-
-  } catch (error) {
-    if (state.logsEnabled) console.error("Erro no LiveData:", error);
-  }
-};
-
-/**
- * Renderiza o placar e lances
- */
-const renderLiveMatch = (lances) => {
-  const container = document.getElementById("live-match-container");
-  const timeline = document.getElementById("timeline-container");
-  if (!container) return;
-
-  container.innerHTML = `
-    <div class="live-match-container fade-in">
-      <div class="match-header">
-        <div class="match-competition"><i class="fas fa-trophy"></i> CRUZEIRO AO VIVO</div>
-        <div class="match-status ${state.match.status.toLowerCase().includes("encerrado") ? "finished" : "live"}">
-          ${state.match.status.toUpperCase() === "AO VIVO" ? '<span class="blink-dot"></span>' : ""} ${state.match.status}
-        </div>
-      </div>
-      <div class="score-row">
-        <div class="team">
-          <img src="${state.match.home.logo}" class="team-logo" onerror="this.src='assets/logo.png'">
-          <div class="team-name">${state.match.home.name}</div>
-        </div>
-        <div class="score-container">
-          <div class="score">${state.match.score.home} <span>x</span> ${state.match.score.away}</div>
-          <div class="match-time">Tempo Real</div>
-        </div>
-        <div class="team">
-          <img src="${state.match.away.logo}" class="team-logo" onerror="this.src='assets/logo.png'">
-          <div class="team-name">${state.match.away.name}</div>
-        </div>
-      </div>
-    </div>`;
-
-  if (timeline) {
-    if (!lances || lances.length === 0) {
-      timeline.innerHTML = `<p class="no-events">Aguardando lances...</p>`;
-    } else {
-      timeline.innerHTML = lances.map(lance => `
-        <div class="timeline-item ${lance.is_gol ? "goal-event" : ""}">
-          <div class="timeline-time">${lance.minuto || '---'}</div>
-          <div class="timeline-content">
-            <div class="timeline-desc">${lance.descricao}</div>
-          </div>
-        </div>`).join("");
-    }
-  }
-};
-
-/**
- * Atualiza Estatísticas
- */
-const renderStats = (statsData) => {
-  const homeList = document.getElementById("home-stats-list");
-  const awayList = document.getElementById("away-stats-list");
-  if (!homeList || !awayList) return;
-
-  const statsArray = [
-    { metrica: "Posse de Bola", mandante: statsData.posse_home || "0%", visitante: statsData.posse_away || "0%" },
-    { metrica: "Escanteios", mandante: statsData.escanteios_home || "0", visitante: statsData.escanteios_away || "0" },
-    { metrica: "Finalizações", mandante: statsData.finalizacoes_home || "0", visitante: statsData.finalizacoes_away || "0" },
-    { metrica: "Faltas", mandante: statsData.faltas_home || "0", visitante: statsData.faltas_away || "0" }
-  ];
-  
-  let homeHTML = "";
-  let awayHTML = "";
-
-  statsArray.forEach(stat => {
-    const label = stat.metrica || stat.item || "";
-    homeHTML += `<div class="stat-row"><span class="stat-value">${stat.mandante || stat.home || 0}</span><span class="stat-label">${label}</span></div>`;
-    awayHTML += `<div class="stat-row"><span class="stat-label">${label}</span><span class="stat-value">${stat.visitante || stat.away || 0}</span></div>`;
-  });
-
-  homeList.innerHTML = homeHTML;
-  awayList.innerHTML = awayHTML;
-};
-
-/**
- * Atualiza Escalações e Árbitro
- */
-const updateLineups = (data) => {
-  if (!data || !data.partida) return;
-
-  const homeContent = document.getElementById("home-lineup-content");
-  const awayContent = document.getElementById("away-lineup-content");
-  const refCard = document.getElementById("match-referee-info");
-
-  const fmtList = (players) => {
-    if (!players || !Array.isArray(players)) return "<div>Não disponível</div>";
-    
-    return players.map(p => {
-      const parts = p.toString().split(' - ');
-      const number = parts[0] || '';
-      const name = parts[1] || p;
-      
-      return `
-        <div class="player-item-min">
-          <span class="player-number">${number}</span>
-          <span class="player-name">${name}</span>
-        </div>`;
-    }).join("");
-  };
-
-  if (homeContent && data.partida.mandante) {
-    homeContent.innerHTML = `
-      <h4>Titulares</h4>
-      ${fmtList(data.partida.mandante.titulares)}
-      <h4>Técnico: ${data.partida.mandante.tecnico || "Não informado"}</h4>`;
-  }
-  
-  if (awayContent && data.partida.visitante) {
-    awayContent.innerHTML = `
-      <h4>Titulares</h4>
-      ${fmtList(data.partida.visitante.titulares)}
-      <h4>Técnico: ${data.partida.visitante.tecnico || "Não informado"}</h4>`;
-  }
-  
-  if (refCard && data.arbitragem) {
-    refCard.innerHTML = `<div class="ref-box"><i class="fas fa-gavel"></i> ${data.arbitragem.nome} (${data.arbitragem.funcao})</div>`;
-  }
-};
-
-/**
- * Lógica de Agenda e Cronômetro MELHORADO
- */
-const loadAgenda = async () => {
-  try {
-    const response = await fetch(`${CONFIG.apiUrl}?v=${Date.now()}`);
-    if (response.ok) {
-      const data = await response.json();
-      state.agendaData = data.agenda || (Array.isArray(data) ? data : []);
-      state.agendaLoaded = true;
-      if (!state.matchStarted) renderPreMatchState();
-    }
   } catch (e) {
-    console.error("Erro ao carregar agenda:", e);
+    if (state.logsEnabled) console.log("⏱️ Countdown ativado");
+    state.matchStarted = false;
+    showNextMatchCountdown();
   }
 };
 
-const renderPreMatchState = () => {
-  const next = getNextMatchFromAgenda();
-  const container = document.getElementById("live-match-container");
-  if (!container || !next) return;
 
-  // Formata a data do jogo
-  const matchDate = formatMatchDate(next.dateObj);
+function detectarNovoLance(data) {
+  if (!data.narracao || data.narracao.length === 0) return;
+
+  const lance = data.narracao[0];
+  const id = btoa(unescape(encodeURIComponent(lance.minuto + lance.descricao)));
+
+if (id !== ultimoLanceId) {
+  ultimoLanceId = id;
+  processarNovoLance(lance);
+}
+}
+
+
+function detectarGolComDelay() {
+  const now = Date.now();
+  const atual = state.match.score;
+  const anterior = golControl.lastScore;
+
+  if (now - golControl.lastTrigger < golControl.cooldown) {
+    return null;
+  }
+
+  if (atual.home > anterior.home) {
+    golControl.lastTrigger = now;
+    golControl.lastScore = { ...atual };
+    return "HOME";
+  }
+
+  if (atual.away > anterior.away) {
+    golControl.lastTrigger = now;
+    golControl.lastScore = { ...atual };
+    return "AWAY";
+  }
+
+  golControl.lastScore = { ...atual };
+  return null;
+}
+
+
+function processarGol() {
+  const gol = detectarGolComDelay();
+  if (!gol) return;
+
+  if (gol === "HOME") {
+    console.log("⚽ GOL DO CRUZEIRO!");
+    dispararAnimacaoFullScreen("gol");
+  }
+
+  if (gol === "AWAY") {
+    console.log("😡 GOL DELES!");
+    dispararAnimacaoFullScreen("gol-del");
+  }
+}
+
+
+function processarNovoLance(lance) {
+    const desc = lance.descricao.toUpperCase();
+    const icone = lance.icone;
+    // 🟥 VERMELHO
+    if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
+        dispararAnimacaoFullScreen('vermelho');
+        return;
+    }
+
+    // 🟨 AMARELO
+    if (icone === "🟨" || desc.includes("AMARELO")) {
+        dispararAnimacaoFullScreen('amarelo');
+        return;
+    }
+}
+
+
+/**
+ * EXIBE A INTERFACE DE JOGO AO VIVO
+ */
+const showLiveMatchUI = () => {
+  const liveSections = document.getElementById("live-match-sections");
+  const countdownWrapper = document.getElementById("countdown-wrapper");
   
-  container.innerHTML = `
-    <div class="live-match-container waiting-mode">
-      <div class="match-header">
-        <div class="match-competition">
-          <i class="fas fa-calendar-alt"></i> PRÓXIMO JOGO
-        </div>
-        <div class="match-date">${matchDate}</div>
-      </div>
-      <div class="score-row">
-        <div class="team">
-          <img src="${next.escudo_mandante}" class="team-logo" onerror="this.src='assets/logo.png'">
-          <div class="team-name">${next.mandante}</div>
-        </div>
-        <div id="countdown-wrapper" class="countdown-wrapper-enhanced">
-          <div class="countdown-label">
-            <i class="fas fa-clock"></i>
-            A BOLA ROLA EM
-          </div>
-          <div class="countdown-grid" id="countdown-grid">
-            <div class="countdown-block">
-              <div class="countdown-number" id="days">--</div>
-              <div class="countdown-unit">DIAS</div>
-            </div>
-            <div class="countdown-separator">:</div>
-            <div class="countdown-block">
-              <div class="countdown-number" id="hours">--</div>
-              <div class="countdown-unit">HORAS</div>
-            </div>
-            <div class="countdown-separator">:</div>
-            <div class="countdown-block">
-              <div class="countdown-number" id="minutes">--</div>
-              <div class="countdown-unit">MIN</div>
-            </div>
-            <div class="countdown-separator">:</div>
-            <div class="countdown-block">
-              <div class="countdown-number" id="seconds">--</div>
-              <div class="countdown-unit">SEG</div>
-            </div>
-          </div>
-          <div class="match-info">
-            <div class="match-info-item">
-              <i class="fas fa-trophy"></i>
-              <span>${next.campeonato}</span>
-            </div>
-            <div class="match-info-item">
-              <i class="fas fa-map-marker-alt"></i>
-              <span>${next.estadio}</span>
-            </div>
-            <div class="match-info-item">
-              <i class="fas fa-clock"></i>
-              <span>${next.hora}</span>
-            </div>
-          </div>
-        </div>
-        <div class="team">
-          <img src="${next.escudo_visitante}" class="team-logo" onerror="this.src='assets/logo.png'">
-          <div class="team-name">${next.visitante}</div>
-        </div>
-      </div>
-    </div>`;
-  
-  startCountdown(next.dateObj);
+  if (liveSections) liveSections.style.display = "block";
+  if (countdownWrapper) countdownWrapper.style.display = "none";
+
+  if (state.countdownInterval) {
+    clearInterval(state.countdownInterval);
+    state.countdownInterval = null;
+  }
 };
 
+/**
+ * EXIBE O COUNTDOWN E ESCONDE O MINUTO A MINUTO
+ */
+const showNextMatchCountdown = () => {
+  const nextMatch = getNextMatchFromAgenda();
+  
+  if (!nextMatch) {
+    console.warn("⚠️ Nenhum próximo jogo encontrado na agenda");
+    return;
+  }
+
+  const liveSections = document.getElementById("live-match-sections");
+  const countdownWrapper = document.getElementById("countdown-wrapper");
+  
+  if (liveSections) liveSections.style.display = "none";
+  if (countdownWrapper) countdownWrapper.style.display = "block";
+
+  renderNextMatchCard(nextMatch);
+  startCountdown(nextMatch.dataObj);
+};
+
+/**
+ * RENDERIZA O CARD DO PRÓXIMO JOGO
+ */
+const renderNextMatchCard = (match) => {
+  const container = document.getElementById("live-match-container");
+  if (!container) return;
+  
+  container.innerHTML = `
+    <div class="match-header-card" style="background: linear-gradient(135deg, #1a1f3a 0%, #002266 100%); border: 2px solid var(--primary-light);">
+      <div class="match-status-badge" style="background: var(--accent); color: var(--primary-dark);">
+        <i class="fas fa-clock"></i> PRÓXIMO JOGO
+      </div>
+      <div class="score-row" style="flex-direction: column; gap: 30px; padding: 40px 20px;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%;">
+          <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
+            <img src="${match.escudo_mandante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
+            <span class="team-name">${match.mandante}</span>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
+            <img src="${match.escudo_visitante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
+            <span class="team-name">${match.visitante}</span>
+          </div>
+        </div>
+        <div class="match-game-info">
+          <div class="match-competition"><i class="fas fa-trophy"></i> ${match.campeonato}</div>
+          <div class="match-date"><i class="fas fa-calendar-alt"></i> ${match.data}</div>
+          <div class="match-time"><i class="fas fa-clock"></i> ${match.hora}</div>
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * LÓGICA DO CONTADOR (COUNTDOWN)
+ */
 const startCountdown = (targetDate) => {
   if (state.countdownInterval) clearInterval(state.countdownInterval);
-  
+  const timerElement = document.getElementById("timer-text");
+  if (!timerElement) return;
+
   const update = () => {
-    const now = new Date();
-    const diff = targetDate - now;
-    
-    if (diff <= 0) {
+    const now = new Date().getTime();
+    const distance = targetDate.getTime() - now;
+    if (distance < 0) {
+      timerElement.textContent = "JOGO COMEÇOU!";
       clearInterval(state.countdownInterval);
-      fetchLiveData();
       return;
     }
-
-    // Calcula dias, horas, minutos e segundos
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-    
-    // Atualiza os elementos
-    const daysEl = document.getElementById("days");
-    const hoursEl = document.getElementById("hours");
-    const minutesEl = document.getElementById("minutes");
-    const secondsEl = document.getElementById("seconds");
-    
-    if (daysEl) daysEl.textContent = String(days).padStart(2, '0');
-    if (hoursEl) hoursEl.textContent = String(hours).padStart(2, '0');
-    if (minutesEl) minutesEl.textContent = String(minutes).padStart(2, '0');
-    if (secondsEl) secondsEl.textContent = String(seconds).padStart(2, '0');
-    
-    // Adiciona animação de pulso nos segundos
-    if (secondsEl) {
-      secondsEl.style.animation = 'none';
-      setTimeout(() => {
-        secondsEl.style.animation = 'pulse 1s ease-in-out';
-      }, 10);
-    }
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    timerElement.textContent = days > 0 
+      ? `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`
+      : `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
   };
-
   state.countdownInterval = setInterval(update, 1000);
   update();
 };
 
-const formatMatchDate = (date) => {
-  const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
-  
-  const dayName = days[date.getDay()];
-  const day = date.getDate();
-  const month = months[date.getMonth()];
-  
-  return `${dayName}, ${day} ${month}`;
+/**
+ * CARREGA AGENDA E PEGA PRÓXIMO JOGO
+ */
+const loadAgenda = async () => {
+  try {
+    const response = await fetch(CONFIG.apiUrl);
+    const data = await response.json();
+    state.agendaData = (Array.isArray(data) && data.length > 0) ? data[0].agenda : [];
+  } catch (error) {
+    console.error("❌ Erro ao carregar agenda:", error);
+    state.agendaData = [];
+  }
 };
 
 const getNextMatchFromAgenda = () => {
-  if (!state.agendaData) return null;
+  if (!state.agendaData || state.agendaData.length === 0) return null;
+  const meses = { "jan": 0, "fev": 1, "mar": 2, "abr": 3, "mai": 4, "jun": 5, "jul": 6, "ago": 7, "set": 8, "out": 9, "nov": 10, "dez": 11 };
   const now = new Date();
-  const meses = { jan:0, fev:1, mar:2, abr:3, mai:4, jun:5, jul:6, ago:7, set:8, out:9, nov:10, dez:11 };
-
-  return state.agendaData.map(m => {
+  const matches = state.agendaData.map(m => {
     try {
-      const parts = m.data.trim().split(" ");
-      const day = parseInt(parts[1]);
-      const month = meses[parts[2].replace(/[.,]/g, "").toLowerCase()];
+      const parts = m.data.trim().split(/[,.\s]+/).filter(p => p);
+      const day = parseInt(parts.find(p => /^\d+$/.test(p)));
+      const mesTexto = parts.find(p => meses.hasOwnProperty(p.toLowerCase()));
       const [hh, mm] = m.hora.split(":").map(Number);
-      let d = new Date();
-      d.setMonth(month, day); 
-      d.setHours(hh, mm, 0, 0);
-      if (d < now) d.setFullYear(d.getFullYear() + 1);
-      return { ...m, dateObj: d };
-    } catch(e) { 
-      return null; 
-    }
-  }).filter(m => m && m.dateObj > now).sort((a,b) => a.dateObj - b.dateObj)[0];
+      const d = new Date(now.getFullYear(), meses[mesTexto.toLowerCase()], day, hh || 0, mm || 0);
+      if (d < now && (now - d) > 86400000) d.setFullYear(now.getFullYear() + 1);
+      return { ...m, dataObj: d };
+    } catch (e) { return null; }
+  }).filter(m => m !== null).sort((a, b) => a.dataObj - b.dataObj);
+  return matches.find(m => m.dataObj > now) || matches[0];
 };
 
-const initNavigation = () => {
+/**
+ * ATUALIZA O ESTADO E RENDERIZA COMPONENTES
+ */
+function updateMatchState(data) {
+  const placar = data.placar || data;
+  state.match.home.name = placar.home_name || placar.mandante || "Mandante";
+  state.match.away.name = placar.away_name || placar.visitante || "Visitante";
+  state.match.home.logo = placar.home_logo || placar.escudo_mandante || "";
+  state.match.away.logo = placar.away_logo || placar.escudo_visitante || "";
+  state.match.score.home = placar.home ?? placar.placar_mandante ?? 0;
+  state.match.score.away = placar.away ?? placar.placar_visitante ?? 0;
+  state.match.status = placar.status || "AO VIVO";
+
+  // Lógica aprimorada para pegar o minuto
+  let minutoAtual = "0'";
+  
+  // Tenta pegar direto do campo minuto
+  if (data.minuto) {
+      minutoAtual = data.minuto;
+  } 
+  // Se não, pega do último lance da narração
+  else if (data.narracao && Array.isArray(data.narracao) && data.narracao.length > 0) {
+      // Pega o primeiro elemento (geralmente o mais recente é o índice 0 ou o último, dependendo da ordem da API)
+      // Assumindo que o índice 0 é o lance mais novo:
+      minutoAtual = data.narracao[0].minuto; 
+  }
+
+  // Limpa caracteres HTML estranhos se vierem da API
+  state.match.minute = minutoAtual.replace(/<[^>]*>?/gm, '').trim();
+}
+
+
+
+function renderAllComponents(data) {
+  renderScoreboard();
+  if (data.narracao) renderTimeline(data.narracao);
+  if (data.estatisticas) {
+    renderStats(data.estatisticas, "home");
+    renderStats(data.estatisticas, "away");
+  }
+  if (data.escalacao) renderLineups(data.escalacao, data.arbitragem);
+}
+
+function renderScoreboard() {
+  const container = document.getElementById("live-match-container");
+  if (!container) return;
+  
+  // HTML do Badge de Minuto
+  const minuteBadge = `
+    <div class="match-timer-badge">
+        <div class="timer-dot"></div>
+        <div class="timer-text">${state.match.minute}</div>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <div class="match-header-card">
+      ${minuteBadge} <div class="match-status-badge">${state.match.status}</div>
+      
+      <div class="score-row">
+        <div class="team-info team-home">
+          <span class="team-name">${state.match.home.name}</span>
+          <img src="${state.match.home.logo}" class="team-logo" alt="${state.match.home.name}">
+        </div>
+        
+        <div class="score-container">
+          <span class="score">${state.match.score.home}</span>
+          <span class="score-divider">×</span>
+          <span class="score">${state.match.score.away}</span>
+        </div>
+        
+        <div class="team-info team-away">
+          <span class="team-name">${state.match.away.name}</span>
+          <img src="${state.match.away.logo}" class="team-logo" alt="${state.match.away.name}">
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
+function renderTimeline(narracao) {
+  const container = document.getElementById("timeline-container");
+  if (!container) return;
+  container.innerHTML = "";
+  
+  narracao.forEach((lance, i) => {
+    const item = document.createElement("div");
+    
+    // Determina classes especiais para ícones
+    let iconClass = '';
+    let iconContent = lance.icone || '📝';
+    let extraClass = lance.classe || 'lance-normal';
+
+    // Lógica para detectar cartões e gol baseado na descrição ou classe
+    const desc = lance.descricao.toLowerCase();
+    
+    if (lance.is_gol || desc.includes('gol')) {
+        iconClass = 'icon-goal';
+        iconContent = '<i class="fas fa-futbol"></i>';
+        extraClass = 'lance-gol';
+    } else if (desc.includes('amarelo')) {
+        iconClass = 'icon-yellow-card';
+        // Ícone de quadrado (cartão) para animar
+        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>'; 
+    } else if (desc.includes('vermelho')) {
+        iconClass = 'icon-red-card';
+        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    }
+
+    item.className = `timeline-item ${extraClass}`;
+    const min = lance.minuto.replace(/\//g, '').replace(/<[^>]*>?/gm, '').trim();
+    
+    item.innerHTML = `
+      <div class="timeline-time"><span class="time-badge">${min}</span></div>
+      <div class="timeline-content">
+        <div class="timeline-icon ${iconClass}">${iconContent}</div>
+        <div class="timeline-text"><p>${lance.descricao}</p></div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+function renderStats(stats, side) {
+  const container = document.getElementById(`${side}-stats-list`);
+  const teamNameContainer = document.getElementById(`${side}-team-name-lineup`);
+  if (!container) return;
+
+  // Atualiza o nome do time no header da escalação
+  if (teamNameContainer) {
+    const teamName = side === "home" ? state.match.home.name : state.match.away.name;
+    teamNameContainer.innerHTML = `<i class="fas fa-users"></i> ${teamName.toUpperCase()}`;
+  }
+
+  // Atualiza estatísticas
+  const items = [
+    { label: "Posse", val: side === "home" ? stats.posse_home : stats.posse_away },
+    { label: "Chutes", val: side === "home" ? stats.finalizacoes_home : stats.finalizacoes_away },
+    { label: "Cantos", val: side === "home" ? stats.escanteios_home : stats.escanteios_away }
+  ];
+  
+  container.innerHTML = items.map(i => `
+    <div class="stat-item"><span class="stat-label">${i.label}</span><span class="stat-value">${i.val || 0}</span></div>
+  `).join('');
+}
+
+/**
+ * LOGICA DE ESCALAÇÃO HORIZONTAL (LOOP)
+ */
+const renderPlayerTrack = (titulares, reservas) => {
+  // Criamos o HTML dos jogadores
+  const tpl = (name, isRes) => `
+    <div class="player-item-min">
+      <i class="fas fa-user-circle" style="margin-right:8px; color:${isRes ? 'var(--gray-400)' : 'var(--primary)'};"></i>
+      <span style="${isRes ? 'color:var(--gray-500); font-weight:400;' : ''}">${name}</span>
+    </div>
+  `;
+  
+  const allPlayers = [
+    ...titulares.map(p => tpl(p, false)),
+    ...reservas.map(p => tpl(p, true))
+  ].join('');
+
+  // Retornamos a trilha duplicada para o efeito de loop infinito no CSS
+  return `<div class="lineup-players-track">${allPlayers}${allPlayers}</div>`;
+};
+
+/**
+ * RENDERIZA AS ESCALAÇÕES COM ROLAGEM INDEPENDENTE
+ */
+function renderLineups(escalacao, arbitragem) {
+  const hCont = document.getElementById("home-lineup-content");
+  const aCont = document.getElementById("away-lineup-content");
+  const homeTeamName = document.getElementById("home-team-name-lineup");
+  const awayTeamName = document.getElementById("away-team-name-lineup");
+
+  // Atualiza nomes dos times nos headers
+  if (homeTeamName) {
+    homeTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.home.name.toUpperCase()}`;
+  }
+  
+  if (awayTeamName) {
+    awayTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.away.name.toUpperCase()}`;
+  }
+
+  // Escalação do Mandante - CORREÇÃO: Verifica se existem dados
+  if (hCont && escalacao && escalacao.home) {
+    const titulares = escalacao.home.titulares || [];
+    const reservas = escalacao.home.reservas || [];
+    const tecnico = escalacao.home.tecnico || "Técnico não informado";
+    
+    hCont.innerHTML = `
+      <div class="lineup-players-container">
+        ${renderPlayerTrack(titulares, reservas)}
+      </div>
+      <div style="margin-top:10px; text-align:center; font-size:0.8rem; border-top:1px solid var(--gray-200); padding-top:5px">
+        <strong>Técnico:</strong> ${tecnico}
+      </div>
+    `;
+  } else if (hCont) {
+    hCont.innerHTML = '<div class="loading-stats">Escalação não disponível</div>';
+  }
+
+  // Escalação do Visitante - CORREÇÃO: Verifica se existem dados
+  if (aCont && escalacao && escalacao.away) {
+    const titulares = escalacao.away.titulares || [];
+    const reservas = escalacao.away.reservas || [];
+    const tecnico = escalacao.away.tecnico || "Técnico não informado";
+    
+    aCont.innerHTML = `
+      <div class="lineup-players-container">
+        ${renderPlayerTrack(titulares, reservas)}
+      </div>
+      <div style="margin-top:10px; text-align:center; font-size:0.8rem; border-top:1px solid var(--gray-200); padding-top:5px">
+        <strong>Técnico:</strong> ${tecnico}
+      </div>
+    `;
+  } else if (aCont) {
+    aCont.innerHTML = '<div class="loading-stats">Escalação não disponível</div>';
+  }
+
+  // Informação da Arbitragem
+  const ref = document.getElementById("match-referee-info");
+  if (ref && arbitragem) {
+    ref.innerHTML = `
+      <i class="fas fa-whistle" style="color:var(--primary); font-size: 1.2rem; margin-bottom: 5px;"></i>
+      <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--gray-500);">Árbitro</div>
+      <div style="font-weight: bold; font-size: 0.9rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${arbitragem}</div>
+    `;
+  }
+}
+
+/**
+ * NAVEGAÇÃO / MENU
+ */
+function initNavigation() {
   const toggle = document.getElementById("menuToggle");
-  const nav = document.getElementById("nav-menu");
-  if (toggle && nav) toggle.addEventListener("click", () => nav.classList.toggle("active"));
+  const menu = document.getElementById("navMenu");
+  if (toggle && menu) {
+    toggle.onclick = () => {
+      menu.classList.toggle("active");
+      toggle.classList.toggle("active");
+    };
+  }
+}
+
+function dispararAnimacaoFullScreen(tipo) {
+    const overlay = document.getElementById('fullscreen-overlay');
+    const container = document.getElementById('lottie-fullscreen');
+    
+    if (!overlay || !container) return;
+
+    // Define o caminho do arquivo JSON
+    let path = '';
+    if (tipo === 'gol') path = '../assets/goal.json';
+    if (tipo === 'amarelo') path = '../assets/Carto Amarelo.json';
+    if (tipo === 'vermelho') path = '../assets/Cartão Vermelho.json';
+
+    // Limpa animação anterior, se houver
+    container.innerHTML = '';
+    overlay.style.display = 'flex';
+
+    const anim = lottie.loadAnimation({
+        container: container,
+        renderer: 'svg',
+        loop: false, // Só passa uma vez para não cansar
+        autoplay: true,
+        path: path
+    });
+
+    // Quando a animação terminar (ou após 4s), fecha o overlay
+    anim.onComplete = () => {
+        overlay.style.display = 'none';
+    };
+
+    // Backup para fechar caso o JSON tenha loop infinito
+    setTimeout(() => {
+        overlay.style.display = 'none';
+    }, 4500);
+}
+
+window.cabulosoTeste = {
+    gol: () => {
+        dispararAnimacaoFullScreen('gol');
+        console.log("⚽ GOOOOL EM TELA CHEIA!");
+    },
+    amarelo: () => {
+        dispararAnimacaoFullScreen('amarelo');
+        console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
+    },
+    vermelho: () => {
+        dispararAnimacaoFullScreen('vermelho');
+        console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
+    }
 };
