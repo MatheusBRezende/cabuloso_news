@@ -520,7 +520,7 @@ function dispararAnimacaoFullScreen(tipo) {
 
     // Define o caminho do arquivo JSON
     let path = '';
-    if (tipo === 'gol') path = '../assets/goal.json';
+    if (tipo === 'gol') path = '../assets/Soccer Fans.json';
     if (tipo === 'amarelo') path = '../assets/Carto Amarelo.json';
     if (tipo === 'vermelho') path = '../assets/Cartão Vermelho.json';
 
