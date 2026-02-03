@@ -592,6 +592,7 @@ function dispararAnimacaoFullScreen(tipo) {
   if (tipo === "gol") path = "../assets/goal.json";
   if (tipo === "amarelo") path = "../assets/Carto Amarelo.json";
   if (tipo === "vermelho") path = "../assets/Cartão Vermelho.json";
+  if (tipo == "penalti") path = "../assets/Penalti.json";
 
   // Limpa animação anterior, se houver
   container.innerHTML = "";
@@ -632,7 +633,6 @@ window.cabulosoTeste = {
     // ADICIONE ESTA LINHA:
     penalti: () => {
         console.log("🎯 PÊNALTI DETECTADO!");
-        // Se você tiver o JSON, aponte para ele. Se não, ele usará o log acima.
         dispararAnimacaoFullScreen('penalti'); 
     }
 };
