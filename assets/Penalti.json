@@ -55,7 +55,7 @@
       "ddd": 0,
       "ind": 2,
       "ty": 5,
-      "nm": "PÊNALTI! 5",
+      "nm": "PENALTI!!! 5",
       "parent": 1,
       "sr": 1,
       "ks": {
@@ -83,9 +83,9 @@
               "s": {
                 "s": 66,
                 "f": "Geometric415BT-BlackA",
-                "t": "PÊNALTI!",
+                "t": "PENALTI!!!",
                 "j": 2,
-                "tr": -18,
+                "tr": 0,
                 "lh": 79.2,
                 "ls": 0,
                 "fc": [0.141, 0.141, 0.141]
@@ -135,7 +135,7 @@
       "ddd": 0,
       "ind": 3,
       "ty": 5,
-      "nm": "PÊNALTI! 4",
+      "nm": "PENALTI!!! 4",
       "parent": 1,
       "sr": 1,
       "ks": {
@@ -153,9 +153,9 @@
               "s": {
                 "s": 66,
                 "f": "Geometric415BT-BlackA",
-                "t": "PÊNALTI!",
+                "t": "PENALTI!!!",
                 "j": 2,
-                "tr": -18,
+                "tr": 0,
                 "lh": 79.2,
                 "ls": 0,
                 "fc": [0.906, 0.185, 0.185]
@@ -205,7 +205,7 @@
       "ddd": 0,
       "ind": 4,
       "ty": 5,
-      "nm": "PÊNALTI! 3",
+      "nm": "PENALTI!!! 3",
       "parent": 1,
       "sr": 1,
       "ks": {
@@ -223,9 +223,9 @@
               "s": {
                 "s": 66,
                 "f": "Geometric415BT-BlackA",
-                "t": "PÊNALTI!",
+                "t": "PENALTI!!!",
                 "j": 2,
-                "tr": -18,
+                "tr": 0,
                 "lh": 79.2,
                 "ls": 0,
                 "fc": [0.141, 0.141, 0.141]
@@ -275,7 +275,7 @@
       "ddd": 0,
       "ind": 5,
       "ty": 5,
-      "nm": "PÊNALTI! 2",
+      "nm": "PENALTI!!! 2",
       "parent": 1,
       "sr": 1,
       "ks": {
@@ -293,9 +293,9 @@
               "s": {
                 "s": 66,
                 "f": "Geometric415BT-BlackA",
-                "t": "PÊNALTI!",
+                "t": "PENALTI!!!",
                 "j": 2,
-                "tr": -18,
+                "tr": 0,
                 "lh": 79.2,
                 "ls": 0,
                 "fc": [0.906, 0.185, 0.185]
@@ -345,7 +345,7 @@
       "ddd": 0,
       "ind": 6,
       "ty": 5,
-      "nm": "PÊNALTI!",
+      "nm": "PENALTI!!!",
       "parent": 1,
       "sr": 1,
       "ks": {
@@ -393,9 +393,9 @@
               "s": {
                 "s": 66,
                 "f": "Geometric415BT-BlackA",
-                "t": "PÊNALTI!",
+                "t": "PENALTI!!!",
                 "j": 2,
-                "tr": -18,
+                "tr": 0,
                 "lh": 79.2,
                 "ls": 0,
                 "sc": [1, 1, 1],
