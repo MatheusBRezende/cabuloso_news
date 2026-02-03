@@ -5,17 +5,17 @@
 let ultimoLanceId = null;
 
 const CONFIG = {
-  webhookUrl: "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
+  webhookUrl:
+    "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
-  updateInterval: 10000
+  updateInterval: 10000,
 };
 
 const golControl = {
   lastScore: { home: 0, away: 0 },
   lastTrigger: 0,
-  cooldown: 12000 // 12s — ajuste se quiser
+  cooldown: 12000, // 12s — ajuste se quiser
 };
-
 
 const state = {
   matchStarted: false,
@@ -26,9 +26,9 @@ const state = {
     away: { name: "Visitante", logo: "" },
     score: { home: 0, away: 0 },
     status: "AO VIVO",
-    minute: "0'"
+    minute: "0'",
   },
-  logsEnabled: true
+  logsEnabled: true,
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -53,7 +53,6 @@ const fetchLiveData = async () => {
     processarGol();
     detectarNovoLance(data);
     renderAllComponents(data);
-
   } catch (e) {
     if (state.logsEnabled) console.log("⏱️ Countdown ativado");
     state.matchStarted = false;
@@ -61,19 +60,17 @@ const fetchLiveData = async () => {
   }
 };
 
-
 function detectarNovoLance(data) {
   if (!data.narracao || data.narracao.length === 0) return;
 
   const lance = data.narracao[0];
   const id = btoa(unescape(encodeURIComponent(lance.minuto + lance.descricao)));
 
-if (id !== ultimoLanceId) {
-  ultimoLanceId = id;
-  processarNovoLance(lance);
+  if (id !== ultimoLanceId) {
+    ultimoLanceId = id;
+    processarNovoLance(lance);
+  }
 }
-}
-
 
 function detectarGolComDelay() {
   const now = Date.now();
@@ -100,7 +97,6 @@ function detectarGolComDelay() {
   return null;
 }
 
-
 function processarGol() {
   const gol = detectarGolComDelay();
   if (!gol) return;
@@ -116,23 +112,33 @@ function processarGol() {
   }
 }
 
-
 function processarNovoLance(lance) {
-    const desc = lance.descricao.toUpperCase();
-    const icone = lance.icone;
-    // 🟥 VERMELHO
-    if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
-        dispararAnimacaoFullScreen('vermelho');
-        return;
-    }
+  const desc = lance.descricao.toUpperCase();
+  const icone = lance.icone;
 
-    // 🟨 AMARELO
-    if (icone === "🟨" || desc.includes("AMARELO")) {
-        dispararAnimacaoFullScreen('amarelo');
-        return;
-    }
+  // 🟥 VERMELHO
+  if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
+    dispararAnimacaoFullScreen("vermelho");
+    return;
+  }
+
+  // 🟨 AMARELO
+  if (icone === "🟨" || desc.includes("AMARELO")) {
+    dispararAnimacaoFullScreen("amarelo");
+    return;
+  }
+
+  // 🎯 PÊNALTI (Nova verificação)
+  if (
+    desc.includes("PÊNALTI") ||
+    desc.includes("PENALIDADE MÁXIMA") ||
+    desc.includes("NA MARCA DA CAL")
+  ) {
+    // Se você tiver um lottie de pênalti, use: dispararAnimacaoFullScreen('penalti');
+    console.log("🎯 CHANCE REAL DE GOL: PÊNALTI!");
+    return;
+  }
 }
-
 
 /**
  * EXIBE A INTERFACE DE JOGO AO VIVO
@@ -140,7 +146,7 @@ function processarNovoLance(lance) {
 const showLiveMatchUI = () => {
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
-  
+
   if (liveSections) liveSections.style.display = "block";
   if (countdownWrapper) countdownWrapper.style.display = "none";
 
@@ -155,7 +161,7 @@ const showLiveMatchUI = () => {
  */
 const showNextMatchCountdown = () => {
   const nextMatch = getNextMatchFromAgenda();
-  
+
   if (!nextMatch) {
     console.warn("⚠️ Nenhum próximo jogo encontrado na agenda");
     return;
@@ -163,7 +169,7 @@ const showNextMatchCountdown = () => {
 
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
-  
+
   if (liveSections) liveSections.style.display = "none";
   if (countdownWrapper) countdownWrapper.style.display = "block";
 
@@ -177,7 +183,7 @@ const showNextMatchCountdown = () => {
 const renderNextMatchCard = (match) => {
   const container = document.getElementById("live-match-container");
   if (!container) return;
-  
+
   container.innerHTML = `
     <div class="match-header-card" style="background: linear-gradient(135deg, #1a1f3a 0%, #002266 100%); border: 2px solid var(--primary-light);">
       <div class="match-status-badge" style="background: var(--accent); color: var(--primary-dark);">
@@ -222,12 +228,15 @@ const startCountdown = (targetDate) => {
       return;
     }
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const hours = Math.floor(
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    );
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
-    timerElement.textContent = days > 0 
-      ? `${days}d ${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`
-      : `${String(hours).padStart(2, '0')}h ${String(minutes).padStart(2, '0')}m ${String(seconds).padStart(2, '0')}s`;
+    timerElement.textContent =
+      days > 0
+        ? `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`
+        : `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
   };
   state.countdownInterval = setInterval(update, 1000);
   update();
@@ -240,7 +249,8 @@ const loadAgenda = async () => {
   try {
     const response = await fetch(CONFIG.apiUrl);
     const data = await response.json();
-    state.agendaData = (Array.isArray(data) && data.length > 0) ? data[0].agenda : [];
+    state.agendaData =
+      Array.isArray(data) && data.length > 0 ? data[0].agenda : [];
   } catch (error) {
     console.error("❌ Erro ao carregar agenda:", error);
     state.agendaData = [];
@@ -249,20 +259,49 @@ const loadAgenda = async () => {
 
 const getNextMatchFromAgenda = () => {
   if (!state.agendaData || state.agendaData.length === 0) return null;
-  const meses = { "jan": 0, "fev": 1, "mar": 2, "abr": 3, "mai": 4, "jun": 5, "jul": 6, "ago": 7, "set": 8, "out": 9, "nov": 10, "dez": 11 };
+  const meses = {
+    jan: 0,
+    fev: 1,
+    mar: 2,
+    abr: 3,
+    mai: 4,
+    jun: 5,
+    jul: 6,
+    ago: 7,
+    set: 8,
+    out: 9,
+    nov: 10,
+    dez: 11,
+  };
   const now = new Date();
-  const matches = state.agendaData.map(m => {
-    try {
-      const parts = m.data.trim().split(/[,.\s]+/).filter(p => p);
-      const day = parseInt(parts.find(p => /^\d+$/.test(p)));
-      const mesTexto = parts.find(p => meses.hasOwnProperty(p.toLowerCase()));
-      const [hh, mm] = m.hora.split(":").map(Number);
-      const d = new Date(now.getFullYear(), meses[mesTexto.toLowerCase()], day, hh || 0, mm || 0);
-      if (d < now && (now - d) > 86400000) d.setFullYear(now.getFullYear() + 1);
-      return { ...m, dataObj: d };
-    } catch (e) { return null; }
-  }).filter(m => m !== null).sort((a, b) => a.dataObj - b.dataObj);
-  return matches.find(m => m.dataObj > now) || matches[0];
+  const matches = state.agendaData
+    .map((m) => {
+      try {
+        const parts = m.data
+          .trim()
+          .split(/[,.\s]+/)
+          .filter((p) => p);
+        const day = parseInt(parts.find((p) => /^\d+$/.test(p)));
+        const mesTexto = parts.find((p) =>
+          meses.hasOwnProperty(p.toLowerCase()),
+        );
+        const [hh, mm] = m.hora.split(":").map(Number);
+        const d = new Date(
+          now.getFullYear(),
+          meses[mesTexto.toLowerCase()],
+          day,
+          hh || 0,
+          mm || 0,
+        );
+        if (d < now && now - d > 86400000) d.setFullYear(now.getFullYear() + 1);
+        return { ...m, dataObj: d };
+      } catch (e) {
+        return null;
+      }
+    })
+    .filter((m) => m !== null)
+    .sort((a, b) => a.dataObj - b.dataObj);
+  return matches.find((m) => m.dataObj > now) || matches[0];
 };
 
 /**
@@ -280,23 +319,25 @@ function updateMatchState(data) {
 
   // Lógica aprimorada para pegar o minuto
   let minutoAtual = "0'";
-  
+
   // Tenta pegar direto do campo minuto
   if (data.minuto) {
-      minutoAtual = data.minuto;
-  } 
+    minutoAtual = data.minuto;
+  }
   // Se não, pega do último lance da narração
-  else if (data.narracao && Array.isArray(data.narracao) && data.narracao.length > 0) {
-      // Pega o primeiro elemento (geralmente o mais recente é o índice 0 ou o último, dependendo da ordem da API)
-      // Assumindo que o índice 0 é o lance mais novo:
-      minutoAtual = data.narracao[0].minuto; 
+  else if (
+    data.narracao &&
+    Array.isArray(data.narracao) &&
+    data.narracao.length > 0
+  ) {
+    // Pega o primeiro elemento (geralmente o mais recente é o índice 0 ou o último, dependendo da ordem da API)
+    // Assumindo que o índice 0 é o lance mais novo:
+    minutoAtual = data.narracao[0].minuto;
   }
 
   // Limpa caracteres HTML estranhos se vierem da API
-  state.match.minute = minutoAtual.replace(/<[^>]*>?/gm, '').trim();
+  state.match.minute = minutoAtual.replace(/<[^>]*>?/gm, "").trim();
 }
-
-
 
 function renderAllComponents(data) {
   renderScoreboard();
@@ -311,7 +352,7 @@ function renderAllComponents(data) {
 function renderScoreboard() {
   const container = document.getElementById("live-match-container");
   if (!container) return;
-  
+
   // HTML do Badge de Minuto
   const minuteBadge = `
     <div class="match-timer-badge">
@@ -345,39 +386,51 @@ function renderScoreboard() {
   `;
 }
 
-
 function renderTimeline(narracao) {
   const container = document.getElementById("timeline-container");
   if (!container) return;
   container.innerHTML = "";
-  
+
   narracao.forEach((lance, i) => {
     const item = document.createElement("div");
-    
+
     // Determina classes especiais para ícones
-    let iconClass = '';
-    let iconContent = lance.icone || '📝';
-    let extraClass = lance.classe || 'lance-normal';
+    let iconClass = "";
+    let iconContent = lance.icone || "📝";
+    let extraClass = lance.classe || "lance-normal";
 
     // Lógica para detectar cartões e gol baseado na descrição ou classe
     const desc = lance.descricao.toLowerCase();
-    
-    if (lance.is_gol || desc.includes('gol')) {
-        iconClass = 'icon-goal';
-        iconContent = '<i class="fas fa-futbol"></i>';
-        extraClass = 'lance-gol';
-    } else if (desc.includes('amarelo')) {
-        iconClass = 'icon-yellow-card';
-        // Ícone de quadrado (cartão) para animar
-        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>'; 
-    } else if (desc.includes('vermelho')) {
-        iconClass = 'icon-red-card';
-        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+
+    if (lance.is_gol || desc.includes("gol")) {
+      iconClass = "icon-goal";
+      iconContent = '<i class="fas fa-futbol"></i>';
+      extraClass = "lance-gol";
+    } else if (desc.includes("amarelo")) {
+      iconClass = "icon-yellow-card";
+      // Ícone de quadrado (cartão) para animar
+      iconContent =
+        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    } else if (desc.includes("vermelho")) {
+      iconClass = "icon-red-card";
+      iconContent =
+        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    } else if (
+      desc.includes("pênalti") ||
+      desc.includes("penalidade máxima") ||
+      desc.includes("na marca da cal")
+    ) {
+      iconClass = "icon-penalty";
+      iconContent = '<i class="fas fa-bullseye"></i>'; // Ícone de alvo ou bola
+      extraClass = "lance-importante";
     }
 
     item.className = `timeline-item ${extraClass}`;
-    const min = lance.minuto.replace(/\//g, '').replace(/<[^>]*>?/gm, '').trim();
-    
+    const min = lance.minuto
+      .replace(/\//g, "")
+      .replace(/<[^>]*>?/gm, "")
+      .trim();
+
     item.innerHTML = `
       <div class="timeline-time"><span class="time-badge">${min}</span></div>
       <div class="timeline-content">
@@ -396,20 +449,34 @@ function renderStats(stats, side) {
 
   // Atualiza o nome do time no header da escalação
   if (teamNameContainer) {
-    const teamName = side === "home" ? state.match.home.name : state.match.away.name;
+    const teamName =
+      side === "home" ? state.match.home.name : state.match.away.name;
     teamNameContainer.innerHTML = `<i class="fas fa-users"></i> ${teamName.toUpperCase()}`;
   }
 
   // Atualiza estatísticas
   const items = [
-    { label: "Posse", val: side === "home" ? stats.posse_home : stats.posse_away },
-    { label: "Chutes", val: side === "home" ? stats.finalizacoes_home : stats.finalizacoes_away },
-    { label: "Cantos", val: side === "home" ? stats.escanteios_home : stats.escanteios_away }
+    {
+      label: "Posse",
+      val: side === "home" ? stats.posse_home : stats.posse_away,
+    },
+    {
+      label: "Chutes",
+      val: side === "home" ? stats.finalizacoes_home : stats.finalizacoes_away,
+    },
+    {
+      label: "Cantos",
+      val: side === "home" ? stats.escanteios_home : stats.escanteios_away,
+    },
   ];
-  
-  container.innerHTML = items.map(i => `
+
+  container.innerHTML = items
+    .map(
+      (i) => `
     <div class="stat-item"><span class="stat-label">${i.label}</span><span class="stat-value">${i.val || 0}</span></div>
-  `).join('');
+  `,
+    )
+    .join("");
 }
 
 /**
@@ -419,15 +486,15 @@ const renderPlayerTrack = (titulares, reservas) => {
   // Criamos o HTML dos jogadores
   const tpl = (name, isRes) => `
     <div class="player-item-min">
-      <i class="fas fa-user-circle" style="margin-right:8px; color:${isRes ? 'var(--gray-400)' : 'var(--primary)'};"></i>
-      <span style="${isRes ? 'color:var(--gray-500); font-weight:400;' : ''}">${name}</span>
+      <i class="fas fa-user-circle" style="margin-right:8px; color:${isRes ? "var(--gray-400)" : "var(--primary)"};"></i>
+      <span style="${isRes ? "color:var(--gray-500); font-weight:400;" : ""}">${name}</span>
     </div>
   `;
-  
+
   const allPlayers = [
-    ...titulares.map(p => tpl(p, false)),
-    ...reservas.map(p => tpl(p, true))
-  ].join('');
+    ...titulares.map((p) => tpl(p, false)),
+    ...reservas.map((p) => tpl(p, true)),
+  ].join("");
 
   // Retornamos a trilha duplicada para o efeito de loop infinito no CSS
   return `<div class="lineup-players-track">${allPlayers}${allPlayers}</div>`;
@@ -446,7 +513,7 @@ function renderLineups(escalacao, arbitragem) {
   if (homeTeamName) {
     homeTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.home.name.toUpperCase()}`;
   }
-  
+
   if (awayTeamName) {
     awayTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.away.name.toUpperCase()}`;
   }
@@ -456,7 +523,7 @@ function renderLineups(escalacao, arbitragem) {
     const titulares = escalacao.home.titulares || [];
     const reservas = escalacao.home.reservas || [];
     const tecnico = escalacao.home.tecnico || "Técnico não informado";
-    
+
     hCont.innerHTML = `
       <div class="lineup-players-container">
         ${renderPlayerTrack(titulares, reservas)}
@@ -466,7 +533,8 @@ function renderLineups(escalacao, arbitragem) {
       </div>
     `;
   } else if (hCont) {
-    hCont.innerHTML = '<div class="loading-stats">Escalação não disponível</div>';
+    hCont.innerHTML =
+      '<div class="loading-stats">Escalação não disponível</div>';
   }
 
   // Escalação do Visitante - CORREÇÃO: Verifica se existem dados
@@ -474,7 +542,7 @@ function renderLineups(escalacao, arbitragem) {
     const titulares = escalacao.away.titulares || [];
     const reservas = escalacao.away.reservas || [];
     const tecnico = escalacao.away.tecnico || "Técnico não informado";
-    
+
     aCont.innerHTML = `
       <div class="lineup-players-container">
         ${renderPlayerTrack(titulares, reservas)}
@@ -484,7 +552,8 @@ function renderLineups(escalacao, arbitragem) {
       </div>
     `;
   } else if (aCont) {
-    aCont.innerHTML = '<div class="loading-stats">Escalação não disponível</div>';
+    aCont.innerHTML =
+      '<div class="loading-stats">Escalação não disponível</div>';
   }
 
   // Informação da Arbitragem
@@ -513,51 +582,51 @@ function initNavigation() {
 }
 
 function dispararAnimacaoFullScreen(tipo) {
-    const overlay = document.getElementById('fullscreen-overlay');
-    const container = document.getElementById('lottie-fullscreen');
-    
-    if (!overlay || !container) return;
+  const overlay = document.getElementById("fullscreen-overlay");
+  const container = document.getElementById("lottie-fullscreen");
 
-    // Define o caminho do arquivo JSON
-    let path = '';
-    if (tipo === 'gol') path = '../assets/goal.json';
-    if (tipo === 'amarelo') path = '../assets/Carto Amarelo.json';
-    if (tipo === 'vermelho') path = '../assets/Cartão Vermelho.json';
+  if (!overlay || !container) return;
 
-    // Limpa animação anterior, se houver
-    container.innerHTML = '';
-    overlay.style.display = 'flex';
+  // Define o caminho do arquivo JSON
+  let path = "";
+  if (tipo === "gol") path = "../assets/goal.json";
+  if (tipo === "amarelo") path = "../assets/Carto Amarelo.json";
+  if (tipo === "vermelho") path = "../assets/Cartão Vermelho.json";
 
-    const anim = lottie.loadAnimation({
-        container: container,
-        renderer: 'svg',
-        loop: false, // Só passa uma vez para não cansar
-        autoplay: true,
-        path: path
-    });
+  // Limpa animação anterior, se houver
+  container.innerHTML = "";
+  overlay.style.display = "flex";
 
-    // Quando a animação terminar (ou após 4s), fecha o overlay
-    anim.onComplete = () => {
-        overlay.style.display = 'none';
-    };
+  const anim = lottie.loadAnimation({
+    container: container,
+    renderer: "svg",
+    loop: false, // Só passa uma vez para não cansar
+    autoplay: true,
+    path: path,
+  });
 
-    // Backup para fechar caso o JSON tenha loop infinito
-    setTimeout(() => {
-        overlay.style.display = 'none';
-    }, 4500);
+  // Quando a animação terminar (ou após 4s), fecha o overlay
+  anim.onComplete = () => {
+    overlay.style.display = "none";
+  };
+
+  // Backup para fechar caso o JSON tenha loop infinito
+  setTimeout(() => {
+    overlay.style.display = "none";
+  }, 4500);
 }
 
 window.cabulosoTeste = {
-    gol: () => {
-        dispararAnimacaoFullScreen('gol');
-        console.log("⚽ GOOOOL EM TELA CHEIA!");
-    },
-    amarelo: () => {
-        dispararAnimacaoFullScreen('amarelo');
-        console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
-    },
-    vermelho: () => {
-        dispararAnimacaoFullScreen('vermelho');
-        console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
-    }
+  gol: () => {
+    dispararAnimacaoFullScreen("gol");
+    console.log("⚽ GOOOOL EM TELA CHEIA!");
+  },
+  amarelo: () => {
+    dispararAnimacaoFullScreen("amarelo");
+    console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
+  },
+  vermelho: () => {
+    dispararAnimacaoFullScreen("vermelho");
+    console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
+  },
 };
