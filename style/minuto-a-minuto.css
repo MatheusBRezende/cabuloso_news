@@ -836,9 +836,6 @@ ul { list-style: none; }
     align-items: center;
     justify-content: center;
 }
-.lottie-icon svg {
-    transform: scale(5.5);
-}
 
 .timeline-icon.icon-goal {
     background: var(--accent);
@@ -1221,6 +1218,16 @@ ul { list-style: none; }
         grid-template-columns: 1fr 200px 1fr;
         gap: var(--space-4);
     }
+
+    .lottie-icon {
+        width: 500px;
+        height: 500px;
+        overflow: hidden;
+        background: transparent !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
 }
 
 @media (max-width: 1024px) {
@@ -1230,6 +1237,16 @@ ul { list-style: none; }
         max-width: 100%;
     }
     
+    .lottie-icon {
+        width: 500px;
+        height: 500px;
+        overflow: hidden;
+        background: transparent !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
     /* CORREÇÃO: Layout de escalações em telas menores - mostra ambos os times */
     .lineup-layout {
         grid-template-columns: 1fr;
@@ -1315,12 +1332,21 @@ ul { list-style: none; }
         gap: var(--space-3);
     }
     
-    /* CORREÇÃO: Headers das estatísticas/escalações menores em mobile */
     .stats-header {
         font-size: 0.75rem;
         flex-direction: column;
         text-align: center;
         gap: var(--space-2);
+    }
+
+    .lottie-icon {
+        width: 500px;
+        height: 500px;
+        overflow: hidden;
+        background: transparent !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 
@@ -1337,5 +1363,15 @@ ul { list-style: none; }
     .team-logo {
         width: 50px;
         height: 50px;
+    }
+
+    .lottie-icon {
+        width: 500px;
+        height: 500px;
+        overflow: hidden;
+        background: transparent !important;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 }

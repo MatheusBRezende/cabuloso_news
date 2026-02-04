@@ -1,46 +1,17 @@
-/**
- * Cabuloso News - Brasileirão, Mineiro & Competições
- * VERSÃO OTIMIZADA: Single Request + Worker Fix + Cache Local
- */
+import { getFromCache, saveToCache } from './cache.js';
 
-// ============================================
-// CONFIGURATION & STATE
-// ============================================
 const CONFIG_BRASILEIRAO = {
-  // URL Única para todos os dados
-  apiUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/',
-  
+  apiUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/dados',
   defaultEscudo: 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
-  CACHE_TTL: 10 * 60 * 1000 // 10 minutos de cache
+  CACHE_TTL: 10 * 60 * 1000 // 10 minutos
 };
 
 const stateBrasileirao = {
   isLoading: true,
-  dadosCompletos: null, // Guarda o pacote inteiro aqui
+  dadosCompletos: null,
   currentFilter: 'todos',
   campeonatoAtual: 'brasileirao',
 };
-
-// ============================================
-// SISTEMA DE CACHE LOCAL (Igual ao script.js)
-// ============================================
-const LocalCacheBrasileirao = {
-  set(key, data, ttl) {
-    const item = { data, timestamp: Date.now(), ttl };
-    localStorage.setItem(`cache_br_${key}`, JSON.stringify(item));
-  },
-  get(key) {
-    const raw = localStorage.getItem(`cache_br_${key}`);
-    if (!raw) return null;
-    const item = JSON.parse(raw);
-    if (Date.now() - item.timestamp > item.ttl) {
-      localStorage.removeItem(`cache_br_${key}`);
-      return null;
-    }
-    return item.data;
-  }
-};
-
 // ============================================
 // UTILITY FUNCTIONS
 // ============================================
@@ -126,6 +97,7 @@ const encontrarMelhorSegundo = (grupoA, grupoB, grupoC) => {
 // MAIN DATA LOADER (SINGLE REQUEST)
 // ============================================
 const loadMasterDataBrasileirao = async () => {
+  const CACHE_KEY = 'master_data'; 
   const container = document.getElementById('tabela-container');
   const agendaContainer = document.querySelector('.games-list');
   
@@ -140,47 +112,44 @@ const loadMasterDataBrasileirao = async () => {
   try {
     let data;
     
-    // 1. Tenta Cache Local
-    const cached = LocalCacheBrasileirao.get('camp_data');
+    // 1. Tenta pegar do Cache Centralizado
+    const cached = getFromCache(CACHE_KEY);
+    
     if (cached) {
-      console.log("📦 Usando cache local para tabelas");
+      console.log("📦 Brasileirão: Usando Cache Central");
       data = cached;
     } else {
-      // 2. Busca na Worker (1 Request)
-      console.log("🌐 Buscando tabelas na nuvem...");
-      const response = await fetch(CONFIG_BRASILEIRAO.apiUrl);
+      console.log("🌐 Brasileirão: Buscando novos dados...");
+      const response = await fetch(`${CONFIG_BRASILEIRAO.apiUrl}?t=${Date.now()}`);
       if (!response.ok) throw new Error(`Erro HTTP: ${response.status}`);
       
       let rawData = await response.json();
-      
-      // 3. Tratamento do formato [ { ... } ]
       if (Array.isArray(rawData)) rawData = rawData[0];
       
       data = rawData;
-      LocalCacheBrasileirao.set('camp_data', data, CONFIG_BRASILEIRAO.CACHE_TTL);
+      // 2. Salva no Cache Centralizado
+      saveToCache(CACHE_KEY, data, CONFIG_BRASILEIRAO.CACHE_TTL);
     }
 
-    // Salva no estado global
     stateBrasileirao.dadosCompletos = data;
 
-    // 4. Renderiza Agenda (Sempre visível no widget)
     if (data.agenda) {
       renderizarAgenda(data.agenda);
     } else if (agendaContainer) {
       agendaContainer.innerHTML = '<div class="error-jogos"><p>Agenda indisponível</p></div>';
     }
 
-    // 5. Renderiza Tabela Inicial (Brasileirão por padrão)
     refreshCurrentView();
 
   } catch (error) {
-    console.error('Erro geral:', error);
-    if (container) {
-      container.innerHTML = `
-        <div class="error-jogos">
-          <p><i class="fas fa-exclamation-triangle"></i> Falha ao carregar dados.</p>
-          <button onclick="loadMasterDataBrasileirao()" class="btn-retry">Tentar Novamente</button>
-        </div>`;
+    console.error('Erro no Brasileirão:', error);
+    // 3. Backup de emergência caso a API caia
+    const backup = localStorage.getItem(`cache_${CACHE_KEY}`);
+    if (backup && container) {
+       stateBrasileirao.dadosCompletos = JSON.parse(backup).data;
+       refreshCurrentView();
+    } else if (container) {
+      container.innerHTML = `<div class="error-jogos"><p>Falha ao carregar dados.</p></div>`;
     }
   }
 };
@@ -473,17 +442,9 @@ const updateLegend = (campeonato) => {
 };
 
 const initBrasileirao = () => {
-  const start = () => {
-    initInterface();
-    loadMasterDataBrasileirao();
-    updateLegend('brasileirao');
-  };
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', start);
-  } else {
-    start();
-  }
+  initInterface();
+  loadMasterDataBrasileirao();
+  updateLegend('brasileirao');
 };
 
 initBrasileirao();

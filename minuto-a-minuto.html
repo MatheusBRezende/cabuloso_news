@@ -1,4 +1,4 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -103,11 +103,7 @@
               "
               >PRÓXIMO JOGO EM:</span
             >
-            <div
-              id="timer-text"
-            >
-              00:00:00
-            </div>
+            <div id="timer-text">00:00:00</div>
             <p style="color: var(--gray-400)">
               A cobertura completa começa 1 hora antes da partida.
             </p>
@@ -207,10 +203,25 @@
       </div>
     </main>
 
-    <div id="fullscreen-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 9999; justify-content: center; align-items: center; pointer-events: none;">
-    <div id="lottie-fullscreen" ></div>
-    <div id="animation-text-overlay" class="animation-text"></div>
-</div>
+    <div
+      id="fullscreen-overlay"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        pointer-events: none;
+      "
+    >
+      <div id="lottie-fullscreen"></div>
+      <div id="animation-text-overlay" class="animation-text"></div>
+    </div>
 
     <footer class="footer"></footer>
 

@@ -1,58 +1,21 @@
-/**
- * Cabuloso News - Script de Resultados
- * VERSÃO OTIMIZADA: Single Request + Worker Fix + Cache Local
- */
+import { getFromCache, saveToCache } from './cache.js';
 
-// ============================================
-// CONFIGURAÇÃO
-// ============================================
 const CONFIG_RESULTADOS = {
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/dados",
   itemsPerPage: 12,
   defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
-  CACHE_TTL: 10 * 60 * 1000 // 10 minutos
+  CACHE_TTL: 15 * 60 * 1000 
 };
 
-// ============================================
-// ESTADO
-// ============================================
 const state = {
   allResults: [],
   filteredResults: [],
   currentPage: 1,
   currentView: 'cards',
   currentCompetition: 'all',
-  stats: {
-    total: 0,
-    vitorias: 0,
-    empates: 0,
-    derrotas: 0
-  }
+  stats: { total: 0, vitorias: 0, empates: 0, derrotas: 0 }
 };
 
-// ============================================
-// SISTEMA DE CACHE LOCAL (Igual ao script.js)
-// ============================================
-const LocalCacheResultados = {
-  set(key, data, ttl) {
-    const item = { data, timestamp: Date.now(), ttl };
-    localStorage.setItem(`cache_res_${key}`, JSON.stringify(item));
-  },
-  get(key) {
-    const raw = localStorage.getItem(`cache_res_${key}`);
-    if (!raw) return null;
-    const item = JSON.parse(raw);
-    if (Date.now() - item.timestamp > item.ttl) {
-      localStorage.removeItem(`cache_res_${key}`);
-      return null;
-    }
-    return item.data;
-  }
-};
-
-// ============================================
-// INICIALIZAÇÃO
-// ============================================
 document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
   initViewToggle();
@@ -61,9 +24,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadResultados();
 });
 
-// ============================================
-// NAVEGAÇÃO MOBILE
-// ============================================
 const initNavigation = () => {
   const menuToggle = document.getElementById('menuToggle');
   const navMenu = document.getElementById('nav-menu');
@@ -84,9 +44,6 @@ const initNavigation = () => {
   });
 };
 
-// ============================================
-// TOGGLE DE VISUALIZAÇÃO
-// ============================================
 const initViewToggle = () => {
   const viewBtns = document.querySelectorAll('.view-btn');
 
@@ -101,9 +58,7 @@ const initViewToggle = () => {
   });
 };
 
-// ============================================
-// TABS DE COMPETIÇÃO
-// ============================================
+
 const initCompetitionTabs = () => {
   const tabs = document.querySelectorAll('.tab-btn');
 
@@ -119,9 +74,6 @@ const initCompetitionTabs = () => {
   });
 };
 
-// ============================================
-// PAGINAÇÃO
-// ============================================
 const initPagination = () => {
   const prevBtn = document.getElementById('prevPage');
   const nextBtn = document.getElementById('nextPage');
@@ -163,43 +115,36 @@ const updatePagination = () => {
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-// ============================================
-// CARREGAR RESULTADOS (OTIMIZADO)
-// ============================================
 const loadResultados = async () => {
+  const CACHE_KEY = 'master_data'; 
   showLoading();
 
   try {
-    let finalData = [];
+    let data;
 
-    // 1. Tenta pegar do Cache Local
-    const cached = LocalCacheResultados.get('resultados_page');
+    const cached = getFromCache(CACHE_KEY);
     
     if (cached) {
-      console.log("📦 Usando cache local para resultados");
-      finalData = cached;
+      console.log("📦 Resultados: Usando Cache Central");
+      data = cached;
     } else {
-      // 2. Busca na Worker (API Única)
-      console.log("🌐 Buscando resultados na nuvem...");
-      const response = await fetch(CONFIG_RESULTADOS.apiUrl);
+      console.log("🌐 Resultados: Buscando novos dados...");
+      const response = await fetch(`${CONFIG_RESULTADOS.apiUrl}?t=${Date.now()}`);
       if (!response.ok) throw new Error('Erro ao carregar dados');
 
       let rawData = await response.json();
-
-      // 3. Tratamento do pacote n8n [ { ... } ]
       if (Array.isArray(rawData)) rawData = rawData[0];
-
-      // 4. Extrai a chave 'resultados'
-      if (rawData.resultados) {
-        finalData = rawData.resultados;
-        // Salva no cache
-        LocalCacheResultados.set('resultados_page', finalData, CONFIG_RESULTADOS.CACHE_TTL);
-      } else {
-        throw new Error("Chave 'resultados' não encontrada no JSON");
-      }
+      
+      data = rawData;
+      // Salva no cache central
+      saveToCache(CACHE_KEY, data, CONFIG_RESULTADOS.CACHE_TTL);
     }
 
-    state.allResults = finalData;
+    if (data.resultados) {
+      state.allResults = data.resultados;
+    } else {
+      throw new Error("Chave 'resultados' não encontrada");
+    }
 
     if (state.allResults.length === 0) {
       showEmpty();
@@ -220,9 +165,6 @@ const loadResultados = async () => {
   }
 };
 
-// ============================================
-// FILTRAR POR COMPETIÇÃO
-// ============================================
 const filterByCompetition = () => {
   if (state.currentCompetition === 'all') {
     state.filteredResults = [...state.allResults];
@@ -237,9 +179,6 @@ const filterByCompetition = () => {
   updatePagination();
 };
 
-// ============================================
-// CALCULAR ESTATÍSTICAS
-// ============================================
 const calculateStats = () => {
   const stats = { total: state.allResults.length, vitorias: 0, empates: 0, derrotas: 0 };
 
@@ -273,9 +212,6 @@ const calculateStats = () => {
   state.stats = stats;
 };
 
-// ============================================
-// ATUALIZAR ESTATÍSTICAS DO HEADER
-// ============================================
 const updateHeaderStats = () => {
   const elements = {
     total: document.getElementById('statTotalGames'),
@@ -290,9 +226,6 @@ const updateHeaderStats = () => {
   if (elements.derrotas) elements.derrotas.textContent = state.stats.derrotas;
 };
 
-// ============================================
-// ATUALIZAR CARDS DE ESTATÍSTICAS
-// ============================================
 const updateStatsCards = () => {
   const container = document.getElementById('statsGridContainer');
   if (!container) return;
@@ -339,9 +272,6 @@ const updateStatsCards = () => {
   `;
 };
 
-// ============================================
-// RENDERIZAR HISTÓRICO HORIZONTAL
-// ============================================
 const renderHorizontalHistory = () => {
   const container = document.getElementById('horizontalMatches');
   if (!container) return;
@@ -387,9 +317,6 @@ const renderHorizontalHistory = () => {
   }).join('');
 };
 
-// ============================================
-// RENDERIZAR RESULTADOS (CARDS E TABELA)
-// ============================================
 const renderResults = () => {
   const start = (state.currentPage - 1) * CONFIG_RESULTADOS.itemsPerPage;
   const end = start + CONFIG_RESULTADOS.itemsPerPage;
@@ -499,9 +426,7 @@ const renderTableView = (results) => {
   }).join('');
 };
 
-// ============================================
-// ESTADOS DE CARREGAMENTO
-// ============================================
+
 const showLoading = () => {
   const cardsContainer = document.getElementById('resultsCards');
   if (cardsContainer) cardsContainer.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p>Carregando resultados...</p></div>`;
@@ -517,9 +442,6 @@ const showEmpty = () => {
   if (cardsContainer) cardsContainer.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Nenhum resultado encontrado.</p></div>`;
 };
 
-// ============================================
-// UTILITÁRIOS
-// ============================================
 const escapeHtml = (text) => {
   if (!text) return '';
   const div = document.createElement('div');
@@ -527,5 +449,12 @@ const escapeHtml = (text) => {
   return div.innerHTML;
 };
 
-// Exportar para uso global
-window.loadResultados = loadResultados;
+const init = () => {
+  initNavigation();
+  initViewToggle();
+  initCompetitionTabs();
+  initPagination();
+  loadResultados();
+};
+
+window.retryLoadResultados = loadResultados;

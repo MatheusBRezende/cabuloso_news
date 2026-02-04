@@ -5,16 +5,15 @@
 let ultimoLanceId = null;
 
 const CONFIG = {
-  webhookUrl:
-    "https://spikeofino-meu-n8n-cabuloso.hf.space/webhook/placar-ao-vivo",
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+  webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/dados",
   updateInterval: 10000,
 };
 
 const golControl = {
   lastScore: { home: 0, away: 0 },
   lastTrigger: 0,
-  cooldown: 12000, // 12s — ajuste se quiser
+  cooldown: 12000,
 };
 
 const state = {
@@ -40,12 +39,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 const fetchLiveData = async () => {
   try {
-    const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`);
-    const text = await response.text();
-    if (!text || text === "[]") throw new Error("Resposta vazia");
+    const response = await fetch(
+      `${CONFIG.webhookUrl}?type=ao-vivo&t=${Date.now()}`
+    );
+    const data = await response.json();
 
-    const data = JSON.parse(text);
+    if (data.error || !data.mandante) {
+      if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem jogo ao vivo.");
+      state.matchStarted = false;
+      showNextMatchCountdown(); 
+      return;
+    }
 
+    // Se chegou aqui, tem jogo!
     state.matchStarted = true;
     showLiveMatchUI();
 
@@ -53,8 +59,9 @@ const fetchLiveData = async () => {
     processarGol();
     detectarNovoLance(data);
     renderAllComponents(data);
+    
   } catch (e) {
-    if (state.logsEnabled) console.log("⏱️ Countdown ativado");
+    if (state.logsEnabled) console.log("⚠️ Erro na requisição, ativando Countdown");
     state.matchStarted = false;
     showNextMatchCountdown();
   }
@@ -102,12 +109,10 @@ function processarGol() {
   if (!gol) return;
 
   if (gol === "HOME") {
-    console.log("⚽ GOL DO CRUZEIRO!");
     dispararAnimacaoFullScreen("gol");
   }
 
   if (gol === "AWAY") {
-    console.log("😡 GOL DELES!");
     dispararAnimacaoFullScreen("gol");
   }
 }
@@ -116,25 +121,17 @@ function processarNovoLance(lance) {
   const desc = lance.descricao.toUpperCase();
   const icone = lance.icone;
 
-  // 🟥 VERMELHO
   if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
     dispararAnimacaoFullScreen("vermelho");
     return;
   }
 
-  // 🟨 AMARELO
-  if (icone === "🟨" || desc.includes("AMARELO")) {
+  if (desc.includes("AMARELO") || desc.includes("CARTÃO AMARELO")) {
     dispararAnimacaoFullScreen("amarelo");
     return;
   }
 
-  // 🎯 PÊNALTI (Nova verificação)
-  if (
-    desc.includes("PÊNALTI") ||
-    desc.includes("PENALIDADE MÁXIMA") ||
-    desc.includes("NA MARCA DA CAL")
-  ) {
-    // Se você tiver um lottie de pênalti, use: dispararAnimacaoFullScreen('penalti');
+  if (desc.includes("PÊNALTI") || desc.includes("PENALIDADE MÁXIMA")) {
     console.log("🎯 CHANCE REAL DE GOL: PÊNALTI!");
     return;
   }
@@ -229,14 +226,19 @@ const startCountdown = (targetDate) => {
     }
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
     const hours = Math.floor(
-      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
     );
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
     timerElement.textContent =
       days > 0
-        ? `${days}d ${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`
-        : `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+        ? `${days}d ${String(hours).padStart(2, "0")}h ${String(
+            minutes
+          ).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`
+        : `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(
+            2,
+            "0"
+          )}m ${String(seconds).padStart(2, "0")}s`;
   };
   state.countdownInterval = setInterval(update, 1000);
   update();
@@ -283,7 +285,7 @@ const getNextMatchFromAgenda = () => {
           .filter((p) => p);
         const day = parseInt(parts.find((p) => /^\d+$/.test(p)));
         const mesTexto = parts.find((p) =>
-          meses.hasOwnProperty(p.toLowerCase()),
+          meses.hasOwnProperty(p.toLowerCase())
         );
         const [hh, mm] = m.hora.split(":").map(Number);
         const d = new Date(
@@ -291,7 +293,7 @@ const getNextMatchFromAgenda = () => {
           meses[mesTexto.toLowerCase()],
           day,
           hh || 0,
-          mm || 0,
+          mm || 0
         );
         if (d < now && now - d > 86400000) d.setFullYear(now.getFullYear() + 1);
         return { ...m, dataObj: d };
@@ -473,8 +475,10 @@ function renderStats(stats, side) {
   container.innerHTML = items
     .map(
       (i) => `
-    <div class="stat-item"><span class="stat-label">${i.label}</span><span class="stat-value">${i.val || 0}</span></div>
-  `,
+    <div class="stat-item"><span class="stat-label">${
+      i.label
+    }</span><span class="stat-value">${i.val || 0}</span></div>
+  `
     )
     .join("");
 }
@@ -486,8 +490,12 @@ const renderPlayerTrack = (titulares, reservas) => {
   // Criamos o HTML dos jogadores
   const tpl = (name, isRes) => `
     <div class="player-item-min">
-      <i class="fas fa-user-circle" style="margin-right:8px; color:${isRes ? "var(--gray-400)" : "var(--primary)"};"></i>
-      <span style="${isRes ? "color:var(--gray-500); font-weight:400;" : ""}">${name}</span>
+      <i class="fas fa-user-circle" style="margin-right:8px; color:${
+        isRes ? "var(--gray-400)" : "var(--primary)"
+      };"></i>
+      <span style="${
+        isRes ? "color:var(--gray-500); font-weight:400;" : ""
+      }">${name}</span>
     </div>
   `;
 
@@ -582,70 +590,73 @@ function initNavigation() {
 }
 
 function dispararAnimacaoFullScreen(tipo) {
-    const overlay = document.getElementById("fullscreen-overlay");
-    const container = document.getElementById("lottie-fullscreen");
-    const textOverlay = document.getElementById("animation-text-overlay");
+  const overlay = document.getElementById("fullscreen-overlay");
+  const container = document.getElementById("lottie-fullscreen");
+  const textOverlay = document.getElementById("animation-text-overlay");
 
-    if (!overlay || !container || !textOverlay) return;
+  if (!overlay || !container || !textOverlay) return;
 
-    // Reseta classes e estado
-    textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho");
-    textOverlay.innerText = "";
-    container.innerHTML = "";
-    overlay.style.display = "flex";
+  // Reseta classes e estado
+  textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho");
+  textOverlay.innerText = "";
+  container.innerHTML = "";
+  overlay.style.display = "flex";
 
-    // Define o texto
-    if (tipo === "amarelo") {
-        textOverlay.innerText = "CARTÃO AMARELO";
-        textOverlay.classList.add("text-amarelo");
-    } else if (tipo === "vermelho") {
-        textOverlay.innerText = "CARTÃO VERMELHO";
-        textOverlay.classList.add("text-vermelho");
-    }
+  // Define o texto
+  if (tipo === "amarelo") {
+    textOverlay.innerText = "CARTÃO AMARELO";
+    textOverlay.classList.add("text-amarelo");
+  } else if (tipo === "vermelho") {
+    textOverlay.innerText = "CARTÃO VERMELHO";
+    textOverlay.classList.add("text-vermelho");
+  }
+  // Força o navegador a reconhecer o reset para reiniciar a animação CSS
+  void textOverlay.offsetWidth;
 
-    // Força o navegador a reconhecer o reset para reiniciar a animação CSS
-    void textOverlay.offsetWidth; 
+  // Dispara a animação
+  textOverlay.classList.add("jump");
 
-    // Dispara a animação
-    textOverlay.classList.add("jump");
+  let path =
+    tipo === "amarelo"
+      ? "../assets/Carto Amarelo.json"
+      : tipo === "vermelho"
+      ? "../assets/Cartão Vermelho.json"
+      : "../assets/Penalti.json";
+  if (tipo === "gol") path = "../assets/goal.json";
 
-    // Lottie (mantendo seu código de path)
-    let path = (tipo === "amarelo") ? "../assets/Carto Amarelo.json" : "../assets/Cartão Vermelho.json";
-    if (tipo === "gol") path = "../assets/goal.json";
+  const anim = lottie.loadAnimation({
+    container: container,
+    renderer: "svg",
+    loop: false,
+    autoplay: true,
+    path: path,
+  });
 
-    const anim = lottie.loadAnimation({
-        container: container,
-        renderer: "svg",
-        loop: false,
-        autoplay: true,
-        path: path,
-    });
-
-anim.onComplete = () => {
+  anim.onComplete = () => {
     // Esperamos a animação de 2.8s de cores + a piscada acabar
     setTimeout(() => {
-        overlay.style.display = "none";
-        textOverlay.classList.remove("jump");
+      overlay.style.display = "none";
+      textOverlay.classList.remove("jump");
     }, 500); // Ajustado para dar tempo de ver o cinza final
-};
+  };
 }
 
 window.cabulosoTeste = {
-    gol: () => {
-        dispararAnimacaoFullScreen('gol');
-        console.log("⚽ GOOOOL EM TELA CHEIA!");
-    },
-    amarelo: () => {
-        dispararAnimacaoFullScreen('amarelo');
-        console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
-    },
-    vermelho: () => {
-        dispararAnimacaoFullScreen('vermelho');
-        console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
-    },
-    // ADICIONE ESTA LINHA:
-    penalti: () => {
-        console.log("🎯 PÊNALTI DETECTADO!");
-        dispararAnimacaoFullScreen('penalti'); 
-    }
+  gol: () => {
+    dispararAnimacaoFullScreen("gol");
+    console.log("⚽ GOOOOL EM TELA CHEIA!");
+  },
+  amarelo: () => {
+    dispararAnimacaoFullScreen("amarelo");
+    console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
+  },
+  vermelho: () => {
+    dispararAnimacaoFullScreen("vermelho");
+    console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
+  },
+  // ADICIONE ESTA LINHA:
+  penalti: () => {
+    console.log("🎯 PÊNALTI DETECTADO!");
+    dispararAnimacaoFullScreen("penalti");
+  },
 };
