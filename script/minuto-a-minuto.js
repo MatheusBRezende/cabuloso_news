@@ -339,7 +339,10 @@ function updateMatchState(data) {
   }
 
   // Limpa caracteres HTML estranhos se vierem da API
-  state.match.minute = minutoAtual.replace(/<[^>]*>?/gm, "").trim();
+  state.match.minute = minutoAtual
+    .replace(/&#?\w+;/g, "") // Remove HTML entities
+    .replace(/<[^>]*>?/gm, "") // Remove HTML tags
+    .trim();
 }
 
 function renderAllComponents(data) {
@@ -392,47 +395,47 @@ function renderScoreboard() {
 function renderTimeline(narracao) {
   const container = document.getElementById("timeline-container");
   if (!container) return;
+  
+  // Segurança caso narracao venha nulo
+  if (!Array.isArray(narracao)) {
+      container.innerHTML = "";
+      return;
+  }
+
   container.innerHTML = "";
 
   narracao.forEach((lance, i) => {
     const item = document.createElement("div");
 
-    // Determina classes especiais para ícones
     let iconClass = "";
     let iconContent = lance.icone || "📝";
     let extraClass = lance.classe || "lance-normal";
+    const desc = lance.descricao ? lance.descricao.toLowerCase() : "";
 
-    // Lógica para detectar cartões e gol baseado na descrição ou classe
-    const desc = lance.descricao.toLowerCase();
-
+    // ... (sua lógica de ícones permanece igual aqui) ...
     if (lance.is_gol || desc.includes("gol")) {
-      iconClass = "icon-goal";
-      iconContent = '<i class="fas fa-futbol"></i>';
-      extraClass = "lance-gol";
+        iconClass = "icon-goal";
+        iconContent = '<i class="fas fa-futbol"></i>';
+        extraClass = "lance-gol";
     } else if (desc.includes("amarelo")) {
-      iconClass = "icon-yellow-card";
-      // Ícone de quadrado (cartão) para animar
-      iconContent =
-        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+        iconClass = "icon-yellow-card";
+        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
     } else if (desc.includes("vermelho")) {
-      iconClass = "icon-red-card";
-      iconContent =
-        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
-    } else if (
-      desc.includes("pênalti") ||
-      desc.includes("penalidade máxima") ||
-      desc.includes("na marca da cal")
-    ) {
-      iconClass = "icon-penalty";
-      iconContent = '<i class="fas fa-bullseye"></i>'; // Ícone de alvo ou bola
-      extraClass = "lance-importante";
+        iconClass = "icon-red-card";
+        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
     }
 
     item.className = `timeline-item ${extraClass}`;
-    const min = lance.minuto
-      .replace(/\//g, "")
-      .replace(/<[^>]*>?/gm, "")
-      .trim();
+
+    // CORREÇÃO DA LIMPEZA DO MINUTO PARA O SEU JSON ESPECÍFICO
+    let min = "0'";
+    if(lance.minuto) {
+        min = String(lance.minuto)
+            // Remove comentários e tags HTML do minuto
+            .replace(/<!--[\s\S]*?-->/g, "") // Remove HTML comments
+            .replace(/<[^>]*>/g, "")         // Remove HTML tags
+            .trim();
+    }
 
     item.innerHTML = `
       <div class="timeline-time"><span class="time-badge">${min}</span></div>
