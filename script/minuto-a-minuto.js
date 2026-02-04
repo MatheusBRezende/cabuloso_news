@@ -44,7 +44,8 @@ const fetchLiveData = async () => {
     );
     const data = await response.json();
 
-    if (data.error || !data.mandante) {
+    // CORREÇÃO AQUI: Verificamos 'placar' ou 'success' em vez de 'mandante'
+    if (data.error || (!data.placar && !data.success)) {
       if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem jogo ao vivo.");
       state.matchStarted = false;
       showNextMatchCountdown(); 
@@ -61,7 +62,7 @@ const fetchLiveData = async () => {
     renderAllComponents(data);
     
   } catch (e) {
-    if (state.logsEnabled) console.log("⚠️ Erro na requisição, ativando Countdown");
+    if (state.logsEnabled) console.error("⚠️ Erro na requisição:", e);
     state.matchStarted = false;
     showNextMatchCountdown();
   }
