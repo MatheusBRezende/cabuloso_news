@@ -512,14 +512,21 @@ ul { list-style: none; }
     box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
-/* --- LAYOUT DO PLACAR (CORRIGIDO) --- */
+
+.match-status-badge.live-pulse {
+    animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* --- LAYOUT DO PLACAR (CORRIGIDO E OTIMIZADO) --- */
 .score-row {
     display: flex;
     align-items: center;
-    justify-content: center; /* Centraliza tudo */
-    gap: 0; /* Remove gap geral, controlaremos nos elementos filhos */
+    justify-content: space-between;
+    gap: var(--space-8);
     padding: var(--space-4) 0;
     position: relative;
+    max-width: 1000px;
+    margin: 0 auto;
 }
 
 .team-info {
@@ -527,75 +534,96 @@ ul { list-style: none; }
     align-items: center;
     gap: var(--space-4);
     flex: 1;
-    width: 0; /* Truque do flexbox para dividir espaços iguais */
+    max-width: 320px;
 }
 
 /* Time da Esquerda (Mandante) */
 .team-info.team-home {
-    justify-content: flex-end; /* Cola no placar */
-    padding-right: var(--space-8); /* Espaço seguro do placar */
+    justify-content: flex-end;
     text-align: right;
 }
 
 /* Time da Direita (Visitante) */
 .team-info.team-away {
-    flex-direction: row-reverse; /* Inverte a ordem: Nome <-> Logo */
-    justify-content: flex-end; /* Cola no placar (que está à esquerda agora devido ao reverse) */
-    padding-left: var(--space-8); /* Espaço seguro do placar */
+    flex-direction: row-reverse;
+    justify-content: flex-start;
     text-align: left;
 }
 
 .team-logo {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
+    flex-shrink: 0;
+    object-fit: contain;
 }
 
 .team-name {
-    font-size: 2.8rem;
-    letter-spacing: 2px;
+    font-size: 1.3rem;
+    letter-spacing: 1px;
     font-weight: 700;
-    color: rgb(138, 138, 138);
-    text-align: center;
-    min-width: 120px;
+    color: var(--gray-700);
+    min-width: 100px;
+    max-width: 220px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
     font-family: var(--font-display);
+    text-transform: uppercase;
 }
 
-.score-container {
+.score-display {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
-    min-width: 180px; /* Garante largura fixa para não dançar */
+    gap: var(--space-3);
+    min-width: 220px;
+    position: relative;
 }
 
-.score {
-    font-size: 4rem;
+/* Container dos números do placar */
+.score-numbers {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.score-number {
+    font-size: 4.5rem;
     font-weight: 800;
     color: var(--primary);
     line-height: 1;
+    font-family: var(--font-display);
 }
 
 .score-divider {
-    font-size: 2rem;
+    font-size: 2.5rem;
     color: var(--gray-400);
     font-weight: 400;
 }
 
-/* --- NOVO: MINUTAGEM ACIMA DO PLACAR --- */
+/* --- MINUTAGEM ACIMA DO PLACAR --- */
 .match-timer-badge {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    margin: 0 auto var(--space-4) auto; /* Centraliza e dá margem inferior */
-    background: rgba(0, 0, 0, 0.05);
-    padding: 4px 16px;
-    border-radius: 20px;
-    width: fit-content;
-    border: 1px solid rgba(0,0,0,0.1);
+    background: var(--primary);
+    color: var(--white);
+    padding: 8px 24px;
+    border-radius: 25px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    box-shadow: 0 3px 12px rgba(0, 51, 153, 0.4);
+    white-space: nowrap;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.match-timer-badge i {
+    font-size: 0.75rem;
+    animation: pulse 2s ease-in-out infinite;
 }
 
 .timer-dot {
@@ -1373,5 +1401,68 @@ ul { list-style: none; }
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+}
+/* === AJUSTES FINAIS DE RESPONSIVIDADE PARA PLACAR === */
+@media (max-width: 768px) {
+    .score-row {
+        flex-direction: column;
+        gap: var(--space-6);
+        max-width: 100%;
+    }
+
+    .team-info {
+        width: 100%;
+        max-width: 100%;
+        justify-content: center !important;
+    }
+    
+    .team-info.team-home,
+    .team-info.team-away {
+        flex-direction: row !important;
+        justify-content: center !important;
+        text-align: center;
+    }
+    
+    .team-logo {
+        width: 60px !important;
+        height: 60px !important;
+    }
+    
+    .team-name {
+        font-size: 1.1rem !important;
+    }
+    
+    .score-number {
+        font-size: 3.5rem !important;
+    }
+    
+    .score-divider {
+        font-size: 2rem !important;
+    }
+    
+    .match-timer-badge {
+        font-size: 0.8rem;
+        padding: 6px 18px;
+    }
+}
+
+@media (max-width: 480px) {
+    .team-logo {
+        width: 50px !important;
+        height: 50px !important;
+    }
+    
+    .team-name {
+        font-size: 0.95rem !important;
+    }
+    
+    .score-number {
+        font-size: 3rem !important;
+    }
+    
+    .match-timer-badge {
+        font-size: 0.75rem;
+        padding: 5px 15px;
     }
 }

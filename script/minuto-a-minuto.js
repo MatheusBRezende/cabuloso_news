@@ -1,6 +1,6 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão: 7.0 - COMPLETA com Loop Infinito de Escalações
+ * Versão: 7.2 - CORRIGIDA (Renderização Garantida)
  */
 let ultimoLanceId = null;
 
@@ -40,19 +40,30 @@ document.addEventListener("DOMContentLoaded", async () => {
 const fetchLiveData = async () => {
   try {
     const response = await fetch(
-      `${CONFIG.webhookUrl}?type=ao-vivo&t=${Date.now()}`
+      `${CONFIG.webhookUrl}&t=${Date.now()}`
     );
-    const data = await response.json();
+    let data = await response.json();
 
-    // CORREÇÃO AQUI: Verificamos 'placar' ou 'success' em vez de 'mandante'
-    if (data.error || (!data.placar && !data.success)) {
+    // Se a API retornar uma lista [], pegamos o primeiro objeto
+    if (Array.isArray(data)) {
+      data = data[0];
+    }
+
+    // CORREÇÃO: Verificação melhorada para garantir renderização
+    // Se temos success:true ou se temos placar válido, é jogo ao vivo
+    const isLiveMatch = data && (
+      data.success === true || 
+      (data.placar && data.placar.status && data.narracao)
+    );
+
+    if (!isLiveMatch || data.error) {
       if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem jogo ao vivo.");
       state.matchStarted = false;
-      showNextMatchCountdown(); 
+      showNextMatchCountdown();
       return;
     }
 
-    // Se chegou aqui, tem jogo!
+    console.log("✅ Jogo ao vivo detectado! Renderizando...");
     state.matchStarted = true;
     showLiveMatchUI();
 
@@ -60,7 +71,7 @@ const fetchLiveData = async () => {
     processarGol();
     detectarNovoLance(data);
     renderAllComponents(data);
-    
+
   } catch (e) {
     if (state.logsEnabled) console.error("⚠️ Erro na requisição:", e);
     state.matchStarted = false;
@@ -72,7 +83,8 @@ function detectarNovoLance(data) {
   if (!data.narracao || data.narracao.length === 0) return;
 
   const lance = data.narracao[0];
-  const id = btoa(unescape(encodeURIComponent(lance.minuto + lance.descricao)));
+  const minutoSafe = lance.minuto ? String(lance.minuto) : "";
+  const id = btoa(unescape(encodeURIComponent(minutoSafe + lance.descricao)));
 
   if (id !== ultimoLanceId) {
     ultimoLanceId = id;
@@ -119,8 +131,7 @@ function processarGol() {
 }
 
 function processarNovoLance(lance) {
-  const desc = lance.descricao.toUpperCase();
-  const icone = lance.icone;
+  const desc = lance.descricao ? lance.descricao.toUpperCase() : "";
 
   if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
     dispararAnimacaoFullScreen("vermelho");
@@ -134,6 +145,8 @@ function processarNovoLance(lance) {
 
   if (desc.includes("PÊNALTI") || desc.includes("PENALIDADE MÁXIMA")) {
     console.log("🎯 CHANCE REAL DE GOL: PÊNALTI!");
+    // Opcional: Se quiser animação de tela cheia para pênalti, descomente abaixo:
+    // dispararAnimacaoFullScreen("penalti"); 
     return;
   }
 }
@@ -241,170 +254,196 @@ const startCountdown = (targetDate) => {
             "0"
           )}m ${String(seconds).padStart(2, "0")}s`;
   };
-  state.countdownInterval = setInterval(update, 1000);
   update();
+  state.countdownInterval = setInterval(update, 1000);
 };
 
-/**
- * CARREGA AGENDA E PEGA PRÓXIMO JOGO
- */
-const loadAgenda = async () => {
+async function loadAgenda() {
   try {
-    const response = await fetch(CONFIG.apiUrl);
+    const response = await fetch(
+      `${CONFIG.apiUrl}?type=geral&t=${Date.now()}`
+    );
     const data = await response.json();
-    state.agendaData =
-      Array.isArray(data) && data.length > 0 ? data[0].agenda : [];
-  } catch (error) {
-    console.error("❌ Erro ao carregar agenda:", error);
-    state.agendaData = [];
+    
+    // Verifica se existe a propriedade 'agenda' com jogos
+    if (data && !data.error && data.agenda && Array.isArray(data.agenda)) {
+      // Converte a estrutura da agenda para o formato esperado
+      state.agendaData = {
+        jogos: data.agenda
+      };
+      console.log("📅 Agenda carregada:", data.agenda.length, "jogos");
+    } else {
+      console.warn("⚠️ Agenda retornou vazia ou com erro");
+    }
+  } catch (e) {
+    console.error("⚠️ Erro ao carregar agenda:", e);
   }
-};
+}
 
-const getNextMatchFromAgenda = () => {
-  if (!state.agendaData || state.agendaData.length === 0) return null;
-  const meses = {
-    jan: 0,
-    fev: 1,
-    mar: 2,
-    abr: 3,
-    mai: 4,
-    jun: 5,
-    jul: 6,
-    ago: 7,
-    set: 8,
-    out: 9,
-    nov: 10,
-    dez: 11,
-  };
+function getNextMatchFromAgenda() {
+  if (!state.agendaData || !state.agendaData.jogos) return null;
   const now = new Date();
-  const matches = state.agendaData
-    .map((m) => {
-      try {
-        const parts = m.data
-          .trim()
-          .split(/[,.\s]+/)
-          .filter((p) => p);
-        const day = parseInt(parts.find((p) => /^\d+$/.test(p)));
-        const mesTexto = parts.find((p) =>
-          meses.hasOwnProperty(p.toLowerCase())
-        );
-        const [hh, mm] = m.hora.split(":").map(Number);
-        const d = new Date(
-          now.getFullYear(),
-          meses[mesTexto.toLowerCase()],
-          day,
-          hh || 0,
-          mm || 0
-        );
-        if (d < now && now - d > 86400000) d.setFullYear(now.getFullYear() + 1);
-        return { ...m, dataObj: d };
-      } catch (e) {
-        return null;
-      }
-    })
-    .filter((m) => m !== null)
-    .sort((a, b) => a.dataObj - b.dataObj);
-  return matches.find((m) => m.dataObj > now) || matches[0];
-};
+  let closest = null;
+  let minDiff = Infinity;
 
-/**
- * ATUALIZA O ESTADO E RENDERIZA COMPONENTES
- */
+  state.agendaData.jogos.forEach((jogo) => {
+    const dataMatch = parseMatchDate(jogo.data, jogo.hora);
+    if (!dataMatch || dataMatch < now) return;
+
+    const diff = dataMatch - now;
+    if (diff < minDiff) {
+      minDiff = diff;
+      closest = { ...jogo, dataObj: dataMatch };
+    }
+  });
+
+  return closest;
+}
+
+function parseMatchDate(dateStr, timeStr) {
+  try {
+    // Remove "qui., " ou "dom., " etc. da data se existir
+    const cleanDate = dateStr.replace(/^[a-z]{3}\.,\s*/i, '').trim();
+    
+    // Separa dia, mês e ano (pode vir como "5 fev." ou "05/02/2026")
+    let day, month, year;
+    
+    if (cleanDate.includes('/')) {
+      // Formato: "05/02/2026"
+      [day, month, year] = cleanDate.split('/');
+    } else {
+      // Formato: "5 fev."
+      const meses = {
+        'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4, 'mai': 5, 'jun': 6,
+        'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12
+      };
+      
+      const parts = cleanDate.split(' ');
+      day = parts[0];
+      const mesStr = parts[1]?.replace('.', '').toLowerCase();
+      month = meses[mesStr] || 1;
+      year = new Date().getFullYear(); // Usa ano atual se não especificado
+    }
+    
+    // Processa hora (pode ser "21:30" ou "A definir")
+    let hour = 0, minute = 0;
+    if (timeStr && timeStr !== 'A definir') {
+      [hour, minute] = timeStr.split(':').map(n => parseInt(n));
+    }
+    
+    return new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hour) || 0,
+      parseInt(minute) || 0
+    );
+  } catch (e) {
+    console.error("Erro ao processar data:", dateStr, timeStr, e);
+    return null;
+  }
+}
+
 function updateMatchState(data) {
-  const placar = data.placar || data;
-  state.match.home.name = placar.home_name || placar.mandante || "Mandante";
-  state.match.away.name = placar.away_name || placar.visitante || "Visitante";
-  state.match.home.logo = placar.home_logo || placar.escudo_mandante || "";
-  state.match.away.logo = placar.away_logo || placar.escudo_visitante || "";
-  state.match.score.home = placar.home ?? placar.placar_mandante ?? 0;
-  state.match.score.away = placar.away ?? placar.placar_visitante ?? 0;
-  state.match.status = placar.status || "AO VIVO";
-
-  // Lógica aprimorada para pegar o minuto
-  let minutoAtual = "0'";
-
-  // Tenta pegar direto do campo minuto
-  if (data.minuto) {
-    minutoAtual = data.minuto;
-  }
-  // Se não, pega do último lance da narração
-  else if (
-    data.narracao &&
-    Array.isArray(data.narracao) &&
-    data.narracao.length > 0
-  ) {
-    // Pega o primeiro elemento (geralmente o mais recente é o índice 0 ou o último, dependendo da ordem da API)
-    // Assumindo que o índice 0 é o lance mais novo:
-    minutoAtual = data.narracao[0].minuto;
-  }
-
-  // Limpa caracteres HTML estranhos se vierem da API
-  state.match.minute = minutoAtual
-    .replace(/&#?\w+;/g, "") // Remove HTML entities
-    .replace(/<[^>]*>?/gm, "") // Remove HTML tags
-    .trim();
+  if (!data.placar) return;
+  
+  state.match.home.name = data.placar.home_name || "Mandante";
+  state.match.home.logo = data.placar.home_logo || "";
+  state.match.away.name = data.placar.away_name || "Visitante";
+  state.match.away.logo = data.placar.away_logo || "";
+  state.match.score.home = data.placar.home || 0;
+  state.match.score.away = data.placar.away || 0;
+  state.match.status = data.placar.status || "AO VIVO";
 }
 
 function renderAllComponents(data) {
-  renderScoreboard();
-  if (data.narracao) renderTimeline(data.narracao);
-  if (data.estatisticas) {
-    renderStats(data.estatisticas, "home");
-    renderStats(data.estatisticas, "away");
-  }
-  if (data.escalacao) renderLineups(data.escalacao, data.arbitragem);
+  renderMatchHeader(data.placar, data.narracao);
+  renderTimeline(data.narracao);
+  renderStats(data.estatisticas, "home");
+  renderStats(data.estatisticas, "away");
+  renderLineups(data.escalacao, data.arbitragem);
 }
 
-function renderScoreboard() {
+function renderMatchHeader(placar, narracao) {
   const container = document.getElementById("live-match-container");
-  if (!container) return;
+  if (!container || !placar) return;
 
-  // HTML do Badge de Minuto
-  const minuteBadge = `
-    <div class="match-timer-badge">
-        <div class="timer-dot"></div>
-        <div class="timer-text">${state.match.minute}</div>
-    </div>
-  `;
+  // Pega o minuto atual do primeiro lance (mais recente)
+  let currentMinute = "0'";
+  if (narracao && narracao.length > 0 && narracao[0].minuto) {
+    currentMinute = String(narracao[0].minuto)
+      .replace(/<[^>]*>/g, "")
+      .trim();
+  }
+
+  // Determina o status baseado no minuto
+  let matchStatus = placar.status || "AO VIVO";
+  
+  // Lógica de mudança automática de status
+  if (currentMinute.includes("45'") && currentMinute.includes("1°T")) {
+    matchStatus = "FIM DO 1° TEMPO";
+  } else if (currentMinute.includes("Int") || currentMinute.toLowerCase().includes("intervalo")) {
+    matchStatus = "INTERVALO";
+  } else if (currentMinute.includes("90'") || (currentMinute.includes("45'") && currentMinute.includes("2°T"))) {
+    matchStatus = "FIM DO 2° TEMPO";
+  } else if (currentMinute.includes("2°T")) {
+    matchStatus = "2° TEMPO";
+  } else if (currentMinute.includes("1°T")) {
+    matchStatus = "1° TEMPO";
+  }
 
   container.innerHTML = `
     <div class="match-header-card">
-      ${minuteBadge} <div class="match-status-badge">${state.match.status}</div>
-      
+      <div class="match-status-badge ${
+        matchStatus.includes("AO VIVO") || matchStatus.includes("TEMPO") ? "live-pulse" : ""
+      }">
+        <i class="fas fa-circle"></i> ${matchStatus}
+      </div>
       <div class="score-row">
         <div class="team-info team-home">
-          <span class="team-name">${state.match.home.name}</span>
-          <img src="${state.match.home.logo}" class="team-logo" alt="${state.match.home.name}">
+          <img src="${placar.home_logo}" alt="${placar.home_name}" class="team-logo" />
+          <span class="team-name">${placar.home_name}</span>
         </div>
-        
-        <div class="score-container">
-          <span class="score">${state.match.score.home}</span>
-          <span class="score-divider">×</span>
-          <span class="score">${state.match.score.away}</span>
+        <div class="score-display">
+          <div class="match-timer-badge">
+            <i class="fas fa-clock"></i>
+            <span>${currentMinute}</span>
+          </div>
+          <div class="score-numbers">
+            <span class="score-number">${placar.home || 0}</span>
+            <span class="score-divider">-</span>
+            <span class="score-number">${placar.away || 0}</span>
+          </div>
         </div>
-        
         <div class="team-info team-away">
-          <span class="team-name">${state.match.away.name}</span>
-          <img src="${state.match.away.logo}" class="team-logo" alt="${state.match.away.name}">
+          <img src="${placar.away_logo}" alt="${placar.away_name}" class="team-logo" />
+          <span class="team-name">${placar.away_name}</span>
         </div>
       </div>
     </div>
   `;
 }
 
+
 function renderTimeline(narracao) {
   const container = document.getElementById("timeline-container");
+  const statusIndicator = document.getElementById("match-status-indicator");
+  const noEventsMessage = document.getElementById("no-events-message");
+
   if (!container) return;
-  
-  // Segurança caso narracao venha nulo
-  if (!Array.isArray(narracao)) {
-      container.innerHTML = "";
-      return;
+
+  if (!narracao || narracao.length === 0) {
+    if (noEventsMessage) noEventsMessage.style.display = "block";
+    if (statusIndicator) statusIndicator.textContent = "AGUARDANDO";
+    return;
   }
+
+  if (noEventsMessage) noEventsMessage.style.display = "none";
+  if (statusIndicator) statusIndicator.textContent = "AO VIVO";
 
   container.innerHTML = "";
 
-  narracao.forEach((lance, i) => {
+  narracao.forEach((lance) => {
     const item = document.createElement("div");
 
     let iconClass = "";
@@ -412,7 +451,7 @@ function renderTimeline(narracao) {
     let extraClass = lance.classe || "lance-normal";
     const desc = lance.descricao ? lance.descricao.toLowerCase() : "";
 
-    // ... (sua lógica de ícones permanece igual aqui) ...
+    // Lógica de Ícones
     if (lance.is_gol || desc.includes("gol")) {
         iconClass = "icon-goal";
         iconContent = '<i class="fas fa-futbol"></i>';
@@ -423,17 +462,18 @@ function renderTimeline(narracao) {
     } else if (desc.includes("vermelho")) {
         iconClass = "icon-red-card";
         iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    } else if (desc.includes("pênalti") || desc.includes("penalidade") || desc.includes("marca da cal")) {
+        iconClass = "icon-penalty";
+        iconContent = '<i class="fas fa-bullseye"></i>';
+        extraClass = "lance-importante";
     }
 
     item.className = `timeline-item ${extraClass}`;
 
-    // CORREÇÃO DA LIMPEZA DO MINUTO PARA O SEU JSON ESPECÍFICO
     let min = "0'";
-    if(lance.minuto) {
+    if(lance.minuto !== undefined && lance.minuto !== null) {
         min = String(lance.minuto)
-            // Remove comentários e tags HTML do minuto
-            .replace(/<!--[\s\S]*?-->/g, "") // Remove HTML comments
-            .replace(/<[^>]*>/g, "")         // Remove HTML tags
+            .replace(/<[^>]*>/g, "")
             .trim();
     }
 
@@ -451,16 +491,14 @@ function renderTimeline(narracao) {
 function renderStats(stats, side) {
   const container = document.getElementById(`${side}-stats-list`);
   const teamNameContainer = document.getElementById(`${side}-team-name-lineup`);
-  if (!container) return;
+  if (!container || !stats) return;
 
-  // Atualiza o nome do time no header da escalação
   if (teamNameContainer) {
     const teamName =
       side === "home" ? state.match.home.name : state.match.away.name;
     teamNameContainer.innerHTML = `<i class="fas fa-users"></i> ${teamName.toUpperCase()}`;
   }
 
-  // Atualiza estatísticas
   const items = [
     {
       label: "Posse",
@@ -491,7 +529,6 @@ function renderStats(stats, side) {
  * LOGICA DE ESCALAÇÃO HORIZONTAL (LOOP)
  */
 const renderPlayerTrack = (titulares, reservas) => {
-  // Criamos o HTML dos jogadores
   const tpl = (name, isRes) => `
     <div class="player-item-min">
       <i class="fas fa-user-circle" style="margin-right:8px; color:${
@@ -506,9 +543,8 @@ const renderPlayerTrack = (titulares, reservas) => {
   const allPlayers = [
     ...titulares.map((p) => tpl(p, false)),
     ...reservas.map((p) => tpl(p, true)),
-  ].join("");
+   ].join("");
 
-  // Retornamos a trilha duplicada para o efeito de loop infinito no CSS
   return `<div class="lineup-players-track">${allPlayers}${allPlayers}</div>`;
 };
 
@@ -521,7 +557,6 @@ function renderLineups(escalacao, arbitragem) {
   const homeTeamName = document.getElementById("home-team-name-lineup");
   const awayTeamName = document.getElementById("away-team-name-lineup");
 
-  // Atualiza nomes dos times nos headers
   if (homeTeamName) {
     homeTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.home.name.toUpperCase()}`;
   }
@@ -530,7 +565,6 @@ function renderLineups(escalacao, arbitragem) {
     awayTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.away.name.toUpperCase()}`;
   }
 
-  // Escalação do Mandante - CORREÇÃO: Verifica se existem dados
   if (hCont && escalacao && escalacao.home) {
     const titulares = escalacao.home.titulares || [];
     const reservas = escalacao.home.reservas || [];
@@ -549,7 +583,6 @@ function renderLineups(escalacao, arbitragem) {
       '<div class="loading-stats">Escalação não disponível</div>';
   }
 
-  // Escalação do Visitante - CORREÇÃO: Verifica se existem dados
   if (aCont && escalacao && escalacao.away) {
     const titulares = escalacao.away.titulares || [];
     const reservas = escalacao.away.reservas || [];
@@ -568,7 +601,6 @@ function renderLineups(escalacao, arbitragem) {
       '<div class="loading-stats">Escalação não disponível</div>';
   }
 
-  // Informação da Arbitragem
   const ref = document.getElementById("match-referee-info");
   if (ref && arbitragem) {
     ref.innerHTML = `
@@ -600,24 +632,23 @@ function dispararAnimacaoFullScreen(tipo) {
 
   if (!overlay || !container || !textOverlay) return;
 
-  // Reseta classes e estado
   textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho");
   textOverlay.innerText = "";
   container.innerHTML = "";
   overlay.style.display = "flex";
 
-  // Define o texto
   if (tipo === "amarelo") {
     textOverlay.innerText = "CARTÃO AMARELO";
     textOverlay.classList.add("text-amarelo");
   } else if (tipo === "vermelho") {
     textOverlay.innerText = "CARTÃO VERMELHO";
     textOverlay.classList.add("text-vermelho");
+  } else if (tipo === "penalti") {
+    textOverlay.innerText = "PÊNALTI";
+    textOverlay.style.color = "#fff";
   }
-  // Força o navegador a reconhecer o reset para reiniciar a animação CSS
+  
   void textOverlay.offsetWidth;
-
-  // Dispara a animação
   textOverlay.classList.add("jump");
 
   let path =
@@ -637,11 +668,10 @@ function dispararAnimacaoFullScreen(tipo) {
   });
 
   anim.onComplete = () => {
-    // Esperamos a animação de 2.8s de cores + a piscada acabar
     setTimeout(() => {
       overlay.style.display = "none";
       textOverlay.classList.remove("jump");
-    }, 500); // Ajustado para dar tempo de ver o cinza final
+    }, 500); 
   };
 }
 
@@ -658,9 +688,8 @@ window.cabulosoTeste = {
     dispararAnimacaoFullScreen("vermelho");
     console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
   },
-  // ADICIONE ESTA LINHA:
   penalti: () => {
     console.log("🎯 PÊNALTI DETECTADO!");
     dispararAnimacaoFullScreen("penalti");
   },
-};
+}
