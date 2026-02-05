@@ -7,7 +7,7 @@ let lastValidStats = null;
 
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados",
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=agenda",
   updateInterval: 15000, 
 };
 
@@ -250,6 +250,14 @@ const renderNextMatchCard = (match) => {
   const container = document.getElementById("live-match-container");
   if (!container) return;
 
+  // Lógica para saber se o Cruzeiro é mandante ou visitante baseado na string "Cruzeiro x ..."
+  const isCruzeiroMandante = match.partida.startsWith("Cruzeiro");
+  
+  const escudoMandante = isCruzeiroMandante ? match.logo_cruzeiro : match.logo_adversario;
+  const escudoVisitante = isCruzeiroMandante ? match.logo_adversario : match.logo_cruzeiro;
+  const nomeMandante = isCruzeiroMandante ? "Cruzeiro" : match.adversario;
+  const nomeVisitante = isCruzeiroMandante ? match.adversario : "Cruzeiro";
+
   container.innerHTML = `
     <div class="match-header-card" style="background: linear-gradient(135deg, #1a1f3a 0%, #002266 100%); border: 2px solid var(--primary-light);">
       <div class="match-status-badge" style="background: var(--accent); color: var(--primary-dark);">
@@ -258,13 +266,13 @@ const renderNextMatchCard = (match) => {
       <div class="score-row" style="flex-direction: column; gap: 30px; padding: 40px 20px;">
         <div style="display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%;">
           <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
-            <img src="${match.escudo_mandante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
-            <span class="team-name">${match.mandante}</span>
+            <img src="${escudoMandante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
+            <span class="team-name">${nomeMandante}</span>
           </div>
           <div class="vs-divider">VS</div>
           <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
-            <img src="${match.escudo_visitante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
-            <span class="team-name">${match.visitante}</span>
+            <img src="${escudoVisitante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
+            <span class="team-name">${nomeVisitante}</span>
           </div>
         </div>
         <div class="match-game-info">
@@ -315,16 +323,15 @@ const startCountdown = (targetDate) => {
 
 async function loadAgenda() {
   try {
-    const response = await fetch(`${CONFIG.apiUrl}?type=geral&t=${Date.now()}`);
+    // Note que mudei para type=agenda
+    const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`); 
     const data = await response.json();
 
-    if (data && !data.error && data.agenda && Array.isArray(data.agenda)) {
+    if (data && data.jogos && Array.isArray(data.jogos)) {
       state.agendaData = {
-        jogos: data.agenda,
+        jogos: data.jogos, // O campo correto agora é 'jogos'
       };
-      console.log("📅 Agenda carregada:", data.agenda.length, "jogos");
-    } else {
-      console.warn("⚠️ Agenda retornou vazia ou com erro");
+      console.log("📅 Agenda carregada:", data.jogos.length, "jogos");
     }
   } catch (e) {
     console.error("⚠️ Erro ao carregar agenda:", e);
