@@ -8,7 +8,7 @@ let lastValidStats = null;
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/dados",
-  updateInterval: 10000,
+  updateInterval: 5000, 
 };
 
 const golControl = {
@@ -81,10 +81,10 @@ const animationQueue = {
 
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
-  initTopFloatingButtons(); // ← AGORA USA OS BOTÕES SUPERIORES
-  await loadAgenda();
-  await fetchLiveData();
+  initTopFloatingButtons();
+  Promise.all([loadAgenda(), fetchLiveData()]); 
   setInterval(fetchLiveData, CONFIG.updateInterval);
+  setInterval(loadAgenda, 30000); 
 });
 
 const fetchLiveData = async () => {
