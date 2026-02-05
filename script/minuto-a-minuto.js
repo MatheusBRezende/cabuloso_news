@@ -3,6 +3,8 @@
  * Versão: 7.2 - CORRIGIDA (Renderização Garantida)
  */
 let ultimoLanceId = null;
+let lastValidStats = null;
+
 
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
@@ -42,6 +44,7 @@ const fetchLiveData = async () => {
     const response = await fetch(
       `${CONFIG.webhookUrl}&t=${Date.now()}`
     );
+
     let data = await response.json();
 
     // Se a API retornar uma lista [], pegamos o primeiro objeto
@@ -49,11 +52,15 @@ const fetchLiveData = async () => {
       data = data[0];
     }
 
-    // CORREÇÃO: Verificação melhorada para garantir renderização
-    // Se temos success:true ou se temos placar válido, é jogo ao vivo
+    // 🔐 Cacheia estatísticas válidas
+    if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+      lastValidStats = data.estatisticas;
+    }
+
+    // Verifica se é jogo ao vivo
     const isLiveMatch = data && (
-      data.success === true || 
-      (data.placar && data.placar.status && data.narracao)
+      data.success === true ||
+      (data.placar && data.placar.status)
     );
 
     if (!isLiveMatch || data.error) {
@@ -78,6 +85,7 @@ const fetchLiveData = async () => {
     showNextMatchCountdown();
   }
 };
+
 
 function detectarNovoLance(data) {
   if (!data.narracao || data.narracao.length === 0) return;
@@ -345,22 +353,27 @@ function parseMatchDate(dateStr, timeStr) {
 }
 
 function updateMatchState(data) {
-  if (!data.placar) return;
-  
-  state.match.home.name = data.placar.home_name || "Mandante";
-  state.match.home.logo = data.placar.home_logo || "";
-  state.match.away.name = data.placar.away_name || "Visitante";
-  state.match.away.logo = data.placar.away_logo || "";
-  state.match.score.home = data.placar.home || 0;
-  state.match.score.away = data.placar.away || 0;
+  if (!data || !data.placar) return;
+
+  if (data.partida && data.partida.includes(" x ")) {
+    const [home, away] = data.partida.split(" x ");
+    state.match.home.name = home.trim();
+    state.match.away.name = away.trim();
+  }
+
+  state.match.score.home = Number(data.placar.home ?? 0);
+  state.match.score.away = Number(data.placar.away ?? 0);
   state.match.status = data.placar.status || "AO VIVO";
 }
+
 
 function renderAllComponents(data) {
   renderMatchHeader(data.placar, data.narracao);
   renderTimeline(data.narracao);
-  renderStats(data.estatisticas, "home");
-  renderStats(data.estatisticas, "away");
+  if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+    renderStats(data.estatisticas, "home");
+    renderStats(data.estatisticas, "away");
+  }  
   renderLineups(data.escalacao, data.arbitragem);
 }
 
@@ -490,40 +503,51 @@ function renderTimeline(narracao) {
 
 function renderStats(stats, side) {
   const container = document.getElementById(`${side}-stats-list`);
-  const teamNameContainer = document.getElementById(`${side}-team-name-lineup`);
+  const teamNameContainer = document.getElementById(`${side}-stats-header`);
   if (!container || !stats) return;
+
+  container.innerHTML = ""; // 👈 BLINDAGEM
 
   if (teamNameContainer) {
     const teamName =
       side === "home" ? state.match.home.name : state.match.away.name;
-    teamNameContainer.innerHTML = `<i class="fas fa-users"></i> ${teamName.toUpperCase()}`;
+
+    teamNameContainer.innerHTML = `
+      <i class="fas fa-chart-bar"></i>
+      <span>ESTATÍSTICAS ${teamName.toUpperCase()}</span>
+    `;
   }
 
+  const isHome = side === "home";
+
   const items = [
-    {
-      label: "Posse",
-      val: side === "home" ? stats.posse_home : stats.posse_away,
-    },
-    {
-      label: "Chutes",
-      val: side === "home" ? stats.finalizacoes_home : stats.finalizacoes_away,
-    },
-    {
-      label: "Cantos",
-      val: side === "home" ? stats.escanteios_home : stats.escanteios_away,
-    },
+    { label: "Posse de bola", val: isHome ? stats.posse_home : stats.posse_away },
+    { label: "Chutes", val: isHome ? stats.chutes_home : stats.chutes_away },
+    { label: "Chutes a gol", val: isHome ? stats.chutes_gol_home : stats.chutes_gol_away },
+    { label: "Chutes para fora", val: isHome ? stats.chutes_fora_home : stats.chutes_fora_away },
+    { label: "Passes certos", val: isHome ? stats.passes_certos_home : stats.passes_certos_away },
+    { label: "Passes errados", val: isHome ? stats.passes_errados_home : stats.passes_errados_away },
+    { label: "Faltas cometidas", val: isHome ? stats.faltas_home : stats.faltas_away },
+    { label: "Desarmes", val: isHome ? stats.desarmes_home : stats.desarmes_away },
+    { label: "Escanteios", val: isHome ? stats.escanteios_home : stats.escanteios_away },
+    { label: "Impedimentos", val: isHome ? stats.impedimentos_home : stats.impedimentos_away },
+    { label: "Cartões amarelos", val: isHome ? stats.amarelos_home : stats.amarelos_away },
+    { label: "Cartões vermelhos", val: isHome ? stats.vermelhos_home : stats.vermelhos_away },
   ];
 
   container.innerHTML = items
     .map(
       (i) => `
-    <div class="stat-item"><span class="stat-label">${
-      i.label
-    }</span><span class="stat-value">${i.val || 0}</span></div>
-  `
+        <div class="stat-item">
+          <span class="stat-label">${i.label}</span>
+          <span class="stat-value">${i.val !== undefined ? i.val : 0}</span>
+        </div>
+      `
     )
     .join("");
 }
+
+
 
 /**
  * LOGICA DE ESCALAÇÃO HORIZONTAL (LOOP)
@@ -552,6 +576,11 @@ const renderPlayerTrack = (titulares, reservas) => {
  * RENDERIZA AS ESCALAÇÕES COM ROLAGEM INDEPENDENTE
  */
 function renderLineups(escalacao, arbitragem) {
+  if (!escalacao || !escalacao.home || !escalacao.away) {
+    console.warn("⚠️ Escalação inválida:", escalacao);
+    return;
+  }
+  
   const hCont = document.getElementById("home-lineup-content");
   const aCont = document.getElementById("away-lineup-content");
   const homeTeamName = document.getElementById("home-team-name-lineup");
