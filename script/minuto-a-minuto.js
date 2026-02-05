@@ -212,7 +212,7 @@ function processarNovoLance(lance) {
 const showLiveMatchUI = () => {
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
-
+  document.body.classList.add("live-match");
   if (liveSections) liveSections.style.display = "block";
   if (countdownWrapper) countdownWrapper.style.display = "none";
 
@@ -672,33 +672,36 @@ function updateTopArbitro(arbitragem) {
  * INICIALIZA OS BOTÕES FLUTUANTES SUPERIORES
  */
 function initTopFloatingButtons() {
-  const statsBtn = document.getElementById("top-stats-btn");
-  const lineupBtn = document.getElementById("top-lineup-btn");
-  const overlay = document.getElementById("floating-overlay");
+  const btnStats = document.getElementById("top-stats-btn");
+  const btnLineup = document.getElementById("top-lineup-btn");
+  
+  // SEUS NOVOS SELETORES MOBILE:
+  const btnStatsMobile = document.getElementById("mobile-stats-btn");
+  const btnLineupMobile = document.getElementById("mobile-lineup-btn");
 
-  if (statsBtn) {
-    statsBtn.onclick = (e) => {
-      e.preventDefault();
-      console.log("Botão Estatísticas clicado");
-      openStatsPanel(); // Chama a função correta que já limpa o outro painel
-    };
-  }
+  const openStats = () => {
+    const overlay = document.getElementById("floating-overlay");
+    const statsPanel = document.getElementById("stats-panel");
+    const lineupPanel = document.getElementById("lineup-panel");
+    overlay.classList.add("active");
+    statsPanel.classList.add("active");
+    lineupPanel.classList.remove("active");
+  };
 
-  if (lineupBtn) {
-    lineupBtn.onclick = (e) => {
-      e.preventDefault();
-      console.log("Botão Escalação clicado");
-      openLineupPanel(); // Chama a função correta que já limpa o outro painel
-    };
-  }
+  const openLineup = () => {
+    const overlay = document.getElementById("floating-overlay");
+    const statsPanel = document.getElementById("stats-panel");
+    const lineupPanel = document.getElementById("lineup-panel");
+    overlay.classList.add("active");
+    lineupPanel.classList.add("active");
+    statsPanel.classList.remove("active");
+  };
 
-  if (overlay) {
-    overlay.onclick = (e) => {
-      if (e.target === overlay) {
-        closeAllPanels();
-      }
-    };
-  }
+  if (btnStats) btnStats.onclick = openStats;
+  if (btnStatsMobile) btnStatsMobile.onclick = openStats; // Ativa no mobile
+  
+  if (btnLineup) btnLineup.onclick = openLineup;
+  if (btnLineupMobile) btnLineupMobile.onclick = openLineup; // Ativa no mobile
 }
 
 function openStatsPanel() {
@@ -856,7 +859,7 @@ function renderPanelStats(stats) {
       { label: "Escanteios", value: stats.escanteios_home || 0 },
       { label: "Impedimentos", value: stats.impedimentos_home || 0 },
       { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
-      { label: "Cartões vermelhos", value: stats.vermelhos_home || 0 },
+      { label: "Cartões vermelhos", value: (stats.vermelhos_home?.total !== undefined) ? stats.vermelhos_home.total : (stats.vermelhos_home || 0) },
     ];
 
     homeStatsList.innerHTML = homeItems
@@ -896,7 +899,7 @@ function renderPanelStats(stats) {
       { label: "Escanteios", value: stats.escanteios_away || 0 },
       { label: "Impedimentos", value: stats.impedimentos_away || 0 },
       { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
-      { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
+      { label: "Cartões vermelhos", value: (stats.vermelhos_home?.total !== undefined) ? stats.vermelhos_home.total : (stats.vermelhos_home || 0) },
     ];
 
     awayStatsList.innerHTML = awayItems
