@@ -1290,23 +1290,3 @@ body.live-match .main-content {
         gap: var(--space-1);
     }
 }
-
-@media (min-width: 769px) {
-    .tab-link .tab-text {
-        display: none;
-    }
-    
-    .tab-link i {
-        font-size: 1.2rem;
-        display: none;
-    }
-    .tab-link{
-        list-style-type: none;
-    }
-}
-
-@media (max-width: 768px) {
-    .tab-link{
-        list-style-type: none;
-    }
-}

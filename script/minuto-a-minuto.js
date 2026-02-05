@@ -34,49 +34,49 @@ const state = {
 const animationQueue = {
   queue: [],
   isPlaying: false,
-  
+
   add(animationType) {
     this.queue.push(animationType);
     if (!this.isPlaying) {
       this.playNext();
     }
   },
-  
+
   async playNext() {
     if (this.queue.length === 0) {
       this.isPlaying = false;
       return;
     }
-    
+
     this.isPlaying = true;
     const animationType = this.queue.shift();
-    
+
     await this.playAnimation(animationType);
-    
+
     // Aguarda um pequeno intervalo antes da próxima animação
     setTimeout(() => {
       this.playNext();
     }, 1000); // 1 segundo entre animações
   },
-  
+
   async playAnimation(type) {
     return new Promise((resolve) => {
-      if (type === 'amarelo') {
-        dispararAnimacaoCartao('amarelo');
-      } else if (type === 'vermelho') {
-        dispararAnimacaoCartao('vermelho');
-      } else if (type === 'gol') {
+      if (type === "amarelo") {
+        dispararAnimacaoCartao("amarelo");
+      } else if (type === "vermelho") {
+        dispararAnimacaoCartao("vermelho");
+      } else if (type === "gol") {
         dispararAnimacaoGol();
-      } else if (type === 'penalti') {
+      } else if (type === "penalti") {
         dispararAnimacaoPenalti();
       }
-      
+
       // A animação completa chama resolve()
       setTimeout(() => {
         resolve();
       }, 3000); // Tempo máximo para qualquer animação
     });
-  }
+  },
 };
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -89,9 +89,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 const fetchLiveData = async () => {
   try {
-    const response = await fetch(
-      `${CONFIG.webhookUrl}&t=${Date.now()}`
-    );
+    const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
 
     let data = await response.json();
 
@@ -100,16 +98,14 @@ const fetchLiveData = async () => {
       data = data[0];
     }
 
-    // 🔐 Cacheia estatísticas válidas
+    renderMatchHeader(data.placar, data.narracao, data.informacoes);
     if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
       lastValidStats = data.estatisticas;
     }
 
     // Verifica se é jogo ao vivo
-    const isLiveMatch = data && (
-      data.success === true ||
-      (data.placar && data.placar.status)
-    );
+    const isLiveMatch =
+      data && (data.success === true || (data.placar && data.placar.status));
 
     if (!isLiveMatch || data.error) {
       if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem jogo ao vivo.");
@@ -126,7 +122,6 @@ const fetchLiveData = async () => {
     processarGol();
     detectarNovoLance(data);
     renderAllComponents(data);
-
   } catch (e) {
     if (state.logsEnabled) console.error("⚠️ Erro na requisição:", e);
     state.matchStarted = false;
@@ -189,20 +184,24 @@ function processarNovoLance(lance) {
   const desc = lance.descricao ? lance.descricao.toUpperCase() : "";
 
   // Verifica pênalti primeiro (mais específico)
-  if (desc.includes("PENALIDADE MÁXIMA") || desc.includes("PÊNALTI") || 
-      desc.includes("PENALTI") || desc.includes("MARCA DA CAL")) {
+  if (
+    desc.includes("PENALIDADE MÁXIMA") ||
+    desc.includes("PÊNALTI") ||
+    desc.includes("PENALTI") ||
+    desc.includes("MARCA DA CAL")
+  ) {
     console.log("🎯 PÊNALTI DETECTADO!");
-    animationQueue.add('penalti');
+    animationQueue.add("penalti");
     return;
   }
 
   if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
-    animationQueue.add('vermelho');
+    animationQueue.add("vermelho");
     return;
   }
 
   if (desc.includes("CARTÃO AMARELO") || desc.includes("AMARELO")) {
-    animationQueue.add('amarelo');
+    animationQueue.add("amarelo");
     return;
   }
 }
@@ -213,14 +212,9 @@ function processarNovoLance(lance) {
 const showLiveMatchUI = () => {
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
-  const mobileButtons = document.getElementById("mobile-buttons");
 
   if (liveSections) liveSections.style.display = "block";
   if (countdownWrapper) countdownWrapper.style.display = "none";
-  if (mobileButtons) mobileButtons.style.display = "flex";
-  
-  // Adiciona classe ao body para esconder hero em mobile
-  document.body.classList.add("live-match");
 
   if (state.countdownInterval) {
     clearInterval(state.countdownInterval);
@@ -241,14 +235,9 @@ const showNextMatchCountdown = () => {
 
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
-  const mobileButtons = document.getElementById("mobile-buttons");
 
   if (liveSections) liveSections.style.display = "none";
   if (countdownWrapper) countdownWrapper.style.display = "block";
-  if (mobileButtons) mobileButtons.style.display = "none";
-  
-  // Remove classe do body para mostrar hero
-  document.body.classList.remove("live-match");
 
   renderNextMatchCard(nextMatch);
   startCountdown(nextMatch.dataObj);
@@ -306,18 +295,18 @@ const startCountdown = (targetDate) => {
     }
     const days = Math.floor(distance / (1000 * 60 * 60 * 24));
     const hours = Math.floor(
-      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
     );
     const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((distance % (1000 * 60)) / 1000);
     timerElement.textContent =
       days > 0
         ? `${days}d ${String(hours).padStart(2, "0")}h ${String(
-            minutes
+            minutes,
           ).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`
         : `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(
             2,
-            "0"
+            "0",
           )}m ${String(seconds).padStart(2, "0")}s`;
   };
   update();
@@ -326,14 +315,12 @@ const startCountdown = (targetDate) => {
 
 async function loadAgenda() {
   try {
-    const response = await fetch(
-      `${CONFIG.apiUrl}?type=geral&t=${Date.now()}`
-    );
+    const response = await fetch(`${CONFIG.apiUrl}?type=geral&t=${Date.now()}`);
     const data = await response.json();
-    
+
     if (data && !data.error && data.agenda && Array.isArray(data.agenda)) {
       state.agendaData = {
-        jogos: data.agenda
+        jogos: data.agenda,
       };
       console.log("📅 Agenda carregada:", data.agenda.length, "jogos");
     } else {
@@ -366,36 +353,47 @@ function getNextMatchFromAgenda() {
 
 function parseMatchDate(dateStr, timeStr) {
   try {
-    const cleanDate = dateStr.replace(/^[a-z]{3}\.,\s*/i, '').trim();
-    
+    const cleanDate = dateStr.replace(/^[a-z]{3}\.,\s*/i, "").trim();
+
     let day, month, year;
-    
-    if (cleanDate.includes('/')) {
-      [day, month, year] = cleanDate.split('/');
+
+    if (cleanDate.includes("/")) {
+      [day, month, year] = cleanDate.split("/");
     } else {
       const meses = {
-        'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4, 'mai': 5, 'jun': 6,
-        'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12
+        jan: 1,
+        fev: 2,
+        mar: 3,
+        abr: 4,
+        mai: 5,
+        jun: 6,
+        jul: 7,
+        ago: 8,
+        set: 9,
+        out: 10,
+        nov: 11,
+        dez: 12,
       };
-      
-      const parts = cleanDate.split(' ');
+
+      const parts = cleanDate.split(" ");
       day = parts[0];
-      const mesStr = parts[1]?.replace('.', '').toLowerCase();
+      const mesStr = parts[1]?.replace(".", "").toLowerCase();
       month = meses[mesStr] || 1;
       year = new Date().getFullYear();
     }
-    
-    let hour = 0, minute = 0;
-    if (timeStr && timeStr !== 'A definir') {
-      [hour, minute] = timeStr.split(':').map(n => parseInt(n));
+
+    let hour = 0,
+      minute = 0;
+    if (timeStr && timeStr !== "A definir") {
+      [hour, minute] = timeStr.split(":").map((n) => parseInt(n));
     }
-    
+
     return new Date(
       parseInt(year),
       parseInt(month) - 1,
       parseInt(day),
       parseInt(hour) || 0,
-      parseInt(minute) || 0
+      parseInt(minute) || 0,
     );
   } catch (e) {
     console.error("Erro ao processar data:", dateStr, timeStr, e);
@@ -418,18 +416,12 @@ function updateMatchState(data) {
 }
 
 function renderAllComponents(data) {
-  renderMatchHeader(data.placar, data.narracao, data.informacoes);
+  renderMatchHeader(data.placar, data.narracao, data.informacoes); 
   renderTimelineFullWidth(data.narracao);
-  
-  // Renderizar estatísticas principais
   if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
     renderPanelStats(data.estatisticas);
   }
-  
-  // Renderizar arbitragem no widget superior
   updateTopArbitro(data.arbitragem);
-  
-  // Renderizar escalações no painel
   renderPanelLineups(data.escalacao);
 }
 
@@ -445,12 +437,19 @@ function renderMatchHeader(placar, narracao, informacoes) {
   }
 
   let matchStatus = placar.status || "AO VIVO";
-  
+
+  // Lógica de status (mantida igual a sua)
   if (currentMinute.includes("45'") && currentMinute.includes("1°T")) {
     matchStatus = "FIM DO 1° TEMPO";
-  } else if (currentMinute.includes("Int") || currentMinute.toLowerCase().includes("intervalo")) {
+  } else if (
+    currentMinute.includes("Int") ||
+    currentMinute.toLowerCase().includes("intervalo")
+  ) {
     matchStatus = "INTERVALO";
-  } else if (currentMinute.includes("90'") || (currentMinute.includes("45'") && currentMinute.includes("2°T"))) {
+  } else if (
+    currentMinute.includes("90'") ||
+    (currentMinute.includes("45'") && currentMinute.includes("2°T"))
+  ) {
     matchStatus = "FIM DO 2° TEMPO";
   } else if (currentMinute.includes("2°T")) {
     matchStatus = "2° TEMPO";
@@ -458,48 +457,46 @@ function renderMatchHeader(placar, narracao, informacoes) {
     matchStatus = "1° TEMPO";
   }
 
-  // Pega o estádio de informacoes
-  let stadiumHTML = '';
-  if (informacoes && informacoes.estadio) {
-    stadiumHTML = `
-      <div class="stadium-info">
-        <i class="fas fa-location-dot"></i>
-        <span>${informacoes.estadio}</span>
-      </div>
-    `;
-  }
+
+  const localPartida = informacoes?.local || informacoes?.estadio || "Local não informado";
+  const nomeCampeonato = informacoes?.campeonato || "Partida";
 
   container.innerHTML = `
-    <div class="match-header-card">
-      <div class="match-status-badge ${
-        matchStatus.includes("AO VIVO") || matchStatus.includes("TEMPO") ? "live-pulse" : ""
-      }">
-        <i class="fas fa-circle"></i> ${matchStatus}
+  <div class="match-header-card">
+    <div class="match-status-badge ${matchStatus.includes("AO VIVO") || matchStatus.includes("TEMPO") ? "live-pulse" : ""}">
+      <i class="fas fa-circle"></i> ${matchStatus.toUpperCase()}
+    </div>
+    
+    <div class="score-row">
+      <div class="team-info team-home">
+        <img src="${placar.home_logo}" alt="${placar.home_name}" class="team-logo" />
+        <span class="team-name">${placar.home_name}</span>
       </div>
-      ${stadiumHTML}
-      <div class="score-row">
-        <div class="team-info">
-          <img src="${placar.home_logo}" alt="${placar.home_name}" class="team-logo" />
-          <span class="team-name">${placar.home_name}</span>
+      
+      <div class="score-display">
+        <div class="match-timer-badge">
+          <i class="fas fa-clock"></i>
+          <span>${currentMinute}</span>
         </div>
-        <div class="score-display">
-          <div class="match-timer-badge">
-            <i class="fas fa-clock"></i>
-            <span>${currentMinute}</span>
-          </div>
-          <div class="score-numbers">
-            <span class="score-number">${placar.home || 0}</span>
-            <span class="score-divider">-</span>
-            <span class="score-number">${placar.away || 0}</span>
-          </div>
+        <div class="score-numbers">
+          <span class="score-number">${placar.home || 0}</span>
+          <span class="score-divider">-</span>
+          <span class="score-number">${placar.away || 0}</span>
         </div>
-        <div class="team-info">
-          <img src="${placar.away_logo}" alt="${placar.away_name}" class="team-logo" />
-          <span class="team-name">${placar.away_name}</span>
-        </div>
+      </div>
+      
+      <div class="team-info team-away">
+        <img src="${placar.away_logo}" alt="${placar.away_name}" class="team-logo" />
+        <span class="team-name">${placar.away_name}</span>
       </div>
     </div>
-  `;
+
+    <div class="match-footer-info" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--gray-300); text-align: center; display: flex; flex-direction: column; gap: 5px;">
+      <div><i class="fas fa-trophy" style="color: var(--accent); margin-right: 5px;"></i> ${nomeCampeonato}</div>
+      <div><i class="fas fa-location-dot" style="color: var(--accent); margin-right: 5px;"></i> ${localPartida}</div>
+    </div>
+  </div>
+`;
 }
 
 /**
@@ -507,7 +504,9 @@ function renderMatchHeader(placar, narracao, informacoes) {
  */
 function renderTimelineFullWidth(narracao) {
   const container = document.getElementById("timeline-container-full");
-  const statusIndicator = document.getElementById("match-status-indicator-full");
+  const statusIndicator = document.getElementById(
+    "match-status-indicator-full",
+  );
   const noEventsMessage = document.getElementById("no-events-message-full");
 
   if (!container) return;
@@ -533,28 +532,34 @@ function renderTimelineFullWidth(narracao) {
 
     // Lógica de Ícones
     if (lance.is_gol || desc.includes("gol")) {
-        iconClass = "icon-goal";
-        iconContent = '<i class="fas fa-futbol"></i>';
-        extraClass = "lance-gol";
+      iconClass = "icon-goal";
+      iconContent = '<i class="fas fa-futbol"></i>';
+      extraClass = "lance-gol";
     } else if (desc.includes("amarelo")) {
-        iconClass = "icon-yellow-card";
-        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+      iconClass = "icon-yellow-card";
+      iconContent =
+        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
     } else if (desc.includes("vermelho")) {
-        iconClass = "icon-red-card";
-        iconContent = '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
-    } else if (desc.includes("pênalti") || desc.includes("penalidade") || desc.includes("marca da cal")) {
-        iconClass = "icon-penalty";
-        iconContent = '<i class="fas fa-bullseye"></i>';
-        extraClass = "lance-importante";
+      iconClass = "icon-red-card";
+      iconContent =
+        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    } else if (
+      desc.includes("pênalti") ||
+      desc.includes("penalidade") ||
+      desc.includes("marca da cal")
+    ) {
+      iconClass = "icon-penalty";
+      iconContent = '<i class="fas fa-bullseye"></i>';
+      extraClass = "lance-importante";
     }
 
     item.className = `timeline-item-full ${extraClass}`;
 
     let min = "0'";
-    if(lance.minuto !== undefined && lance.minuto !== null) {
-        min = String(lance.minuto)
-            .replace(/<[^>]*>/g, "")
-            .trim();
+    if (lance.minuto !== undefined && lance.minuto !== null) {
+      min = String(lance.minuto)
+        .replace(/<[^>]*>/g, "")
+        .trim();
     }
 
     item.innerHTML = `
@@ -578,9 +583,9 @@ function renderGridStats(stats) {
   const awayContainer = document.getElementById("away-stats-list-grid");
   const homeHeader = document.getElementById("home-stats-header-grid");
   const awayHeader = document.getElementById("away-stats-header-grid");
-  
+
   if (!stats) return;
-  
+
   // Atualizar cabeçalhos
   if (homeHeader && state.match.home.name) {
     homeHeader.innerHTML = `
@@ -588,14 +593,14 @@ function renderGridStats(stats) {
       <span>${state.match.home.name.toUpperCase()}</span>
     `;
   }
-  
+
   if (awayHeader && state.match.away.name) {
     awayHeader.innerHTML = `
       <i class="fas fa-chart-pie"></i>
       <span>${state.match.away.name.toUpperCase()}</span>
     `;
   }
-  
+
   // Renderizar estatísticas do mandante
   if (homeContainer) {
     const homeItems = [
@@ -611,15 +616,19 @@ function renderGridStats(stats) {
       { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
       { label: "Cartões vermelhos", value: stats.vermelhos_home || 0 },
     ];
-    
-    homeContainer.innerHTML = homeItems.map(item => `
+
+    homeContainer.innerHTML = homeItems
+      .map(
+        (item) => `
       <div class="stat-item-grid">
         <span class="stat-label-grid">${item.label}</span>
         <span class="stat-value-grid">${item.value}</span>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   }
-  
+
   // Renderizar estatísticas do visitante
   if (awayContainer) {
     const awayItems = [
@@ -635,13 +644,17 @@ function renderGridStats(stats) {
       { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
       { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
     ];
-    
-    awayContainer.innerHTML = awayItems.map(item => `
+
+    awayContainer.innerHTML = awayItems
+      .map(
+        (item) => `
       <div class="stat-item-grid">
         <span class="stat-label-grid">${item.label}</span>
         <span class="stat-value-grid">${item.value}</span>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   }
 }
 
@@ -649,14 +662,9 @@ function renderGridStats(stats) {
  * ATUALIZA ÁRBITRO NO WIDGET SUPERIOR
  */
 function updateTopArbitro(arbitragem) {
-  const arbitroNome = document.querySelector('.top-arbitro-nome');
+  const arbitroNome = document.querySelector(".top-arbitro-nome");
   if (arbitroNome && arbitragem) {
-    // Extrai apenas o nome do árbitro (remove "Árbitro: ")
-    let nomeArbitro = arbitragem;
-    if (typeof arbitragem === 'string') {
-      nomeArbitro = arbitragem.replace(/árbitro:\s*/i, '').trim();
-    }
-    arbitroNome.textContent = nomeArbitro || 'Aguardando...';
+    arbitroNome.textContent = arbitragem;
   }
 }
 
@@ -664,17 +672,15 @@ function updateTopArbitro(arbitragem) {
  * INICIALIZA OS BOTÕES FLUTUANTES SUPERIORES
  */
 function initTopFloatingButtons() {
-  const statsBtn = document.getElementById('top-stats-btn');
-  const lineupBtn = document.getElementById('top-lineup-btn');
-  const mobileStatsBtn = document.getElementById('mobile-stats-btn');
-  const mobileLineupBtn = document.getElementById('mobile-lineup-btn');
-  const overlay = document.getElementById('floating-overlay');
+  const statsBtn = document.getElementById("top-stats-btn");
+  const lineupBtn = document.getElementById("top-lineup-btn");
+  const overlay = document.getElementById("floating-overlay");
 
   if (statsBtn) {
     statsBtn.onclick = (e) => {
       e.preventDefault();
       console.log("Botão Estatísticas clicado");
-      openStatsPanel();
+      openStatsPanel(); // Chama a função correta que já limpa o outro painel
     };
   }
 
@@ -682,27 +688,10 @@ function initTopFloatingButtons() {
     lineupBtn.onclick = (e) => {
       e.preventDefault();
       console.log("Botão Escalação clicado");
-      openLineupPanel();
+      openLineupPanel(); // Chama a função correta que já limpa o outro painel
     };
   }
-  
-  // BOTÕES MOBILE
-  if (mobileStatsBtn) {
-    mobileStatsBtn.onclick = (e) => {
-      e.preventDefault();
-      console.log("Botão Mobile Estatísticas clicado");
-      openStatsPanel();
-    };
-  }
-  
-  if (mobileLineupBtn) {
-    mobileLineupBtn.onclick = (e) => {
-      e.preventDefault();
-      console.log("Botão Mobile Escalação clicado");
-      openLineupPanel();
-    };
-  }
-  
+
   if (overlay) {
     overlay.onclick = (e) => {
       if (e.target === overlay) {
@@ -713,32 +702,32 @@ function initTopFloatingButtons() {
 }
 
 function openStatsPanel() {
-  const overlay = document.getElementById('floating-overlay');
-  const statsPanel = document.getElementById('stats-panel');
-  const lineupPanel = document.getElementById('lineup-panel');
+  const overlay = document.getElementById("floating-overlay");
+  const statsPanel = document.getElementById("stats-panel");
+  const lineupPanel = document.getElementById("lineup-panel");
 
   if (overlay && statsPanel) {
-    overlay.classList.add('active');
-    statsPanel.classList.add('active');
-    lineupPanel.classList.remove('active');
-    document.body.style.overflow = 'hidden';
-    
+    overlay.classList.add("active");
+    statsPanel.classList.add("active");
+    lineupPanel.classList.remove("active");
+    document.body.style.overflow = "hidden";
+
     // ATUALIZA OS DADOS QUANDO ABRIR O PAINEL
     updateStatsPanel();
   }
 }
 
 function openLineupPanel() {
-  const overlay = document.getElementById('floating-overlay');
-  const lineupPanel = document.getElementById('lineup-panel');
-  const statsPanel = document.getElementById('stats-panel');
+  const overlay = document.getElementById("floating-overlay");
+  const lineupPanel = document.getElementById("lineup-panel");
+  const statsPanel = document.getElementById("stats-panel");
 
   if (overlay && lineupPanel) {
-    overlay.classList.add('active');
-    lineupPanel.classList.add('active');
-    statsPanel.classList.remove('active');
-    document.body.style.overflow = 'hidden';
-    
+    overlay.classList.add("active");
+    lineupPanel.classList.add("active");
+    statsPanel.classList.remove("active");
+    document.body.style.overflow = "hidden";
+
     // ATUALIZA OS DADOS QUANDO ABRIR O PAINEL
     updateLineupPanel();
   }
@@ -764,68 +753,64 @@ function updateLineupPanel() {
 
 async function fetchLiveDataForPanel() {
   try {
-    const response = await fetch(
-      `${CONFIG.webhookUrl}&t=${Date.now()}`
-    );
+    const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
     let data = await response.json();
-    
+
     if (Array.isArray(data)) {
       data = data[0];
     }
-    
+
     // Atualiza estatísticas se disponíveis
     if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
       lastValidStats = data.estatisticas;
       renderPanelStats(data.estatisticas);
     }
-    
+
     // Atualiza escalações se disponíveis
     if (data.escalacao) {
       renderPanelLineups(data.escalacao);
     }
-    
+
     // Atualiza árbitro se disponível
     if (data.arbitragem) {
       updateTopArbitro(data.arbitragem);
     }
-    
   } catch (e) {
     console.error("⚠️ Erro ao buscar dados para painéis:", e);
   }
 }
 
-
 function closeAllPanels() {
-  const overlay = document.getElementById('floating-overlay');
-  const panels = document.querySelectorAll('.floating-panel');
-  
-  if (overlay) overlay.classList.remove('active');
-  panels.forEach(panel => panel.classList.remove('active'));
-  
+  const overlay = document.getElementById("floating-overlay");
+  const panels = document.querySelectorAll(".floating-panel");
+
+  if (overlay) overlay.classList.remove("active");
+  panels.forEach((panel) => panel.classList.remove("active"));
+
   // DEVOLVE O SCROLL
-  document.body.style.overflow = ''; 
+  document.body.style.overflow = "";
   console.log("Painéis fechados e scroll liberado");
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  const overlay = document.getElementById('floating-overlay');
+document.addEventListener("DOMContentLoaded", () => {
+  const overlay = document.getElementById("floating-overlay");
   if (overlay) {
-      overlay.addEventListener('click', (e) => {
-          if (e.target === overlay) closeAllPanels();
-      });
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeAllPanels();
+    });
   }
-  
+
   // CORREÇÃO AQUI: O seu HTML usa 'panel-close-btn'
-  document.querySelectorAll('.panel-close-btn').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          closeAllPanels();
-      });
+  document.querySelectorAll(".panel-close-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllPanels();
+    });
   });
 
   // ADICIONE ISSO PARA O ESC FUNCIONAR SEMPRE:
-  document.addEventListener('keydown', (e) => {
-      if (e.key === "Escape") closeAllPanels();
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllPanels();
   });
 });
 
@@ -834,28 +819,38 @@ document.addEventListener('DOMContentLoaded', () => {
  */
 function renderPanelStats(stats) {
   if (!stats) return;
-  
-  const homeTeamName = document.getElementById('panel-home-team');
-  const awayTeamName = document.getElementById('panel-away-team');
-  
+
+  const homeTeamName = document.getElementById("panel-home-team");
+  const awayTeamName = document.getElementById("panel-away-team");
+
   if (homeTeamName && state.match.home.name) {
     homeTeamName.innerHTML = `<span>${state.match.home.name.toUpperCase()}</span>`;
   }
-  
+
   if (awayTeamName && state.match.away.name) {
     awayTeamName.innerHTML = `<span>${state.match.away.name.toUpperCase()}</span>`;
   }
-  
-  const homeStatsList = document.getElementById('panel-home-stats');
+
+  const homeStatsList = document.getElementById("panel-home-stats");
   if (homeStatsList) {
     const homeItems = [
       { label: "Posse de bola", value: stats.posse_home || "0%" },
       { label: "Chutes", value: stats.chutes_home || 0 },
       { label: "Chutes a gol", value: stats.chutes_gol_home || 0 },
-      { label: "Precisão", value: stats.chutes_home ? `${Math.round((stats.chutes_gol_home / stats.chutes_home) * 100) || 0}%` : "0%" },
+      {
+        label: "Precisão",
+        value: stats.chutes_home
+          ? `${Math.round((stats.chutes_gol_home / stats.chutes_home) * 100) || 0}%`
+          : "0%",
+      },
       { label: "Passes certos", value: stats.passes_certos_home || 0 },
       { label: "Passes errados", value: stats.passes_errados_home || 0 },
-      { label: "Precisão passes", value: stats.passes_certos_home ? `${Math.round((stats.passes_certos_home / (stats.passes_certos_home + stats.passes_errados_home)) * 100) || 0}%` : "0%" },
+      {
+        label: "Precisão passes",
+        value: stats.passes_certos_home
+          ? `${Math.round((stats.passes_certos_home / (stats.passes_certos_home + stats.passes_errados_home)) * 100) || 0}%`
+          : "0%",
+      },
       { label: "Faltas", value: stats.faltas_home || 0 },
       { label: "Desarmes", value: stats.desarmes_home || 0 },
       { label: "Escanteios", value: stats.escanteios_home || 0 },
@@ -863,25 +858,39 @@ function renderPanelStats(stats) {
       { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
       { label: "Cartões vermelhos", value: stats.vermelhos_home || 0 },
     ];
-    
-    homeStatsList.innerHTML = homeItems.map(item => `
+
+    homeStatsList.innerHTML = homeItems
+      .map(
+        (item) => `
       <div class="panel-stat-item">
         <span class="panel-stat-label">${item.label}</span>
         <span class="panel-stat-value">${item.value}</span>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   }
-  
-  const awayStatsList = document.getElementById('panel-away-stats');
+
+  const awayStatsList = document.getElementById("panel-away-stats");
   if (awayStatsList) {
     const awayItems = [
       { label: "Posse de bola", value: stats.posse_away || "0%" },
       { label: "Chutes", value: stats.chutes_away || 0 },
       { label: "Chutes a gol", value: stats.chutes_gol_away || 0 },
-      { label: "Precisão", value: stats.chutes_away ? `${Math.round((stats.chutes_gol_away / stats.chutes_away) * 100) || 0}%` : "0%" },
+      {
+        label: "Precisão",
+        value: stats.chutes_away
+          ? `${Math.round((stats.chutes_gol_away / stats.chutes_away) * 100) || 0}%`
+          : "0%",
+      },
       { label: "Passes certos", value: stats.passes_certos_away || 0 },
       { label: "Passes errados", value: stats.passes_errados_away || 0 },
-      { label: "Precisão passes", value: stats.passes_certos_away ? `${Math.round((stats.passes_certos_away / (stats.passes_certos_away + stats.passes_errados_away)) * 100) || 0}%` : "0%" },
+      {
+        label: "Precisão passes",
+        value: stats.passes_certos_away
+          ? `${Math.round((stats.passes_certos_away / (stats.passes_certos_away + stats.passes_errados_away)) * 100) || 0}%`
+          : "0%",
+      },
       { label: "Faltas", value: stats.faltas_away || 0 },
       { label: "Desarmes", value: stats.desarmes_away || 0 },
       { label: "Escanteios", value: stats.escanteios_away || 0 },
@@ -889,13 +898,17 @@ function renderPanelStats(stats) {
       { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
       { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
     ];
-    
-    awayStatsList.innerHTML = awayItems.map(item => `
+
+    awayStatsList.innerHTML = awayItems
+      .map(
+        (item) => `
       <div class="panel-stat-item">
         <span class="panel-stat-label">${item.label}</span>
         <span class="panel-stat-value">${item.value}</span>
       </div>
-    `).join('');
+    `,
+      )
+      .join("");
   }
 }
 
@@ -907,42 +920,44 @@ function renderPanelStats(stats) {
  */
 function renderPanelLineups(escalacao) {
   if (!escalacao) return;
-  
-  const homeTeamName = document.getElementById('panel-home-team-name');
-  const awayTeamName = document.getElementById('panel-away-team-name');
-  
+
+  const homeTeamName = document.getElementById("panel-home-team-name");
+  const awayTeamName = document.getElementById("panel-away-team-name");
+
   if (homeTeamName && state.match.home.name) {
     homeTeamName.textContent = state.match.home.name.toUpperCase();
   }
-  
+
   if (awayTeamName && state.match.away.name) {
     awayTeamName.textContent = state.match.away.name.toUpperCase();
   }
-  
+
   // Função auxiliar para criar o HTML do jogador
   const createPlayerItem = (jogador, tipo) => {
-    const item = document.createElement('div');
-    item.className = `panel-player-item ${tipo === 'titular' ? 'titular' : 'reserva'}`;
-    
+    const item = document.createElement("div");
+    item.className = `panel-player-item ${tipo === "titular" ? "titular" : "reserva"}`;
+
     // Tratamento para suportar tanto string antiga quanto novo objeto com foto
     let nome = jogador;
     let fotoUrl = null;
-    let numero = '';
-    
-    if (typeof jogador === 'object' && jogador !== null) {
-        nome = jogador.nome;
-        fotoUrl = jogador.foto;
-        numero = jogador.numero ? `<span class="player-number">${jogador.numero}</span>` : '';
+    let numero = "";
+
+    if (typeof jogador === "object" && jogador !== null) {
+      nome = jogador.nome;
+      fotoUrl = jogador.foto;
+      numero = jogador.numero
+        ? `<span class="player-number">${jogador.numero}</span>`
+        : "";
     }
 
     // Lógica da Imagem
-    let iconHtml = '';
+    let iconHtml = "";
     if (fotoUrl) {
-        // Se tiver foto, usa a imagem
-        iconHtml = `<div class="panel-player-photo" style="background-image: url('${fotoUrl}');"></div>`;
+      // Se tiver foto, usa a imagem
+      iconHtml = `<div class="panel-player-photo" style="background-image: url('${fotoUrl}');"></div>`;
     } else {
-        // Se não, usa o ícone padrão
-        iconHtml = `<div class="panel-player-icon"><i class="fas fa-user"></i></div>`;
+      // Se não, usa o ícone padrão
+      iconHtml = `<div class="panel-player-icon"><i class="fas fa-user"></i></div>`;
     }
 
     item.innerHTML = `
@@ -955,27 +970,27 @@ function renderPanelLineups(escalacao) {
     return item;
   };
 
-  const homeLineupList = document.getElementById('panel-home-lineup');
+  const homeLineupList = document.getElementById("panel-home-lineup");
   if (homeLineupList && escalacao.home) {
-    homeLineupList.innerHTML = '';
-    
+    homeLineupList.innerHTML = "";
+
     // Titulares
     const titulares = escalacao.home.titulares || [];
-    titulares.forEach(jogador => {
-      homeLineupList.appendChild(createPlayerItem(jogador, 'titular'));
+    titulares.forEach((jogador) => {
+      homeLineupList.appendChild(createPlayerItem(jogador, "titular"));
     });
-    
+
     // Reservas
     const reservas = escalacao.home.reservas || [];
-    reservas.forEach(jogador => {
-      homeLineupList.appendChild(createPlayerItem(jogador, 'reserva'));
+    reservas.forEach((jogador) => {
+      homeLineupList.appendChild(createPlayerItem(jogador, "reserva"));
     });
-    
+
     // Técnico
     if (escalacao.home.tecnico) {
-      const tecnicoItem = document.createElement('div');
-      tecnicoItem.className = 'panel-player-item';
-      tecnicoItem.style.borderLeft = '3px solid var(--accent)';
+      const tecnicoItem = document.createElement("div");
+      tecnicoItem.className = "panel-player-item";
+      tecnicoItem.style.borderLeft = "3px solid var(--accent)";
       tecnicoItem.innerHTML = `
         <div class="panel-player-icon"><i class="fas fa-whistle"></i></div>
         <span class="panel-player-name"><strong>Técnico:</strong> ${escalacao.home.tecnico}</span>
@@ -983,28 +998,28 @@ function renderPanelLineups(escalacao) {
       homeLineupList.appendChild(tecnicoItem);
     }
   }
-  
-  const awayLineupList = document.getElementById('panel-away-lineup');
+
+  const awayLineupList = document.getElementById("panel-away-lineup");
   if (awayLineupList && escalacao.away) {
-    awayLineupList.innerHTML = '';
-    
+    awayLineupList.innerHTML = "";
+
     // Titulares
     const titulares = escalacao.away.titulares || [];
-    titulares.forEach(jogador => {
-      awayLineupList.appendChild(createPlayerItem(jogador, 'titular'));
+    titulares.forEach((jogador) => {
+      awayLineupList.appendChild(createPlayerItem(jogador, "titular"));
     });
-    
+
     // Reservas
     const reservas = escalacao.away.reservas || [];
-    reservas.forEach(jogador => {
-      awayLineupList.appendChild(createPlayerItem(jogador, 'reserva'));
+    reservas.forEach((jogador) => {
+      awayLineupList.appendChild(createPlayerItem(jogador, "reserva"));
     });
-    
+
     // Técnico
     if (escalacao.away.tecnico) {
-      const tecnicoItem = document.createElement('div');
-      tecnicoItem.className = 'panel-player-item';
-      tecnicoItem.style.borderLeft = '3px solid var(--accent)';
+      const tecnicoItem = document.createElement("div");
+      tecnicoItem.className = "panel-player-item";
+      tecnicoItem.style.borderLeft = "3px solid var(--accent)";
       tecnicoItem.innerHTML = `
         <div class="panel-player-icon"><i class="fas fa-whistle"></i></div>
         <span class="panel-player-name"><strong>Técnico:</strong> ${escalacao.away.tecnico}</span>
@@ -1050,7 +1065,7 @@ function dispararAnimacaoFullScreen(tipo) {
     textOverlay.innerText = "PÊNALTI";
     textOverlay.style.color = "#fff";
   }
-  
+
   void textOverlay.offsetWidth;
   textOverlay.classList.add("jump");
 
@@ -1058,8 +1073,8 @@ function dispararAnimacaoFullScreen(tipo) {
     tipo === "amarelo"
       ? "../assets/Carto Amarelo.json"
       : tipo === "vermelho"
-      ? "../assets/Cartão Vermelho.json"
-      : "../assets/Penalti.json";
+        ? "../assets/Cartão Vermelho.json"
+        : "../assets/Penalti.json";
   if (tipo === "gol") path = "../assets/goal.json";
 
   const anim = lottie.loadAnimation({
@@ -1074,7 +1089,7 @@ function dispararAnimacaoFullScreen(tipo) {
     setTimeout(() => {
       overlay.style.display = "none";
       textOverlay.classList.remove("jump");
-    }, 500); 
+    }, 500);
   };
 }
 
@@ -1099,21 +1114,21 @@ window.cabulosoTeste = {
     dispararAnimacaoFullScreen("penalti");
   },
   abrirEstatisticas: () => {
-    const overlay = document.getElementById('floating-overlay');
-    const statsPanel = document.getElementById('stats-panel');
+    const overlay = document.getElementById("floating-overlay");
+    const statsPanel = document.getElementById("stats-panel");
     if (overlay && statsPanel) {
-      overlay.classList.add('active');
-      statsPanel.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      overlay.classList.add("active");
+      statsPanel.classList.add("active");
+      document.body.style.overflow = "hidden";
     }
   },
   abrirEscalacoes: () => {
-    const overlay = document.getElementById('floating-overlay');
-    const lineupPanel = document.getElementById('lineup-panel');
+    const overlay = document.getElementById("floating-overlay");
+    const lineupPanel = document.getElementById("lineup-panel");
     if (overlay && lineupPanel) {
-      overlay.classList.add('active');
-      lineupPanel.classList.add('active');
-      document.body.style.overflow = 'hidden';
+      overlay.classList.add("active");
+      lineupPanel.classList.add("active");
+      document.body.style.overflow = "hidden";
     }
-  }
-}
+  },
+};
