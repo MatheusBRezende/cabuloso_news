@@ -458,7 +458,7 @@ function renderMatchHeader(placar, narracao, informacoes) {
   }
 
 
-  const localPartida = informacoes?.eestadio || "Local não informado";
+  const localPartida = informacoes?.estadio || "Local não informado";
   const nomeCampeonato = informacoes?.campeonato || "Partida";
 
   container.innerHTML = `
