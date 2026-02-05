@@ -7,8 +7,8 @@ let lastValidStats = null;
 
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/dados",
-  updateInterval: 5000, 
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados",
+  updateInterval: 15000, 
 };
 
 const golControl = {

@@ -1,7 +1,7 @@
 import { getFromCache, saveToCache } from './cache.js';
 
 const CONFIG_BRASILEIRAO = {
-  apiUrl: 'https://cabuloso-api.cabulosonews92.workers.dev/dados',
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados",
   defaultEscudo: 'https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png',
   CACHE_TTL: 10 * 60 * 1000 // 10 minutos
 };

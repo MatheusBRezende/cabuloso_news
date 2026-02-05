@@ -1,6 +1,6 @@
 const LiveMatchDetector = (() => {
   const CONFIG = {
-    webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/",
+    webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados",
     checkInterval: 5000,
     minutoAMinutoUrl: "../minuto-a-minuto.html",
     countdownSeconds: 10,
