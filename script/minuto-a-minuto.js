@@ -213,9 +213,14 @@ function processarNovoLance(lance) {
 const showLiveMatchUI = () => {
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
+  const mobileButtons = document.getElementById("mobile-buttons");
 
   if (liveSections) liveSections.style.display = "block";
   if (countdownWrapper) countdownWrapper.style.display = "none";
+  if (mobileButtons) mobileButtons.style.display = "flex";
+  
+  // Adiciona classe ao body para esconder hero em mobile
+  document.body.classList.add("live-match");
 
   if (state.countdownInterval) {
     clearInterval(state.countdownInterval);
@@ -236,9 +241,14 @@ const showNextMatchCountdown = () => {
 
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
+  const mobileButtons = document.getElementById("mobile-buttons");
 
   if (liveSections) liveSections.style.display = "none";
   if (countdownWrapper) countdownWrapper.style.display = "block";
+  if (mobileButtons) mobileButtons.style.display = "none";
+  
+  // Remove classe do body para mostrar hero
+  document.body.classList.remove("live-match");
 
   renderNextMatchCard(nextMatch);
   startCountdown(nextMatch.dataObj);
@@ -408,8 +418,8 @@ function updateMatchState(data) {
 }
 
 function renderAllComponents(data) {
-  renderMatchHeader(data.placar, data.narracao);
-  renderTimelineFullWidth(data.narracao); // ← NOVA FUNÇÃO
+  renderMatchHeader(data.placar, data.narracao, data.informacoes);
+  renderTimelineFullWidth(data.narracao);
   
   // Renderizar estatísticas principais
   if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
@@ -423,7 +433,7 @@ function renderAllComponents(data) {
   renderPanelLineups(data.escalacao);
 }
 
-function renderMatchHeader(placar, narracao) {
+function renderMatchHeader(placar, narracao, informacoes) {
   const container = document.getElementById("live-match-container");
   if (!container || !placar) return;
 
@@ -448,6 +458,17 @@ function renderMatchHeader(placar, narracao) {
     matchStatus = "1° TEMPO";
   }
 
+  // Pega o estádio de informacoes
+  let stadiumHTML = '';
+  if (informacoes && informacoes.estadio) {
+    stadiumHTML = `
+      <div class="stadium-info">
+        <i class="fas fa-location-dot"></i>
+        <span>${informacoes.estadio}</span>
+      </div>
+    `;
+  }
+
   container.innerHTML = `
     <div class="match-header-card">
       <div class="match-status-badge ${
@@ -455,8 +476,9 @@ function renderMatchHeader(placar, narracao) {
       }">
         <i class="fas fa-circle"></i> ${matchStatus}
       </div>
+      ${stadiumHTML}
       <div class="score-row">
-        <div class="team-info team-home">
+        <div class="team-info">
           <img src="${placar.home_logo}" alt="${placar.home_name}" class="team-logo" />
           <span class="team-name">${placar.home_name}</span>
         </div>
@@ -471,7 +493,7 @@ function renderMatchHeader(placar, narracao) {
             <span class="score-number">${placar.away || 0}</span>
           </div>
         </div>
-        <div class="team-info team-away">
+        <div class="team-info">
           <img src="${placar.away_logo}" alt="${placar.away_name}" class="team-logo" />
           <span class="team-name">${placar.away_name}</span>
         </div>
@@ -629,7 +651,12 @@ function renderGridStats(stats) {
 function updateTopArbitro(arbitragem) {
   const arbitroNome = document.querySelector('.top-arbitro-nome');
   if (arbitroNome && arbitragem) {
-    arbitroNome.textContent = arbitragem;
+    // Extrai apenas o nome do árbitro (remove "Árbitro: ")
+    let nomeArbitro = arbitragem;
+    if (typeof arbitragem === 'string') {
+      nomeArbitro = arbitragem.replace(/árbitro:\s*/i, '').trim();
+    }
+    arbitroNome.textContent = nomeArbitro || 'Aguardando...';
   }
 }
 
@@ -639,13 +666,15 @@ function updateTopArbitro(arbitragem) {
 function initTopFloatingButtons() {
   const statsBtn = document.getElementById('top-stats-btn');
   const lineupBtn = document.getElementById('top-lineup-btn');
+  const mobileStatsBtn = document.getElementById('mobile-stats-btn');
+  const mobileLineupBtn = document.getElementById('mobile-lineup-btn');
   const overlay = document.getElementById('floating-overlay');
 
   if (statsBtn) {
     statsBtn.onclick = (e) => {
       e.preventDefault();
       console.log("Botão Estatísticas clicado");
-      openStatsPanel(); // Chama a função correta que já limpa o outro painel
+      openStatsPanel();
     };
   }
 
@@ -653,7 +682,24 @@ function initTopFloatingButtons() {
     lineupBtn.onclick = (e) => {
       e.preventDefault();
       console.log("Botão Escalação clicado");
-      openLineupPanel(); // Chama a função correta que já limpa o outro painel
+      openLineupPanel();
+    };
+  }
+  
+  // BOTÕES MOBILE
+  if (mobileStatsBtn) {
+    mobileStatsBtn.onclick = (e) => {
+      e.preventDefault();
+      console.log("Botão Mobile Estatísticas clicado");
+      openStatsPanel();
+    };
+  }
+  
+  if (mobileLineupBtn) {
+    mobileLineupBtn.onclick = (e) => {
+      e.preventDefault();
+      console.log("Botão Mobile Escalação clicado");
+      openLineupPanel();
     };
   }
   
