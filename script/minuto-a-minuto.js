@@ -856,6 +856,9 @@ function renderPanelStats(stats) {
 /**
  * RENDERIZAR ESCALAÇÕES NO PAINEL FLUTUANTE
  */
+/**
+ * RENDERIZAR ESCALAÇÕES NO PAINEL FLUTUANTE (COM SUPORTE A FOTOS)
+ */
 function renderPanelLineups(escalacao) {
   if (!escalacao) return;
   
@@ -870,39 +873,56 @@ function renderPanelLineups(escalacao) {
     awayTeamName.textContent = state.match.away.name.toUpperCase();
   }
   
+  // Função auxiliar para criar o HTML do jogador
+  const createPlayerItem = (jogador, tipo) => {
+    const item = document.createElement('div');
+    item.className = `panel-player-item ${tipo === 'titular' ? 'titular' : 'reserva'}`;
+    
+    // Tratamento para suportar tanto string antiga quanto novo objeto com foto
+    let nome = jogador;
+    let fotoUrl = null;
+    let numero = '';
+    
+    if (typeof jogador === 'object' && jogador !== null) {
+        nome = jogador.nome;
+        fotoUrl = jogador.foto;
+        numero = jogador.numero ? `<span class="player-number">${jogador.numero}</span>` : '';
+    }
+
+    // Lógica da Imagem
+    let iconHtml = '';
+    if (fotoUrl) {
+        // Se tiver foto, usa a imagem
+        iconHtml = `<div class="panel-player-photo" style="background-image: url('${fotoUrl}');"></div>`;
+    } else {
+        // Se não, usa o ícone padrão
+        iconHtml = `<div class="panel-player-icon"><i class="fas fa-user"></i></div>`;
+    }
+
+    item.innerHTML = `
+      ${iconHtml}
+      <div class="player-info-wrapper">
+         <span class="panel-player-name">${numero} ${nome}</span>
+         <span class="panel-player-position">${tipo.toUpperCase()}</span>
+      </div>
+    `;
+    return item;
+  };
+
   const homeLineupList = document.getElementById('panel-home-lineup');
   if (homeLineupList && escalacao.home) {
-    const titulares = escalacao.home.titulares || [];
-    const reservas = escalacao.home.reservas || [];
-    
     homeLineupList.innerHTML = '';
     
     // Titulares
-    titulares.forEach((jogador, index) => {
-      const item = document.createElement('div');
-      item.className = 'panel-player-item titular';
-      item.innerHTML = `
-        <div class="panel-player-icon">
-          <i class="fas fa-user"></i>
-        </div>
-        <span class="panel-player-name">${jogador}</span>
-        <span class="panel-player-position">TITULAR</span>
-      `;
-      homeLineupList.appendChild(item);
+    const titulares = escalacao.home.titulares || [];
+    titulares.forEach(jogador => {
+      homeLineupList.appendChild(createPlayerItem(jogador, 'titular'));
     });
     
     // Reservas
-    reservas.forEach((jogador, index) => {
-      const item = document.createElement('div');
-      item.className = 'panel-player-item reserva';
-      item.innerHTML = `
-        <div class="panel-player-icon">
-          <i class="fas fa-user"></i>
-        </div>
-        <span class="panel-player-name">${jogador}</span>
-        <span class="panel-player-position">RESERVA</span>
-      `;
-      homeLineupList.appendChild(item);
+    const reservas = escalacao.home.reservas || [];
+    reservas.forEach(jogador => {
+      homeLineupList.appendChild(createPlayerItem(jogador, 'reserva'));
     });
     
     // Técnico
@@ -911,9 +931,7 @@ function renderPanelLineups(escalacao) {
       tecnicoItem.className = 'panel-player-item';
       tecnicoItem.style.borderLeft = '3px solid var(--accent)';
       tecnicoItem.innerHTML = `
-        <div class="panel-player-icon">
-          <i class="fas fa-whistle"></i>
-        </div>
+        <div class="panel-player-icon"><i class="fas fa-whistle"></i></div>
         <span class="panel-player-name"><strong>Técnico:</strong> ${escalacao.home.tecnico}</span>
       `;
       homeLineupList.appendChild(tecnicoItem);
@@ -922,37 +940,18 @@ function renderPanelLineups(escalacao) {
   
   const awayLineupList = document.getElementById('panel-away-lineup');
   if (awayLineupList && escalacao.away) {
-    const titulares = escalacao.away.titulares || [];
-    const reservas = escalacao.away.reservas || [];
-    
     awayLineupList.innerHTML = '';
     
     // Titulares
-    titulares.forEach((jogador, index) => {
-      const item = document.createElement('div');
-      item.className = 'panel-player-item titular';
-      item.innerHTML = `
-        <div class="panel-player-icon">
-          <i class="fas fa-user"></i>
-        </div>
-        <span class="panel-player-name">${jogador}</span>
-        <span class="panel-player-position">TITULAR</span>
-      `;
-      awayLineupList.appendChild(item);
+    const titulares = escalacao.away.titulares || [];
+    titulares.forEach(jogador => {
+      awayLineupList.appendChild(createPlayerItem(jogador, 'titular'));
     });
     
     // Reservas
-    reservas.forEach((jogador, index) => {
-      const item = document.createElement('div');
-      item.className = 'panel-player-item reserva';
-      item.innerHTML = `
-        <div class="panel-player-icon">
-          <i class="fas fa-user"></i>
-        </div>
-        <span class="panel-player-name">${jogador}</span>
-        <span class="panel-player-position">RESERVA</span>
-      `;
-      awayLineupList.appendChild(item);
+    const reservas = escalacao.away.reservas || [];
+    reservas.forEach(jogador => {
+      awayLineupList.appendChild(createPlayerItem(jogador, 'reserva'));
     });
     
     // Técnico
@@ -961,9 +960,7 @@ function renderPanelLineups(escalacao) {
       tecnicoItem.className = 'panel-player-item';
       tecnicoItem.style.borderLeft = '3px solid var(--accent)';
       tecnicoItem.innerHTML = `
-        <div class="panel-player-icon">
-          <i class="fas fa-whistle"></i>
-        </div>
+        <div class="panel-player-icon"><i class="fas fa-whistle"></i></div>
         <span class="panel-player-name"><strong>Técnico:</strong> ${escalacao.away.tecnico}</span>
       `;
       awayLineupList.appendChild(tecnicoItem);

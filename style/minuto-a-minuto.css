@@ -964,6 +964,18 @@ ul { list-style: none; }
     font-size: 0.9rem;
 }
 
+.panel-player-photo {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%; /* Faz ficar redondo */
+    background-size: cover;
+    background-position: center top;
+    background-color: #333;
+    border: 2px solid var(--accent);
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
 .panel-player-item {
     display: flex;
     align-items: center;
@@ -973,6 +985,18 @@ ul { list-style: none; }
     border-radius: var(--radius);
     border: 1px solid var(--gray-200);
     transition: var(--transition);
+}
+
+.player-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.player-number {
+    font-weight: bold;
+    color: var(--accent);
+    margin-right: 5px;
 }
 
 .panel-player-item:hover {
