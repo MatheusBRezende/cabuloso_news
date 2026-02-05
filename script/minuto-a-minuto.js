@@ -1,10 +1,9 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão: 7.2 - CORRIGIDA (Renderização Garantida)
+ * Versão: 9.0 - TIMELINE FULL WIDTH + WIDGETS SUPERIORES
  */
 let ultimoLanceId = null;
 let lastValidStats = null;
-
 
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
@@ -32,8 +31,57 @@ const state = {
   logsEnabled: true,
 };
 
+const animationQueue = {
+  queue: [],
+  isPlaying: false,
+  
+  add(animationType) {
+    this.queue.push(animationType);
+    if (!this.isPlaying) {
+      this.playNext();
+    }
+  },
+  
+  async playNext() {
+    if (this.queue.length === 0) {
+      this.isPlaying = false;
+      return;
+    }
+    
+    this.isPlaying = true;
+    const animationType = this.queue.shift();
+    
+    await this.playAnimation(animationType);
+    
+    // Aguarda um pequeno intervalo antes da próxima animação
+    setTimeout(() => {
+      this.playNext();
+    }, 1000); // 1 segundo entre animações
+  },
+  
+  async playAnimation(type) {
+    return new Promise((resolve) => {
+      if (type === 'amarelo') {
+        dispararAnimacaoCartao('amarelo');
+      } else if (type === 'vermelho') {
+        dispararAnimacaoCartao('vermelho');
+      } else if (type === 'gol') {
+        dispararAnimacaoGol();
+      } else if (type === 'penalti') {
+        dispararAnimacaoPenalti();
+      }
+      
+      // A animação completa chama resolve()
+      setTimeout(() => {
+        resolve();
+      }, 3000); // Tempo máximo para qualquer animação
+    });
+  }
+};
+
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
+  initTopFloatingButtons(); // ← AGORA USA OS BOTÕES SUPERIORES
   await loadAgenda();
   await fetchLiveData();
   setInterval(fetchLiveData, CONFIG.updateInterval);
@@ -85,7 +133,6 @@ const fetchLiveData = async () => {
     showNextMatchCountdown();
   }
 };
-
 
 function detectarNovoLance(data) {
   if (!data.narracao || data.narracao.length === 0) return;
@@ -141,20 +188,21 @@ function processarGol() {
 function processarNovoLance(lance) {
   const desc = lance.descricao ? lance.descricao.toUpperCase() : "";
 
+  // Verifica pênalti primeiro (mais específico)
+  if (desc.includes("PENALIDADE MÁXIMA") || desc.includes("PÊNALTI") || 
+      desc.includes("PENALTI") || desc.includes("MARCA DA CAL")) {
+    console.log("🎯 PÊNALTI DETECTADO!");
+    animationQueue.add('penalti');
+    return;
+  }
+
   if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
-    dispararAnimacaoFullScreen("vermelho");
+    animationQueue.add('vermelho');
     return;
   }
 
-  if (desc.includes("AMARELO") || desc.includes("CARTÃO AMARELO")) {
-    dispararAnimacaoFullScreen("amarelo");
-    return;
-  }
-
-  if (desc.includes("PÊNALTI") || desc.includes("PENALIDADE MÁXIMA")) {
-    console.log("🎯 CHANCE REAL DE GOL: PÊNALTI!");
-    // Opcional: Se quiser animação de tela cheia para pênalti, descomente abaixo:
-    // dispararAnimacaoFullScreen("penalti"); 
+  if (desc.includes("CARTÃO AMARELO") || desc.includes("AMARELO")) {
+    animationQueue.add('amarelo');
     return;
   }
 }
@@ -273,9 +321,7 @@ async function loadAgenda() {
     );
     const data = await response.json();
     
-    // Verifica se existe a propriedade 'agenda' com jogos
     if (data && !data.error && data.agenda && Array.isArray(data.agenda)) {
-      // Converte a estrutura da agenda para o formato esperado
       state.agendaData = {
         jogos: data.agenda
       };
@@ -310,17 +356,13 @@ function getNextMatchFromAgenda() {
 
 function parseMatchDate(dateStr, timeStr) {
   try {
-    // Remove "qui., " ou "dom., " etc. da data se existir
     const cleanDate = dateStr.replace(/^[a-z]{3}\.,\s*/i, '').trim();
     
-    // Separa dia, mês e ano (pode vir como "5 fev." ou "05/02/2026")
     let day, month, year;
     
     if (cleanDate.includes('/')) {
-      // Formato: "05/02/2026"
       [day, month, year] = cleanDate.split('/');
     } else {
-      // Formato: "5 fev."
       const meses = {
         'jan': 1, 'fev': 2, 'mar': 3, 'abr': 4, 'mai': 5, 'jun': 6,
         'jul': 7, 'ago': 8, 'set': 9, 'out': 10, 'nov': 11, 'dez': 12
@@ -330,10 +372,9 @@ function parseMatchDate(dateStr, timeStr) {
       day = parts[0];
       const mesStr = parts[1]?.replace('.', '').toLowerCase();
       month = meses[mesStr] || 1;
-      year = new Date().getFullYear(); // Usa ano atual se não especificado
+      year = new Date().getFullYear();
     }
     
-    // Processa hora (pode ser "21:30" ou "A definir")
     let hour = 0, minute = 0;
     if (timeStr && timeStr !== 'A definir') {
       [hour, minute] = timeStr.split(':').map(n => parseInt(n));
@@ -366,22 +407,26 @@ function updateMatchState(data) {
   state.match.status = data.placar.status || "AO VIVO";
 }
 
-
 function renderAllComponents(data) {
   renderMatchHeader(data.placar, data.narracao);
-  renderTimeline(data.narracao);
+  renderTimelineFullWidth(data.narracao); // ← NOVA FUNÇÃO
+  
+  // Renderizar estatísticas principais
   if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
-    renderStats(data.estatisticas, "home");
-    renderStats(data.estatisticas, "away");
-  }  
-  renderLineups(data.escalacao, data.arbitragem);
+    renderPanelStats(data.estatisticas);
+  }
+  
+  // Renderizar arbitragem no widget superior
+  updateTopArbitro(data.arbitragem);
+  
+  // Renderizar escalações no painel
+  renderPanelLineups(data.escalacao);
 }
 
 function renderMatchHeader(placar, narracao) {
   const container = document.getElementById("live-match-container");
   if (!container || !placar) return;
 
-  // Pega o minuto atual do primeiro lance (mais recente)
   let currentMinute = "0'";
   if (narracao && narracao.length > 0 && narracao[0].minuto) {
     currentMinute = String(narracao[0].minuto)
@@ -389,10 +434,8 @@ function renderMatchHeader(placar, narracao) {
       .trim();
   }
 
-  // Determina o status baseado no minuto
   let matchStatus = placar.status || "AO VIVO";
   
-  // Lógica de mudança automática de status
   if (currentMinute.includes("45'") && currentMinute.includes("1°T")) {
     matchStatus = "FIM DO 1° TEMPO";
   } else if (currentMinute.includes("Int") || currentMinute.toLowerCase().includes("intervalo")) {
@@ -437,11 +480,13 @@ function renderMatchHeader(placar, narracao) {
   `;
 }
 
-
-function renderTimeline(narracao) {
-  const container = document.getElementById("timeline-container");
-  const statusIndicator = document.getElementById("match-status-indicator");
-  const noEventsMessage = document.getElementById("no-events-message");
+/**
+ * RENDERIZA TIMELINE EM LARGURA TOTAL
+ */
+function renderTimelineFullWidth(narracao) {
+  const container = document.getElementById("timeline-container-full");
+  const statusIndicator = document.getElementById("match-status-indicator-full");
+  const noEventsMessage = document.getElementById("no-events-message-full");
 
   if (!container) return;
 
@@ -461,7 +506,7 @@ function renderTimeline(narracao) {
 
     let iconClass = "";
     let iconContent = lance.icone || "📝";
-    let extraClass = lance.classe || "lance-normal";
+    let extraClass = "lance-normal";
     const desc = lance.descricao ? lance.descricao.toLowerCase() : "";
 
     // Lógica de Ícones
@@ -481,7 +526,7 @@ function renderTimeline(narracao) {
         extraClass = "lance-importante";
     }
 
-    item.className = `timeline-item ${extraClass}`;
+    item.className = `timeline-item-full ${extraClass}`;
 
     let min = "0'";
     if(lance.minuto !== undefined && lance.minuto !== null) {
@@ -491,152 +536,438 @@ function renderTimeline(narracao) {
     }
 
     item.innerHTML = `
-      <div class="timeline-time"><span class="time-badge">${min}</span></div>
-      <div class="timeline-content">
-        <div class="timeline-icon ${iconClass}">${iconContent}</div>
-        <div class="timeline-text"><p>${lance.descricao}</p></div>
+      <div class="timeline-time-full">
+        <span class="time-badge-full">${min}</span>
+      </div>
+      <div class="timeline-content-full">
+        <div class="timeline-icon-full ${iconClass}">${iconContent}</div>
+        <div class="timeline-text-full"><p>${lance.descricao}</p></div>
       </div>
     `;
     container.appendChild(item);
   });
 }
 
-function renderStats(stats, side) {
-  const container = document.getElementById(`${side}-stats-list`);
-  const teamNameContainer = document.getElementById(`${side}-stats-header`);
-  if (!container || !stats) return;
-
-  container.innerHTML = ""; // 👈 BLINDAGEM
-
-  if (teamNameContainer) {
-    const teamName =
-      side === "home" ? state.match.home.name : state.match.away.name;
-
-    teamNameContainer.innerHTML = `
+/**
+ * RENDERIZA ESTATÍSTICAS EM GRID
+ */
+function renderGridStats(stats) {
+  const homeContainer = document.getElementById("home-stats-list-grid");
+  const awayContainer = document.getElementById("away-stats-list-grid");
+  const homeHeader = document.getElementById("home-stats-header-grid");
+  const awayHeader = document.getElementById("away-stats-header-grid");
+  
+  if (!stats) return;
+  
+  // Atualizar cabeçalhos
+  if (homeHeader && state.match.home.name) {
+    homeHeader.innerHTML = `
       <i class="fas fa-chart-bar"></i>
-      <span>ESTATÍSTICAS ${teamName.toUpperCase()}</span>
+      <span>${state.match.home.name.toUpperCase()}</span>
     `;
   }
+  
+  if (awayHeader && state.match.away.name) {
+    awayHeader.innerHTML = `
+      <i class="fas fa-chart-pie"></i>
+      <span>${state.match.away.name.toUpperCase()}</span>
+    `;
+  }
+  
+  // Renderizar estatísticas do mandante
+  if (homeContainer) {
+    const homeItems = [
+      { label: "Posse de bola", value: stats.posse_home || "0%" },
+      { label: "Chutes", value: stats.chutes_home || 0 },
+      { label: "Chutes a gol", value: stats.chutes_gol_home || 0 },
+      { label: "Passes certos", value: stats.passes_certos_home || 0 },
+      { label: "Passes errados", value: stats.passes_errados_home || 0 },
+      { label: "Faltas", value: stats.faltas_home || 0 },
+      { label: "Desarmes", value: stats.desarmes_home || 0 },
+      { label: "Escanteios", value: stats.escanteios_home || 0 },
+      { label: "Impedimentos", value: stats.impedimentos_home || 0 },
+      { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
+      { label: "Cartões vermelhos", value: stats.vermelhos_home || 0 },
+    ];
+    
+    homeContainer.innerHTML = homeItems.map(item => `
+      <div class="stat-item-grid">
+        <span class="stat-label-grid">${item.label}</span>
+        <span class="stat-value-grid">${item.value}</span>
+      </div>
+    `).join('');
+  }
+  
+  // Renderizar estatísticas do visitante
+  if (awayContainer) {
+    const awayItems = [
+      { label: "Posse de bola", value: stats.posse_away || "0%" },
+      { label: "Chutes", value: stats.chutes_away || 0 },
+      { label: "Chutes a gol", value: stats.chutes_gol_away || 0 },
+      { label: "Passes certos", value: stats.passes_certos_away || 0 },
+      { label: "Passes errados", value: stats.passes_errados_away || 0 },
+      { label: "Faltas", value: stats.faltas_away || 0 },
+      { label: "Desarmes", value: stats.desarmes_away || 0 },
+      { label: "Escanteios", value: stats.escanteios_away || 0 },
+      { label: "Impedimentos", value: stats.impedimentos_away || 0 },
+      { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
+      { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
+    ];
+    
+    awayContainer.innerHTML = awayItems.map(item => `
+      <div class="stat-item-grid">
+        <span class="stat-label-grid">${item.label}</span>
+        <span class="stat-value-grid">${item.value}</span>
+      </div>
+    `).join('');
+  }
+}
 
-  const isHome = side === "home";
+/**
+ * ATUALIZA ÁRBITRO NO WIDGET SUPERIOR
+ */
+function updateTopArbitro(arbitragem) {
+  const arbitroNome = document.querySelector('.top-arbitro-nome');
+  if (arbitroNome && arbitragem) {
+    arbitroNome.textContent = arbitragem;
+  }
+}
 
-  const items = [
-    { label: "Posse de bola", val: isHome ? stats.posse_home : stats.posse_away },
-    { label: "Chutes", val: isHome ? stats.chutes_home : stats.chutes_away },
-    { label: "Chutes a gol", val: isHome ? stats.chutes_gol_home : stats.chutes_gol_away },
-    { label: "Chutes para fora", val: isHome ? stats.chutes_fora_home : stats.chutes_fora_away },
-    { label: "Passes certos", val: isHome ? stats.passes_certos_home : stats.passes_certos_away },
-    { label: "Passes errados", val: isHome ? stats.passes_errados_home : stats.passes_errados_away },
-    { label: "Faltas cometidas", val: isHome ? stats.faltas_home : stats.faltas_away },
-    { label: "Desarmes", val: isHome ? stats.desarmes_home : stats.desarmes_away },
-    { label: "Escanteios", val: isHome ? stats.escanteios_home : stats.escanteios_away },
-    { label: "Impedimentos", val: isHome ? stats.impedimentos_home : stats.impedimentos_away },
-    { label: "Cartões amarelos", val: isHome ? stats.amarelos_home : stats.amarelos_away },
-    { label: "Cartões vermelhos", val: isHome ? stats.vermelhos_home : stats.vermelhos_away },
-  ];
+/**
+ * INICIALIZA OS BOTÕES FLUTUANTES SUPERIORES
+ */
+function initTopFloatingButtons() {
+  const statsBtn = document.getElementById('top-stats-btn');
+  const lineupBtn = document.getElementById('top-lineup-btn');
+  const overlay = document.getElementById('floating-overlay');
 
-  container.innerHTML = items
-    .map(
-      (i) => `
-        <div class="stat-item">
-          <span class="stat-label">${i.label}</span>
-          <span class="stat-value">${i.val !== undefined ? i.val : 0}</span>
-        </div>
-      `
-    )
-    .join("");
+  if (statsBtn) {
+    statsBtn.onclick = (e) => {
+      e.preventDefault();
+      console.log("Botão Estatísticas clicado");
+      openStatsPanel(); // Chama a função correta que já limpa o outro painel
+    };
+  }
+
+  if (lineupBtn) {
+    lineupBtn.onclick = (e) => {
+      e.preventDefault();
+      console.log("Botão Escalação clicado");
+      openLineupPanel(); // Chama a função correta que já limpa o outro painel
+    };
+  }
+  
+  if (overlay) {
+    overlay.onclick = (e) => {
+      if (e.target === overlay) {
+        closeAllPanels();
+      }
+    };
+  }
+}
+
+function openStatsPanel() {
+  const overlay = document.getElementById('floating-overlay');
+  const statsPanel = document.getElementById('stats-panel');
+  const lineupPanel = document.getElementById('lineup-panel');
+
+  if (overlay && statsPanel) {
+    overlay.classList.add('active');
+    statsPanel.classList.add('active');
+    lineupPanel.classList.remove('active');
+    document.body.style.overflow = 'hidden';
+    
+    // ATUALIZA OS DADOS QUANDO ABRIR O PAINEL
+    updateStatsPanel();
+  }
+}
+
+function openLineupPanel() {
+  const overlay = document.getElementById('floating-overlay');
+  const lineupPanel = document.getElementById('lineup-panel');
+  const statsPanel = document.getElementById('stats-panel');
+
+  if (overlay && lineupPanel) {
+    overlay.classList.add('active');
+    lineupPanel.classList.add('active');
+    statsPanel.classList.remove('active');
+    document.body.style.overflow = 'hidden';
+    
+    // ATUALIZA OS DADOS QUANDO ABRIR O PAINEL
+    updateLineupPanel();
+  }
+}
+
+function updateStatsPanel() {
+  // Use as estatísticas em cache (lastValidStats) ou busque se não houver
+  if (lastValidStats) {
+    renderPanelStats(lastValidStats);
+  } else {
+    // Tenta buscar estatísticas da API
+    fetchLiveDataForPanel();
+  }
+}
+
+/**
+ * ATUALIZA OS DADOS DO PAINEL DE ESCALAÇÕES
+ */
+function updateLineupPanel() {
+  // Tenta buscar escalações da API
+  fetchLiveDataForPanel();
+}
+
+async function fetchLiveDataForPanel() {
+  try {
+    const response = await fetch(
+      `${CONFIG.webhookUrl}&t=${Date.now()}`
+    );
+    let data = await response.json();
+    
+    if (Array.isArray(data)) {
+      data = data[0];
+    }
+    
+    // Atualiza estatísticas se disponíveis
+    if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+      lastValidStats = data.estatisticas;
+      renderPanelStats(data.estatisticas);
+    }
+    
+    // Atualiza escalações se disponíveis
+    if (data.escalacao) {
+      renderPanelLineups(data.escalacao);
+    }
+    
+    // Atualiza árbitro se disponível
+    if (data.arbitragem) {
+      updateTopArbitro(data.arbitragem);
+    }
+    
+  } catch (e) {
+    console.error("⚠️ Erro ao buscar dados para painéis:", e);
+  }
 }
 
 
+function closeAllPanels() {
+  const overlay = document.getElementById('floating-overlay');
+  const panels = document.querySelectorAll('.floating-panel');
+  
+  if (overlay) overlay.classList.remove('active');
+  panels.forEach(panel => panel.classList.remove('active'));
+  
+  // DEVOLVE O SCROLL
+  document.body.style.overflow = ''; 
+  console.log("Painéis fechados e scroll liberado");
+}
 
-/**
- * LOGICA DE ESCALAÇÃO HORIZONTAL (LOOP)
- */
-const renderPlayerTrack = (titulares, reservas) => {
-  const tpl = (name, isRes) => `
-    <div class="player-item-min">
-      <i class="fas fa-user-circle" style="margin-right:8px; color:${
-        isRes ? "var(--gray-400)" : "var(--primary)"
-      };"></i>
-      <span style="${
-        isRes ? "color:var(--gray-500); font-weight:400;" : ""
-      }">${name}</span>
-    </div>
-  `;
-
-  const allPlayers = [
-    ...titulares.map((p) => tpl(p, false)),
-    ...reservas.map((p) => tpl(p, true)),
-   ].join("");
-
-  return `<div class="lineup-players-track">${allPlayers}${allPlayers}</div>`;
-};
-
-/**
- * RENDERIZA AS ESCALAÇÕES COM ROLAGEM INDEPENDENTE
- */
-function renderLineups(escalacao, arbitragem) {
-  if (!escalacao || !escalacao.home || !escalacao.away) {
-    console.warn("⚠️ Escalação inválida:", escalacao);
-    return;
+document.addEventListener('DOMContentLoaded', () => {
+  const overlay = document.getElementById('floating-overlay');
+  if (overlay) {
+      overlay.addEventListener('click', (e) => {
+          if (e.target === overlay) closeAllPanels();
+      });
   }
   
-  const hCont = document.getElementById("home-lineup-content");
-  const aCont = document.getElementById("away-lineup-content");
-  const homeTeamName = document.getElementById("home-team-name-lineup");
-  const awayTeamName = document.getElementById("away-team-name-lineup");
+  // CORREÇÃO AQUI: O seu HTML usa 'panel-close-btn'
+  document.querySelectorAll('.panel-close-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          closeAllPanels();
+      });
+  });
 
-  if (homeTeamName) {
-    homeTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.home.name.toUpperCase()}`;
+  // ADICIONE ISSO PARA O ESC FUNCIONAR SEMPRE:
+  document.addEventListener('keydown', (e) => {
+      if (e.key === "Escape") closeAllPanels();
+  });
+});
+
+/**
+ * RENDERIZAR ESTATÍSTICAS NO PAINEL FLUTUANTE
+ */
+function renderPanelStats(stats) {
+  if (!stats) return;
+  
+  const homeTeamName = document.getElementById('panel-home-team');
+  const awayTeamName = document.getElementById('panel-away-team');
+  
+  if (homeTeamName && state.match.home.name) {
+    homeTeamName.innerHTML = `<span>${state.match.home.name.toUpperCase()}</span>`;
   }
-
-  if (awayTeamName) {
-    awayTeamName.innerHTML = `<i class="fas fa-users"></i> ${state.match.away.name.toUpperCase()}`;
+  
+  if (awayTeamName && state.match.away.name) {
+    awayTeamName.innerHTML = `<span>${state.match.away.name.toUpperCase()}</span>`;
   }
+  
+  const homeStatsList = document.getElementById('panel-home-stats');
+  if (homeStatsList) {
+    const homeItems = [
+      { label: "Posse de bola", value: stats.posse_home || "0%" },
+      { label: "Chutes", value: stats.chutes_home || 0 },
+      { label: "Chutes a gol", value: stats.chutes_gol_home || 0 },
+      { label: "Precisão", value: stats.chutes_home ? `${Math.round((stats.chutes_gol_home / stats.chutes_home) * 100) || 0}%` : "0%" },
+      { label: "Passes certos", value: stats.passes_certos_home || 0 },
+      { label: "Passes errados", value: stats.passes_errados_home || 0 },
+      { label: "Precisão passes", value: stats.passes_certos_home ? `${Math.round((stats.passes_certos_home / (stats.passes_certos_home + stats.passes_errados_home)) * 100) || 0}%` : "0%" },
+      { label: "Faltas", value: stats.faltas_home || 0 },
+      { label: "Desarmes", value: stats.desarmes_home || 0 },
+      { label: "Escanteios", value: stats.escanteios_home || 0 },
+      { label: "Impedimentos", value: stats.impedimentos_home || 0 },
+      { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
+      { label: "Cartões vermelhos", value: stats.vermelhos_home || 0 },
+    ];
+    
+    homeStatsList.innerHTML = homeItems.map(item => `
+      <div class="panel-stat-item">
+        <span class="panel-stat-label">${item.label}</span>
+        <span class="panel-stat-value">${item.value}</span>
+      </div>
+    `).join('');
+  }
+  
+  const awayStatsList = document.getElementById('panel-away-stats');
+  if (awayStatsList) {
+    const awayItems = [
+      { label: "Posse de bola", value: stats.posse_away || "0%" },
+      { label: "Chutes", value: stats.chutes_away || 0 },
+      { label: "Chutes a gol", value: stats.chutes_gol_away || 0 },
+      { label: "Precisão", value: stats.chutes_away ? `${Math.round((stats.chutes_gol_away / stats.chutes_away) * 100) || 0}%` : "0%" },
+      { label: "Passes certos", value: stats.passes_certos_away || 0 },
+      { label: "Passes errados", value: stats.passes_errados_away || 0 },
+      { label: "Precisão passes", value: stats.passes_certos_away ? `${Math.round((stats.passes_certos_away / (stats.passes_certos_away + stats.passes_errados_away)) * 100) || 0}%` : "0%" },
+      { label: "Faltas", value: stats.faltas_away || 0 },
+      { label: "Desarmes", value: stats.desarmes_away || 0 },
+      { label: "Escanteios", value: stats.escanteios_away || 0 },
+      { label: "Impedimentos", value: stats.impedimentos_away || 0 },
+      { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
+      { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
+    ];
+    
+    awayStatsList.innerHTML = awayItems.map(item => `
+      <div class="panel-stat-item">
+        <span class="panel-stat-label">${item.label}</span>
+        <span class="panel-stat-value">${item.value}</span>
+      </div>
+    `).join('');
+  }
+}
 
-  if (hCont && escalacao && escalacao.home) {
+/**
+ * RENDERIZAR ESCALAÇÕES NO PAINEL FLUTUANTE
+ */
+function renderPanelLineups(escalacao) {
+  if (!escalacao) return;
+  
+  const homeTeamName = document.getElementById('panel-home-team-name');
+  const awayTeamName = document.getElementById('panel-away-team-name');
+  
+  if (homeTeamName && state.match.home.name) {
+    homeTeamName.textContent = state.match.home.name.toUpperCase();
+  }
+  
+  if (awayTeamName && state.match.away.name) {
+    awayTeamName.textContent = state.match.away.name.toUpperCase();
+  }
+  
+  const homeLineupList = document.getElementById('panel-home-lineup');
+  if (homeLineupList && escalacao.home) {
     const titulares = escalacao.home.titulares || [];
     const reservas = escalacao.home.reservas || [];
-    const tecnico = escalacao.home.tecnico || "Técnico não informado";
-
-    hCont.innerHTML = `
-      <div class="lineup-players-container">
-        ${renderPlayerTrack(titulares, reservas)}
-      </div>
-      <div style="margin-top:10px; text-align:center; font-size:0.8rem; border-top:1px solid var(--gray-200); padding-top:5px">
-        <strong>Técnico:</strong> ${tecnico}
-      </div>
-    `;
-  } else if (hCont) {
-    hCont.innerHTML =
-      '<div class="loading-stats">Escalação não disponível</div>';
+    
+    homeLineupList.innerHTML = '';
+    
+    // Titulares
+    titulares.forEach((jogador, index) => {
+      const item = document.createElement('div');
+      item.className = 'panel-player-item titular';
+      item.innerHTML = `
+        <div class="panel-player-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <span class="panel-player-name">${jogador}</span>
+        <span class="panel-player-position">TITULAR</span>
+      `;
+      homeLineupList.appendChild(item);
+    });
+    
+    // Reservas
+    reservas.forEach((jogador, index) => {
+      const item = document.createElement('div');
+      item.className = 'panel-player-item reserva';
+      item.innerHTML = `
+        <div class="panel-player-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <span class="panel-player-name">${jogador}</span>
+        <span class="panel-player-position">RESERVA</span>
+      `;
+      homeLineupList.appendChild(item);
+    });
+    
+    // Técnico
+    if (escalacao.home.tecnico) {
+      const tecnicoItem = document.createElement('div');
+      tecnicoItem.className = 'panel-player-item';
+      tecnicoItem.style.borderLeft = '3px solid var(--accent)';
+      tecnicoItem.innerHTML = `
+        <div class="panel-player-icon">
+          <i class="fas fa-whistle"></i>
+        </div>
+        <span class="panel-player-name"><strong>Técnico:</strong> ${escalacao.home.tecnico}</span>
+      `;
+      homeLineupList.appendChild(tecnicoItem);
+    }
   }
-
-  if (aCont && escalacao && escalacao.away) {
+  
+  const awayLineupList = document.getElementById('panel-away-lineup');
+  if (awayLineupList && escalacao.away) {
     const titulares = escalacao.away.titulares || [];
     const reservas = escalacao.away.reservas || [];
-    const tecnico = escalacao.away.tecnico || "Técnico não informado";
-
-    aCont.innerHTML = `
-      <div class="lineup-players-container">
-        ${renderPlayerTrack(titulares, reservas)}
-      </div>
-      <div style="margin-top:10px; text-align:center; font-size:0.8rem; border-top:1px solid var(--gray-200); padding-top:5px">
-        <strong>Técnico:</strong> ${tecnico}
-      </div>
-    `;
-  } else if (aCont) {
-    aCont.innerHTML =
-      '<div class="loading-stats">Escalação não disponível</div>';
-  }
-
-  const ref = document.getElementById("match-referee-info");
-  if (ref && arbitragem) {
-    ref.innerHTML = `
-      <i class="fas fa-whistle" style="color:var(--primary); font-size: 1.2rem; margin-bottom: 5px;"></i>
-      <div style="font-size: 0.7rem; text-transform: uppercase; color: var(--gray-500);">Árbitro</div>
-      <div style="font-weight: bold; font-size: 0.9rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis;">${arbitragem}</div>
-    `;
+    
+    awayLineupList.innerHTML = '';
+    
+    // Titulares
+    titulares.forEach((jogador, index) => {
+      const item = document.createElement('div');
+      item.className = 'panel-player-item titular';
+      item.innerHTML = `
+        <div class="panel-player-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <span class="panel-player-name">${jogador}</span>
+        <span class="panel-player-position">TITULAR</span>
+      `;
+      awayLineupList.appendChild(item);
+    });
+    
+    // Reservas
+    reservas.forEach((jogador, index) => {
+      const item = document.createElement('div');
+      item.className = 'panel-player-item reserva';
+      item.innerHTML = `
+        <div class="panel-player-icon">
+          <i class="fas fa-user"></i>
+        </div>
+        <span class="panel-player-name">${jogador}</span>
+        <span class="panel-player-position">RESERVA</span>
+      `;
+      awayLineupList.appendChild(item);
+    });
+    
+    // Técnico
+    if (escalacao.away.tecnico) {
+      const tecnicoItem = document.createElement('div');
+      tecnicoItem.className = 'panel-player-item';
+      tecnicoItem.style.borderLeft = '3px solid var(--accent)';
+      tecnicoItem.innerHTML = `
+        <div class="panel-player-icon">
+          <i class="fas fa-whistle"></i>
+        </div>
+        <span class="panel-player-name"><strong>Técnico:</strong> ${escalacao.away.tecnico}</span>
+      `;
+      awayLineupList.appendChild(tecnicoItem);
+    }
   }
 }
 
@@ -704,6 +1035,9 @@ function dispararAnimacaoFullScreen(tipo) {
   };
 }
 
+/**
+ * FUNÇÕES DE TESTE PARA DEBUG
+ */
 window.cabulosoTeste = {
   gol: () => {
     dispararAnimacaoFullScreen("gol");
@@ -721,4 +1055,22 @@ window.cabulosoTeste = {
     console.log("🎯 PÊNALTI DETECTADO!");
     dispararAnimacaoFullScreen("penalti");
   },
+  abrirEstatisticas: () => {
+    const overlay = document.getElementById('floating-overlay');
+    const statsPanel = document.getElementById('stats-panel');
+    if (overlay && statsPanel) {
+      overlay.classList.add('active');
+      statsPanel.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  },
+  abrirEscalacoes: () => {
+    const overlay = document.getElementById('floating-overlay');
+    const lineupPanel = document.getElementById('lineup-panel');
+    if (overlay && lineupPanel) {
+      overlay.classList.add('active');
+      lineupPanel.classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+  }
 }

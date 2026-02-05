@@ -81,6 +81,33 @@
       </div>
     </section>
 
+    <!-- BOTÕES FLUTUANTES SUPERIORES E ÁRBITRO -->
+    <div class="top-floating-widgets">
+      <!-- ÁRBITRO -->
+      <div class="top-arbitro-widget" id="top-arbitro-info">
+        <div class="top-arbitro-icon">
+          <i class="fas fa-whistle"></i>
+        </div>
+        <div class="top-arbitro-content">
+          <div class="top-arbitro-title">Árbitro</div>
+          <div class="top-arbitro-nome">Aguardando...</div>
+        </div>
+      </div>
+      
+      <!-- BOTÕES -->
+      <div class="top-floating-buttons">
+        <button class="top-floating-btn" id="top-stats-btn">
+          <i class="fas fa-chart-bar"></i>
+          <span class="top-btn-label">Estatísticas</span>
+        </button>
+        
+        <button class="top-floating-btn" id="top-lineup-btn">
+          <i class="fas fa-users"></i>
+          <span class="top-btn-label">Escalações</span>
+        </button>
+      </div>
+    </div>
+
     <main class="main-content">
       <div class="container">
         <div id="live-match-container"></div>
@@ -110,99 +137,99 @@
           </div>
         </div>
 
+        <!-- AQUI É ONDE FICA O CONTEÚDO DO JOGO AO VIVO -->
         <div id="live-match-sections">
-          <div class="match-layout">
-            <aside class="stats-column home-stats">
-              <div class="stats-card">
-                <div class="stats-header" id="home-stats-header">
-                  <i class="fas fa-chart-bar"></i>
-                  <span>ESTATÍSTICA MANDANTE</span>
-                </div>
-                <div id="home-stats-list" class="stats-list">
-                  <div class="loading-stats">Aguardando dados...</div>
-                </div>
-              </div>
-
-              <div class="arbitro-column">
-                <div class="arbitro-container" id="match-referee-info">
-                  <div class="arbitro-icon">
-                    <i class="fas fa-whistle"></i>
-                  </div>
-                  <div class="arbitro-title">Árbitro Principal</div>
-                  <div class="arbitro-nome" id="arbitro-nome">
-                    Aguardando...
-                  </div>
+          <!-- TIMELINE EXPANDIDA (100% largura) -->
+          <div class="timeline-fullwidth">
+            <div class="timeline-container-full">
+              <div class="timeline-header-full">
+                <h2>
+                  <i class="fas fa-list-ul"></i> AO VIVO - LANCE A LANCE
+                </h2>
+                <div class="match-status-full" id="match-status-indicator-full">
+                  AGUARDANDO
                 </div>
               </div>
-            </aside>
-
-            <div class="timeline-column">
-              <div class="timeline-container">
-                <div class="timeline-header">
-                  <h2>
-                    <i class="fas fa-list-ul"></i> AO VIVO MINUTO A MINUTO
-                  </h2>
-                  <div class="match-status" id="match-status-indicator">
-                    AGUARDANDO
+              <div class="timeline-full" id="timeline-container-full">
+                <div class="no-events-message-full" id="no-events-message-full">
+                  <div class="no-events-icon-full">
+                    <i class="fas fa-futbol"></i>
                   </div>
-                </div>
-                <div class="timeline" id="timeline-container">
-                  <div class="no-events-message" id="no-events-message">
-                    <div class="no-events-icon">
-                      <i class="fas fa-futbol"></i>
-                    </div>
-                    <p>Nenhum lance registrado ainda.</p>
-                  </div>
+                  <p>Nenhum lance registrado ainda.</p>
                 </div>
               </div>
-            </div>
-
-            <aside class="stats-column away-stats">
-              <div class="stats-card">
-                <div class="stats-header" id="away-stats-header">
-                  <span>ESTATÍSTICA VISITANTE</span>
-                  <i class="fas fa-chart-pie"></i>
-                </div>
-                <div id="away-stats-list" class="stats-list">
-                  <div class="loading-stats">Aguardando dados...</div>
-                </div>
-              </div>
-            </aside>
-          </div>
-
-          <div class="lineup-section" style="margin-top: 2rem">
-            <div class="lineup-layout">
-              <!-- MANDANTE -->
-              <aside class="stats-column home-lineup-column">
-                <div class="stats-card">
-                  <div class="stats-header" id="home-team-name-lineup">
-                    <i class="fas fa-users"></i>
-                    <span id="home-lineup-title">ESCALAÇÃO MANDANTE</span>
-                  </div>
-                  <div id="home-lineup-content" class="stats-list">
-                    <div class="loading-stats">Aguardando dados...</div>
-                  </div>
-                </div>
-              </aside>
-
-              <!-- VISITANTE -->
-              <aside class="stats-column away-lineup-column">
-                <div class="stats-card">
-                  <div class="stats-header" id="away-team-name-lineup">
-                    <i class="fas fa-users"></i>
-                    <span id="away-lineup-title">ESCALAÇÃO VISITANTE</span>
-                  </div>
-                  <div id="away-lineup-content" class="stats-list">
-                    <div class="loading-stats">Aguardando dados...</div>
-                  </div>
-                </div>
-              </aside>
             </div>
           </div>
         </div>
       </div>
     </main>
 
+    <!-- OVERLAY PARA OS PAINÉIS FLUTUANTES -->
+    <div class="floating-panel-overlay" id="floating-overlay"></div>
+
+    <!-- PAINEL DE ESTATÍSTICAS -->
+    <div class="floating-panel floating-panel-left" id="stats-panel">
+      <div class="panel-header">
+        <h3><i class="fas fa-chart-bar"></i> ESTATÍSTICAS DETALHADAS</h3>
+        <button class="panel-close-btn" data-panel="stats">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="panel-content">
+        <div class="panel-stats-layout">
+          <div class="panel-stats-column">
+            <div class="panel-team-header" id="panel-home-team">
+              <span>MANDANTE</span>
+            </div>
+            <div id="panel-home-stats" class="panel-stats-list">
+              <div class="loading-stats">Carregando estatísticas...</div>
+            </div>
+          </div>
+          
+          <div class="panel-stats-column">
+            <div class="panel-team-header" id="panel-away-team">
+              <span>VISITANTE</span>
+            </div>
+            <div id="panel-away-stats" class="panel-stats-list">
+              <div class="loading-stats">Carregando estatísticas...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PAINEL DE ESCALAÇÕES -->
+    <div class="floating-panel floating-panel-right" id="lineup-panel">
+      <div class="panel-header">
+        <h3><i class="fas fa-users"></i> ESCALAÇÕES</h3>
+        <button class="panel-close-btn" data-panel="lineup">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="panel-content">
+        <div class="panel-lineup-layout">
+          <div class="panel-lineup-column">
+            <div class="panel-team-header">
+              <span id="panel-home-team-name">MANDANTE</span>
+            </div>
+            <div id="panel-home-lineup" class="panel-lineup-list">
+              <div class="loading-stats">Carregando escalação...</div>
+            </div>
+          </div>
+          
+          <div class="panel-lineup-column">
+            <div class="panel-team-header">
+              <span id="panel-away-team-name">VISITANTE</span>
+            </div>
+            <div id="panel-away-lineup" class="panel-lineup-list">
+              <div class="loading-stats">Carregando escalação...</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- OVERLAY DAS ANIMAÇÕES (gol, cartão, etc.) -->
     <div
       id="fullscreen-overlay"
       style="
