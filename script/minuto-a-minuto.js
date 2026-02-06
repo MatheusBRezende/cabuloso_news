@@ -345,19 +345,22 @@ function getNextMatchFromAgenda() {
   let minDiff = Infinity;
 
   state.agendaData.jogos.forEach((jogo) => {
+    // Usamos jogo.data (ex: 05/02/2026) e jogo.hora (ex: 21:30)
     const dataMatch = parseMatchDate(jogo.data, jogo.hora);
-    if (!dataMatch || dataMatch < now) return;
+    if (!dataMatch) return;
 
+    // Se o jogo é no futuro ou foi há menos de 3 horas (ainda pode estar rolando)
     const diff = dataMatch - now;
-    if (diff < minDiff) {
-      minDiff = diff;
-      closest = { ...jogo, dataObj: dataMatch };
+    if (dataMatch > (now - 10800000)) { 
+      if (diff < minDiff && diff > -10800000) {
+        minDiff = diff;
+        closest = { ...jogo, dataObj: dataMatch };
+      }
     }
   });
 
   return closest;
 }
-
 function parseMatchDate(dateStr, timeStr) {
   try {
     const cleanDate = dateStr.replace(/^[a-z]{3}\.,\s*/i, "").trim();
