@@ -414,22 +414,35 @@ async function loadAgenda() {
     const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`);
     const data = await response.json();
 
-    // Verifica se a resposta tem sucesso e jogos
-    if (data && data.sucesso === true && data.jogos && Array.isArray(data.jogos)) {
-      state.agendaData = {
-        jogos: data.jogos // Agora extraímos corretamente
-      };
-      console.log("📅 Agenda carregada:", data.jogos.length, "jogos");
+    console.log("📦 Dados brutos da agenda:", data); // Para debug
+
+    // A API retorna um array com um objeto dentro
+    if (Array.isArray(data) && data.length > 0) {
+      const agendaObj = data[0]; // Pega o primeiro objeto do array
       
-      // Se não tiver jogo ao vivo, exibe o próximo jogo
-      if (!state.matchStarted) {
-        showNextMatchCountdown();
+      if (agendaObj && agendaObj.sucesso === true && agendaObj.jogos && Array.isArray(agendaObj.jogos)) {
+        state.agendaData = {
+          jogos: agendaObj.jogos
+        };
+        
+        console.log("✅ Agenda carregada:", agendaObj.jogos.length, "jogos");
+        
+        // Se não tiver jogo ao vivo, exibe o próximo jogo
+        if (!state.matchStarted) {
+          showNextMatchCountdown();
+        }
+        
+        return; // Sucesso - sair da função
       }
-    } else {
-      console.warn("⚠️ Agenda vazia ou formato inválido:", data);
     }
+    
+    // Se chegou aqui, formato não reconhecido
+    console.warn("⚠️ Formato de agenda não reconhecido:", data);
+    state.agendaData = { jogos: [] };
+    
   } catch (e) {
-    console.error("⚠️ Erro ao carregar agenda:", e);
+    console.error("❌ Erro ao carregar agenda:", e);
+    state.agendaData = { jogos: [] };
   }
 }
 
