@@ -72,11 +72,13 @@ const animationQueue = {
       this.isPlaying = false;
       return;
     }
-
+  
     this.isPlaying = true;
     const event = this.queue.shift();
-
+  
     await this.playAnimation(event.type);
+  
+    this.isPlaying = false;
     this.playNext();
   },
 
@@ -84,7 +86,7 @@ const animationQueue = {
     return new Promise((resolve) => {
       dispararAnimacaoFullScreen(type);
 
-      setTimeout(resolve, 4500);
+      setTimeout(resolve, 100);
     });
   },
 };
@@ -221,7 +223,7 @@ function processarGol() {
   if (!gol) return;
 
   const minuto = state.match.minute || "0'";
-  const hash = gerarHashLance(minuto, "GOL_PLACAR");
+  const hash = gerarHashLance(minuto, "GOL");
 
   animationQueue.add({
     type: "gol",
