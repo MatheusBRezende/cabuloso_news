@@ -61,20 +61,13 @@ const animationQueue = {
 
   async playAnimation(type) {
     return new Promise((resolve) => {
-      if (type === "amarelo") {
-        dispararAnimacaoCartao("amarelo");
-      } else if (type === "vermelho") {
-        dispararAnimacaoCartao("vermelho");
-      } else if (type === "gol") {
-        dispararAnimacaoGol();
-      } else if (type === "penalti") {
-        dispararAnimacaoPenalti();
-      }
+      // Chamando a função correta que realmente existe no seu código
+      dispararAnimacaoFullScreen(type);
 
-      // A animação completa chama resolve()
+      // Tempo máximo para qualquer animação antes de liberar a fila
       setTimeout(() => {
         resolve();
-      }, 3000); // Tempo máximo para qualquer animação
+      }, 4000); // Aumentei para 4s para garantir a sincronia com o Lottie
     });
   },
 };
