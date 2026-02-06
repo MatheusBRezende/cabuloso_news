@@ -286,6 +286,30 @@ const showNextMatchCountdown = () => {
 
   if (!nextMatch) {
     console.warn("⚠️ Nenhum próximo jogo encontrado na agenda");
+    
+    // Mostra uma mensagem padrão se não houver próximos jogos
+    const liveSections = document.getElementById("live-match-sections");
+    const countdownWrapper = document.getElementById("countdown-wrapper");
+    
+    if (liveSections) liveSections.style.display = "none";
+    if (countdownWrapper) {
+      countdownWrapper.style.display = "block";
+      
+      // Mensagem de fallback
+      const container = document.getElementById("live-match-container");
+      if (container) {
+        container.innerHTML = `
+          <div class="match-header-card" style="text-align: center; padding: 40px;">
+            <div class="match-status-badge" style="background: var(--gray-600);">
+              <i class="fas fa-calendar-times"></i> SEM PRÓXIMOS JOGOS
+            </div>
+            <div style="margin-top: 20px; color: var(--gray-300);">
+              Nenhum jogo encontrado na agenda
+            </div>
+          </div>
+        `;
+      }
+    }
     return;
   }
 
@@ -383,15 +407,22 @@ const startCountdown = (targetDate) => {
 
 async function loadAgenda() {
   try {
-    // Note que mudei para type=agenda
     const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`);
     const data = await response.json();
 
-    if (data && data.jogos && Array.isArray(data.jogos)) {
+    // Verifica se a resposta tem sucesso e jogos
+    if (data && data.sucesso === true && data.jogos && Array.isArray(data.jogos)) {
       state.agendaData = {
-        jogos: data.jogos, // O campo correto agora é 'jogos'
+        jogos: data.jogos // Agora extraímos corretamente
       };
       console.log("📅 Agenda carregada:", data.jogos.length, "jogos");
+      
+      // Se não tiver jogo ao vivo, exibe o próximo jogo
+      if (!state.matchStarted) {
+        showNextMatchCountdown();
+      }
+    } else {
+      console.warn("⚠️ Agenda vazia ou formato inválido:", data);
     }
   } catch (e) {
     console.error("⚠️ Erro ao carregar agenda:", e);
@@ -421,28 +452,29 @@ function getNextMatchFromAgenda() {
 
   return closest;
 }
+
 function parseMatchDate(dateStr, timeStr) {
   try {
-    const cleanDate = dateStr.replace(/^[a-z]{3}\.,\s*/i, "").trim();
-
+    // Remove prefixos como "dom.," se existir
+    const cleanDate = dateStr.replace(/^[a-z]{3}\.,?\s*/i, "").trim();
+    
     let day, month, year;
 
     if (cleanDate.includes("/")) {
-      [day, month, year] = cleanDate.split("/");
+      const parts = cleanDate.split("/");
+      day = parts[0];
+      month = parts[1];
+      year = parts[2];
+      
+      // Se o ano tiver apenas 2 dígitos, assume século 21
+      if (year && year.length === 2) {
+        year = "20" + year;
+      }
     } else {
+      // Fallback para formato textual
       const meses = {
-        jan: 1,
-        fev: 2,
-        mar: 3,
-        abr: 4,
-        mai: 5,
-        jun: 6,
-        jul: 7,
-        ago: 8,
-        set: 9,
-        out: 10,
-        nov: 11,
-        dez: 12,
+        jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
+        jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12
       };
 
       const parts = cleanDate.split(" ");
@@ -452,19 +484,24 @@ function parseMatchDate(dateStr, timeStr) {
       year = new Date().getFullYear();
     }
 
-    let hour = 0,
-      minute = 0;
+    let hour = 0, minute = 0;
     if (timeStr && timeStr !== "A definir") {
       [hour, minute] = timeStr.split(":").map((n) => parseInt(n));
     }
 
-    return new Date(
+    // Cria a data no fuso horário de Brasília (UTC-3)
+    const date = new Date(
       parseInt(year),
       parseInt(month) - 1,
       parseInt(day),
       parseInt(hour) || 0,
-      parseInt(minute) || 0,
+      parseInt(minute) || 0
     );
+    
+    // Ajusta para UTC-3 (Brasília)
+    date.setHours(date.getHours() - 3);
+    
+    return date;
   } catch (e) {
     console.error("Erro ao processar data:", dateStr, timeStr, e);
     return null;
