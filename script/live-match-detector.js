@@ -30,117 +30,49 @@ const LiveMatchDetector = (() => {
     try {
       const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`, {
         cache: "no-cache",
-        method: "GET",
-        headers: {
-          Accept: "application/json",
-        },
+        headers: { Accept: "application/json" }
       });
-
-      if (!response.ok) {
-        console.log("Webhook retornou status:", response.status);
+  
+      if (!response.ok) return null;
+  
+      const data = await response.json();
+  
+      if (!data || data.sucesso !== true || !Array.isArray(data.jogos)) {
+        console.log("Estrutura inválida da agenda");
         return null;
       }
-
-      // Pega o texto da resposta primeiro
-      const text = await response.text();
-
-      // Se vazio, retorna null
-      if (!text || text.trim() === "") {
-        console.log("Webhook retornou vazio");
+  
+      // 🔴 PROCURA JOGO AO VIVO
+      const jogoAoVivo = data.jogos.find(j => j.tipo === "now");
+  
+      if (!jogoAoVivo) {
+        console.log("Nenhum jogo ao vivo");
         return null;
       }
-
-      // Tenta fazer parse do JSON
-      let data;
-      try {
-        data = JSON.parse(text);
-        console.log("Dados recebidos do webhook:", data);
-      } catch (parseError) {
-        console.error("Erro ao fazer parse do JSON:", parseError);
-        console.log("Resposta recebida:", text.substring(0, 200));
-        return null;
-      }
-
-      // Verifica se é array e pega primeiro item
-      const matchData = Array.isArray(data) && data.length > 0 ? data[0] : data;
-
-      // Se não tem dados válidos
-      if (!matchData || typeof matchData !== "object") {
-        console.log("Dados do webhook inválidos");
-        return null;
-      }
-
-      // LOG EXTRA: Verifica todas as chaves disponíveis
-      console.log("Chaves disponíveis:", Object.keys(matchData));
-
-      // CORREÇÃO: Verifica estrutura dos dados
-      // Primeiro, tenta usar a estrutura do n8n (com placar e resultados)
-      if (matchData.placar) {
-        console.log("Usando estrutura placar/resultados");
-        const tempo = matchData.placar.status || "";
-        const isLive =
-          tempo &&
-          !tempo.includes("Fim") &&
-          !tempo.includes("Encerrado") &&
-          !tempo.includes("FINAL") &&
-          tempo !== "";
-
-        if (isLive) {
-          console.log(
-            "✅ Jogo ao vivo detectado (estrutura placar):",
-            matchData.placar.home_name,
-            "vs",
-            matchData.placar.away_name,
-          );
-          return {
-            mandante: matchData.placar.home_name || "Time Casa",
-            visitante: matchData.placar.away_name || "Time Fora",
-            placar_mandante: matchData.placar.home || 0,
-            placar_visitante: matchData.placar.away || 0,
-            tempo: tempo,
-            campeonato: matchData.placar.campeonato || "Campeonato",
-            status: tempo.includes("Intervalo") ? "INTERVALO" : "AO_VIVO",
-          };
-        }
-      }
-
-      // Se não encontrou na estrutura placar, tenta estrutura alternativa
-      const tempoAlt = matchData["Tempo_Jogo"] || matchData.status || "";
-      const isLiveAlt =
-        tempoAlt &&
-        !tempoAlt.includes("Fim") &&
-        !tempoAlt.includes("Encerrado") &&
-        !tempoAlt.includes("FINAL") &&
-        tempoAlt !== "";
-
-      if (isLiveAlt) {
-        console.log(
-          "✅ Jogo ao vivo detectado (estrutura alternativa):",
-          matchData.Casa || matchData.mandante,
-          "vs",
-          matchData.Fora || matchData.visitante,
-        );
-        return {
-          mandante: matchData.Casa || matchData.mandante || "Time Casa",
-          visitante: matchData.Fora || matchData.visitante || "Time Fora",
-          placar_mandante:
-            matchData["Gols Casa"] || matchData.placar_mandante || 0,
-          placar_visitante:
-            matchData["Gols fora"] || matchData.placar_visitante || 0,
-          tempo: tempoAlt,
-          campeonato:
-            matchData.Campeonato || matchData.campeonato || "Campeonato",
-          status: tempoAlt.includes("Intervalo") ? "INTERVALO" : "AO_VIVO",
-        };
-      }
-
-      console.log("Jogo não está ao vivo (Status/Tempo:", tempoAlt, ")");
-      return null;
-    } catch (error) {
-      console.error("❌ Erro ao verificar jogo ao vivo:", error.message);
+  
+      // Extrai nomes
+      const [mandante, visitante] = jogoAoVivo.partida
+        .split(" x ")
+        .map(t => t.trim());
+  
+      console.log("✅ Jogo ao vivo detectado:", mandante, "vs", visitante);
+  
+      return {
+        mandante,
+        visitante,
+        placar_mandante: 0, // placar vem do minuto-a-minuto
+        placar_visitante: 0,
+        tempo: "AO VIVO",
+        campeonato: jogoAoVivo.campeonato || "Campeonato",
+        status: "AO_VIVO"
+      };
+  
+    } catch (err) {
+      console.error("Erro ao verificar jogo ao vivo:", err.message);
       return null;
     }
   };
+  
 
   /**
    * Cria o CSS do modal e ícone ao vivo
