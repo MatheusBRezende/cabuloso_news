@@ -42,24 +42,30 @@ const EVENT_PRIORITY = {
 const animationQueue = {
   queue: [],
   isPlaying: false,
-  lastEvents: new Set(),
-
-  // deduplicação
-
+  lastEvents: new Map(), // hash -> timestamp
+  MAX_EVENT_AGE: 10 * 60 * 1000, // 10 minutos
+  
   add(event) {
-    // event = { type, minute, hash }
-
-    // ⛔ ignora duplicados
+    const now = Date.now();
+  
+    for (const [hash, time] of this.lastEvents.entries()) {
+      if (now - time > this.MAX_EVENT_AGE) {
+        this.lastEvents.delete(hash);
+      }
+    }
+  
     if (this.lastEvents.has(event.hash)) return;
-    this.lastEvents.add(event.hash);
-
+  
+    this.lastEvents.set(event.hash, now);
+  
     this.queue.push(event);
-
-    // 🔁 ordena por prioridade
-    this.queue.sort((a, b) => EVENT_PRIORITY[a.type] - EVENT_PRIORITY[b.type]);
-
+  
+    this.queue.sort(
+      (a, b) => EVENT_PRIORITY[a.type] - EVENT_PRIORITY[b.type]
+    );
+  
     if (!this.isPlaying) this.playNext();
-  },
+  },  
 
   async playNext() {
     if (this.queue.length === 0) {
@@ -114,25 +120,14 @@ function stopLivePolling() {
 const animationCache = {};
 
 function preloadAnimations() {
-  const animations = {
-    gol: "../assets/goal.json",
-    amarelo: "../assets/Carto Amarelo.json",
-    vermelho: "../assets/Cartão Vermelho.json",
-    penalti: "../assets/Penalti.json",
-  };
-
-  Object.entries(animations).forEach(([key, path]) => {
-    animationCache[key] = lottie.loadAnimation({
-      container: document.createElement("div"), // fora do DOM
-      renderer: "svg",
-      loop: false,
-      autoplay: false,
-      path,
-    });
-  });
+  animationCache.gol = "../assets/goal.json";
+  animationCache.amarelo = "../assets/Carto Amarelo.json";
+  animationCache.vermelho = "../assets/Cartão Vermelho.json";
+  animationCache.penalti = "../assets/Penalti.json";
 
   console.log("🎬 Animações pré-carregadas");
 }
+
 
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
@@ -1174,27 +1169,25 @@ function dispararAnimacaoFullScreen(tipo) {
   void textOverlay.offsetWidth;
   textOverlay.classList.add("jump");
 
-  let path =
-    tipo === "amarelo"
-      ? "../assets/Carto Amarelo.json"
-      : tipo === "vermelho"
-        ? "../assets/Cartão Vermelho.json"
-        : "../assets/Penalti.json";
-  if (tipo === "gol") path = "../assets/goal.json";
-
-  const anim = animationCache[tipo];
-  if (!anim) return;
-
-  anim.container = container;
-  container.appendChild(anim.renderer.svgElement);
-
-  anim.goToAndPlay(0, true);
-
-  anim.onComplete = () => {
+  const path = animationCache[tipo];
+  if (!path) return;
+  
+  const anim = lottie.loadAnimation({
+    container,
+    renderer: "svg",
+    loop: false,
+    autoplay: true,
+    path,
+  });
+  
+  anim.addEventListener("complete", () => {
     setTimeout(() => {
       textOverlay.classList.remove("jump");
+      overlay.style.display = "none";
+  
+      anim.destroy(); // ⛔ impede sobreposição
     }, 4500);
-  };
+  });  
 }
 
 /**
