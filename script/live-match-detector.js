@@ -36,14 +36,17 @@ const LiveMatchDetector = (() => {
       if (!response.ok) return null;
   
       const data = await response.json();
+      
+      // CORREÇÃO: Verifica se a resposta é um array e pega o primeiro elemento
+      const responseData = Array.isArray(data) ? data[0] : data;
   
-      if (!data || data.sucesso !== true || !Array.isArray(data.jogos)) {
+      if (!responseData || responseData.sucesso !== true || !Array.isArray(responseData.jogos)) {
         console.log("Estrutura inválida da agenda");
         return null;
       }
   
       // 🔴 PROCURA JOGO AO VIVO
-      const jogoAoVivo = data.jogos.find(j => j.tipo === "now");
+      const jogoAoVivo = responseData.jogos.find(j => j.tipo === "now");
   
       if (!jogoAoVivo) {
         console.log("Nenhum jogo ao vivo");
@@ -91,8 +94,6 @@ const LiveMatchDetector = (() => {
     }
   };
   
-  
-
   /**
    * Cria o CSS do modal e ícone ao vivo
    */
