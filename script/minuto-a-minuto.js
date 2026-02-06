@@ -150,6 +150,10 @@ const fetchLiveData = async () => {
       data = data[0];
     }
 
+    if (data && data[""] !== undefined) {
+      data = data[""]; // Extrai os dados da chave vazia
+    }
+
     if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
       lastValidStats = data.estatisticas;
     }
@@ -866,6 +870,10 @@ async function fetchLiveDataForPanel() {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
     let data = await response.json();
+
+    if (data && data[""] !== undefined) {
+      data = data[""];
+    }
 
     if (Array.isArray(data)) {
       data = data[0];
