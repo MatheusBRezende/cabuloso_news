@@ -4,6 +4,7 @@
  */
 let ultimoLanceId = null;
 let lastValidStats = null;
+let animationLock = false;
 
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
@@ -61,15 +62,22 @@ const animationQueue = {
 
   async playAnimation(type) {
     return new Promise((resolve) => {
-      // Chamando a função correta que realmente existe no seu código
-      dispararAnimacaoFullScreen(type);
-
-      // Tempo máximo para qualquer animação antes de liberar a fila
-      setTimeout(() => {
+      if (animationLock) {
         resolve();
-      }, 4000); // Aumentei para 4s para garantir a sincronia com o Lottie
+        return;
+      }
+  
+      animationLock = true;
+  
+      dispararAnimacaoFullScreen(type);
+  
+      // tempo total da animação (Lottie + texto)
+      setTimeout(() => {
+        animationLock = false;
+        resolve();
+      }, 4500);
     });
-  },
+  },  
 };
 
 let liveInterval = null;
@@ -178,14 +186,9 @@ function processarGol() {
   const gol = detectarGolComDelay();
   if (!gol) return;
 
-  if (gol === "HOME") {
-    dispararAnimacaoFullScreen("gol");
-  }
-
-  if (gol === "AWAY") {
-    dispararAnimacaoFullScreen("gol");
-  }
+  animationQueue.add("gol");
 }
+
 
 function processarNovoLance(lance) {
   const desc = lance.descricao ? lance.descricao.toUpperCase() : "";
@@ -1131,7 +1134,7 @@ function dispararAnimacaoFullScreen(tipo) {
     setTimeout(() => {
       overlay.style.display = "none";
       textOverlay.classList.remove("jump");
-    }, 500);
+    }, 1500);
   };
 }
 
