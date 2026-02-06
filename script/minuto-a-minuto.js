@@ -32,15 +32,33 @@ const state = {
   logsEnabled: true,
 };
 
+const EVENT_PRIORITY = {
+  gol: 1,
+  penalti: 2,
+  vermelho: 3,
+  amarelo: 4,
+};
+
 const animationQueue = {
   queue: [],
   isPlaying: false,
+  lastEvents: new Set(),
 
-  add(animationType) {
-    this.queue.push(animationType);
-    if (!this.isPlaying) {
-      this.playNext();
-    }
+  // deduplicação
+
+  add(event) {
+    // event = { type, minute, hash }
+
+    // ⛔ ignora duplicados
+    if (this.lastEvents.has(event.hash)) return;
+    this.lastEvents.add(event.hash);
+
+    this.queue.push(event);
+
+    // 🔁 ordena por prioridade
+    this.queue.sort((a, b) => EVENT_PRIORITY[a.type] - EVENT_PRIORITY[b.type]);
+
+    if (!this.isPlaying) this.playNext();
   },
 
   async playNext() {
@@ -50,35 +68,34 @@ const animationQueue = {
     }
 
     this.isPlaying = true;
-    const animationType = this.queue.shift();
+    const event = this.queue.shift();
 
-    await this.playAnimation(animationType);
-
-    // Aguarda um pequeno intervalo antes da próxima animação
-    setTimeout(() => {
-      this.playNext();
-    }, 1000); // 1 segundo entre animações
+    await this.playAnimation(event.type);
+    this.playNext();
   },
 
-  async playAnimation(type) {
+  playAnimation(type) {
     return new Promise((resolve) => {
-      if (animationLock) {
-        resolve();
-        return;
-      }
-  
-      animationLock = true;
-  
       dispararAnimacaoFullScreen(type);
-  
-      // tempo total da animação (Lottie + texto)
-      setTimeout(() => {
-        animationLock = false;
-        resolve();
-      }, 4500);
+
+      setTimeout(resolve, 4500);
     });
-  },  
+  },
 };
+
+function gerarHashLance(minuto, descricao) {
+  const minutoNormalizado = String(minuto).replace(/\D/g, "");
+  return btoa(
+    unescape(
+      encodeURIComponent(
+        `${minutoNormalizado}|${descricao
+          .toLowerCase()
+          .replace(/gol|cartão|amarelo|vermelho|pênalti/g, "")
+          .trim()}`,
+      ),
+    ),
+  );
+}
 
 let liveInterval = null;
 
@@ -94,6 +111,28 @@ function stopLivePolling() {
   }
 }
 
+const animationCache = {};
+
+function preloadAnimations() {
+  const animations = {
+    gol: "../assets/goal.json",
+    amarelo: "../assets/Carto Amarelo.json",
+    vermelho: "../assets/Cartão Vermelho.json",
+    penalti: "../assets/Penalti.json",
+  };
+
+  Object.entries(animations).forEach(([key, path]) => {
+    animationCache[key] = lottie.loadAnimation({
+      container: document.createElement("div"), // fora do DOM
+      renderer: "svg",
+      loop: false,
+      autoplay: false,
+      path,
+    });
+  });
+
+  console.log("🎬 Animações pré-carregadas");
+}
 
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
@@ -186,33 +225,43 @@ function processarGol() {
   const gol = detectarGolComDelay();
   if (!gol) return;
 
-  animationQueue.add("gol");
+  const minuto = state.match.minute || "0'";
+  const hash = gerarHashLance(minuto, "GOL_PLACAR");
+
+  animationQueue.add({
+    type: "gol",
+    minute: minuto,
+    hash,
+  });
 }
 
-
 function processarNovoLance(lance) {
-  const desc = lance.descricao ? lance.descricao.toUpperCase() : "";
+  const desc = lance.descricao?.toUpperCase() || "";
+  const minuto = lance.minuto ? String(lance.minuto) : "0'";
+  const hash = gerarHashLance(minuto, desc);
 
-  // Verifica pênalti primeiro (mais específico)
+  if (desc.includes("GOL")) {
+    animationQueue.add({ type: "gol", minute: minuto, hash });
+    return;
+  }
+
+  if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
+    animationQueue.add({ type: "vermelho", minute: minuto, hash });
+    return;
+  }
+
   if (
     desc.includes("PENALIDADE MÁXIMA") ||
     desc.includes("PÊNALTI") ||
     desc.includes("PENALTI") ||
     desc.includes("MARCA DA CAL")
   ) {
-    console.log("🎯 PÊNALTI DETECTADO!");
-    animationQueue.add("penalti");
-    return;
-  }
-
-  if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
-    animationQueue.add("vermelho");
+    animationQueue.add({ type: "penalti", minute: minuto, hash });
     return;
   }
 
   if (desc.includes("CARTÃO AMARELO") || desc.includes("AMARELO")) {
-    animationQueue.add("amarelo");
-    return;
+    animationQueue.add({ type: "amarelo", minute: minuto, hash });
   }
 }
 
@@ -543,7 +592,9 @@ function renderTimelineFullWidth(narracao) {
   if (noEventsMessage) noEventsMessage.style.display = "none";
   if (statusIndicator) statusIndicator.textContent = "AO VIVO";
 
-  container.innerHTML = "";
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
 
   narracao.forEach((lance) => {
     const item = document.createElement("div");
@@ -801,13 +852,18 @@ async function fetchLiveDataForPanel() {
     if (data.arbitragem) {
       updateTopArbitro(data.arbitragem);
     }
+    const isLiveMatch =
+      data &&
+      data.placar &&
+      !["PAST", "ENCERRADO", "FINALIZADO"].includes(
+        String(data.placar.status).toUpperCase(),
+      );
+
     if (isLiveMatch) {
       startLivePolling();
     } else {
       stopLivePolling();
     }
-    
-
   } catch (e) {
     console.error("⚠️ Erro ao buscar dados para painéis:", e);
   }
@@ -826,6 +882,7 @@ function closeAllPanels() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  preloadAnimations();
   const overlay = document.getElementById("floating-overlay");
   if (overlay) {
     overlay.addEventListener("click", (e) => {
@@ -1097,7 +1154,10 @@ function dispararAnimacaoFullScreen(tipo) {
 
   textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho");
   textOverlay.innerText = "";
-  container.innerHTML = "";
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
   overlay.style.display = "flex";
 
   if (tipo === "amarelo") {
@@ -1122,19 +1182,18 @@ function dispararAnimacaoFullScreen(tipo) {
         : "../assets/Penalti.json";
   if (tipo === "gol") path = "../assets/goal.json";
 
-  const anim = lottie.loadAnimation({
-    container: container,
-    renderer: "svg",
-    loop: false,
-    autoplay: true,
-    path: path,
-  });
+  const anim = animationCache[tipo];
+  if (!anim) return;
+
+  anim.container = container;
+  container.appendChild(anim.renderer.svgElement);
+
+  anim.goToAndPlay(0, true);
 
   anim.onComplete = () => {
     setTimeout(() => {
-      overlay.style.display = "none";
       textOverlay.classList.remove("jump");
-    }, 1500);
+    }, 4500);
   };
 }
 
