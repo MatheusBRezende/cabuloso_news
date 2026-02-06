@@ -50,18 +50,36 @@ const LiveMatchDetector = (() => {
         return null;
       }
   
-      // Extrai nomes
+      // Extrai times
       const [mandante, visitante] = jogoAoVivo.partida
         .split(" x ")
         .map(t => t.trim());
   
-      console.log("✅ Jogo ao vivo detectado:", mandante, "vs", visitante);
+      // 🔥 PLACAR REAL (vem do n8n)
+      const placarMandante =
+        jogoAoVivo.tem_placar && typeof jogoAoVivo.placar?.mandante === "number"
+          ? jogoAoVivo.placar.mandante
+          : 0;
+  
+      const placarVisitante =
+        jogoAoVivo.tem_placar && typeof jogoAoVivo.placar?.visitante === "number"
+          ? jogoAoVivo.placar.visitante
+          : 0;
+  
+      console.log(
+        "✅ Jogo ao vivo:",
+        mandante,
+        placarMandante,
+        "x",
+        placarVisitante,
+        visitante
+      );
   
       return {
         mandante,
         visitante,
-        placar_mandante: 0, // placar vem do minuto-a-minuto
-        placar_visitante: 0,
+        placar_mandante: placarMandante,
+        placar_visitante: placarVisitante,
         tempo: "AO VIVO",
         campeonato: jogoAoVivo.campeonato || "Campeonato",
         status: "AO_VIVO"
@@ -72,6 +90,7 @@ const LiveMatchDetector = (() => {
       return null;
     }
   };
+  
   
 
   /**

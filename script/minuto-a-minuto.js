@@ -8,7 +8,7 @@ let lastValidStats = null;
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=agenda",
-  updateInterval: 15000, 
+  updateInterval: 1000,
 };
 
 const golControl = {
@@ -75,9 +75,10 @@ const animationQueue = {
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
   initTopFloatingButtons();
-  Promise.all([loadAgenda(), fetchLiveData()]); 
+  fetchLiveData();
+  loadAgenda();
   setInterval(fetchLiveData, CONFIG.updateInterval);
-  setInterval(loadAgenda, 30000); 
+  setInterval(loadAgenda, 30000);
 });
 
 const fetchLiveData = async () => {
@@ -245,9 +246,13 @@ const renderNextMatchCard = (match) => {
 
   // Lógica para saber se o Cruzeiro é mandante ou visitante baseado na string "Cruzeiro x ..."
   const isCruzeiroMandante = match.partida.startsWith("Cruzeiro");
-  
-  const escudoMandante = isCruzeiroMandante ? match.logo_cruzeiro : match.logo_adversario;
-  const escudoVisitante = isCruzeiroMandante ? match.logo_adversario : match.logo_cruzeiro;
+
+  const escudoMandante = isCruzeiroMandante
+    ? match.logo_cruzeiro
+    : match.logo_adversario;
+  const escudoVisitante = isCruzeiroMandante
+    ? match.logo_adversario
+    : match.logo_cruzeiro;
   const nomeMandante = isCruzeiroMandante ? "Cruzeiro" : match.adversario;
   const nomeVisitante = isCruzeiroMandante ? match.adversario : "Cruzeiro";
 
@@ -317,7 +322,7 @@ const startCountdown = (targetDate) => {
 async function loadAgenda() {
   try {
     // Note que mudei para type=agenda
-    const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`); 
+    const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`);
     const data = await response.json();
 
     if (data && data.jogos && Array.isArray(data.jogos)) {
@@ -344,7 +349,7 @@ function getNextMatchFromAgenda() {
 
     // Se o jogo é no futuro ou foi há menos de 3 horas (ainda pode estar rolando)
     const diff = dataMatch - now;
-    if (dataMatch > (now - 10800000)) { 
+    if (dataMatch > now - 10800000) {
       if (diff < minDiff && diff > -10800000) {
         minDiff = diff;
         closest = { ...jogo, dataObj: dataMatch };
@@ -419,7 +424,7 @@ function updateMatchState(data) {
 }
 
 function renderAllComponents(data) {
-  renderMatchHeader(data.placar, data.narracao, data.informacoes); 
+  renderMatchHeader(data.placar, data.narracao, data.informacoes);
   renderTimelineFullWidth(data.narracao);
   if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
     renderPanelStats(data.estatisticas);
@@ -459,7 +464,6 @@ function renderMatchHeader(placar, narracao, informacoes) {
   } else if (currentMinute.includes("1°T")) {
     matchStatus = "1° TEMPO";
   }
-
 
   const localPartida = informacoes?.estadio || "Local não informado";
   const nomeCampeonato = informacoes?.campeonato || "Partida";
@@ -677,7 +681,7 @@ function updateTopArbitro(arbitragem) {
 function initTopFloatingButtons() {
   const btnStats = document.getElementById("top-stats-btn");
   const btnLineup = document.getElementById("top-lineup-btn");
-  
+
   // SEUS NOVOS SELETORES MOBILE:
   const btnStatsMobile = document.getElementById("mobile-stats-btn");
   const btnLineupMobile = document.getElementById("mobile-lineup-btn");
@@ -702,7 +706,7 @@ function initTopFloatingButtons() {
 
   if (btnStats) btnStats.onclick = openStats;
   if (btnStatsMobile) btnStatsMobile.onclick = openStats; // Ativa no mobile
-  
+
   if (btnLineup) btnLineup.onclick = openLineup;
   if (btnLineupMobile) btnLineupMobile.onclick = openLineup; // Ativa no mobile
 }
@@ -862,7 +866,13 @@ function renderPanelStats(stats) {
       { label: "Escanteios", value: stats.escanteios_home || 0 },
       { label: "Impedimentos", value: stats.impedimentos_home || 0 },
       { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
-      { label: "Cartões vermelhos", value: (stats.vermelhos_home?.total !== undefined) ? stats.vermelhos_home.total : (stats.vermelhos_home || 0) },
+      {
+        label: "Cartões vermelhos",
+        value:
+          stats.vermelhos_home?.total !== undefined
+            ? stats.vermelhos_home.total
+            : stats.vermelhos_home || 0,
+      },
     ];
 
     homeStatsList.innerHTML = homeItems
@@ -902,7 +912,13 @@ function renderPanelStats(stats) {
       { label: "Escanteios", value: stats.escanteios_away || 0 },
       { label: "Impedimentos", value: stats.impedimentos_away || 0 },
       { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
-      { label: "Cartões vermelhos", value: (stats.vermelhos_home?.total !== undefined) ? stats.vermelhos_home.total : (stats.vermelhos_home || 0) },
+      {
+        label: "Cartões vermelhos",
+        value:
+          stats.vermelhos_home?.total !== undefined
+            ? stats.vermelhos_home.total
+            : stats.vermelhos_home || 0,
+      },
     ];
 
     awayStatsList.innerHTML = awayItems
