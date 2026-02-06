@@ -72,12 +72,26 @@ const animationQueue = {
   },
 };
 
+let liveInterval = null;
+
+function startLivePolling() {
+  if (liveInterval) return;
+  liveInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
+}
+
+function stopLivePolling() {
+  if (liveInterval) {
+    clearInterval(liveInterval);
+    liveInterval = null;
+  }
+}
+
+
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
   initTopFloatingButtons();
   fetchLiveData();
   loadAgenda();
-  setInterval(fetchLiveData, CONFIG.updateInterval);
   setInterval(loadAgenda, 30000);
 });
 
@@ -92,7 +106,6 @@ const fetchLiveData = async () => {
       data = data[0];
     }
 
-    renderMatchHeader(data.placar, data.narracao, data.informacoes);
     if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
       lastValidStats = data.estatisticas;
     }
@@ -785,6 +798,13 @@ async function fetchLiveDataForPanel() {
     if (data.arbitragem) {
       updateTopArbitro(data.arbitragem);
     }
+    if (isLiveMatch) {
+      startLivePolling();
+    } else {
+      stopLivePolling();
+    }
+    
+
   } catch (e) {
     console.error("⚠️ Erro ao buscar dados para painéis:", e);
   }
