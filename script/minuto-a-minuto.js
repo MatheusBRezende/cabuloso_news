@@ -141,7 +141,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 const fetchLiveData = async () => {
   try {
-    const response = await fetch(CONFIG.webhookUrl, { cache: 'no-cache' });
+    const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
 
     let data = await response.json();
 
@@ -407,7 +407,7 @@ const startCountdown = (targetDate) => {
 
 async function loadAgenda() {
   try {
-    const response = await fetch(CONFIG.apiUrl, { cache: 'no-cache' });
+    const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`);
     const data = await response.json();
 
     console.log("📦 Dados brutos da agenda:", data);
@@ -873,7 +873,7 @@ function updateLineupPanel() {
 
 async function fetchLiveDataForPanel() {
   try {
-    const response = await fetch(CONFIG.webhookUrl, { cache: 'no-cache' });
+    const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
     let data = await response.json();
 
     if (data && data[""] !== undefined) {
