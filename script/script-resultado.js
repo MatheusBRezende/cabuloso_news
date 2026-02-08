@@ -1,7 +1,7 @@
 import { getFromCache, saveToCache } from './cache.js';
 
 const CONFIG_RESULTADOS = {
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=resultados",
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
   itemsPerPage: 12,
   defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
   CACHE_TTL: 15 * 60 * 1000 
