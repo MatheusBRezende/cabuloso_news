@@ -9,7 +9,7 @@ let animationLock = false;
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=agenda",
-  updateInterval: 1000,
+  updateInterval: 10000,
 };
 
 const golControl = {
@@ -334,17 +334,13 @@ const renderNextMatchCard = (match) => {
   const container = document.getElementById("live-match-container");
   if (!container) return;
 
-  // Lógica para saber se o Cruzeiro é mandante ou visitante baseado na string "Cruzeiro x ..."
-  const isCruzeiroMandante = match.partida.startsWith("Cruzeiro");
+  // Verifica se o Cruzeiro é o mandante para organizar o escudo na esquerda
+  const isCruzeiroMandante = match.mandante?.toLowerCase().includes("cruzeiro");
 
-  const escudoMandante = isCruzeiroMandante
-    ? match.logo_cruzeiro
-    : match.logo_adversario;
-  const escudoVisitante = isCruzeiroMandante
-    ? match.logo_adversario
-    : match.logo_cruzeiro;
-  const nomeMandante = isCruzeiroMandante ? "Cruzeiro" : match.adversario;
-  const nomeVisitante = isCruzeiroMandante ? match.adversario : "Cruzeiro";
+  const escudoMandante = match.escudo_mandante || "../assets/default-logo.png";
+  const escudoVisitante = match.escudo_visitante || "../assets/default-logo.png";
+  const nomeMandante = match.mandante || "A definir";
+  const nomeVisitante = match.visitante || "A definir";
 
   container.innerHTML = `
     <div class="match-header-card" style="background: linear-gradient(135deg, #1a1f3a 0%, #002266 100%); border: 2px solid var(--primary-light);">
@@ -364,7 +360,7 @@ const renderNextMatchCard = (match) => {
           </div>
         </div>
         <div class="match-game-info">
-          <div class="match-competition"><i class="fas fa-trophy"></i> ${match.campeonato}</div>
+          <div class="match-competition"><i class="fas fa-trophy"></i> ${match.campeonato || 'Partida'}</div>
           <div class="match-date"><i class="fas fa-calendar-alt"></i> ${match.data}</div>
           <div class="match-time"><i class="fas fa-clock"></i> ${match.hora}</div>
         </div>
@@ -414,31 +410,28 @@ async function loadAgenda() {
     const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`);
     const data = await response.json();
 
-    console.log("📦 Dados brutos da agenda:", data); // Para debug
+    console.log("📦 Dados brutos da agenda:", data);
 
-    // A API retorna um array com um objeto dentro
-    if (Array.isArray(data) && data.length > 0) {
-      const agendaObj = data[0]; // Pega o primeiro objeto do array
-      
-      if (agendaObj && agendaObj.sucesso === true && agendaObj.jogos && Array.isArray(agendaObj.jogos)) {
-        state.agendaData = {
-          jogos: agendaObj.jogos
-        };
-        
-        console.log("✅ Agenda carregada:", agendaObj.jogos.length, "jogos");
-        
-        // Se não tiver jogo ao vivo, exibe o próximo jogo
-        if (!state.matchStarted) {
-          showNextMatchCountdown();
-        }
-        
-        return; // Sucesso - sair da função
-      }
-    }
+    // 1. Normalização: Se a API vier como Array, pegamos o primeiro item. 
+    // Se vier como Objeto (seu caso atual), usamos o objeto direto.
+    const rawData = Array.isArray(data) ? data[0] : data;
     
-    // Se chegou aqui, formato não reconhecido
-    console.warn("⚠️ Formato de agenda não reconhecido:", data);
-    state.agendaData = { jogos: [] };
+    // 2. Verificação: O seu JSON tem a chave "agenda"
+    if (rawData && rawData.agenda && Array.isArray(rawData.agenda)) {
+      state.agendaData = {
+        jogos: rawData.agenda // Mapeamos 'agenda' da API para o 'jogos' do seu state
+      };
+      
+      console.log("✅ Agenda carregada:", rawData.agenda.length, "jogos");
+      
+      // Se não tiver jogo ao vivo, exibe o próximo jogo
+      if (!state.matchStarted) {
+        showNextMatchCountdown();
+      }
+    } else {
+      console.warn("⚠️ Formato de agenda não reconhecido ou vazio:", data);
+      state.agendaData = { jogos: [] };
+    }
     
   } catch (e) {
     console.error("❌ Erro ao carregar agenda:", e);
@@ -453,14 +446,13 @@ function getNextMatchFromAgenda() {
   let minDiff = Infinity;
 
   state.agendaData.jogos.forEach((jogo) => {
-    // Usamos jogo.data (ex: 05/02/2026) e jogo.hora (ex: 21:30)
     const dataMatch = parseMatchDate(jogo.data, jogo.hora);
     if (!dataMatch) return;
 
-    // Se o jogo é no futuro ou foi há menos de 3 horas (ainda pode estar rolando)
     const diff = dataMatch - now;
+    // Considera jogos futuros ou que começaram há menos de 3 horas
     if (dataMatch > now - 10800000) {
-      if (diff < minDiff && diff > -10800000) {
+      if (diff < minDiff) {
         minDiff = diff;
         closest = { ...jogo, dataObj: dataMatch };
       }

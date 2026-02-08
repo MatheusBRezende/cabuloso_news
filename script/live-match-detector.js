@@ -1,790 +1,168 @@
 const LiveMatchDetector = (() => {
   const CONFIG = {
-    webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=agenda",
-    checkInterval: 5000,
+    // API que traz a agenda completa
+    webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
+    checkInterval: 60000, // 1 minuto (ideal para não pesar)
     minutoAMinutoUrl: "../minuto-a-minuto.html",
-    countdownSeconds: 10,
     storageKey: "cabuloso_live_match_dismissed",
-
-    testMode: false,
-    testMatchData: {
-      mandante: "Cruzeiro",
-      visitante: "Atlético-MG",
-      placar_mandante: 2,
-      placar_visitante: 1,
-      tempo: "2º TEMPO - 78'",
-      campeonato: "Brasileirão Série A",
-      status: "AO_VIVO",
-    },
   };
 
   let checkIntervalId = null;
-  let countdownIntervalId = null;
   let currentLiveMatch = null;
   let modalShown = false;
 
   /**
-   * Verifica se há jogo ao vivo via webhook
+   * Verifica a agenda e decide se deve monitorar o jogo
    */
-  const checkLiveMatch = async () => {
+  const startMonitoringIfGameIsToday = async () => {
     try {
-      const response = await fetch(`${CONFIG.webhookUrl}?t=${Date.now()}`, {
-        cache: "no-cache",
-        headers: { Accept: "application/json" }
+      const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`, {
+        cache: "no-cache"
       });
-  
-      if (!response.ok) return null;
-  
-      const data = await response.json();
       
-      // CORREÇÃO: Verifica se a resposta é um array e pega o primeiro elemento
+      if (!response.ok) return;
+      const data = await response.json();
       const responseData = Array.isArray(data) ? data[0] : data;
-  
-      if (!responseData || responseData.sucesso !== true || !Array.isArray(responseData.jogos)) {
-        console.log("Estrutura inválida da agenda");
-        return null;
+
+      if (!responseData || !Array.isArray(responseData.agenda)) return;
+
+      // 1. Pega a data de hoje (DD/MM/AAAA)
+      const hoje = new Date().toLocaleDateString('pt-BR');
+
+      // 2. Procura se tem jogo do Cruzeiro hoje
+      const jogoHoje = responseData.agenda.find(j => j.data === hoje);
+
+      if (jogoHoje) {
+        console.log("⚽ Jogo detectado para hoje! Iniciando monitoramento...");
+        
+        // Configura os dados do jogo atual
+        currentLiveMatch = {
+          mandante: jogoHoje.mandante,
+          visitante: jogoHoje.visitante,
+          placar_mandante: 0,
+          placar_visitante: 0,
+          tempo: "HOJE ÀS " + jogoHoje.hora,
+          campeonato: jogoHoje.campeonato
+        };
+
+        // Adiciona os indicadores visuais nos cards da página
+        addLiveIndicators(currentLiveMatch);
+
+        // Inicia o loop de checagem (opcional, caso queira atualizar placar)
+        startCheckLoop();
+        
+        // Mostra o modal de convite
+        showModal(currentLiveMatch);
+      } else {
+        console.log("📅 Sem jogos para hoje. Detector em modo de espera.");
       }
-  
-      // 🔴 PROCURA JOGO AO VIVO
-      const jogoAoVivo = responseData.jogos.find(j => j.tipo === "now");
-  
-      if (!jogoAoVivo) {
-        console.log("Nenhum jogo ao vivo");
-        return null;
-      }
-  
-      // Extrai times
-      const [mandante, visitante] = jogoAoVivo.partida
-        .split(" x ")
-        .map(t => t.trim());
-  
-      // 🔥 PLACAR REAL (vem do n8n)
-      const placarMandante =
-        jogoAoVivo.tem_placar && typeof jogoAoVivo.placar?.mandante === "number"
-          ? jogoAoVivo.placar.mandante
-          : 0;
-  
-      const placarVisitante =
-        jogoAoVivo.tem_placar && typeof jogoAoVivo.placar?.visitante === "number"
-          ? jogoAoVivo.placar.visitante
-          : 0;
-  
-      console.log(
-        "✅ Jogo ao vivo:",
-        mandante,
-        placarMandante,
-        "x",
-        placarVisitante,
-        visitante
-      );
-  
-      return {
-        mandante,
-        visitante,
-        placar_mandante: placarMandante,
-        placar_visitante: placarVisitante,
-        tempo: "AO VIVO",
-        campeonato: jogoAoVivo.campeonato || "Campeonato",
-        status: "AO_VIVO"
-      };
-  
     } catch (err) {
-      console.error("Erro ao verificar jogo ao vivo:", err.message);
-      return null;
+      console.error("Erro ao processar agenda:", err);
     }
   };
-  
+
+  const startCheckLoop = () => {
+    if (checkIntervalId) clearInterval(checkIntervalId);
+    checkIntervalId = setInterval(async () => {
+        // Aqui você poderia chamar uma API de placar em tempo real se tiver
+        console.log("Checando status do jogo de hoje...");
+    }, CONFIG.checkInterval);
+  };
+
   /**
-   * Cria o CSS do modal e ícone ao vivo
+   * Injeta os Estilos CSS
    */
   const injectStyles = () => {
     if (document.getElementById("live-match-detector-styles")) return;
-
     const styles = document.createElement("style");
     styles.id = "live-match-detector-styles";
     styles.textContent = `
-      /* ========================================
-         MODAL DE JOGO AO VIVO
-         ======================================== */
-      .live-match-modal {
-        position: fixed;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 10000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-        animation: fadeIn 0.3s ease;
-      }
-
-      .live-match-modal.active {
-        display: flex;
-      }
-
-      .live-modal-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.8);
-        backdrop-filter: blur(4px);
-      }
-
-      .live-modal-content {
-        position: relative;
-        background: white;
-        border-radius: 1rem;
-        max-width: 500px;
-        width: 90%;
-        padding: 2rem;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        animation: slideUp 0.4s ease;
-      }
-
-      .live-modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 1.5rem;
-      }
-
-      .live-badge-pulse {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: #ef4444;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 0.875rem;
-        animation: pulse 2s infinite;
-      }
-
-      .live-dot {
-        width: 8px;
-        height: 8px;
-        background: white;
-        border-radius: 50%;
-        animation: blink 1.5s infinite;
-      }
-
-      .live-modal-close {
-        background: rgba(0, 0, 0, 0.05);
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.2s;
-        color: #6b7280;
-      }
-
-      .live-modal-close:hover {
-        background: rgba(0, 0, 0, 0.1);
-        color: #1f2937;
-      }
-
-      .live-modal-icon {
-        width: 80px;
-        height: 80px;
-        background: linear-gradient(135deg, #003399, #001f5c);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 1.5rem;
-      }
-
-      .live-modal-icon i {
-        font-size: 2.5rem;
-        color: #ffd700;
-      }
-
-      .live-modal-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #1f2937;
-        text-align: center;
-        margin-bottom: 1rem;
-      }
-
-      .live-modal-match {
-        background: linear-gradient(135deg, rgba(0, 51, 153, 0.05), rgba(255, 215, 0, 0.05));
-        padding: 1.5rem;
-        border-radius: 0.75rem;
-        margin-bottom: 1rem;
-        border: 1px solid rgba(0, 51, 153, 0.1);
-      }
-
-      .live-modal-teams {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 0.5rem;
-      }
-
-      .live-modal-team-name {
-        font-weight: 600;
-        color: #1f2937;
-        font-size: 1rem;
-        text-align: center;
-        flex: 1;
-      }
-
-      .live-modal-score {
-        font-size: 2rem;
-        font-weight: 700;
-        color: #003399;
-        font-family: 'Poppins', sans-serif;
-        margin: 0 1rem;
-      }
-
-      .live-modal-time {
-        text-align: center;
-        color: #6b7280;
-        font-size: 0.875rem;
-        font-weight: 600;
-      }
-
-      .live-modal-text {
-        text-align: center;
-        color: #6b7280;
-        margin-bottom: 1.5rem;
-        line-height: 1.6;
-      }
-
-      .live-modal-countdown {
-        font-size: 3rem;
-        font-weight: 700;
-        color: #003399;
-        text-align: center;
-        margin-bottom: 1.5rem;
-        font-family: 'Poppins', sans-serif;
-      }
-
-      .live-modal-actions {
-        display: flex;
-        gap: 1rem;
-      }
-
-      .live-modal-actions .btn {
-        flex: 1;
-        padding: 0.875rem 1.5rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.5rem;
-        border: none;
-      }
-
-      .live-modal-actions .btn-primary {
-        background: #003399;
-        color: white;
-      }
-
-      .live-modal-actions .btn-primary:hover {
-        background: #001f5c;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0, 51, 153, 0.3);
-      }
-
-      .live-modal-actions .btn-secondary {
-        background: #f3f4f6;
-        color: #6b7280;
-      }
-
-      .live-modal-actions .btn-secondary:hover {
-        background: #e5e7eb;
-      }
-
-      /* ========================================
-         ÍCONE AO VIVO NOS PRÓXIMOS JOGOS
-         ======================================== */
-      .live-indicator {
-        position: absolute;
-        top: 8px;
-        right: 8px;
-        background: #ef4444;
-        color: white;
-        padding: 0.25rem 0.75rem;
-        border-radius: 9999px;
-        font-weight: 700;
-        font-size: 0.75rem;
-        display: flex;
-        align-items: center;
-        gap: 0.375rem;
-        animation: pulse 2s infinite;
-        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
-        z-index: 10;
-      }
-
-      .live-indicator-dot {
-        width: 6px;
-        height: 6px;
-        background: white;
-        border-radius: 50%;
-        animation: blink 1.5s infinite;
-      }
-
-      .live-indicator-text {
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-
-      /* Botão "Assistir Ao Vivo" nos cards */
-      .watch-live-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.5rem;
-        background: #ef4444;
-        color: white;
-        padding: 0.5rem 1rem;
-        border-radius: 0.5rem;
-        font-weight: 600;
-        font-size: 0.875rem;
-        text-decoration: none;
-        transition: all 0.2s;
-        margin-top: 0.5rem;
-        border: none;
-        cursor: pointer;
-      }
-
-      .watch-live-btn:hover {
-        background: #dc2626;
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
-      }
-
-      /* ========================================
-         ANIMAÇÕES
-         ======================================== */
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-
-      @keyframes slideUp {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
-      }
-
-      @keyframes pulse {
-        0%, 100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.8;
-        }
-      }
-
-      @keyframes blink {
-        0%, 100% {
-          opacity: 1;
-        }
-        50% {
-          opacity: 0.3;
-        }
-      }
-
-      /* ========================================
-         RESPONSIVO
-         ======================================== */
-      @media (max-width: 640px) {
-        .live-modal-content {
-          padding: 1.5rem;
-        }
-
-        .live-modal-title {
-          font-size: 1.25rem;
-        }
-
-        .live-modal-score {
-          font-size: 1.5rem;
-        }
-
-        .live-modal-countdown {
-          font-size: 2rem;
-        }
-
-        .live-modal-actions {
-          flex-direction: column;
-        }
-      }
+      .live-match-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 10000; display: none; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; }
+      .live-match-modal.active { display: flex; }
+      .live-modal-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(4px); }
+      .live-modal-content { position: relative; background: white; border-radius: 1rem; max-width: 500px; width: 90%; padding: 2rem; box-shadow: 0 20px 60px rgba(0,0,0,0.3); text-align: center; }
+      .live-badge-pulse { display: inline-flex; align-items: center; gap: 0.5rem; background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 700; animation: pulse 2s infinite; margin-bottom: 1rem; }
+      .live-modal-score { font-size: 2.5rem; font-weight: 800; color: #003399; margin: 1rem 0; display: block; }
+      .live-modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
+      .btn-live { flex: 1; padding: 1rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; text-decoration: none; }
+      .btn-primary { background: #003399; color: white; }
+      .btn-secondary { background: #f3f4f6; color: #6b7280; }
+      .live-indicator { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; animation: pulse 2s infinite; }
+      @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
+      @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     `;
-
     document.head.appendChild(styles);
   };
 
-  /**
-   * Cria o HTML do modal
-   */
   const createModal = () => {
     if (document.getElementById("liveMatchModal")) return;
-
-    const modalHTML = `
-      <div class="live-match-modal" id="liveMatchModal">
-        <div class="live-modal-overlay"></div>
-        <div class="live-modal-content">
-          <div class="live-modal-header">
-            <div class="live-badge-pulse">
-              <span class="live-dot"></span>
-              <span class="live-text">AO VIVO</span>
-            </div>
-            <button class="live-modal-close" id="liveModalClose" aria-label="Fechar">
-              <i class="fas fa-times"></i>
-            </button>
-          </div>
-          
-          <div class="live-modal-icon">
-            <i class="fas fa-futbol"></i>
-          </div>
-          
-          <h2 class="live-modal-title">Jogo do Cruzeiro está acontecendo!</h2>
-          
-          <div class="live-modal-match" id="liveModalMatchInfo">
-            <div class="live-modal-teams">
-              <span class="live-modal-team-name" id="liveTeam1">Time Casa</span>
-              <span class="live-modal-score" id="liveScore">0 - 0</span>
-              <span class="live-modal-team-name" id="liveTeam2">Time Fora</span>
-            </div>
-            <div class="live-modal-time" id="liveTime">1º TEMPO - 0'</div>
-          </div>
-          
-          <p class="live-modal-text">
-            Acompanhe todos os lances em tempo real na página Minuto a Minuto!
-          </p>
-          
-          <div class="live-modal-countdown" id="liveModalCountdown">10</div>
-          
-          <div class="live-modal-actions">
-            <button class="btn btn-primary" id="liveGoNowBtn">
-              <i class="fas fa-play-circle"></i>
-              Assistir Agora
-            </button>
-            <button class="btn btn-secondary" id="liveCancelBtn">
-              <i class="fas fa-times"></i>
-              Fechar
-            </button>
-          </div>
+    const modal = document.createElement("div");
+    modal.id = "liveMatchModal";
+    modal.className = "live-match-modal";
+    modal.innerHTML = `
+      <div class="live-modal-overlay"></div>
+      <div class="live-modal-content">
+        <div class="live-badge-pulse">● AO VIVO</div>
+        <h2 style="color:#1f2937">JOGO DO CRUZEIRO!</h2>
+        <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 10px;">
+          <div style="font-weight: 700; font-size: 1.1rem;" id="liveMatchTeams"></div>
+          <span class="live-modal-score" id="liveScore">VS</span>
+          <div id="liveMatchTime" style="color: #6b7280; font-size: 0.9rem;"></div>
+        </div>
+        <p style="color: #6b7280; margin-bottom: 20px;">Acompanhe todos os lances em tempo real no nosso minuto a minuto!</p>
+        <div class="live-modal-actions">
+          <a href="${CONFIG.minutoAMinutoUrl}" class="btn-live btn-primary">ASSISTIR AGORA</a>
+          <button class="btn-live btn-secondary" id="closeLiveModal">MAIS TARDE</button>
         </div>
       </div>
     `;
-
-    document.body.insertAdjacentHTML("beforeend", modalHTML);
-    setupModalEvents();
+    document.body.appendChild(modal);
+    document.getElementById("closeLiveModal").addEventListener("click", hideModal);
   };
 
-  /**
-   * Configura eventos do modal
-   */
-  const setupModalEvents = () => {
-    const modal = document.getElementById("liveMatchModal");
-    const closeBtn = document.getElementById("liveModalClose");
-    const goNowBtn = document.getElementById("liveGoNowBtn");
-    const cancelBtn = document.getElementById("liveCancelBtn");
-    const overlay = modal?.querySelector(".live-modal-overlay");
-
-    if (closeBtn) closeBtn.addEventListener("click", hideModal);
-    if (cancelBtn) cancelBtn.addEventListener("click", hideModal);
-    if (goNowBtn) goNowBtn.addEventListener("click", redirectToLive);
-    if (overlay) overlay.addEventListener("click", hideModal);
-  };
-
-  /**
-   * Mostra o modal com contagem regressiva
-   */
-  const showModal = (matchData) => {
-    // Verifica se o usuário já dispensou o modal nesta sessão
-    const dismissed = sessionStorage.getItem(CONFIG.storageKey);
-    if (dismissed === "true") {
-      console.log("Modal já foi dispensado pelo usuário");
-      return;
-    }
-
-    const modal = document.getElementById("liveMatchModal");
-    const team1 = document.getElementById("liveTeam1");
-    const team2 = document.getElementById("liveTeam2");
-    const score = document.getElementById("liveScore");
-    const time = document.getElementById("liveTime");
-    const countdown = document.getElementById("liveModalCountdown");
-
-    if (!modal) {
-      console.error("Modal não encontrado no DOM");
-      return;
-    }
-
-    // Atualiza informações do jogo
-    if (team1) team1.textContent = matchData.mandante;
-    if (team2) team2.textContent = matchData.visitante;
-    if (score)
-      score.textContent = `${matchData.placar_mandante} - ${matchData.placar_visitante}`;
-    if (time) time.textContent = matchData.tempo;
-
-    console.log(
-      "Mostrando modal para:",
-      matchData.mandante,
-      "vs",
-      matchData.visitante,
-    );
-
-    // Inicia contagem regressiva
-    let count = CONFIG.countdownSeconds;
-    if (countdown) countdown.textContent = count;
-
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-    }
-
-    countdownIntervalId = setInterval(() => {
-      count--;
-      if (countdown) countdown.textContent = count;
-
-      if (count <= 0) {
-        clearInterval(countdownIntervalId);
-        redirectToLive();
-      }
-    }, 1000);
-
-    // Mostra modal
-    modal.classList.add("active");
+  const showModal = (match) => {
+    if (sessionStorage.getItem(CONFIG.storageKey)) return;
+    
+    document.getElementById("liveMatchTeams").textContent = `${match.mandante} x ${match.visitante}`;
+    document.getElementById("liveMatchTime").textContent = match.tempo;
+    document.getElementById("liveMatchModal").classList.add("active");
     modalShown = true;
-
-    // Adiciona listener para tecla ESC
-    document.addEventListener("keydown", handleEscKey);
   };
 
-  /**
-   * Manipula tecla ESC para fechar modal
-   */
-  const handleEscKey = (e) => {
-    if (e.key === "Escape") {
-      hideModal();
-    }
-  };
-
-  /**
-   * Esconde o modal
-   */
   const hideModal = () => {
-    const modal = document.getElementById("liveMatchModal");
-    if (modal) {
-      modal.classList.remove("active");
-    }
-
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-      countdownIntervalId = null;
-    }
-
-    // Marca que o usuário dispensou o modal
+    document.getElementById("liveMatchModal").classList.remove("active");
     sessionStorage.setItem(CONFIG.storageKey, "true");
-    modalShown = false;
-
-    // Remove listener da tecla ESC
-    document.removeEventListener("keydown", handleEscKey);
   };
 
-  /**
-   * Redireciona para a página ao vivo
-   */
-  const redirectToLive = () => {
-    console.log("Redirecionando para:", CONFIG.minutoAMinutoUrl);
-    window.location.href = CONFIG.minutoAMinutoUrl;
-  };
-
-  /**
-   * Adiciona ícone "AO VIVO" nos cards de próximos jogos
-   */
-  const addLiveIndicators = (matchData) => {
-    // Procura por cards de próximos jogos
-    const matchCards = document.querySelectorAll(
-      ".next-match, .match-item, .horizontal-match-card, .match-card",
-    );
-
-    if (matchCards.length === 0) {
-      console.log("Nenhum card de jogo encontrado para adicionar indicador");
-      return;
-    }
-
-    matchCards.forEach((card) => {
-      // Verifica se o card corresponde ao jogo ao vivo
-      const cardText = card.textContent.toLowerCase();
-      const mandante = matchData.mandante.toLowerCase();
-      const visitante = matchData.visitante.toLowerCase();
-
-      if (cardText.includes(mandante) && cardText.includes(visitante)) {
-        console.log(
-          "Adicionando indicador ao vivo no card:",
-          mandante,
-          "vs",
-          visitante,
-        );
-
-        // Remove indicador antigo se existir
-        const oldIndicator = card.querySelector(".live-indicator");
-        if (oldIndicator) oldIndicator.remove();
-
-        // Adiciona novo indicador
-        const indicator = document.createElement("div");
-        indicator.className = "live-indicator";
-        indicator.innerHTML = `
-          <span class="live-indicator-dot"></span>
-          <span class="live-indicator-text">Ao Vivo</span>
-        `;
-
-        // Posiciona o card como relativo
+  const addLiveIndicators = (match) => {
+    const cards = document.querySelectorAll(".next-match");
+    cards.forEach(card => {
+      const text = card.textContent.toLowerCase();
+      if (text.includes(match.mandante.toLowerCase()) || text.includes(match.visitante.toLowerCase())) {
         card.style.position = "relative";
-        card.appendChild(indicator);
-
-        // Adiciona botão "Assistir Ao Vivo"
-        const existingBtn = card.querySelector(".watch-live-btn");
-        if (!existingBtn) {
-          const watchBtn = document.createElement("a");
-          watchBtn.href = CONFIG.minutoAMinutoUrl;
-          watchBtn.className = "watch-live-btn";
-          watchBtn.innerHTML = `
-            <i class="fas fa-play-circle"></i>
-            Assistir Ao Vivo
-          `;
-          card.appendChild(watchBtn);
+        if (!card.querySelector(".live-indicator")) {
+          const badge = document.createElement("div");
+          badge.className = "live-indicator";
+          badge.innerHTML = "● AO VIVO";
+          card.appendChild(badge);
         }
       }
     });
   };
 
-  /**
-   * Remove indicadores ao vivo quando jogo termina
-   */
-  const removeLiveIndicators = () => {
-    const indicators = document.querySelectorAll(".live-indicator");
-    indicators.forEach((ind) => ind.remove());
-
-    const watchBtns = document.querySelectorAll(".watch-live-btn");
-    watchBtns.forEach((btn) => btn.remove());
-  };
-
-  /**
-   * Loop principal de verificação
-   */
-  const startChecking = async () => {
-    // MODO DE TESTE - Retorna dados simulados
-    if (CONFIG.testMode) {
-      console.log("🧪 MODO DE TESTE ATIVADO - Simulando jogo ao vivo");
-      const liveMatch = CONFIG.testMatchData;
-      currentLiveMatch = liveMatch;
-
-      if (!modalShown) {
-        showModal(liveMatch);
-      }
-      addLiveIndicators(liveMatch);
-      return;
-    }
-
-    // Modo normal - verifica webhook
-    const liveMatch = await checkLiveMatch();
-
-    if (liveMatch) {
-      console.log("Jogo ao vivo detectado:", liveMatch);
-      currentLiveMatch = liveMatch;
-
-      // Mostra modal apenas uma vez
-      if (!modalShown) {
-        showModal(liveMatch);
-      }
-
-      // Adiciona indicadores nos cards
-      addLiveIndicators(liveMatch);
-    } else {
-      console.log("Nenhum jogo ao vivo detectado");
-      // Remove indicadores se não há mais jogo ao vivo
-      if (currentLiveMatch) {
-        console.log("Removendo indicadores - jogo terminou");
-        removeLiveIndicators();
-        currentLiveMatch = null;
-        modalShown = false;
-      }
-    }
-  };
-
-  /**
-   * Inicializa o detector
-   */
-  const init = () => {
-    console.log("LiveMatchDetector inicializando...");
-
-    // Limpa sessionStorage para teste (remova em produção)
-    // sessionStorage.removeItem(CONFIG.storageKey);
-
-    // Injeta estilos
-    injectStyles();
-
-    // Cria modal
-    createModal();
-
-    // Primeira verificação
-    startChecking();
-
-    // Configura intervalo de verificação
-    if (checkIntervalId) {
-      clearInterval(checkIntervalId);
-    }
-
-    checkIntervalId = setInterval(startChecking, CONFIG.checkInterval);
-    console.log(
-      "LiveMatchDetector iniciado com intervalo de",
-      CONFIG.checkInterval,
-      "ms",
-    );
-  };
-
-  /**
-   * Para o detector
-   */
-  const stop = () => {
-    if (checkIntervalId) {
-      clearInterval(checkIntervalId);
-      checkIntervalId = null;
-    }
-
-    if (countdownIntervalId) {
-      clearInterval(countdownIntervalId);
-      countdownIntervalId = null;
-    }
-
-    hideModal();
-  };
-
-  // Interface pública
   return {
-    init,
-    stop,
-    checkNow: startChecking,
-    // DEBUG: expõe função para teste
-    debug: () => ({ currentLiveMatch, modalShown }),
+    init: () => {
+      injectStyles();
+      createModal();
+      startMonitoringIfGameIsToday();
+      
+      // Se o usuário mudar de aba e voltar, checamos se o jogo começou
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden && !modalShown) startMonitoringIfGameIsToday();
+      });
+    }
   };
 })();
 
-// Auto-inicializa quando o DOM estiver pronto
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => LiveMatchDetector.init());
-} else {
-  LiveMatchDetector.init();
-}
+// Inicialização
+LiveMatchDetector.init();

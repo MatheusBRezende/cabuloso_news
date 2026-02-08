@@ -1,7 +1,7 @@
 import { getFromCache, saveToCache } from './cache.js';
 
 const CONFIG_RESULTADOS = {
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados",
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=resultados",
   itemsPerPage: 12,
   defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
   CACHE_TTL: 15 * 60 * 1000 
@@ -116,7 +116,7 @@ const updatePagination = () => {
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
 const loadResultados = async () => {
-  const CACHE_KEY = 'master_data'; 
+  const CACHE_KEY = 'master_data_resultados'; 
   showLoading();
 
   try {
@@ -129,10 +129,11 @@ const loadResultados = async () => {
       data = cached;
     } else {
       console.log("🌐 Resultados: Buscando novos dados...");
-      const response = await fetch(`${CONFIG_RESULTADOS.apiUrl}?t=${Date.now()}`);
+      const response = await fetch(`${CONFIG_RESULTADOS.apiUrl}&t=${Date.now()}`);
       if (!response.ok) throw new Error('Erro ao carregar dados');
 
       let rawData = await response.json();
+      // Normalização (n8n às vezes envia array)
       if (Array.isArray(rawData)) rawData = rawData[0];
       
       data = rawData;
@@ -227,13 +228,14 @@ const updateHeaderStats = () => {
 };
 
 const updateStatsCards = () => {
-  const container = document.getElementById('statsGridContainer');
+  const container = document.getElementById('statsCardsContainer');
   if (!container) return;
 
-  const filtered = state.filteredResults;
+  const results = state.currentCompetition === 'all' ? state.allResults : state.filteredResults;
+
   let vitorias = 0, empates = 0, derrotas = 0, golsMarcados = 0, golsSofridos = 0;
 
-  filtered.forEach(res => {
+  results.forEach(res => {
     let s1 = 0, s2 = 0;
     if (res.score1 !== undefined) {
        s1 = parseInt(res.score1); s2 = parseInt(res.score2);
