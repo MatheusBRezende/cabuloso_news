@@ -1,6 +1,7 @@
 /**
  * Cabuloso News - Minuto a Minuto
  * Versão: 9.0 - TIMELINE FULL WIDTH + WIDGETS SUPERIORES
+ * ATUALIZAÇÃO AUTOMÁTICA A CADA 1 SEGUNDO
  */
 let ultimoLanceId = null;
 let lastValidStats = null;
@@ -9,7 +10,7 @@ let animationLock = false;
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
-  updateInterval: 5000, // ✅ CORRIGIDO: 5 segundos ao invés de 10
+  updateInterval: 5000, 
 };
 
 const golControl = {
@@ -109,7 +110,7 @@ let liveInterval = null;
 
 function startLivePolling() {
   if (liveInterval) return;
-  console.log("🔄 Iniciando polling a cada", CONFIG.updateInterval / 1000, "segundos");
+  console.log("🔄 Iniciando polling automático a cada", CONFIG.updateInterval, "ms");
   liveInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
 }
 
@@ -136,10 +137,18 @@ function preloadAnimations() {
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
   initTopFloatingButtons();
-  fetchLiveData();
-  startLivePolling(); // ✅ CORRIGIDO: Inicia o polling automático
+  
+  // Primeira busca imediata
+  await fetchLiveData();
+  
+  // Inicia o polling automático
+  startLivePolling();
+  
+  // Agenda
   loadAgenda();
   setInterval(loadAgenda, 30000);
+  
+  console.log("✅ Sistema iniciado com atualização automática a cada 1 segundo");
 });
 
 const fetchLiveData = async () => {
@@ -283,360 +292,640 @@ const showLiveMatchUI = () => {
     clearInterval(state.countdownInterval);
     state.countdownInterval = null;
   }
-
-  if (!liveInterval) {
-    startLivePolling();
-  }
 };
 
 /**
- * EXIBE CONTAGEM REGRESSIVA PARA PRÓXIMO JOGO
+ * EXIBE O COUNTDOWN E ESCONDE O MINUTO A MINUTO
  */
 const showNextMatchCountdown = () => {
+  const nextMatch = getNextMatchFromAgenda();
+
+  if (!nextMatch) {
+    console.warn("⚠️ Nenhum próximo jogo encontrado na agenda");
+    
+    // Mostra uma mensagem padrão se não houver próximos jogos
+    const liveSections = document.getElementById("live-match-sections");
+    const countdownWrapper = document.getElementById("countdown-wrapper");
+    
+    if (liveSections) liveSections.style.display = "none";
+    if (countdownWrapper) {
+      countdownWrapper.style.display = "block";
+      
+      // Mensagem de fallback
+      const container = document.getElementById("live-match-container");
+      if (container) {
+        container.innerHTML = `
+          <div class="match-header-card" style="text-align: center; padding: 40px;">
+            <div class="match-status-badge" style="background: var(--gray-600);">
+              <i class="fas fa-calendar-times"></i> SEM PRÓXIMOS JOGOS
+            </div>
+            <div style="margin-top: 20px; color: var(--gray-300);">
+              Nenhum jogo encontrado na agenda
+            </div>
+          </div>
+        `;
+      }
+    }
+    return;
+  }
+
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
-  document.body.classList.remove("live-match");
-  if (liveSections) liveSections.style.display = "none";
-  if (countdownWrapper) countdownWrapper.style.display = "flex";
 
-  updateNextMatchCountdown();
+  if (liveSections) liveSections.style.display = "none";
+  if (countdownWrapper) countdownWrapper.style.display = "block";
+
+  renderNextMatchCard(nextMatch);
+  startCountdown(nextMatch.dataObj);
 };
 
 /**
- * ATUALIZA CONTAGEM REGRESSIVA
+ * RENDERIZA O CARD DO PRÓXIMO JOGO
  */
-function updateNextMatchCountdown() {
-  const now = new Date();
-  if (!state.agendaData || !state.agendaData.proximos) {
-    displayDefaultCountdown();
-    return;
-  }
-
-  const nextMatch = state.agendaData.proximos.find((jogo) => {
-    const matchDate = new Date(jogo.data);
-    return matchDate > now;
-  });
-
-  if (!nextMatch) {
-    displayDefaultCountdown();
-    return;
-  }
-
-  const matchDate = new Date(nextMatch.data);
-  const diff = matchDate - now;
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-
-  updateCountdownDisplay({
-    hours: hours.toString().padStart(2, "0"),
-    minutes: minutes.toString().padStart(2, "0"),
-    seconds: seconds.toString().padStart(2, "0"),
-    home: nextMatch.mandante,
-    away: nextMatch.visitante,
-    homeLogo: nextMatch.logo_mandante,
-    awayLogo: nextMatch.logo_visitante,
-  });
-}
-
-/**
- * ATUALIZA O HTML DA CONTAGEM REGRESSIVA
- */
-function updateCountdownDisplay(data) {
-  const container = document.getElementById("countdown-wrapper");
+const renderNextMatchCard = (match) => {
+  const container = document.getElementById("live-match-container");
   if (!container) return;
 
-  container.innerHTML = `
-    <div class="countdown-container">
-      <div class="countdown-header">
-        <h2>PRÓXIMA PARTIDA EM</h2>
-      </div>
-      <div class="countdown-timer">
-        <div class="countdown-box">
-          <span class="countdown-number">${data.hours}</span>
-          <span class="countdown-label">HORAS</span>
-        </div>
-        <div class="countdown-box">
-          <span class="countdown-number">${data.minutes}</span>
-          <span class="countdown-label">MINUTOS</span>
-        </div>
-        <div class="countdown-box">
-          <span class="countdown-number">${data.seconds}</span>
-          <span class="countdown-label">SEGUNDOS</span>
-        </div>
-      </div>
-      <div class="countdown-match">
-        <div class="countdown-team">
-          <img src="${data.homeLogo}" alt="${data.home}" />
-          <span>${data.home}</span>
-        </div>
-        <span class="countdown-vs">VS</span>
-        <div class="countdown-team">
-          <img src="${data.awayLogo}" alt="${data.away}" />
-          <span>${data.away}</span>
-        </div>
-      </div>
-    </div>
-  `;
-}
+  // Verifica se o Cruzeiro é o mandante para organizar o escudo na esquerda
+  const isCruzeiroMandante = match.mandante?.toLowerCase().includes("cruzeiro");
 
-/**
- * EXIBE MENSAGEM PADRÃO QUANDO NÃO HÁ PRÓXIMO JOGO
- */
-function displayDefaultCountdown() {
-  const container = document.getElementById("countdown-wrapper");
-  if (!container) return;
+  const escudoMandante = match.escudo_mandante || "../assets/default-logo.png";
+  const escudoVisitante = match.escudo_visitante || "../assets/default-logo.png";
+  const nomeMandante = match.mandante || "A definir";
+  const nomeVisitante = match.visitante || "A definir";
 
   container.innerHTML = `
-    <div class="countdown-container">
-      <div class="countdown-header">
-        <h2>AGUARDANDO PRÓXIMA PARTIDA</h2>
+    <div class="match-header-card" style="background: linear-gradient(135deg, #1a1f3a 0%, #002266 100%); border: 2px solid var(--primary-light);">
+      <div class="match-status-badge" style="background: var(--accent); color: var(--primary-dark);">
+        <i class="fas fa-clock"></i> PRÓXIMO JOGO
       </div>
-      <p>Nenhum jogo agendado no momento.</p>
-    </div>
-  `;
-}
-
-/**
- * ATUALIZAR O ESTADO DA PARTIDA
- */
-function updateMatchState(data) {
-  if (!data.placar) return;
-
-  state.match.home.name = data.placar.mandante || "Mandante";
-  state.match.home.logo = data.placar.logo_mandante || "";
-  state.match.away.name = data.placar.visitante || "Visitante";
-  state.match.away.logo = data.placar.logo_visitante || "";
-  state.match.score.home = parseInt(data.placar.gols_mandante) || 0;
-  state.match.score.away = parseInt(data.placar.gols_visitante) || 0;
-  state.match.status = data.placar.status || "AO VIVO";
-  state.match.minute =
-    data.placar.tempo || data.placar.minuto || data.placar.periodo || "0'";
-}
-
-/**
- * RENDERIZAR TODOS OS COMPONENTES
- */
-function renderAllComponents(data) {
-  renderScoreboard();
-  renderTimeline(data.narracao || []);
-  renderTopWidgets(data);
-  renderStats(data.estatisticas || {});
-}
-
-/**
- * RENDERIZAR PLACAR
- */
-function renderScoreboard() {
-  const scoreboardContainer = document.getElementById("scoreboard");
-  if (!scoreboardContainer) return;
-
-  const { home, away, score, status, minute } = state.match;
-
-  scoreboardContainer.innerHTML = `
-    <div class="scoreboard">
-      <div class="team home-team">
-        <img src="${home.logo}" alt="${home.name}" />
-        <span>${home.name}</span>
-      </div>
-      <div class="score-center">
-        <div class="score">
-          <span class="score-home">${score.home}</span>
-          <span class="score-separator">×</span>
-          <span class="score-away">${score.away}</span>
-        </div>
-        <div class="match-info">
-          <span class="match-status">${status}</span>
-          <span class="match-time">${minute}</span>
-        </div>
-      </div>
-      <div class="team away-team">
-        <img src="${away.logo}" alt="${away.name}" />
-        <span>${away.name}</span>
-      </div>
-    </div>
-  `;
-}
-
-/**
- * RENDERIZAR TIMELINE DE LANCES
- */
-function renderTimeline(narracao) {
-  const timelineContainer = document.getElementById("timeline");
-  if (!timelineContainer) return;
-
-  if (!narracao || narracao.length === 0) {
-    timelineContainer.innerHTML = `
-      <div class="timeline-empty">
-        <i class="fas fa-clock"></i>
-        <p>Aguardando lances...</p>
-      </div>
-    `;
-    return;
-  }
-
-  timelineContainer.innerHTML = narracao
-    .map((lance, index) => {
-      const desc = lance.descricao || "";
-      let icon = "fa-circle";
-      let eventType = "";
-
-      if (desc.toUpperCase().includes("GOL")) {
-        icon = "fa-futbol";
-        eventType = "gol";
-      } else if (
-        desc.toUpperCase().includes("CARTÃO AMARELO") ||
-        desc.toUpperCase().includes("AMARELO")
-      ) {
-        icon = "fa-square";
-        eventType = "amarelo";
-      } else if (
-        desc.toUpperCase().includes("CARTÃO VERMELHO") ||
-        desc.toUpperCase().includes("EXPULSO")
-      ) {
-        icon = "fa-square";
-        eventType = "vermelho";
-      } else if (
-        desc.toUpperCase().includes("PÊNALTI") ||
-        desc.toUpperCase().includes("PENALTI")
-      ) {
-        icon = "fa-dot-circle";
-        eventType = "penalti";
-      }
-
-      return `
-        <div class="timeline-item ${eventType}" data-index="${index}">
-          <div class="timeline-marker">
-            <i class="fas ${icon}"></i>
+      <div class="score-row" style="flex-direction: column; gap: 30px; padding: 40px 20px;">
+        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%;">
+          <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
+            <img src="${escudoMandante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
+            <span class="team-name">${nomeMandante}</span>
           </div>
-          <div class="timeline-content">
-            <div class="timeline-time">${lance.minuto || "0'"}</div>
-            <div class="timeline-description">${desc}</div>
+          <div class="vs-divider">VS</div>
+          <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
+            <img src="${escudoVisitante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
+            <span class="team-name">${nomeVisitante}</span>
           </div>
         </div>
-      `;
-    })
-    .join("");
-}
-
-/**
- * RENDERIZAR WIDGETS SUPERIORES
- */
-function renderTopWidgets(data) {
-  const widgetsContainer = document.getElementById("top-widgets");
-  if (!widgetsContainer) return;
-
-  const stats = data.estatisticas || lastValidStats || {};
-
-  const posse_home = stats.posse_home || "50%";
-  const posse_away = stats.posse_away || "50%";
-  const chutes_home = stats.chutes_gol_home || 0;
-  const chutes_away = stats.chutes_gol_away || 0;
-  const escanteios_home = stats.escanteios_home || 0;
-  const escanteios_away = stats.escanteios_away || 0;
-
-  widgetsContainer.innerHTML = `
-    <div class="widget">
-      <div class="widget-title">Posse de Bola</div>
-      <div class="widget-content">
-        <div class="widget-bar">
-          <div class="widget-bar-fill home" style="width: ${posse_home}"></div>
-          <div class="widget-bar-fill away" style="width: ${posse_away}"></div>
-        </div>
-        <div class="widget-values">
-          <span>${posse_home}</span>
-          <span>${posse_away}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="widget">
-      <div class="widget-title">Chutes a Gol</div>
-      <div class="widget-content">
-        <div class="widget-values">
-          <span class="widget-stat-home">${chutes_home}</span>
-          <span class="widget-stat-away">${chutes_away}</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="widget">
-      <div class="widget-title">Escanteios</div>
-      <div class="widget-content">
-        <div class="widget-values">
-          <span class="widget-stat-home">${escanteios_home}</span>
-          <span class="widget-stat-away">${escanteios_away}</span>
+        <div class="match-game-info">
+          <div class="match-competition"><i class="fas fa-trophy"></i> ${match.campeonato || 'Partida'}</div>
+          <div class="match-date"><i class="fas fa-calendar-alt"></i> ${match.data}</div>
+          <div class="match-time"><i class="fas fa-clock"></i> ${match.hora}</div>
         </div>
       </div>
     </div>
   `;
-}
+};
 
 /**
- * RENDERIZAR ESTATÍSTICAS NO PAINEL FLUTUANTE
+ * LÓGICA DO CONTADOR (COUNTDOWN)
  */
-function renderStats(stats) {
-  renderPanelStats(stats);
-}
+const startCountdown = (targetDate) => {
+  if (state.countdownInterval) clearInterval(state.countdownInterval);
+  const timerElement = document.getElementById("timer-text");
+  if (!timerElement) return;
 
-/**
- * CARREGAR AGENDA
- */
+  const update = () => {
+    const now = new Date().getTime();
+    const distance = targetDate.getTime() - now;
+    if (distance < 0) {
+      timerElement.textContent = "JOGO COMEÇOU!";
+      clearInterval(state.countdownInterval);
+      return;
+    }
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor(
+      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
+    );
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    timerElement.textContent =
+      days > 0
+        ? `${days}d ${String(hours).padStart(2, "0")}h ${String(
+            minutes,
+          ).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`
+        : `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(
+            2,
+            "0",
+          )}m ${String(seconds).padStart(2, "0")}s`;
+  };
+  update();
+  state.countdownInterval = setInterval(update, 1000);
+};
+
 async function loadAgenda() {
   try {
     const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`);
     const data = await response.json();
 
-    if (data && data.proximos) {
-      state.agendaData = data;
+    console.log("📦 Dados brutos da agenda:", data);
+
+    // 1. Normalização: Se a API vier como Array, pegamos o primeiro item. 
+    // Se vier como Objeto (seu caso atual), usamos o objeto direto.
+    const rawData = Array.isArray(data) ? data[0] : data;
+    
+    // 2. Verificação: O seu JSON tem a chave "agenda"
+    if (rawData && rawData.agenda && Array.isArray(rawData.agenda)) {
+      state.agendaData = {
+        jogos: rawData.agenda // Mapeamos 'agenda' da API para o 'jogos' do seu state
+      };
+      
+      console.log("✅ Agenda carregada:", rawData.agenda.length, "jogos");
+      
+      // Se não tiver jogo ao vivo, exibe o próximo jogo
+      if (!state.matchStarted) {
+        showNextMatchCountdown();
+      }
+    } else {
+      console.warn("⚠️ Formato de agenda não reconhecido ou vazio:", data);
+      state.agendaData = { jogos: [] };
     }
-  } catch (error) {
-    console.error("Erro ao carregar agenda:", error);
+    
+  } catch (e) {
+    console.error("❌ Erro ao carregar agenda:", e);
+    state.agendaData = { jogos: [] };
+  }
+}
+
+function getNextMatchFromAgenda() {
+  if (!state.agendaData || !state.agendaData.jogos) return null;
+  const now = new Date();
+  let closest = null;
+  let minDiff = Infinity;
+
+  state.agendaData.jogos.forEach((jogo) => {
+    const dataMatch = parseMatchDate(jogo.data, jogo.hora);
+    if (!dataMatch) return;
+
+    const diff = dataMatch - now;
+    // Considera jogos futuros ou que começaram há menos de 3 horas
+    if (dataMatch > now - 10800000) {
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = { ...jogo, dataObj: dataMatch };
+      }
+    }
+  });
+
+  return closest;
+}
+
+function parseMatchDate(dateStr, timeStr) {
+  try {
+    // Remove prefixos como "dom.," se existir
+    const cleanDate = dateStr.replace(/^[a-z]{3}\.,?\s*/i, "").trim();
+    
+    let day, month, year;
+
+    if (cleanDate.includes("/")) {
+      const parts = cleanDate.split("/");
+      day = parts[0];
+      month = parts[1];
+      year = parts[2];
+      
+      // Se o ano tiver apenas 2 dígitos, assume século 21
+      if (year && year.length === 2) {
+        year = "20" + year;
+      }
+    } else {
+      // Fallback para formato textual
+      const meses = {
+        jan: 1, fev: 2, mar: 3, abr: 4, mai: 5, jun: 6,
+        jul: 7, ago: 8, set: 9, out: 10, nov: 11, dez: 12
+      };
+
+      const parts = cleanDate.split(" ");
+      day = parts[0];
+      const mesStr = parts[1]?.replace(".", "").toLowerCase();
+      month = meses[mesStr] || 1;
+      year = new Date().getFullYear();
+    }
+
+    let hour = 0, minute = 0;
+    if (timeStr && timeStr !== "A definir") {
+      [hour, minute] = timeStr.split(":").map((n) => parseInt(n));
+    }
+
+    // Cria a data no fuso horário de Brasília (UTC-3)
+    const date = new Date(
+      parseInt(year),
+      parseInt(month) - 1,
+      parseInt(day),
+      parseInt(hour) || 0,
+      parseInt(minute) || 0
+    );
+    
+    // Ajusta para UTC-3 (Brasília)
+    date.setHours(date.getHours() - 3);
+    
+    return date;
+  } catch (e) {
+    console.error("Erro ao processar data:", dateStr, timeStr, e);
+    return null;
+  }
+}
+
+function updateMatchState(data) {
+  if (!data || !data.placar) return;
+
+  if (data.partida && data.partida.includes(" x ")) {
+    const [home, away] = data.partida.split(" x ");
+    state.match.home.name = home.trim();
+    state.match.away.name = away.trim();
+  }
+
+  state.match.score.home = Number(data.placar.home ?? 0);
+  state.match.score.away = Number(data.placar.away ?? 0);
+  state.match.status = data.placar.status || "AO VIVO";
+}
+
+function renderAllComponents(data) {
+  renderMatchHeader(data.placar, data.narracao, data.informacoes);
+  renderTimelineFullWidth(data.narracao);
+  if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+    renderPanelStats(data.estatisticas);
+  }
+  updateTopArbitro(data.arbitragem);
+  renderPanelLineups(data.escalacao);
+}
+
+function renderMatchHeader(placar, narracao, informacoes) {
+  const container = document.getElementById("live-match-container");
+  if (!container || !placar) return;
+
+  let currentMinute = "0'";
+  if (narracao && narracao.length > 0 && narracao[0].minuto) {
+    currentMinute = String(narracao[0].minuto)
+      .replace(/<[^>]*>/g, "")
+      .trim();
+  }
+
+  let matchStatus = placar.status || "AO VIVO";
+
+  // Lógica de status (mantida igual a sua)
+  if (currentMinute.includes("45'") && currentMinute.includes("1°T")) {
+    matchStatus = "FIM DO 1° TEMPO";
+  } else if (
+    currentMinute.includes("Int") ||
+    currentMinute.toLowerCase().includes("intervalo")
+  ) {
+    matchStatus = "INTERVALO";
+  } else if (
+    currentMinute.includes("90'") ||
+    (currentMinute.includes("45'") && currentMinute.includes("2°T"))
+  ) {
+    matchStatus = "FIM DO 2° TEMPO";
+  } else if (currentMinute.includes("2°T")) {
+    matchStatus = "2° TEMPO";
+  } else if (currentMinute.includes("1°T")) {
+    matchStatus = "1° TEMPO";
+  }
+
+  const localPartida = informacoes?.estadio || "Local não informado";
+  const nomeCampeonato = informacoes?.campeonato || "Partida";
+
+  container.innerHTML = `
+  <div class="match-header-card">
+    <div class="match-status-badge ${matchStatus.includes("AO VIVO") || matchStatus.includes("TEMPO") ? "live-pulse" : ""}">
+      <i class="fas fa-circle"></i> ${matchStatus.toUpperCase()}
+    </div>
+    
+    <div class="score-row">
+      <div class="team-info team-home">
+        <img src="${placar.home_logo}" alt="${placar.home_name}" class="team-logo" />
+        <span class="team-name">${placar.home_name}</span>
+      </div>
+      
+      <div class="score-display">
+        <div class="match-timer-badge">
+          <i class="fas fa-clock"></i>
+          <span>${currentMinute}</span>
+        </div>
+        <div class="score-numbers">
+          <span class="score-number">${placar.home || 0}</span>
+          <span class="score-divider">-</span>
+          <span class="score-number">${placar.away || 0}</span>
+        </div>
+      </div>
+      
+      <div class="team-info team-away">
+        <img src="${placar.away_logo}" alt="${placar.away_name}" class="team-logo" />
+        <span class="team-name">${placar.away_name}</span>
+      </div>
+    </div>
+
+    <div class="match-footer-info" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--gray-300); text-align: center; display: flex; flex-direction: column; gap: 5px;">
+      <div><i class="fas fa-trophy" style="color: var(--accent); margin-right: 5px;"></i> ${nomeCampeonato}</div>
+      <div><i class="fas fa-location-dot" style="color: var(--accent); margin-right: 5px;"></i> ${localPartida}</div>
+    </div>
+  </div>
+`;
+}
+
+/**
+ * RENDERIZA TIMELINE EM LARGURA TOTAL
+ */
+function renderTimelineFullWidth(narracao) {
+  const container = document.getElementById("timeline-container-full");
+  const statusIndicator = document.getElementById(
+    "match-status-indicator-full",
+  );
+  const noEventsMessage = document.getElementById("no-events-message-full");
+
+  if (!container) return;
+
+  if (!narracao || narracao.length === 0) {
+    if (noEventsMessage) noEventsMessage.style.display = "block";
+    if (statusIndicator) statusIndicator.textContent = "AGUARDANDO";
+    return;
+  }
+
+  if (noEventsMessage) noEventsMessage.style.display = "none";
+  if (statusIndicator) statusIndicator.textContent = "AO VIVO";
+
+  while (container.firstChild) {
+    container.removeChild(container.firstChild);
+  }
+
+  narracao.forEach((lance) => {
+    const item = document.createElement("div");
+
+    let iconClass = "";
+    let iconContent = lance.icone || "📝";
+    let extraClass = "lance-normal";
+    const desc = lance.descricao ? lance.descricao.toLowerCase() : "";
+
+    // Lógica de Ícones
+    if (lance.is_gol || desc.includes("gol")) {
+      iconClass = "icon-goal";
+      iconContent = '<i class="fas fa-futbol"></i>';
+      extraClass = "lance-gol";
+    } else if (desc.includes("amarelo")) {
+      iconClass = "icon-yellow-card";
+      iconContent =
+        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    } else if (desc.includes("vermelho")) {
+      iconClass = "icon-red-card";
+      iconContent =
+        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
+    } else if (
+      desc.includes("pênalti") ||
+      desc.includes("penalidade") ||
+      desc.includes("marca da cal")
+    ) {
+      iconClass = "icon-penalty";
+      iconContent = '<i class="fas fa-bullseye"></i>';
+      extraClass = "lance-importante";
+    }
+
+    item.className = `timeline-item-full ${extraClass}`;
+
+    let min = "0'";
+    if (lance.minuto !== undefined && lance.minuto !== null) {
+      min = String(lance.minuto)
+        .replace(/<[^>]*>/g, "")
+        .trim();
+    }
+
+    item.innerHTML = `
+      <div class="timeline-time-full">
+        <span class="time-badge-full">${min}</span>
+      </div>
+      <div class="timeline-content-full">
+        <div class="timeline-icon-full ${iconClass}">${iconContent}</div>
+        <div class="timeline-text-full"><p>${lance.descricao}</p></div>
+      </div>
+    `;
+    container.appendChild(item);
+  });
+}
+
+/**
+ * RENDERIZA ESTATÍSTICAS EM GRID
+ */
+function renderGridStats(stats) {
+  const homeContainer = document.getElementById("home-stats-list-grid");
+  const awayContainer = document.getElementById("away-stats-list-grid");
+  const homeHeader = document.getElementById("home-stats-header-grid");
+  const awayHeader = document.getElementById("away-stats-header-grid");
+
+  if (!stats) return;
+
+  // Atualizar cabeçalhos
+  if (homeHeader && state.match.home.name) {
+    homeHeader.innerHTML = `
+      <i class="fas fa-chart-bar"></i>
+      <span>${state.match.home.name.toUpperCase()}</span>
+    `;
+  }
+
+  if (awayHeader && state.match.away.name) {
+    awayHeader.innerHTML = `
+      <i class="fas fa-chart-pie"></i>
+      <span>${state.match.away.name.toUpperCase()}</span>
+    `;
+  }
+
+  // Renderizar estatísticas do mandante
+  if (homeContainer) {
+    const homeItems = [
+      { label: "Posse de bola", value: stats.posse_home || "0%" },
+      { label: "Chutes", value: stats.chutes_home || 0 },
+      { label: "Chutes a gol", value: stats.chutes_gol_home || 0 },
+      { label: "Passes certos", value: stats.passes_certos_home || 0 },
+      { label: "Passes errados", value: stats.passes_errados_home || 0 },
+      { label: "Faltas", value: stats.faltas_home || 0 },
+      { label: "Desarmes", value: stats.desarmes_home || 0 },
+      { label: "Escanteios", value: stats.escanteios_home || 0 },
+      { label: "Impedimentos", value: stats.impedimentos_home || 0 },
+      { label: "Cartões amarelos", value: stats.amarelos_home || 0 },
+      { label: "Cartões vermelhos", value: stats.vermelhos_home || 0 },
+    ];
+
+    homeContainer.innerHTML = homeItems
+      .map(
+        (item) => `
+      <div class="stat-item-grid">
+        <span class="stat-label-grid">${item.label}</span>
+        <span class="stat-value-grid">${item.value}</span>
+      </div>
+    `,
+      )
+      .join("");
+  }
+
+  // Renderizar estatísticas do visitante
+  if (awayContainer) {
+    const awayItems = [
+      { label: "Posse de bola", value: stats.posse_away || "0%" },
+      { label: "Chutes", value: stats.chutes_away || 0 },
+      { label: "Chutes a gol", value: stats.chutes_gol_away || 0 },
+      { label: "Passes certos", value: stats.passes_certos_away || 0 },
+      { label: "Passes errados", value: stats.passes_errados_away || 0 },
+      { label: "Faltas", value: stats.faltas_away || 0 },
+      { label: "Desarmes", value: stats.desarmes_away || 0 },
+      { label: "Escanteios", value: stats.escanteios_away || 0 },
+      { label: "Impedimentos", value: stats.impedimentos_away || 0 },
+      { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
+      { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
+    ];
+
+    awayContainer.innerHTML = awayItems
+      .map(
+        (item) => `
+      <div class="stat-item-grid">
+        <span class="stat-label-grid">${item.label}</span>
+        <span class="stat-value-grid">${item.value}</span>
+      </div>
+    `,
+      )
+      .join("");
   }
 }
 
 /**
- * INICIALIZAR BOTÕES FLUTUANTES
+ * ATUALIZA ÁRBITRO NO WIDGET SUPERIOR
+ */
+function updateTopArbitro(arbitragem) {
+  const arbitroNome = document.querySelector(".top-arbitro-nome");
+  if (arbitroNome && arbitragem) {
+    arbitroNome.textContent = arbitragem;
+  }
+}
+
+/**
+ * INICIALIZA OS BOTÕES FLUTUANTES SUPERIORES
  */
 function initTopFloatingButtons() {
+  const btnStats = document.getElementById("top-stats-btn");
+  const btnLineup = document.getElementById("top-lineup-btn");
+
+  // SEUS NOVOS SELETORES MOBILE:
+  const btnStatsMobile = document.getElementById("mobile-stats-btn");
+  const btnLineupMobile = document.getElementById("mobile-lineup-btn");
+
+  const openStats = () => {
+    const overlay = document.getElementById("floating-overlay");
+    const statsPanel = document.getElementById("stats-panel");
+    const lineupPanel = document.getElementById("lineup-panel");
+    overlay.classList.add("active");
+    statsPanel.classList.add("active");
+    lineupPanel.classList.remove("active");
+  };
+
+  const openLineup = () => {
+    const overlay = document.getElementById("floating-overlay");
+    const statsPanel = document.getElementById("stats-panel");
+    const lineupPanel = document.getElementById("lineup-panel");
+    overlay.classList.add("active");
+    lineupPanel.classList.add("active");
+    statsPanel.classList.remove("active");
+  };
+
+  if (btnStats) btnStats.onclick = openStats;
+  if (btnStatsMobile) btnStatsMobile.onclick = openStats; // Ativa no mobile
+
+  if (btnLineup) btnLineup.onclick = openLineup;
+  if (btnLineupMobile) btnLineupMobile.onclick = openLineup; // Ativa no mobile
+}
+
+function openStatsPanel() {
   const overlay = document.getElementById("floating-overlay");
-  const statsBtn = document.getElementById("open-stats");
-  const lineupBtn = document.getElementById("open-lineup");
   const statsPanel = document.getElementById("stats-panel");
   const lineupPanel = document.getElementById("lineup-panel");
 
-  if (statsBtn) {
-    statsBtn.onclick = () => {
-      if (overlay && statsPanel) {
-        overlay.classList.add("active");
-        statsPanel.classList.add("active");
-        document.body.style.overflow = "hidden";
-      }
-    };
-  }
+  if (overlay && statsPanel) {
+    overlay.classList.add("active");
+    statsPanel.classList.add("active");
+    lineupPanel.classList.remove("active");
+    document.body.style.overflow = "hidden";
 
-  if (lineupBtn) {
-    lineupBtn.onclick = () => {
-      if (overlay && lineupPanel) {
-        overlay.classList.add("active");
-        lineupPanel.classList.add("active");
-        document.body.style.overflow = "hidden";
-      }
-    };
+    // ATUALIZA OS DADOS QUANDO ABRIR O PAINEL
+    updateStatsPanel();
   }
+}
 
-  if (overlay) {
-    overlay.onclick = (e) => {
-      if (e.target === overlay) {
-        closeAllPanels();
-      }
-    };
+function openLineupPanel() {
+  const overlay = document.getElementById("floating-overlay");
+  const lineupPanel = document.getElementById("lineup-panel");
+  const statsPanel = document.getElementById("stats-panel");
+
+  if (overlay && lineupPanel) {
+    overlay.classList.add("active");
+    lineupPanel.classList.add("active");
+    statsPanel.classList.remove("active");
+    document.body.style.overflow = "hidden";
+
+    // ATUALIZA OS DADOS QUANDO ABRIR O PAINEL
+    updateLineupPanel();
   }
+}
 
-  const closeBtns = document.querySelectorAll(".panel-close");
-  closeBtns.forEach((btn) => {
-    btn.onclick = closeAllPanels;
-  });
+function updateStatsPanel() {
+  // Use as estatísticas em cache (lastValidStats) ou busque se não houver
+  if (lastValidStats) {
+    renderPanelStats(lastValidStats);
+  } else {
+    // Tenta buscar estatísticas da API
+    fetchLiveDataForPanel();
+  }
+}
+
+/**
+ * ATUALIZA OS DADOS DO PAINEL DE ESCALAÇÕES
+ */
+function updateLineupPanel() {
+  // Tenta buscar escalações da API
+  fetchLiveDataForPanel();
+}
+
+async function fetchLiveDataForPanel() {
+  try {
+    const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
+    let data = await response.json();
+
+    if (data && data[""] !== undefined) {
+      data = data[""];
+    }
+
+    if (Array.isArray(data)) {
+      data = data[0];
+    }
+
+    // Atualiza estatísticas se disponíveis
+    if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+      lastValidStats = data.estatisticas;
+      renderPanelStats(data.estatisticas);
+    }
+
+    // Atualiza escalações se disponíveis
+    if (data.escalacao) {
+      renderPanelLineups(data.escalacao);
+    }
+
+    // Atualiza árbitro se disponível
+    if (data.arbitragem) {
+      updateTopArbitro(data.arbitragem);
+    }
+    const isLiveMatch =
+      data &&
+      data.placar &&
+      !["PAST", "ENCERRADO", "FINALIZADO"].includes(
+        String(data.placar.status).toUpperCase(),
+      );
+
+    if (isLiveMatch) {
+      startLivePolling();
+    } else {
+      stopLivePolling();
+    }
+  } catch (e) {
+    console.error("⚠️ Erro ao buscar dados para painéis:", e);
+  }
 }
 
 function closeAllPanels() {
@@ -645,13 +934,52 @@ function closeAllPanels() {
 
   if (overlay) overlay.classList.remove("active");
   panels.forEach((panel) => panel.classList.remove("active"));
+
+  // DEVOLVE O SCROLL
   document.body.style.overflow = "";
+  console.log("Painéis fechados e scroll liberado");
 }
+
+document.addEventListener("DOMContentLoaded", () => {
+  preloadAnimations();
+  const overlay = document.getElementById("floating-overlay");
+  if (overlay) {
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) closeAllPanels();
+    });
+  }
+
+  // CORREÇÃO AQUI: O seu HTML usa 'panel-close-btn'
+  document.querySelectorAll(".panel-close-btn").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      closeAllPanels();
+    });
+  });
+
+  // ADICIONE ISSO PARA O ESC FUNCIONAR SEMPRE:
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeAllPanels();
+  });
+});
 
 /**
  * RENDERIZAR ESTATÍSTICAS NO PAINEL FLUTUANTE
  */
 function renderPanelStats(stats) {
+  if (!stats) return;
+
+  const homeTeamName = document.getElementById("panel-home-team");
+  const awayTeamName = document.getElementById("panel-away-team");
+
+  if (homeTeamName && state.match.home.name) {
+    homeTeamName.innerHTML = `<span>${state.match.home.name.toUpperCase()}</span>`;
+  }
+
+  if (awayTeamName && state.match.away.name) {
+    awayTeamName.innerHTML = `<span>${state.match.away.name.toUpperCase()}</span>`;
+  }
+
   const homeStatsList = document.getElementById("panel-home-stats");
   if (homeStatsList) {
     const homeItems = [
