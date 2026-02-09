@@ -1,7 +1,7 @@
 /**
  * Cabuloso News - Minuto a Minuto
- * Versão: 9.0 - TIMELINE FULL WIDTH + WIDGETS SUPERIORES
- * ATUALIZAÇÃO AUTOMÁTICA A CADA 1 SEGUNDO
+ * Versão: 10.0 - CORRIGIDO - SEM FALSOS POSITIVOS
+ * ATUALIZAÇÃO AUTOMÁTICA A CADA 5 SEGUNDOS
  */
 let ultimoLanceId = null;
 let lastValidStats = null;
@@ -16,7 +16,33 @@ const CONFIG = {
 const golControl = {
   lastScore: { home: 0, away: 0 },
   lastTrigger: 0,
-  cooldown: 12000,
+  cooldown: 8000,
+  matchId: null,
+  
+  loadSavedScore() {
+    try {
+      const saved = localStorage.getItem('cabuloso_last_score');
+      if (saved) {
+        const data = JSON.parse(saved);
+        if (data.matchId === this.matchId && data.timestamp > Date.now() - 3600000) {
+          this.lastScore = data.score;
+          console.log('📥 Placar restaurado:', this.lastScore);
+        }
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar placar:', e);
+    }
+  },
+  
+  saveScore(score) {
+    try {
+      localStorage.setItem('cabuloso_last_score', JSON.stringify({
+        matchId: this.matchId,
+        score: score,
+        timestamp: Date.now()
+      }));
+    } catch (e) {}
+  }
 };
 
 const state = {
@@ -43,8 +69,36 @@ const EVENT_PRIORITY = {
 const animationQueue = {
   queue: [],
   isPlaying: false,
-  lastEvents: new Map(), // hash -> timestamp
-  MAX_EVENT_AGE: 10 * 60 * 1000, // 10 minutos
+  lastEvents: new Map(),
+  MAX_EVENT_AGE: 30 * 60 * 1000,
+  
+  loadShownEvents() {
+    try {
+      const saved = localStorage.getItem('cabuloso_shown_events');
+      if (saved) {
+        const data = JSON.parse(saved);
+        const cutoff = Date.now() - 2 * 60 * 60 * 1000;
+        for (const [hash, time] of Object.entries(data)) {
+          if (time > cutoff) {
+            this.lastEvents.set(hash, time);
+          }
+        }
+        console.log(`📥 ${this.lastEvents.size} eventos anteriores carregados`);
+      }
+    } catch (e) {
+      console.warn('Erro ao carregar eventos:', e);
+    }
+  },
+  
+  saveShownEvents() {
+    try {
+      const data = {};
+      for (const [hash, time] of this.lastEvents.entries()) {
+        data[hash] = time;
+      }
+      localStorage.setItem('cabuloso_shown_events', JSON.stringify(data));
+    } catch (e) {}
+  },
   
   add(event) {
     const now = Date.now();
@@ -55,9 +109,13 @@ const animationQueue = {
       }
     }
   
-    if (this.lastEvents.has(event.hash)) return;
+    if (this.lastEvents.has(event.hash)) {
+      console.log('🔄 Evento ignorado (já mostrado):', event.type);
+      return;
+    }
   
     this.lastEvents.set(event.hash, now);
+    this.saveShownEvents();
   
     this.queue.push(event);
   
@@ -92,18 +150,17 @@ const animationQueue = {
   },
 };
 
-function gerarHashLance(minuto, descricao) {
+function gerarHashLance(minuto, descricao, tipo = '') {
   const minutoNormalizado = String(minuto).replace(/\D/g, "");
-  return btoa(
-    unescape(
-      encodeURIComponent(
-        `${minutoNormalizado}|${descricao
-          .toLowerCase()
-          .replace(/gol|cartão|amarelo|vermelho|pênalti/g, "")
-          .trim()}`,
-      ),
-    ),
-  );
+  const descNormalizada = descricao
+    .toLowerCase()
+    .replace(/[^\w\sáàâãéèêíïóôõöúçñ]/g, "")
+    .trim()
+    .substring(0, 100);
+  
+  const hashString = `${minutoNormalizado}|${tipo}|${descNormalizada}`;
+  
+  return btoa(unescape(encodeURIComponent(hashString)));
 }
 
 let liveInterval = null;
@@ -138,6 +195,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
   initTopFloatingButtons();
   
+  animationQueue.loadShownEvents();
+  
   // Primeira busca imediata
   await fetchLiveData();
   
@@ -148,39 +207,54 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadAgenda();
   setInterval(loadAgenda, 30000);
   
-  console.log("✅ Sistema iniciado com atualização automática a cada 1 segundo");
+  console.log("✅ Sistema iniciado com atualização automática a cada 5 segundos");
 });
 
 const fetchLiveData = async () => {
   try {
     const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
-
     let data = await response.json();
 
+    // 1. TRATAMENTO DO ENVELOPE n8n: 
+    // Se receber o objeto com 'dados_prontos', extraímos o conteúdo real
+    if (data && data.dados_prontos) {
+      data = data.dados_prontos;
+    } 
     // Se a API retornar uma lista [], pegamos o primeiro objeto
-    if (Array.isArray(data)) {
+    else if (Array.isArray(data)) {
       data = data[0];
     }
 
+    // 2. VERIFICAÇÃO DE MODO AGENDA:
+    // Se o n8n avisar que é apenas agenda, paramos aqui.
+    if (data && (data.status === "agenda" || data.modo_agenda === true)) {
+      if (state.logsEnabled) console.log("📅 " + (data.mensagem || "Modo Agenda: Aguardando jogo."));
+      state.matchStarted = false;
+      showNextMatchCountdown();
+      return; // Sai da função sem renderizar nada do "Ao Vivo"
+    }
+
+    // Mantemos sua lógica de extração de chave vazia se houver
     if (data && data[""] !== undefined) {
-      data = data[""]; // Extrai os dados da chave vazia
+      data = data[""];
     }
 
     if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
       lastValidStats = data.estatisticas;
     }
 
-    // Verifica se é jogo ao vivo
-    const isLiveMatch =
-      data && (data.success === true || (data.placar && data.placar.status));
+    // 3. VALIDAÇÃO DE JOGO REALMENTE ATIVO
+    // Verificamos se há sucesso E se há dados reais de partida (placar ou narração)
+    const isLiveMatch = data && data.success === true && (data.placar || data.narracao);
 
     if (!isLiveMatch || data.error) {
-      if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem jogo ao vivo.");
+      if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem dados de jogo ao vivo.");
       state.matchStarted = false;
       showNextMatchCountdown();
       return;
     }
 
+    // 4. RENDERIZAÇÃO DO JOGO
     console.log("✅ Jogo ao vivo detectado! Renderizando...");
     state.matchStarted = true;
     showLiveMatchUI();
@@ -189,6 +263,7 @@ const fetchLiveData = async () => {
     processarGol();
     detectarNovoLance(data);
     renderAllComponents(data);
+
   } catch (e) {
     if (state.logsEnabled) console.error("⚠️ Erro na requisição:", e);
     state.matchStarted = false;
@@ -218,19 +293,31 @@ function detectarGolComDelay() {
     return null;
   }
 
-  if (atual.home > anterior.home) {
-    golControl.lastTrigger = now;
-    golControl.lastScore = { ...atual };
-    return "HOME";
+  if (atual.home === anterior.home && atual.away === anterior.away) {
+    return null;
   }
 
-  if (atual.away > anterior.away) {
+  let quemFezGol = null;
+  
+  if (atual.home > anterior.home) {
+    quemFezGol = "HOME";
+  } else if (atual.away > anterior.away) {
+    quemFezGol = "AWAY";
+  }
+
+  if (quemFezGol) {
+    console.log(`⚽ GOL! ${quemFezGol} - Placar: ${atual.home} x ${atual.away}`);
+    
     golControl.lastTrigger = now;
     golControl.lastScore = { ...atual };
-    return "AWAY";
+    golControl.saveScore(atual);
+    
+    return quemFezGol;
   }
 
   golControl.lastScore = { ...atual };
+  golControl.saveScore(atual);
+  
   return null;
 }
 
@@ -239,26 +326,26 @@ function processarGol() {
   if (!gol) return;
 
   const minuto = state.match.minute || "0'";
-  const hash = gerarHashLance(minuto, "GOL");
+  const placar = `${state.match.score.home}x${state.match.score.away}`;
+  const hash = gerarHashLance(minuto, `GOL_${placar}`, 'GOL');
 
   animationQueue.add({
     type: "gol",
     minute: minuto,
     hash,
+    team: gol
   });
 }
 
 function processarNovoLance(lance) {
   const desc = lance.descricao?.toUpperCase() || "";
   const minuto = lance.minuto ? String(lance.minuto) : "0'";
-  const hash = gerarHashLance(minuto, desc);
 
-  if (desc.includes("GOL")) {
-    animationQueue.add({ type: "gol", minute: minuto, hash });
-    return;
-  }
+  // REMOVIDO: Detecção de gol por palavra-chave
+  // Gols agora são detectados APENAS por mudança de placar
 
   if (desc.includes("CARTÃO VERMELHO") || desc.includes("EXPULSO")) {
+    const hash = gerarHashLance(minuto, desc, 'VERMELHO');
     animationQueue.add({ type: "vermelho", minute: minuto, hash });
     return;
   }
@@ -269,11 +356,13 @@ function processarNovoLance(lance) {
     desc.includes("PENALTI") ||
     desc.includes("MARCA DA CAL")
   ) {
+    const hash = gerarHashLance(minuto, desc, 'PENALTI');
     animationQueue.add({ type: "penalti", minute: minuto, hash });
     return;
   }
 
   if (desc.includes("CARTÃO AMARELO") || desc.includes("AMARELO")) {
+    const hash = gerarHashLance(minuto, desc, 'AMARELO');
     animationQueue.add({ type: "amarelo", minute: minuto, hash });
   }
 }
@@ -532,6 +621,15 @@ function parseMatchDate(dateStr, timeStr) {
 function updateMatchState(data) {
   if (!data || !data.placar) return;
 
+  const placar = data.placar;
+  
+  const matchId = btoa(`${placar.home_name}-${placar.away_name}-${data.informacoes?.data || ''}`);
+  
+  if (golControl.matchId !== matchId) {
+    golControl.matchId = matchId;
+    golControl.loadSavedScore();
+  }
+
   if (data.partida && data.partida.includes(" x ")) {
     const [home, away] = data.partida.split(" x ");
     state.match.home.name = home.trim();
@@ -541,6 +639,7 @@ function updateMatchState(data) {
   state.match.score.home = Number(data.placar.home ?? 0);
   state.match.score.away = Number(data.placar.away ?? 0);
   state.match.status = data.placar.status || "AO VIVO";
+  state.match.minute = data.narracao?.[0]?.minuto || "0'";
 }
 
 function renderAllComponents(data) {
@@ -1293,3 +1392,9 @@ window.cabulosoTeste = {
     }
   },
 };
+
+// Salvar dados antes de fechar/recarregar a página
+window.addEventListener('beforeunload', () => {
+  golControl.saveScore(golControl.lastScore);
+  animationQueue.saveShownEvents();
+});
