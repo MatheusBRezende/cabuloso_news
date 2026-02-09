@@ -212,52 +212,58 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 const fetchLiveData = async () => {
   try {
+    // Adiciona timestamp para evitar cache do navegador e garantir dado fresco
     const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
     let data = await response.json();
 
-    // 1. TRATAMENTO DO ENVELOPE n8n: 
-    // Se receber o objeto com 'dados_prontos', extraímos o conteúdo real
+    // 1. TRATAMENTO DO ENVELOPE (n8n ou Array)
     if (data && data.dados_prontos) {
       data = data.dados_prontos;
-    } 
-    // Se a API retornar uma lista [], pegamos o primeiro objeto
-    else if (Array.isArray(data)) {
+    } else if (Array.isArray(data)) {
       data = data[0];
     }
 
-    // 2. VERIFICAÇÃO DE MODO AGENDA:
-    // Se o n8n avisar que é apenas agenda, paramos aqui.
-    if (data && (data.status === "agenda" || data.modo_agenda === true)) {
-      if (state.logsEnabled) console.log("📅 " + (data.mensagem || "Modo Agenda: Aguardando jogo."));
-      state.matchStarted = false;
-      showNextMatchCountdown();
-      return; // Sai da função sem renderizar nada do "Ao Vivo"
-    }
-
-    // Mantemos sua lógica de extração de chave vazia se houver
+    // 2. MANTÉM LÓGICA DE EXTRAÇÃO DE CHAVE VAZIA (Se houver)
     if (data && data[""] !== undefined) {
       data = data[""];
     }
 
-    if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
-      lastValidStats = data.estatisticas;
-    }
-
-    // 3. VALIDAÇÃO DE JOGO REALMENTE ATIVO
-    // Verificamos se há sucesso E se há dados reais de partida (placar ou narração)
+    // 3. LÓGICA INTELIGENTE DE ECONOMIA (BACKOFF)
+    // Se a API indicar erro, modo agenda ou falta de dados de partida
     const isLiveMatch = data && data.success === true && (data.placar || data.narracao);
+    const isAgenda = data && (data.status === "agenda" || data.modo_agenda === true);
 
-    if (!isLiveMatch || data.error) {
-      if (state.logsEnabled) console.log("⏱️ Modo Agenda: Sem dados de jogo ao vivo.");
+    if (!isLiveMatch || isAgenda || data.error) {
+      if (state.logsEnabled) {
+        console.log("📅 Modo Economia: Sem jogo ao vivo. Próxima checagem em 60s.");
+      }
+      
       state.matchStarted = false;
       showNextMatchCountdown();
+
+      // Para o intervalo rápido (5s) e agenda uma execução única para daqui a 60s
+      stopLivePolling();
+      setTimeout(fetchLiveData, 60000); 
       return;
     }
 
-    // 4. RENDERIZAÇÃO DO JOGO
-    console.log("✅ Jogo ao vivo detectado! Renderizando...");
-    state.matchStarted = true;
+    // 4. SE CHEGOU AQUI, O JOGO ESTÁ ROLANDO!
+    // Se vínhamos do modo economia, reativa o polling de 5 segundos
+    if (state.matchStarted === false) {
+      console.log("⚽ Jogo detectado! Ativando polling rápido (5s)");
+      state.matchStarted = true;
+      startLivePolling(); 
+    }
+
+    // 5. ATUALIZAÇÃO DOS COMPONENTES VISUAIS
+    if (state.logsEnabled) console.log("✅ Renderizando lances do jogo...");
+    
     showLiveMatchUI();
+
+    // Cache de estatísticas para evitar telas vazias em oscilações
+    if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+      lastValidStats = data.estatisticas;
+    }
 
     updateMatchState(data);
     processarGol();
@@ -266,8 +272,13 @@ const fetchLiveData = async () => {
 
   } catch (e) {
     if (state.logsEnabled) console.error("⚠️ Erro na requisição:", e);
+    
     state.matchStarted = false;
     showNextMatchCountdown();
+    
+    // Em caso de erro de rede, tenta novamente em 30 segundos
+    stopLivePolling();
+    setTimeout(fetchLiveData, 30000);
   }
 };
 

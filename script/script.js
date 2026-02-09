@@ -2,11 +2,9 @@ import { getFromCache, saveToCache } from "./cache.js";
 
 const CONFIG = {
   apiUrlGeral: "https://cabuloso-api.cabulosonews92.workers.dev/?type=geral",
-  apiUrlBrasileiro:
-    "https://cabuloso-api.cabulosonews92.workers.dev/?type=tabela_br",
+  apiUrlBrasileiro:"https://cabuloso-api.cabulosonews92.workers.dev/?type=tabela_br",
   apiUrlJogos: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
-  defaultImage:
-    "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+  defaultImage:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
   CACHE_TTL: 10 * 60 * 1000, // 10 minutos
 };
 
