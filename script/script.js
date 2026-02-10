@@ -12,7 +12,7 @@ const CONFIG = {
 // ============================================
 let allNews = [];
 let displayedNewsCount = 0;
-const NEWS_PER_PAGE = 6;
+const NEWS_PER_PAGE = 10;
 
 // ============================================
 // UTILITÁRIOS
