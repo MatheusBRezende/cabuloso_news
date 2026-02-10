@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
@@ -34,14 +34,26 @@
   </head>
   <body>
     <!-- Skip Link for Accessibility -->
-    <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+    <a href="#main-content" class="skip-link"
+      >Pular para o conteúdo principal</a
+    >
 
     <header class="header" role="banner">
       <nav class="navbar" role="navigation" aria-label="Navegação principal">
         <div class="nav-container">
-          <a href="index.html" class="nav-logo" aria-label="Cabuloso News - Página inicial">
+          <a
+            href="index.html"
+            class="nav-logo"
+            aria-label="Cabuloso News - Página inicial"
+          >
             <div class="logo-container">
-              <img src="./assets/logo.png" alt="" class="logo" width="40" height="40" />
+              <img
+                src="./assets/logo.png"
+                alt=""
+                class="logo"
+                width="40"
+                height="40"
+              />
               <div class="logo-glow" aria-hidden="true"></div>
             </div>
             <div class="logo-text-container">
@@ -58,7 +70,12 @@
               </a>
             </li>
             <li class="nav-item" role="none">
-              <a href="competicao.html" class="nav-link active" role="menuitem" aria-current="page">
+              <a
+                href="competicao.html"
+                class="nav-link active"
+                role="menuitem"
+                aria-current="page"
+              >
                 <i class="fas fa-table"></i>
                 <span>Tabela</span>
               </a>
@@ -77,9 +94,9 @@
             </li>
           </ul>
 
-          <button 
-            class="menu-toggle" 
-            id="menuToggle" 
+          <button
+            class="menu-toggle"
+            id="menuToggle"
             type="button"
             aria-label="Abrir menu de navegação"
             aria-expanded="false"
@@ -108,14 +125,22 @@
             <span>Temporada 2026</span>
           </div>
           <h1 class="hero-title" id="hero-title">
-            <span class="title-main" id="campeonato-nome">Brasileirão Serie A</span>
-            <span class="title-sub">Acompanhe todas as competições do Cruzeiro</span>
+            <span class="title-main" id="campeonato-nome"
+              >Brasileirão Serie A</span
+            >
+            <span class="title-sub"
+              >Acompanhe todas as competições do Cruzeiro</span
+            >
           </h1>
           <div class="hero-selector">
-            <div class="campeonato-buttons" role="tablist" aria-label="Selecionar campeonato">
-              <button 
-                class="campeonato-btn active" 
-                data-campeonato="brasileirao" 
+            <div
+              class="campeonato-buttons"
+              role="tablist"
+              aria-label="Selecionar campeonato"
+            >
+              <button
+                class="campeonato-btn active"
+                data-campeonato="brasileirao"
                 type="button"
                 role="tab"
                 aria-selected="true"
@@ -123,9 +148,9 @@
                 <i class="fas fa-futbol" aria-hidden="true"></i>
                 <span>Brasileirão</span>
               </button>
-              <button 
-                class="campeonato-btn" 
-                data-campeonato="mineiro" 
+              <button
+                class="campeonato-btn"
+                data-campeonato="mineiro"
                 type="button"
                 role="tab"
                 aria-selected="false"
@@ -133,9 +158,9 @@
                 <i class="fas fa-mountain" aria-hidden="true"></i>
                 <span>Mineiro</span>
               </button>
-              <button 
-                class="campeonato-btn" 
-                data-campeonato="copa-do-brasil" 
+              <button
+                class="campeonato-btn"
+                data-campeonato="copa-do-brasil"
                 type="button"
                 role="tab"
                 aria-selected="false"
@@ -169,7 +194,12 @@
           </div>
 
           <div class="table-wrapper">
-            <div id="tabela-container" class="table-container" role="region" aria-label="Tabela de classificação">
+            <div
+              id="tabela-container"
+              class="table-container"
+              role="region"
+              aria-label="Tabela de classificação"
+            >
               <div class="loading-state" aria-busy="true">
                 <div class="loading-spinner">
                   <div class="spinner" role="status">
@@ -178,17 +208,27 @@
                 </div>
                 <p>Carregando dados do campeonato...</p>
               </div>
-              
+
               <!-- Copa do Brasil Static Games -->
-              <div class="fase-copa fade-in-up" id="copa-static-games" style="display: none;">
-                <h3><i class="fas fa-trophy" aria-hidden="true"></i> Copa do Brasil 2026</h3>
+              <div
+                class="fase-copa fade-in-up"
+                id="copa-static-games"
+                style="display: none"
+              >
+                <h3>
+                  <i class="fas fa-trophy" aria-hidden="true"></i> Copa do
+                  Brasil 2026
+                </h3>
                 <div class="aviso-sem-jogos-copa" role="alert">
                   <div class="aviso-icon" aria-hidden="true">
                     <i class="fas fa-clock"></i>
                   </div>
                   <div class="aviso-content">
                     <h3>AGUARDE ENQUANTO NÃO HÁ PARTIDAS</h3>
-                    <p>As informações dos próximos jogos da Copa do Brasil serão atualizadas em breve.</p>
+                    <p>
+                      As informações dos próximos jogos da Copa do Brasil serão
+                      atualizadas em breve.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -197,43 +237,70 @@
 
           <!-- Legend -->
           <div class="legend-container" id="legend-container">
-            <div class="legend" id="legend" role="complementary" aria-label="Legenda da tabela">
+            <div
+              class="legend"
+              id="legend"
+              role="complementary"
+              aria-label="Legenda da tabela"
+            >
               <div class="legend-header">
-                <h3><i class="fas fa-info-circle" aria-hidden="true"></i> Legenda</h3>
+                <h3>
+                  <i class="fas fa-info-circle" aria-hidden="true"></i> Legenda
+                </h3>
               </div>
-              
+
               <!-- Brasileirão Legend -->
-              <div class="legend-group" id="legend-brasileirao" data-campeonato="brasileirao" role="list">
+              <div
+                class="legend-group"
+                id="legend-brasileirao"
+                data-campeonato="brasileirao"
+                role="list"
+              >
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-libertadores" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-libertadores"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Libertadores</strong>
                     <small>(1º-4º)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-preliberta" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-preliberta"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Pré-Libertadores</strong>
                     <small>(5º-6º)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-sulamericana" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-sulamericana"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Sul-Americana</strong>
                     <small>(7º-12º)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-rebaixamento" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-rebaixamento"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Rebaixamento</strong>
                     <small>(17º-20º)</small>
                   </span>
                 </div>
                 <div class="legend-item special" role="listitem">
-                  <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-cruzeiro"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Cruzeiro</strong>
                     <small>Maior de Minas</small>
@@ -242,44 +309,68 @@
               </div>
 
               <!-- Mineiro Legend -->
-              <div class="legend-group" id="legend-mineiro" data-campeonato="mineiro" role="list" style="display: none;">
+              <div
+                class="legend-group"
+                id="legend-mineiro"
+                data-campeonato="mineiro"
+                role="list"
+                style="display: none"
+              >
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-classificado-direto" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-classificado-direto"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Classificado Direto</strong>
                     <small>(1º de cada grupo)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-melhor-segundo" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-melhor-segundo"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Melhor 2º - Classifica</strong>
                     <small>(melhor entre os 3)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-segundo-normal" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-segundo-normal"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>2º Colocado</strong>
                     <small>(não classifica)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-eliminado" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-eliminado"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>3º Colocado</strong>
                     <small>(eliminado)</small>
                   </span>
                 </div>
                 <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-repescagem" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-repescagem"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>4º - Repescagem</strong>
                     <small>(disputa vaga na semi)</small>
                   </span>
                 </div>
                 <div class="legend-item special" role="listitem">
-                  <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
+                  <span
+                    class="legend-color zona-cruzeiro"
+                    aria-hidden="true"
+                  ></span>
                   <span class="legend-text">
                     <strong>Cruzeiro</strong>
                     <small>Maior de Minas</small>
@@ -293,9 +384,9 @@
     </main>
 
     <!-- Widget Toggle Button -->
-    <button 
-      class="widget-toggle-btn" 
-      id="widget-toggle" 
+    <button
+      class="widget-toggle-btn"
+      id="widget-toggle"
       type="button"
       aria-label="Abrir próximos jogos"
       aria-expanded="false"
@@ -307,32 +398,68 @@
 
     <!-- Games Widget -->
     <aside class="games-widget-container" aria-label="Widget de próximos jogos">
-      <div 
-        class="games-widget" 
-        id="games-widget" 
-        role="dialog" 
+      <div
+        class="games-widget"
+        id="games-widget"
+        role="dialog"
         aria-labelledby="widget-title"
         aria-hidden="true"
       >
         <div class="widget-header">
           <h3 id="widget-title">
-            <i class="fas fa-calendar-alt" aria-hidden="true"></i> 
+            <i class="fas fa-calendar-alt" aria-hidden="true"></i>
             Próximos Jogos
           </h3>
-          <button 
-            class="widget-close" 
-            id="widget-close" 
+          <button
+            class="widget-close"
+            id="widget-close"
             type="button"
             aria-label="Fechar widget de próximos jogos"
           >
             <i class="fas fa-times" aria-hidden="true"></i>
           </button>
         </div>
-        <div class="widget-filters" role="tablist" aria-label="Filtrar por campeonato">
-          <button class="filter-btn active" data-filter="todos" type="button" role="tab" aria-selected="true">Todos</button>
-          <button class="filter-btn" data-filter="Campeonato Brasileiro" type="button" role="tab" aria-selected="false">Brasileirão</button>
-          <button class="filter-btn" data-filter="Campeonato Mineiro" type="button" role="tab" aria-selected="false">Mineiro</button>
-          <button class="filter-btn" data-filter="Copa do Brasil" type="button" role="tab" aria-selected="false">Copa do Brasil</button>
+        <div
+          class="widget-filters"
+          role="tablist"
+          aria-label="Filtrar por campeonato"
+        >
+          <button
+            class="filter-btn active"
+            data-filter="todos"
+            type="button"
+            role="tab"
+            aria-selected="true"
+          >
+            Todos
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="Campeonato Brasileiro"
+            type="button"
+            role="tab"
+            aria-selected="false"
+          >
+            Brasileirão
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="Campeonato Mineiro"
+            type="button"
+            role="tab"
+            aria-selected="false"
+          >
+            Mineiro
+          </button>
+          <button
+            class="filter-btn"
+            data-filter="Copa do Brasil"
+            type="button"
+            role="tab"
+            aria-selected="false"
+          >
+            Copa do Brasil
+          </button>
         </div>
         <div class="games-list" role="tabpanel" aria-live="polite">
           <!-- Os jogos serão carregados aqui -->
@@ -346,7 +473,13 @@
         <div class="footer-content">
           <div class="footer-section">
             <div class="footer-logo">
-              <img src="./assets/logo.png" alt="" class="footer-logo-img" width="50" height="50" />
+              <img
+                src="./assets/logo.png"
+                alt=""
+                class="footer-logo-img"
+                width="50"
+                height="50"
+              />
               <div>
                 <h3>Cabuloso News</h3>
                 <p>O portal do torcedor celeste</p>
@@ -356,17 +489,36 @@
           <div class="footer-section">
             <h4>Navegação</h4>
             <ul role="list">
-              <li><a href="index.html"><i class="fas fa-home" aria-hidden="true"></i> Início</a></li>
-              <li><a href="competicao.html"><i class="fas fa-table"></i> Tabelas</a></li>
-              <li><a href="resultados.html"><i class="fas fa-trophy" aria-hidden="true"></i> Resultados</a></li>
-              <li><a href="minuto-a-minuto/minuto-a-minuto.html"><i class="fas fa-play-circle"></i> Ao Vivo</a></li>
+              <li>
+                <a href="index.html"
+                  ><i class="fas fa-home" aria-hidden="true"></i> Início</a
+                >
+              </li>
+              <li>
+                <a href="competicao.html"
+                  ><i class="fas fa-table"></i> Tabelas</a
+                >
+              </li>
+              <li>
+                <a href="resultados.html"
+                  ><i class="fas fa-trophy" aria-hidden="true"></i>
+                  Resultados</a
+                >
+              </li>
+              <li>
+                <a href="minuto-a-minuto/minuto-a-minuto.html"
+                  ><i class="fas fa-play-circle"></i> Ao Vivo</a
+                >
+              </li>
             </ul>
           </div>
           <div class="footer-section">
             <h4>Contato</h4>
             <p>
               <i class="fas fa-envelope" aria-hidden="true"></i>
-              <a href="mailto:cabulosonews92@gmail.com">cabulosonews92@gmail.com</a>
+              <a href="mailto:cabulosonews92@gmail.com"
+                >cabulosonews92@gmail.com</a
+              >
             </p>
           </div>
         </div>
@@ -380,6 +532,7 @@
     </footer>
 
     <!-- Scripts -->
+    <script src="./script/cache.js"></script>
     <script src="./script/live-match-detector.js"></script>
     <script type="module" src="./script/script-brasileirao.js"></script>
   </body>

@@ -10,7 +10,7 @@ const STORAGE_TYPE = sessionStorage; // Mais rápido e limpa ao fechar navegador
  * @param {any} data - Dados a serem salvos
  * @param {number} ttl - Tempo de vida em milissegundos
  */
-export const saveToCache = (key, data, ttl) => {
+const saveToCache = (key, data, ttl) => {
   try {
     const item = { 
       data, 
@@ -37,7 +37,7 @@ export const saveToCache = (key, data, ttl) => {
  * @param {string} key - Chave do cache
  * @returns {any|null} Dados armazenados ou null se expirado/inexistente
  */
-export const getFromCache = (key) => {
+const getFromCache = (key) => {
   const raw = STORAGE_TYPE.getItem(`cache_${key}`);
   if (!raw) return null;
 
@@ -63,7 +63,7 @@ export const getFromCache = (key) => {
  * @param {string} url - URL da requisição
  * @param {Response} response - Resposta da API
  */
-export const saveToCacheAPI = async (url, response) => {
+const saveToCacheAPI = async (url, response) => {
   if (!('caches' in window)) return; // Navegador não suporta
   
   try {
@@ -81,7 +81,7 @@ export const saveToCacheAPI = async (url, response) => {
  * @param {string} url - URL da requisição
  * @returns {Response|null} Resposta em cache ou null
  */
-export const getFromCacheAPI = async (url) => {
+const getFromCacheAPI = async (url) => {
   if (!('caches' in window)) return null;
   
   try {
@@ -116,7 +116,7 @@ export const getFromCacheAPI = async (url) => {
 /**
  * Limpa entradas expiradas do sessionStorage
  */
-export const clearExpiredCache = () => {
+const clearExpiredCache = () => {
   const keysToRemove = [];
   
   for (let i = 0; i < STORAGE_TYPE.length; i++) {
@@ -137,7 +137,7 @@ export const clearExpiredCache = () => {
 /**
  * Limpa TODO o cache do Cabuloso
  */
-export const clearAllCabulosoCache = async () => {
+const clearAllCabulosoCache = async () => {
   // Limpa sessionStorage
   Object.keys(STORAGE_TYPE).forEach(key => {
     if (key.startsWith('cache_')) {
@@ -161,7 +161,7 @@ export const clearAllCabulosoCache = async () => {
 /**
  * Retorna estatísticas do cache (útil para debug)
  */
-export const getCacheStats = () => {
+const getCacheStats = () => {
   const keys = [];
   const stats = {
     totalItems: 0,
@@ -202,11 +202,19 @@ export const getCacheStats = () => {
   return stats;
 };
 
-// Expõe para debug no console
+// ⭐ ADICIONE ESTAS LINHAS NO FINAL PARA EXPOR AS FUNÇÕES GLOBALMENTE:
 if (typeof window !== 'undefined') {
   window.cabulosoCache = {
+    getFromCache,
+    saveToCache,
+    getFromCacheAPI,
+    saveToCacheAPI,
+    clearExpiredCache,
+    clearAllCabulosoCache,
+    getCacheStats,
     stats: getCacheStats,
-    clear: clearAllCabulosoCache,
-    clearExpired: clearExpiredCache
+    clear: clearAllCabulosoCache
   };
+  
+  console.log("✅ Cache API carregada globalmente como window.cabulosoCache");
 }

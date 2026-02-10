@@ -1,7 +1,30 @@
 // live-match-detector.js - VERSÃO OTIMIZADA
 // Reutiliza dados do endpoint consolidado (dados-completos)
 
-import { getFromCache } from './cache.js';
+// ⭐ REMOVA ESTE IMPORT:
+// import { getFromCache } from './cache.js';
+
+// ⭐ ADICIONE ESTA FUNÇÃO DE CACHE DIRETAMENTE NO ARQUIVO:
+const getFromCache = (key) => {
+  try {
+    const item = sessionStorage.getItem(`cache_${key}`);
+    if (!item) return null;
+    
+    const data = JSON.parse(item);
+    
+    // Verifica se o cache ainda é válido (5 minutos = 300000ms)
+    const ttl = data.ttl || 300000; // 5 minutos por padrão
+    if (Date.now() - data.timestamp > ttl) {
+      sessionStorage.removeItem(`cache_${key}`);
+      return null;
+    }
+    
+    return data.data || data.value;
+  } catch (e) {
+    console.warn('Erro ao ler cache:', e);
+    return null;
+  }
+};
 
 const LiveMatchDetector = (() => {
   const CONFIG = {
