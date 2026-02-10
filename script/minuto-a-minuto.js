@@ -146,7 +146,8 @@ const animationQueue = {
     await this.playAnimation(event.type);
   
     this.isPlaying = false;
-    this.playNext();
+    // CORREÇÃO: Aguarda a próxima execução antes de marcar como não em execução
+    await this.playNext();
   },
 
   playAnimation(type) {
@@ -336,13 +337,42 @@ const fetchLiveData = async () => {
  */
 async function checkProximoJogo() {
   try {
-    if (state.agendaData && state.agendaData.length > 0) {
-      const proximoJogo = state.agendaData[0];
+    // 🟢 CORREÇÃO: Verifica se agendaData existe e se a propriedade 'jogos' é um array populado
+    if (state.agendaData && Array.isArray(state.agendaData.jogos) && state.agendaData.jogos.length > 0) {
+      const proximoJogo = state.agendaData.jogos[0];
       
-      // Parse da data/hora do jogo
-      const [dia, mes, ano] = proximoJogo.data.split('/');
-      const [hora, minuto] = proximoJogo.hora.split(':');
-      const dataJogo = new Date(ano, mes - 1, dia, hora, minuto);
+      // CORREÇÃO: Validação de dados da data/hora
+      const dataParts = proximoJogo.data ? proximoJogo.data.split('/') : [];
+      const horaParts = proximoJogo.hora ? proximoJogo.hora.split(':') : [];
+      
+      if (dataParts.length !== 3 || horaParts.length < 2) {
+        console.warn("Formato de data/hora inválido:", proximoJogo.data, proximoJogo.hora);
+        return null;
+      }
+      
+      const dia = parseInt(dataParts[0], 10);
+      const mes = parseInt(dataParts[1], 10);
+      const ano = parseInt(dataParts[2], 10);
+      const hora = parseInt(horaParts[0], 10);
+      const minuto = parseInt(horaParts[1] || 0, 10);
+      
+      // Valida valores numéricos
+      if (!isFinite(dia) || !isFinite(mes) || !isFinite(ano) || !isFinite(hora) || !isFinite(minuto)) {
+        console.warn("Valores de data/hora não são números válidos");
+        return null;
+      }
+      
+      // Valida faixas razoáveis
+      if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 2000 || ano > 2100 || 
+          hora < 0 || hora > 23 || minuto < 0 || minuto > 59) {
+        console.warn("Valores de data/hora fora da faixa esperada");
+        return null;
+      }
+      
+      // CORREÇÃO: Cria a data UTC para Brasília (UTC-3)
+      // A hora fornecida é em Brasília, então adicionamos 3 horas para converter para UTC
+      const utcMillis = Date.UTC(ano, mes - 1, dia, hora + 3, minuto);
+      const dataJogo = new Date(utcMillis);
       
       const agora = new Date();
       const minutosParaInicio = Math.floor((dataJogo - agora) / 1000 / 60);
@@ -355,7 +385,7 @@ async function checkProximoJogo() {
   } catch (e) {
     console.warn("Erro ao verificar próximo jogo:", e);
   }
-  return null;
+  return null; // Retorna null se não houver jogos ou em caso de erro
 }
 
 function detectarNovoLance(data) {
@@ -686,17 +716,16 @@ function parseMatchDate(dateStr, timeStr) {
       [hour, minute] = timeStr.split(":").map((n) => parseInt(n));
     }
 
-    // Cria a data no fuso horário de Brasília (UTC-3)
-    const date = new Date(
+    // CORREÇÃO: Cria a data UTC para Brasília (UTC-3)
+    const utcMillis = Date.UTC(
       parseInt(year),
       parseInt(month) - 1,
       parseInt(day),
-      parseInt(hour) || 0,
+      (parseInt(hour) || 0) + 3, // Adiciona 3 horas para converter Brasília -> UTC
       parseInt(minute) || 0
     );
     
-    // Ajusta para UTC-3 (Brasília)
-    date.setHours(date.getHours() - 3);
+    const date = new Date(utcMillis);
     
     return date;
   } catch (e) {
@@ -877,15 +906,31 @@ function renderTimelineFullWidth(narracao) {
         .trim();
     }
 
-    item.innerHTML = `
-      <div class="timeline-time-full">
-        <span class="time-badge-full">${min}</span>
-      </div>
-      <div class="timeline-content-full">
-        <div class="timeline-icon-full ${iconClass}">${iconContent}</div>
-        <div class="timeline-text-full"><p>${lance.descricao}</p></div>
-      </div>
-    `;
+    // CORREÇÃO: Sanitização de HTML usando textContent
+    const timeElement = document.createElement("div");
+    timeElement.className = "timeline-time-full";
+    timeElement.innerHTML = `<span class="time-badge-full">${min}</span>`;
+
+    const contentElement = document.createElement("div");
+    contentElement.className = "timeline-content-full";
+    
+    const iconElement = document.createElement("div");
+    iconElement.className = `timeline-icon-full ${iconClass}`;
+    iconElement.innerHTML = iconContent;
+    
+    const textElement = document.createElement("div");
+    textElement.className = "timeline-text-full";
+    
+    const pElement = document.createElement("p");
+    pElement.textContent = lance.descricao || "";
+    textElement.appendChild(pElement);
+    
+    contentElement.appendChild(iconElement);
+    contentElement.appendChild(textElement);
+    
+    item.appendChild(timeElement);
+    item.appendChild(contentElement);
+    
     container.appendChild(item);
   });
 }
@@ -957,6 +1002,7 @@ function renderGridStats(stats) {
       { label: "Escanteios", value: stats.escanteios_away || 0 },
       { label: "Impedimentos", value: stats.impedimentos_away || 0 },
       { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
+      // CORREÇÃO: Cartões vermelhos do visitante
       { label: "Cartões vermelhos", value: stats.vermelhos_away || 0 },
     ];
 
@@ -1097,18 +1143,10 @@ async function fetchLiveDataForPanel() {
     if (data.arbitragem) {
       updateTopArbitro(data.arbitragem);
     }
-    const isLiveMatch =
-      data &&
-      data.placar &&
-      !["PAST", "ENCERRADO", "FINALIZADO"].includes(
-        String(data.placar.status).toUpperCase(),
-      );
-
-    if (isLiveMatch) {
-      startLivePolling();
-    } else {
-      stopLivePolling();
-    }
+    
+    // CORREÇÃO: Remove controle de polling deste método
+    // O polling é controlado apenas pela função fetchLiveData
+    // NÃO chamamos startLivePolling ou stopLivePolling aqui
   } catch (e) {
     console.error("⚠️ Erro ao buscar dados para painéis:", e);
   }
@@ -1237,12 +1275,13 @@ function renderPanelStats(stats) {
       { label: "Escanteios", value: stats.escanteios_away || 0 },
       { label: "Impedimentos", value: stats.impedimentos_away || 0 },
       { label: "Cartões amarelos", value: stats.amarelos_away || 0 },
+      // CORREÇÃO: Cartões vermelhos do visitante
       {
         label: "Cartões vermelhos",
         value:
-          stats.vermelhos_home?.total !== undefined
-            ? stats.vermelhos_home.total
-            : stats.vermelhos_home || 0,
+          stats.vermelhos_away?.total !== undefined
+            ? stats.vermelhos_away.total
+            : stats.vermelhos_away || 0,
       },
     ];
 
@@ -1259,9 +1298,6 @@ function renderPanelStats(stats) {
   }
 }
 
-/**
- * RENDERIZAR ESCALAÇÕES NO PAINEL FLUTUANTE
- */
 /**
  * RENDERIZAR ESCALAÇÕES NO PAINEL FLUTUANTE (COM SUPORTE A FOTOS)
  */

@@ -1,4 +1,4 @@
-// script-resultado.js - VERSÃO OTIMIZADA
+// script-resultado.js - VERSÃO OTIMIZADA E CORRIGIDA
 // Reutiliza dados do endpoint consolidado
 
 import { getFromCache, saveToCache } from './cache.js';
@@ -179,11 +179,13 @@ const loadResultados = async () => {
 
           let rawData = await response.json();
           
-          // Normalização (n8n às vezes envia array)
-          if (Array.isArray(rawData)) rawData = rawData[0];
+          // 🟢 CORREÇÃO: Normalização robusta (checa se array não está vazio)
+          if (Array.isArray(rawData)) {
+            rawData = rawData.length > 0 ? rawData[0] : {};
+          }
           
-          data = rawData;
-          resultados = data.resultados;
+          data = rawData || {};
+          resultados = data.resultados || [];
           
           // Salva no cache local
           saveToCache(CACHE_KEY_RESULTADOS, data, CONFIG_RESULTADOS.CACHE_TTL);
@@ -358,12 +360,12 @@ const renderHorizontalHistory = () => {
         </div>
         <div class="horizontal-card-teams">
           <div class="horizontal-card-team">
-            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy" onerror="this.onerror=null; this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
           </div>
           <span class="horizontal-card-score">${escapeHtml(res.score)}</span>
           <div class="horizontal-card-team">
-            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy" onerror="this.onerror=null; this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
           </div>
         </div>
@@ -414,12 +416,12 @@ const renderCardsView = (results) => {
         </div>
         <div class="card-teams">
           <div class="card-team">
-            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.onerror=null; this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
           </div>
           <span class="card-score">${escapeHtml(res.score)}</span>
           <div class="card-team">
-            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" loading="lazy" onerror="this.onerror=null; this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
           </div>
         </div>
@@ -466,11 +468,11 @@ const renderTableView = (results) => {
         <td>${escapeHtml(res.date)}</td>
         <td>
           <div class="match-teams">
-            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy" onerror="this.onerror=null; this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="team-name ${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
             <span class="vs">vs</span>
             <span class="team-name ${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
-            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy" onerror="this.onerror=null; this.src='${CONFIG_RESULTADOS.defaultLogo}'">
           </div>
         </td>
         <td><strong>${escapeHtml(res.score)}</strong></td>
