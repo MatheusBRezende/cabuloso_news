@@ -1,8 +1,11 @@
 /**
- * Cabuloso News - Minuto a Minuto
- * Versão: 10.0 - CORRIGIDO - SEM FALSOS POSITIVOS
- * ATUALIZAÇÃO AUTOMÁTICA A CADA 5 SEGUNDOS
+ * Cabuloso News - Minuto a Minuto OTIMIZADO
+ * Versão: 11.0 - SEM COMPROMETER TEMPO REAL
+ * - Mantém 5s de atualização durante jogos ao vivo
+ * - Economiza requisições quando não há jogo
+ * - Usa cache inteligente do Worker (RAM)
  */
+
 let ultimoLanceId = null;
 let lastValidStats = null;
 let animationLock = false;
@@ -10,7 +13,11 @@ let animationLock = false;
 const CONFIG = {
   webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
   apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
-  updateInterval: 5000, 
+  
+  // ⚡ MODOS DE ATUALIZAÇÃO
+  updateIntervalLive: 5000,      // 5s durante jogo AO VIVO (RÁPIDO!)
+  updateIntervalIdle: 60000,     // 60s quando não há jogo (ECONOMIZA)
+  updateIntervalPreMatch: 15000, // 15s 30min antes do jogo
 };
 
 const golControl = {
@@ -49,6 +56,7 @@ const state = {
   matchStarted: false,
   agendaData: null,
   countdownInterval: null,
+  currentUpdateInterval: CONFIG.updateIntervalLive, // Começa otimista
   match: {
     home: { name: "Mandante", logo: "" },
     away: { name: "Visitante", logo: "" },
@@ -144,7 +152,6 @@ const animationQueue = {
   playAnimation(type) {
     return new Promise((resolve) => {
       dispararAnimacaoFullScreen(type);
-
       setTimeout(resolve, 100);
     });
   },
@@ -165,10 +172,16 @@ function gerarHashLance(minuto, descricao, tipo = '') {
 
 let liveInterval = null;
 
-function startLivePolling() {
-  if (liveInterval) return;
-  console.log("🔄 Iniciando polling automático a cada", CONFIG.updateInterval, "ms");
-  liveInterval = setInterval(fetchLiveData, CONFIG.updateInterval);
+/**
+ * POLLING INTELIGENTE - Adapta velocidade baseado no estado do jogo
+ */
+function startLivePolling(intervalMs = CONFIG.updateIntervalLive) {
+  stopLivePolling(); // Limpa qualquer intervalo anterior
+  
+  state.currentUpdateInterval = intervalMs;
+  console.log(`🔄 Iniciando polling: ${intervalMs}ms (${intervalMs === CONFIG.updateIntervalLive ? 'RÁPIDO - AO VIVO' : intervalMs === CONFIG.updateIntervalPreMatch ? 'MODERADO - PRÉ-JOGO' : 'LENTO - AGUARDANDO'})`);
+  
+  liveInterval = setInterval(fetchLiveData, intervalMs);
 }
 
 function stopLivePolling() {
@@ -186,10 +199,8 @@ function preloadAnimations() {
   animationCache.amarelo = "../assets/Carto Amarelo.json";
   animationCache.vermelho = "../assets/Cartão Vermelho.json";
   animationCache.penalti = "../assets/Penalti.json";
-
   console.log("🎬 Animações pré-carregadas");
 }
-
 
 document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
@@ -200,21 +211,34 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Primeira busca imediata
   await fetchLiveData();
   
-  // Inicia o polling automático
-  startLivePolling();
+  // Inicia polling (velocidade será ajustada automaticamente)
+  startLivePolling(state.currentUpdateInterval);
   
-  // Agenda
+  // Agenda (menos frequente)
   loadAgenda();
-  setInterval(loadAgenda, 30000);
+  setInterval(loadAgenda, 60000); // 1 minuto
   
-  console.log("✅ Sistema iniciado com atualização automática a cada 5 segundos");
+  console.log("✅ Sistema iniciado com polling adaptativo");
 });
 
+/**
+ * ⭐ FETCH OTIMIZADO - Aproveita cache do Worker
+ */
 const fetchLiveData = async () => {
   try {
-    // Adiciona timestamp para evitar cache do navegador e garantir dado fresco
-    const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`);
+    // ⚡ NÃO adiciona ?t= aqui - deixa o Worker decidir se usa cache
+    // Durante jogo ao vivo, o Worker vai buscar dados frescos automaticamente
+    const response = await fetch(CONFIG.webhookUrl, {
+      cache: 'no-cache' // Força bypass do cache do navegador, mas permite cache do Worker
+    });
+    
     let data = await response.json();
+
+    // Verifica status do cache no Worker
+    const cacheStatus = response.headers.get('X-Cache');
+    if (cacheStatus) {
+      console.log(`📦 Cache status: ${cacheStatus}`);
+    }
 
     // 1. TRATAMENTO DO ENVELOPE (n8n ou Array)
     if (data && data.dados_prontos) {
@@ -223,64 +247,116 @@ const fetchLiveData = async () => {
       data = data[0];
     }
 
-    // 2. MANTÉM LÓGICA DE EXTRAÇÃO DE CHAVE VAZIA (Se houver)
+    // 2. MANTÉM LÓGICA DE EXTRAÇÃO DE CHAVE VAZIA
     if (data && data[""] !== undefined) {
       data = data[""];
     }
 
-    // 3. LÓGICA INTELIGENTE DE ECONOMIA (BACKOFF)
-    // Se a API indicar erro, modo agenda ou falta de dados de partida
+    // 3. LÓGICA INTELIGENTE DE ADAPTAÇÃO DE VELOCIDADE
     const isLiveMatch = data && data.success === true && (data.placar || data.narracao);
     const isAgenda = data && (data.status === "agenda" || data.modo_agenda === true);
+    const hasError = data && data.error;
 
-    if (!isLiveMatch || isAgenda || data.error) {
+    // 🎯 DECISÃO DE VELOCIDADE
+    if (hasError || !data) {
+      // ERRO: Modo super lento (60s)
       if (state.logsEnabled) {
-        console.log("📅 Modo Economia: Sem jogo ao vivo. Próxima checagem em 60s.");
+        console.log("❌ Erro detectado. Aguardando 60s...");
       }
-      
       state.matchStarted = false;
       showNextMatchCountdown();
-
-      // Para o intervalo rápido (5s) e agenda uma execução única para daqui a 60s
-      stopLivePolling();
-      setTimeout(fetchLiveData, 60000); 
+      startLivePolling(CONFIG.updateIntervalIdle);
       return;
     }
 
-    // 4. SE CHEGOU AQUI, O JOGO ESTÁ ROLANDO!
-    // Se vínhamos do modo economia, reativa o polling de 5 segundos
-    if (state.matchStarted === false) {
-      console.log("⚽ Jogo detectado! Ativando polling rápido (5s)");
-      state.matchStarted = true;
-      startLivePolling(); 
+    if (isAgenda && !isLiveMatch) {
+      // MODO AGENDA: Verifica se está próximo do jogo
+      const proximoJogo = await checkProximoJogo();
+      
+      if (proximoJogo && proximoJogo.minutosParaInicio <= 30) {
+        // 30 minutos antes: modo PRÉ-JOGO (15s)
+        if (state.logsEnabled) {
+          console.log(`⏰ Jogo em ${proximoJogo.minutosParaInicio}min. Polling moderado (15s).`);
+        }
+        state.matchStarted = false;
+        showNextMatchCountdown();
+        startLivePolling(CONFIG.updateIntervalPreMatch);
+      } else {
+        // Mais de 30min: modo LENTO (60s)
+        if (state.logsEnabled) {
+          console.log("📅 Sem jogos próximos. Polling lento (60s).");
+        }
+        state.matchStarted = false;
+        showNextMatchCountdown();
+        startLivePolling(CONFIG.updateIntervalIdle);
+      }
+      return;
     }
 
-    // 5. ATUALIZAÇÃO DOS COMPONENTES VISUAIS
-    if (state.logsEnabled) console.log("✅ Renderizando lances do jogo...");
-    
-    showLiveMatchUI();
+    // 4. JOGO AO VIVO! ⚽
+    if (isLiveMatch) {
+      // Garante polling RÁPIDO (5s)
+      if (state.currentUpdateInterval !== CONFIG.updateIntervalLive) {
+        console.log("⚽ JOGO AO VIVO DETECTADO! Ativando polling RÁPIDO (5s)");
+        state.matchStarted = true;
+        startLivePolling(CONFIG.updateIntervalLive);
+      }
 
-    // Cache de estatísticas para evitar telas vazias em oscilações
-    if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
-      lastValidStats = data.estatisticas;
+      // 5. ATUALIZAÇÃO DOS COMPONENTES VISUAIS
+      if (state.logsEnabled) console.log("✅ Renderizando lances do jogo...");
+      
+      showLiveMatchUI();
+
+      // Cache de estatísticas
+      if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
+        lastValidStats = data.estatisticas;
+      }
+
+      updateMatchState(data);
+      processarGol();
+      detectarNovoLance(data);
+      renderTimeline(data.narracao || []);
+      renderMatchStats(lastValidStats || data.estatisticas);
+      renderLineups(data.escalacao);
     }
 
-    updateMatchState(data);
-    processarGol();
-    detectarNovoLance(data);
-    renderAllComponents(data);
-
-  } catch (e) {
-    if (state.logsEnabled) console.error("⚠️ Erro na requisição:", e);
+  } catch (error) {
+    console.error("❌ Erro ao buscar dados ao vivo:", error);
     
-    state.matchStarted = false;
-    showNextMatchCountdown();
-    
-    // Em caso de erro de rede, tenta novamente em 30 segundos
-    stopLivePolling();
-    setTimeout(fetchLiveData, 30000);
+    // Em caso de erro de rede, mantém polling lento
+    if (state.currentUpdateInterval !== CONFIG.updateIntervalIdle) {
+      console.log("🔄 Erro de rede. Reduzindo frequência...");
+      startLivePolling(CONFIG.updateIntervalIdle);
+    }
   }
 };
+
+/**
+ * Verifica se há jogo próximo na agenda
+ */
+async function checkProximoJogo() {
+  try {
+    if (state.agendaData && state.agendaData.length > 0) {
+      const proximoJogo = state.agendaData[0];
+      
+      // Parse da data/hora do jogo
+      const [dia, mes, ano] = proximoJogo.data.split('/');
+      const [hora, minuto] = proximoJogo.hora.split(':');
+      const dataJogo = new Date(ano, mes - 1, dia, hora, minuto);
+      
+      const agora = new Date();
+      const minutosParaInicio = Math.floor((dataJogo - agora) / 1000 / 60);
+      
+      return {
+        jogo: proximoJogo,
+        minutosParaInicio: minutosParaInicio
+      };
+    }
+  } catch (e) {
+    console.warn("Erro ao verificar próximo jogo:", e);
+  }
+  return null;
+}
 
 function detectarNovoLance(data) {
   if (!data.narracao || data.narracao.length === 0) return;

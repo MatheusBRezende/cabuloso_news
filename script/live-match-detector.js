@@ -1,8 +1,15 @@
+// live-match-detector.js - VERSÃO OTIMIZADA
+// Reutiliza dados do endpoint consolidado (dados-completos)
+
+import { getFromCache } from './cache.js';
+
 const LiveMatchDetector = (() => {
   const CONFIG = {
-    // API que traz a agenda completa
+    // ⭐ MUDANÇA: Usa endpoint consolidado quando possível
     webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
-    checkInterval: 60000, // 1 minuto (ideal para não pesar)
+    webhookUrlConsolidado: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos",
+    
+    checkInterval: 60000, // 1 minuto
     minutoAMinutoUrl: "../minuto-a-minuto.html",
     storageKey: "cabuloso_live_match_dismissed",
   };
@@ -12,25 +19,38 @@ const LiveMatchDetector = (() => {
   let modalShown = false;
 
   /**
-   * Verifica a agenda e decide se deve monitorar o jogo
+   * ⭐ OTIMIZADO: Tenta reutilizar cache antes de fazer requisição
    */
   const startMonitoringIfGameIsToday = async () => {
     try {
-      const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`, {
-        cache: "no-cache"
-      });
-      
-      if (!response.ok) return;
-      const data = await response.json();
-      const responseData = Array.isArray(data) ? data[0] : data;
+      let agenda = null;
 
-      if (!responseData || !Array.isArray(responseData.agenda)) return;
+      // 1. TENTA REUTILIZAR CACHE DO ENDPOINT CONSOLIDADO
+      const CACHE_KEY = "master_data_v3"; // Mesma chave do script.js
+      const cachedData = getFromCache(CACHE_KEY);
 
-      // 1. Pega a data de hoje (DD/MM/AAAA)
+      if (cachedData && cachedData.agenda) {
+        console.log("📦 Live Detector: Reutilizando agenda do cache");
+        agenda = cachedData.agenda;
+      } else {
+        // 2. SE NÃO TEM CACHE, BUSCA DO WORKER
+        console.log("🌐 Live Detector: Buscando agenda do Worker");
+        const response = await fetch(`${CONFIG.webhookUrl}&t=${Date.now()}`, {
+          cache: "no-cache"
+        });
+        
+        if (!response.ok) return;
+        const data = await response.json();
+        const responseData = Array.isArray(data) ? data[0] : data;
+
+        if (!responseData || !Array.isArray(responseData.agenda)) return;
+        
+        agenda = responseData.agenda;
+      }
+
+      // 3. VERIFICA SE HÁ JOGO HOJE
       const hoje = new Date().toLocaleDateString('pt-BR');
-
-      // 2. Procura se tem jogo do Cruzeiro hoje
-      const jogoHoje = responseData.agenda.find(j => j.data === hoje);
+      const jogoHoje = agenda.find(j => j.data === hoje);
 
       if (jogoHoje) {
         console.log("⚽ Jogo detectado para hoje! Iniciando monitoramento...");
@@ -45,10 +65,10 @@ const LiveMatchDetector = (() => {
           campeonato: jogoHoje.campeonato
         };
 
-        // Adiciona os indicadores visuais nos cards da página
+        // Adiciona os indicadores visuais
         addLiveIndicators(currentLiveMatch);
 
-        // Inicia o loop de checagem (opcional, caso queira atualizar placar)
+        // Inicia o loop de checagem
         startCheckLoop();
         
         // Mostra o modal de convite
@@ -57,15 +77,22 @@ const LiveMatchDetector = (() => {
         console.log("📅 Sem jogos para hoje. Detector em modo de espera.");
       }
     } catch (err) {
-      console.error("Erro ao processar agenda:", err);
+      console.error("❌ Erro ao processar agenda:", err);
     }
   };
 
+  /**
+   * Loop de checagem - Poderia verificar se o jogo começou
+   */
   const startCheckLoop = () => {
     if (checkIntervalId) clearInterval(checkIntervalId);
     checkIntervalId = setInterval(async () => {
-        // Aqui você poderia chamar uma API de placar em tempo real se tiver
-        console.log("Checando status do jogo de hoje...");
+        // Aqui você poderia chamar a API de placar em tempo real
+        // Mas isso já é feito pelo minuto-a-minuto.js
+        console.log("🔍 Checando status do jogo de hoje...");
+        
+        // Opcional: Verificar se o jogo começou e atualizar o modal
+        // await checkIfGameStarted();
     }, CONFIG.checkInterval);
   };
 
@@ -86,8 +113,10 @@ const LiveMatchDetector = (() => {
       .live-modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
       .btn-live { flex: 1; padding: 1rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; text-decoration: none; }
       .btn-primary { background: #003399; color: white; }
+      .btn-primary:hover { background: #002266; }
       .btn-secondary { background: #f3f4f6; color: #6b7280; }
-      .live-indicator { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; animation: pulse 2s infinite; }
+      .btn-secondary:hover { background: #e5e7eb; }
+      .live-indicator { position: absolute; top: 10px; right: 10px; background: #ef4444; color: white; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 800; animation: pulse 2s infinite; z-index: 10; }
       @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
       @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     `;
@@ -100,10 +129,10 @@ const LiveMatchDetector = (() => {
     modal.id = "liveMatchModal";
     modal.className = "live-match-modal";
     modal.innerHTML = `
-      <div class="live-modal-overlay"></div>
+      <div class="live-modal-overlay" onclick="hideModal()"></div>
       <div class="live-modal-content">
         <div class="live-badge-pulse">● AO VIVO</div>
-        <h2 style="color:#1f2937">JOGO DO CRUZEIRO!</h2>
+        <h2 style="color:#1f2937; margin-bottom:10px;">JOGO DO CRUZEIRO!</h2>
         <div style="margin: 20px 0; padding: 15px; background: #f8fafc; border-radius: 10px;">
           <div style="font-weight: 700; font-size: 1.1rem;" id="liveMatchTeams"></div>
           <span class="live-modal-score" id="liveScore">VS</span>
@@ -117,52 +146,101 @@ const LiveMatchDetector = (() => {
       </div>
     `;
     document.body.appendChild(modal);
+    
+    // Event listeners
     document.getElementById("closeLiveModal").addEventListener("click", hideModal);
+    document.querySelector(".live-modal-overlay").addEventListener("click", hideModal);
   };
 
   const showModal = (match) => {
-    if (sessionStorage.getItem(CONFIG.storageKey)) return;
+    if (sessionStorage.getItem(CONFIG.storageKey)) {
+      console.log("ℹ️ Modal já foi mostrado nesta sessão");
+      return;
+    }
     
-    document.getElementById("liveMatchTeams").textContent = `${match.mandante} x ${match.visitante}`;
-    document.getElementById("liveMatchTime").textContent = match.tempo;
-    document.getElementById("liveMatchModal").classList.add("active");
+    const teamsElement = document.getElementById("liveMatchTeams");
+    const timeElement = document.getElementById("liveMatchTime");
+    const modalElement = document.getElementById("liveMatchModal");
+    
+    if (teamsElement) teamsElement.textContent = `${match.mandante} x ${match.visitante}`;
+    if (timeElement) timeElement.textContent = match.tempo;
+    if (modalElement) modalElement.classList.add("active");
+    
     modalShown = true;
+    console.log("📢 Modal de jogo ao vivo exibido");
   };
 
   const hideModal = () => {
-    document.getElementById("liveMatchModal").classList.remove("active");
+    const modalElement = document.getElementById("liveMatchModal");
+    if (modalElement) modalElement.classList.remove("active");
+    
     sessionStorage.setItem(CONFIG.storageKey, "true");
+    console.log("✅ Modal fechado pelo usuário");
   };
 
   const addLiveIndicators = (match) => {
-    const cards = document.querySelectorAll(".next-match");
+    const cards = document.querySelectorAll(".next-match, .match-item");
+    let indicatorsAdded = 0;
+    
     cards.forEach(card => {
       const text = card.textContent.toLowerCase();
-      if (text.includes(match.mandante.toLowerCase()) || text.includes(match.visitante.toLowerCase())) {
+      const hasMandante = match.mandante && text.includes(match.mandante.toLowerCase());
+      const hasVisitante = match.visitante && text.includes(match.visitante.toLowerCase());
+      
+      if (hasMandante || hasVisitante) {
         card.style.position = "relative";
+        
         if (!card.querySelector(".live-indicator")) {
           const badge = document.createElement("div");
           badge.className = "live-indicator";
           badge.innerHTML = "● AO VIVO";
           card.appendChild(badge);
+          indicatorsAdded++;
         }
       }
     });
+    
+    if (indicatorsAdded > 0) {
+      console.log(`✅ ${indicatorsAdded} indicadores "AO VIVO" adicionados`);
+    }
   };
+
+  // Expõe hideModal globalmente para o onclick do overlay
+  window.hideModal = hideModal;
 
   return {
     init: () => {
+      console.log("🎯 Inicializando Live Match Detector...");
+      
       injectStyles();
       createModal();
       startMonitoringIfGameIsToday();
       
-      // Se o usuário mudar de aba e voltar, checamos se o jogo começou
+      // Se o usuário mudar de aba e voltar, checa novamente
       document.addEventListener("visibilitychange", () => {
-        if (!document.hidden && !modalShown) startMonitoringIfGameIsToday();
+        if (!document.hidden && !modalShown) {
+          console.log("👁️ Página voltou ao foco, checando jogo...");
+          startMonitoringIfGameIsToday();
+        }
       });
+      
+      console.log("✅ Live Match Detector iniciado");
+    },
+    
+    // Expõe métodos para debug
+    refresh: startMonitoringIfGameIsToday,
+    showModalDebug: () => {
+      if (currentLiveMatch) showModal(currentLiveMatch);
     }
   };
 })();
 
 // Inicialização
-LiveMatchDetector.init();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', LiveMatchDetector.init);
+} else {
+  LiveMatchDetector.init();
+}
+
+// Debug no console
+console.log("💡 Dica: Use LiveMatchDetector.showModalDebug() para testar o modal");

@@ -1,10 +1,16 @@
+// script-resultado.js - VERSÃO OTIMIZADA
+// Reutiliza dados do endpoint consolidado
+
 import { getFromCache, saveToCache } from './cache.js';
 
 const CONFIG_RESULTADOS = {
-  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
+  // ⭐ Prioriza endpoint consolidado
+  apiUrlConsolidado: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos",
+  apiUrlJogos: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
+  
   itemsPerPage: 12,
   defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
-  CACHE_TTL: 15 * 60 * 1000 
+  CACHE_TTL: 5 * 60 * 1000 // 5 minutos (alinhado com dados consolidados)
 };
 
 const state = {
@@ -17,6 +23,7 @@ const state = {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+  console.log("🎯 Inicializando página de Resultados...");
   initNavigation();
   initViewToggle();
   initCompetitionTabs();
@@ -57,7 +64,6 @@ const initViewToggle = () => {
     });
   });
 };
-
 
 const initCompetitionTabs = () => {
   const tabs = document.querySelectorAll('.tab-btn');
@@ -115,43 +121,89 @@ const updatePagination = () => {
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
+/**
+ * ⭐ LOAD OTIMIZADO - Reutiliza dados consolidados
+ */
 const loadResultados = async () => {
-  const CACHE_KEY = 'master_data_resultados'; 
+  const CACHE_KEY_CONSOLIDATED = 'master_data_v3'; // Mesma chave do script.js
+  const CACHE_KEY_RESULTADOS = 'master_data_resultados_v2'; // Fallback
+  
   showLoading();
 
   try {
     let data;
+    let resultados = null;
 
-    const cached = getFromCache(CACHE_KEY);
+    // 1. TENTA REUTILIZAR CACHE DO ENDPOINT CONSOLIDADO (prioridade)
+    const cachedConsolidated = getFromCache(CACHE_KEY_CONSOLIDATED);
     
-    if (cached) {
-      console.log("📦 Resultados: Usando Cache Central");
-      data = cached;
+    if (cachedConsolidated && cachedConsolidated.resultados) {
+      console.log("📦 Resultados: Reutilizando dados consolidados do cache");
+      resultados = cachedConsolidated.resultados;
     } else {
-      console.log("🌐 Resultados: Buscando novos dados...");
-      const response = await fetch(`${CONFIG_RESULTADOS.apiUrl}&t=${Date.now()}`);
-      if (!response.ok) throw new Error('Erro ao carregar dados');
-
-      let rawData = await response.json();
-      // Normalização (n8n às vezes envia array)
-      if (Array.isArray(rawData)) rawData = rawData[0];
+      // 2. TENTA CACHE LOCAL DE RESULTADOS
+      const cachedLocal = getFromCache(CACHE_KEY_RESULTADOS);
       
-      data = rawData;
-      // Salva no cache central
-      saveToCache(CACHE_KEY, data, CONFIG_RESULTADOS.CACHE_TTL);
+      if (cachedLocal) {
+        console.log("📦 Resultados: Usando cache local");
+        data = cachedLocal;
+        resultados = data.resultados || data;
+      } else {
+        // 3. BUSCA DADOS CONSOLIDADOS DO WORKER (preferencial)
+        console.log("🌐 Resultados: Buscando dados consolidados do Worker...");
+        
+        try {
+          const response = await fetch(`${CONFIG_RESULTADOS.apiUrlConsolidado}&t=${Date.now()}`);
+          
+          if (response.ok) {
+            const consolidatedData = await response.json();
+            
+            if (consolidatedData.resultados) {
+              console.log("✅ Dados consolidados recebidos com sucesso");
+              resultados = consolidatedData.resultados;
+              
+              // Salva no cache consolidado também (para outras páginas)
+              saveToCache(CACHE_KEY_CONSOLIDATED, consolidatedData, CONFIG_RESULTADOS.CACHE_TTL);
+            }
+          }
+        } catch (consolidatedError) {
+          console.warn("⚠️ Endpoint consolidado falhou, tentando endpoint específico...", consolidatedError);
+        }
+
+        // 4. FALLBACK: Endpoint específico de jogos
+        if (!resultados) {
+          console.log("🔄 Usando fallback: endpoint específico de jogos");
+          const response = await fetch(`${CONFIG_RESULTADOS.apiUrlJogos}&t=${Date.now()}`);
+          
+          if (!response.ok) throw new Error('Erro ao carregar dados');
+
+          let rawData = await response.json();
+          
+          // Normalização (n8n às vezes envia array)
+          if (Array.isArray(rawData)) rawData = rawData[0];
+          
+          data = rawData;
+          resultados = data.resultados;
+          
+          // Salva no cache local
+          saveToCache(CACHE_KEY_RESULTADOS, data, CONFIG_RESULTADOS.CACHE_TTL);
+        }
+      }
     }
 
-    if (data.resultados) {
-      state.allResults = data.resultados;
-    } else {
-      throw new Error("Chave 'resultados' não encontrada");
+    // 5. VALIDA E PROCESSA RESULTADOS
+    if (!resultados || !Array.isArray(resultados)) {
+      throw new Error("Resultados inválidos ou não encontrados");
     }
+
+    state.allResults = resultados;
 
     if (state.allResults.length === 0) {
       showEmpty();
       return;
     }
 
+    // 6. RENDERIZA INTERFACE
     state.filteredResults = [...state.allResults];
     calculateStats();
     updateHeaderStats();
@@ -160,9 +212,11 @@ const loadResultados = async () => {
     renderResults();
     updatePagination();
 
+    console.log(`✅ ${state.allResults.length} resultados carregados`);
+
   } catch (error) {
-    console.error('Erro ao carregar resultados:', error);
-    showError();
+    console.error('❌ Erro ao carregar resultados:', error);
+    showError(error.message);
   }
 };
 
@@ -231,11 +285,10 @@ const updateStatsCards = () => {
   const container = document.getElementById('statsCardsContainer');
   if (!container) return;
 
-  const results = state.currentCompetition === 'all' ? state.allResults : state.filteredResults;
+  let vitorias = 0, empates = 0, derrotas = 0;
+  let golsMarcados = 0, golsSofridos = 0;
 
-  let vitorias = 0, empates = 0, derrotas = 0, golsMarcados = 0, golsSofridos = 0;
-
-  results.forEach(res => {
+  state.filteredResults.forEach(res => {
     let s1 = 0, s2 = 0;
     if (res.score1 !== undefined) {
        s1 = parseInt(res.score1); s2 = parseInt(res.score2);
@@ -305,12 +358,12 @@ const renderHorizontalHistory = () => {
         </div>
         <div class="horizontal-card-teams">
           <div class="horizontal-card-team">
-            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
           </div>
           <span class="horizontal-card-score">${escapeHtml(res.score)}</span>
           <div class="horizontal-card-team">
-            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo-uniform" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
           </div>
         </div>
@@ -413,11 +466,11 @@ const renderTableView = (results) => {
         <td>${escapeHtml(res.date)}</td>
         <td>
           <div class="match-teams">
-            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy">
+            <img src="${res.logo1 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
             <span class="team-name ${isCruzeiroHome ? 'home' : ''}">${escapeHtml(team1)}</span>
             <span class="vs">vs</span>
             <span class="team-name ${!isCruzeiroHome ? 'home' : ''}">${escapeHtml(team2)}</span>
-            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy">
+            <img src="${res.logo2 || CONFIG_RESULTADOS.defaultLogo}" alt="" class="team-logo" loading="lazy" onerror="this.src='${CONFIG_RESULTADOS.defaultLogo}'">
           </div>
         </td>
         <td><strong>${escapeHtml(res.score)}</strong></td>
@@ -428,20 +481,48 @@ const renderTableView = (results) => {
   }).join('');
 };
 
-
 const showLoading = () => {
   const cardsContainer = document.getElementById('resultsCards');
-  if (cardsContainer) cardsContainer.innerHTML = `<div class="loading-state"><div class="loading-spinner"></div><p>Carregando resultados...</p></div>`;
+  if (cardsContainer) {
+    cardsContainer.innerHTML = `
+      <div class="loading-state">
+        <div class="loading-spinner"></div>
+        <p>Carregando resultados...</p>
+      </div>
+    `;
+  }
 };
 
-const showError = () => {
+const showError = (message) => {
   const cardsContainer = document.getElementById('resultsCards');
-  if (cardsContainer) cardsContainer.innerHTML = `<div class="error-state"><i class="fas fa-exclamation-triangle"></i><p>Erro ao carregar resultados.</p><button class="btn-retry" onclick="loadResultados()"><i class="fas fa-sync-alt"></i> Tentar Novamente</button></div>`;
+  if (cardsContainer) {
+    cardsContainer.innerHTML = `
+      <div class="error-state">
+        <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6b6b;"></i>
+        <p style="margin-top:20px;">Erro ao carregar resultados.</p>
+        <p style="color:#999; margin-top:10px; font-size:14px;">${escapeHtml(message)}</p>
+        <button 
+          class="btn-retry" 
+          onclick="window.retryLoadResultados()"
+          style="margin-top:20px; padding:10px 20px; background:#003399; color:white; border:none; border-radius:5px; cursor:pointer;"
+        >
+          <i class="fas fa-sync-alt"></i> Tentar Novamente
+        </button>
+      </div>
+    `;
+  }
 };
 
 const showEmpty = () => {
   const cardsContainer = document.getElementById('resultsCards');
-  if (cardsContainer) cardsContainer.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i><p>Nenhum resultado encontrado.</p></div>`;
+  if (cardsContainer) {
+    cardsContainer.innerHTML = `
+      <div class="empty-state">
+        <i class="fas fa-inbox" style="font-size:48px; color:#ccc;"></i>
+        <p style="margin-top:20px;">Nenhum resultado encontrado.</p>
+      </div>
+    `;
+  }
 };
 
 const escapeHtml = (text) => {
@@ -451,12 +532,7 @@ const escapeHtml = (text) => {
   return div.innerHTML;
 };
 
-const init = () => {
-  initNavigation();
-  initViewToggle();
-  initCompetitionTabs();
-  initPagination();
-  loadResultados();
-};
-
+// Expõe para retry button
 window.retryLoadResultados = loadResultados;
+
+console.log("💡 Dica: Use window.retryLoadResultados() para recarregar dados");
