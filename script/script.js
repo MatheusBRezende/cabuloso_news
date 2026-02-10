@@ -1,11 +1,12 @@
-import { getFromCache, saveToCache } from "./cache.js";
+// script.js - VERSÃO OTIMIZADA
+import { getFromCache, saveToCache, getFromCacheAPI, saveToCacheAPI } from "./cache.js";
 
 const CONFIG = {
-  apiUrlGeral: "https://cabuloso-api.cabulosonews92.workers.dev/?type=geral",
-  apiUrlBrasileiro:"https://cabuloso-api.cabulosonews92.workers.dev/?type=tabela_br",
-  apiUrlJogos: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
-  defaultImage:"https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
-  CACHE_TTL: 10 * 60 * 1000, // 10 minutos
+  // ⭐ ENDPOINT ÚNICO CONSOLIDADO - Reduz de 3 para 1 requisição!
+  apiUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos",
+  
+  defaultImage: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png",
+  CACHE_TTL: 5 * 60 * 1000, // 5 minutos (alinhado com Worker)
 };
 
 // ============================================
@@ -41,149 +42,151 @@ function hideLoadingScreen() {
   }
 }
 
+function showErrorMessage(message) {
+  const container = document.getElementById("newsContainer");
+  if (container) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:40px; color:#999;">
+        <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6b6b;"></i>
+        <p style="margin-top:20px; font-size:18px; font-weight:600;">${message}</p>
+        <button 
+          onclick="location.reload()" 
+          style="margin-top:20px; padding:12px 24px; background:#003399; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600; transition: all 0.3s;"
+          onmouseover="this.style.background='#002266'"
+          onmouseout="this.style.background='#003399'"
+        >
+          🔄 Recarregar Página
+        </button>
+      </div>
+    `;
+  }
+}
+
 // ============================================
-// LÓGICA MESTRE DE DADOS (SINGLE FETCH)
+// LÓGICA MESTRE DE DADOS (UMA REQUISIÇÃO!)
 // ============================================
 async function loadMasterData() {
-  const CACHE_KEY = "master_data";
+  const CACHE_KEY = "master_data_v3"; // v3 para limpar cache antigo
   console.log("🚀 Iniciando carga de dados...");
 
   try {
-    // 1. Tenta pegar do Cache Global (via cache.js)
+    // 1. Tenta sessionStorage primeiro (mais rápido)
     const cachedData = getFromCache(CACHE_KEY);
     if (cachedData) {
-      console.log("📦 Dados recuperados do Cache Global");
+      console.log("📦 Dados recuperados do sessionStorage");
       distributeData(cachedData);
       hideLoadingScreen();
       return;
     }
 
-    // 2. Busca múltiplas APIs do Worker
-    console.log("🌐 Buscando novos dados nas APIs...");
-
-    // Buscar dados de diferentes endpoints
-    const [geralRes, brasileiroRes, jogosRes] = await Promise.all([
-      fetch(`${CONFIG.apiUrlGeral}&t=${Date.now()}`),
-      fetch(`${CONFIG.apiUrlBrasileiro}&t=${Date.now()}`),
-      fetch(`${CONFIG.apiUrlJogos}&t=${Date.now()}`),
-    ]);
-
-    const [geral, brasileiro, jogos] = await Promise.all([
-      geralRes.json(),
-      brasileiroRes.json(),
-      jogosRes.json(),
-    ]);
-
-    console.log("📊 Dados recebidos:", { geral, brasileiro, jogos });
-
-    // 3. Normalização das respostas
-
-    // API Geral retorna: [{ "tipo": "noticias", "dados": [...] }]
-    let geralData = Array.isArray(geral) ? geral[0] : geral;
-    // Extrai o array de notícias se existir
-    let noticiasArray = [];
-
-    if (Array.isArray(geral) && geral.length > 0) {
-      // Pega o primeiro elemento do array (o objeto que contém as notícias)
-      const primeiroItem = geral[0];
-
-      if (primeiroItem.dados && Array.isArray(primeiroItem.dados)) {
-        // Se houver a chave 'dados', extrai as notícias de lá
-        noticiasArray = primeiroItem.dados;
-      } else if (
-        primeiroItem.noticias &&
-        Array.isArray(primeiroItem.noticias)
-      ) {
-        // Fallback caso a chave mude para 'noticias'
-        noticiasArray = primeiroItem.noticias;
-      }
-    }
-
-    // API Brasileiro retorna: { "edicao": {...}, "tabela_brasileiro": {...}, "agenda": [...] }
-    const brasileiroData = Array.isArray(brasileiro)
-      ? brasileiro[0]
-      : brasileiro;
-
-    // API Jogos retorna: { "noticias": [], "tabela_brasileiro": {}, "resultados": [...], "agenda": [...] }
-    const jogosData = Array.isArray(jogos) ? jogos[0] : jogos;
-
-    // 4. Monta objeto unificado pegando dados das fontes corretas
-    const data = {
-      // Notícias vêm da API Geral (extraídas do formato especial)
-      noticias: noticiasArray,
-
-      // Tabela do Brasileiro vem da API Brasileiro (tem estrutura completa)
-      tabela_brasileiro: brasileiroData?.tabela_brasileiro || null,
-
-      // Agenda vem da API de Jogos
-      agenda: jogosData?.agenda || [],
-
-      // Resultados vêm da API de Jogos
-      resultados: jogosData?.resultados || [],
-    };
-
-    console.log("✅ Dados unificados:", data);
-
-    // 5. Salva no Cache Global apenas se os dados forem válidos
-    if (data && !data.error) {
+    // 2. Tenta Cache API (persistente entre sessões)
+    const cachedResponse = await getFromCacheAPI(CONFIG.apiUrl);
+    if (cachedResponse) {
+      console.log("📦 Dados recuperados do Cache API");
+      const data = await cachedResponse.json();
+      
+      // Salva também no sessionStorage para próximas consultas
       saveToCache(CACHE_KEY, data, CONFIG.CACHE_TTL);
+      
       distributeData(data);
-    } else {
-      throw new Error(data?.error || "Dados inválidos");
+      hideLoadingScreen();
+      return;
     }
-  } catch (error) {
-    console.error("❌ Erro na carga mestre:", error);
 
-    // Tenta carregar qualquer coisa que sobrou no localStorage mesmo expirado em último caso
-    const backup = localStorage.getItem(`cache_${CACHE_KEY}`);
-    if (backup) {
-      console.warn("⚠️ Usando backup de emergência");
-      try {
-        distributeData(JSON.parse(backup).data);
-      } catch (e) {
-        console.error("Erro ao parsear backup:", e);
+    // 3. Busca dados frescos (UMA requisição consolidada!)
+    console.log("🌐 Buscando dados frescos do Worker...");
+    
+    const startTime = performance.now();
+    
+    const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`, {
+      cache: 'no-cache',
+      headers: {
+        'Accept': 'application/json'
       }
+    });
+
+    const fetchTime = performance.now() - startTime;
+    console.log(`⏱️ Tempo de resposta: ${Math.round(fetchTime)}ms`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
+
+    const data = await response.json();
+    
+    // Verifica se veio do cache do Worker
+    const cacheStatus = response.headers.get('X-Cache');
+    console.log(`📊 Status do cache do Worker: ${cacheStatus || 'N/A'}`);
+    console.log("✅ Dados recebidos:", data);
+
+    // 4. Valida dados
+    if (!data || data.error) {
+      throw new Error(data?.error || "Dados inválidos recebidos");
+    }
+
+    // 5. Salva em AMBOS os caches
+    saveToCache(CACHE_KEY, data, CONFIG.CACHE_TTL);
+    await saveToCacheAPI(CONFIG.apiUrl, response);
+
+    // 6. Distribui para UI
+    distributeData(data);
+
+  } catch (error) {
+    console.error("❌ Erro na carga de dados:", error);
+    showErrorMessage(`Erro ao carregar dados: ${error.message}`);
   } finally {
     hideLoadingScreen();
   }
 }
 
-// Distribui os dados para cada seção do site
+// ============================================
+// DISTRIBUIÇÃO DE DADOS
+// ============================================
 function distributeData(data) {
-  if (!data) return;
+  if (!data) {
+    console.warn("⚠️ Nenhum dado para distribuir");
+    return;
+  }
 
-  console.log("📤 Distribuindo dados:", data);
+  console.log("📤 Distribuindo dados para interface");
 
-  if (
-    data.noticias &&
-    Array.isArray(data.noticias) &&
-    data.noticias.length > 0
-  ) {
+  // 1. Notícias
+  if (data.noticias && Array.isArray(data.noticias) && data.noticias.length > 0) {
     initNews(data.noticias);
+    console.log(`✅ ${data.noticias.length} notícias carregadas`);
   } else {
     console.warn("⚠️ Nenhuma notícia encontrada");
+    const container = document.getElementById("newsContainer");
+    if (container) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#999;">
+          <i class="far fa-newspaper" style="font-size:48px;"></i>
+          <p style="margin-top:20px;">Nenhuma notícia disponível no momento</p>
+        </div>
+      `;
+    }
   }
 
-  if (data.tabela_brasileiro?.classificacao) {
-    renderMiniTable(data.tabela_brasileiro.classificacao);
+  // 2. Tabela do Brasileiro
+  if (data.tabelas?.brasileiro?.classificacao) {
+    renderMiniTable(data.tabelas.brasileiro.classificacao);
+    console.log("✅ Tabela do Brasileiro carregada");
   } else {
     console.warn("⚠️ Tabela do Brasileiro não encontrada");
-    console.log("Estrutura recebida:", data.tabela_brasileiro);
   }
 
+  // 3. Agenda (Próximos Jogos)
   if (data.agenda && Array.isArray(data.agenda) && data.agenda.length > 0) {
     renderNextMatches(data.agenda);
+    console.log(`✅ ${data.agenda.length} jogos na agenda`);
   } else {
     console.warn("⚠️ Agenda não encontrada");
   }
 
-  if (
-    data.resultados &&
-    Array.isArray(data.resultados) &&
-    data.resultados.length > 0
-  ) {
+  // 4. Resultados Recentes
+  if (data.resultados && Array.isArray(data.resultados) && data.resultados.length > 0) {
     renderRecentResults(data.resultados);
+    console.log(`✅ ${data.resultados.length} resultados carregados`);
   } else {
     console.warn("⚠️ Resultados não encontrados");
   }
@@ -198,6 +201,7 @@ function initNews(noticiasData) {
   const container = document.getElementById("newsContainer");
   if (!container) return;
 
+  // Ordena por data (mais recente primeiro)
   noticiasData.sort((a, b) => parseNewsDate(b.date) - parseNewsDate(a.date));
   allNews = noticiasData;
   displayedNewsCount = 0;
@@ -205,12 +209,15 @@ function initNews(noticiasData) {
   container.innerHTML = "";
   renderMoreNews();
 
+  // Configura botão "Carregar Mais"
   const loadMoreContainer = document.getElementById("loadMoreContainer");
   if (loadMoreContainer) {
-    loadMoreContainer.style.display =
-      allNews.length > NEWS_PER_PAGE ? "block" : "none";
+    loadMoreContainer.style.display = allNews.length > NEWS_PER_PAGE ? "block" : "none";
+    
     const btnLoadMore = document.getElementById("btnLoadMore");
-    if (btnLoadMore) btnLoadMore.onclick = renderMoreNews;
+    if (btnLoadMore) {
+      btnLoadMore.onclick = renderMoreNews;
+    }
   }
 }
 
@@ -220,31 +227,46 @@ function renderMoreNews() {
 
   const newsToShow = allNews.slice(
     displayedNewsCount,
-    displayedNewsCount + NEWS_PER_PAGE,
+    displayedNewsCount + NEWS_PER_PAGE
   );
 
   newsToShow.forEach((noticia) => {
     const newsCard = document.createElement("article");
     newsCard.className = "news-card";
-    newsCard.onclick = () => window.open(noticia.url || noticia.link, "_blank");
+    newsCard.onclick = () => {
+      const url = noticia.url || noticia.link;
+      if (url) window.open(url, "_blank");
+    };
 
     const imgUrl = noticia.image || CONFIG.defaultImage;
 
     newsCard.innerHTML = `
       <div class="news-image">
-        <img src="${imgUrl}" alt="${escapeHtml(noticia.title)}" loading="lazy" onerror="this.src='${CONFIG.defaultImage}'">
+        <img 
+          src="${imgUrl}" 
+          alt="${escapeHtml(noticia.title)}" 
+          loading="lazy" 
+          onerror="this.src='${CONFIG.defaultImage}'"
+        >
         <div class="news-badge">${escapeHtml(noticia.fonte || "Notícia")}</div>
       </div>
       <div class="news-content">
-        <div class="news-date"><i class="far fa-clock"></i> ${escapeHtml(noticia.date || "")}</div>
+        <div class="news-date">
+          <i class="far fa-clock"></i> ${escapeHtml(noticia.date || "")}
+        </div>
         <h3 class="news-title">${escapeHtml(noticia.title)}</h3>
-        <div class="news-footer"><span class="read-more">Ler mais <i class="fas fa-arrow-right"></i></span></div>
+        <div class="news-footer">
+          <span class="read-more">Ler mais <i class="fas fa-arrow-right"></i></span>
+        </div>
       </div>
     `;
+    
     container.appendChild(newsCard);
   });
 
   displayedNewsCount += newsToShow.length;
+
+  // Esconde botão se não há mais notícias
   const loadMoreContainer = document.getElementById("loadMoreContainer");
   if (loadMoreContainer && displayedNewsCount >= allNews.length) {
     loadMoreContainer.style.display = "none";
@@ -257,30 +279,40 @@ function renderMiniTable(classificacao) {
   if (!tbody) return;
 
   const top5 = classificacao.slice(0, 5);
+  
   tbody.innerHTML = top5
     .map((time, index) => {
       const isCruzeiro = time.nome?.toLowerCase().includes("cruzeiro");
       return `
-      <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
-        <td>${index + 1}º</td>
-        <td>
-          <div class="team-cell">
-            <img src="${time.escudo || CONFIG.defaultImage}" alt="" class="team-logo" loading="lazy">
-            <span>${escapeHtml(time.nome)}</span>
-          </div>
-        </td>
-        <td><strong>${time.pontos}</strong></td>
-      </tr>
-    `;
+        <tr class="${isCruzeiro ? "cruzeiro-row" : ""}">
+          <td>${index + 1}º</td>
+          <td>
+            <div class="team-cell">
+              <img 
+                src="${time.escudo || CONFIG.defaultImage}" 
+                alt="${escapeHtml(time.nome)}" 
+                class="team-logo" 
+                loading="lazy"
+                onerror="this.src='${CONFIG.defaultImage}'"
+              >
+              <span>${escapeHtml(time.nome)}</span>
+            </div>
+          </td>
+          <td><strong>${time.pontos}</strong></td>
+        </tr>
+      `;
     })
     .join("");
 
+  // Atualiza estatística de posição
   const cruzeiro = classificacao.find((t) =>
-    t.nome?.toLowerCase().includes("cruzeiro"),
+    t.nome?.toLowerCase().includes("cruzeiro")
   );
+  
   const statPosition = document.getElementById("statPosition");
   if (statPosition && cruzeiro) {
-    statPosition.textContent = `${cruzeiro.posicao || classificacao.indexOf(cruzeiro) + 1}º lugar`;
+    const posicao = cruzeiro.posicao || (classificacao.indexOf(cruzeiro) + 1);
+    statPosition.textContent = `${posicao}º lugar`;
   }
 }
 
@@ -290,28 +322,50 @@ function renderNextMatches(agenda) {
   if (!container) return;
 
   const proximos = agenda.slice(0, 3);
-  container.innerHTML = proximos
-    .map(
-      (jogo) => `
-    <div class="match-item">
-      <div class="match-item-date"><i class="far fa-calendar"></i> ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}</div>
-      <div class="match-item-teams">
-        <div class="match-team-widget">
-          <img src="${jogo.escudo_mandante || CONFIG.defaultImage}" alt="" loading="lazy">
-          <span>${escapeHtml(jogo.mandante)}</span>
-        </div>
-        <span class="match-score-widget">X</span>
-        <div class="match-team-widget">
-          <span>${escapeHtml(jogo.visitante)}</span>
-          <img src="${jogo.escudo_visitante || CONFIG.defaultImage}" alt="" loading="lazy">
-        </div>
+  
+  if (proximos.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center; padding:20px; color:#999;">
+        <i class="far fa-calendar-times" style="font-size:32px;"></i>
+        <p style="margin-top:10px;">Nenhum jogo agendado</p>
       </div>
-      <div class="match-item-competition">${escapeHtml(jogo.campeonato)}</div>
-    </div>
-  `,
-    )
+    `;
+    return;
+  }
+
+  container.innerHTML = proximos
+    .map((jogo) => `
+      <div class="match-item">
+        <div class="match-item-date">
+          <i class="far fa-calendar"></i> ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}
+        </div>
+        <div class="match-item-teams">
+          <div class="match-team-widget">
+            <img 
+              src="${jogo.escudo_mandante || CONFIG.defaultImage}" 
+              alt="${escapeHtml(jogo.mandante)}" 
+              loading="lazy"
+              onerror="this.src='${CONFIG.defaultImage}'"
+            >
+            <span>${escapeHtml(jogo.mandante)}</span>
+          </div>
+          <span class="match-score-widget">X</span>
+          <div class="match-team-widget">
+            <span>${escapeHtml(jogo.visitante)}</span>
+            <img 
+              src="${jogo.escudo_visitante || CONFIG.defaultImage}" 
+              alt="${escapeHtml(jogo.visitante)}" 
+              loading="lazy"
+              onerror="this.src='${CONFIG.defaultImage}'"
+            >
+          </div>
+        </div>
+        <div class="match-item-competition">${escapeHtml(jogo.campeonato)}</div>
+      </div>
+    `)
     .join("");
 
+  // Atualiza estatística do próximo jogo
   const statNextGame = document.getElementById("statNextGame");
   if (statNextGame && proximos.length > 0) {
     const prox = proximos[0];
@@ -327,20 +381,22 @@ function renderRecentResults(resultados) {
   const container = document.getElementById("recentResultsWidget");
   if (!container) return;
 
-  // Pega apenas os 5 últimos resultados
   const ultimosResultados = resultados.slice(0, 5);
 
   if (ultimosResultados.length === 0) {
-    container.innerHTML =
-      '<div class="loading-cell">Nenhum resultado recente</div>';
+    container.innerHTML = `
+      <div style="text-align:center; padding:20px; color:#999;">
+        <i class="fas fa-futbol" style="font-size:32px;"></i>
+        <p style="margin-top:10px;">Nenhum resultado recente</p>
+      </div>
+    `;
     return;
   }
 
   container.innerHTML = ultimosResultados
     .map((res) => {
-      // 1. Tratamento do Placar (Quebra a string "0 - 1")
-      let score1 = "0",
-        score2 = "0";
+      // Tratamento do Placar
+      let score1 = "0", score2 = "0";
       if (res.score && res.score.includes("-")) {
         const partes = res.score.split("-");
         score1 = partes[0].trim();
@@ -350,7 +406,7 @@ function renderRecentResults(resultados) {
       const team1 = res.team1 || "Time 1";
       const team2 = res.team2 || "Time 2";
 
-      // 2. Lógica de Cores (Vitória, Empate, Derrota)
+      // Lógica de Cores (Vitória, Empate, Derrota)
       let statusClass = "neutral";
       const s1 = parseInt(score1);
       const s2 = parseInt(score2);
@@ -359,10 +415,8 @@ function renderRecentResults(resultados) {
         if (s1 === s2) {
           statusClass = "draw"; // Empate
         } else {
-          const cruzeiroVenceuMandante =
-            team1.toLowerCase().includes("cruzeiro") && s1 > s2;
-          const cruzeiroVenceuVisitante =
-            team2.toLowerCase().includes("cruzeiro") && s2 > s1;
+          const cruzeiroVenceuMandante = team1.toLowerCase().includes("cruzeiro") && s1 > s2;
+          const cruzeiroVenceuVisitante = team2.toLowerCase().includes("cruzeiro") && s2 > s1;
 
           if (cruzeiroVenceuMandante || cruzeiroVenceuVisitante) {
             statusClass = "win"; // Vitória
@@ -373,20 +427,33 @@ function renderRecentResults(resultados) {
       }
 
       return `
-      <div class="result-mini">
-        <div class="result-mini-teams">
-          <div class="result-mini-team">
-            <img src="${res.logo1 || CONFIG.defaultImage}" alt="" loading="lazy" onerror="this.src='${CONFIG.defaultImage}'">
-            <span>${escapeHtml(team1)}</span>
+        <div class="result-mini">
+          <div class="result-mini-teams">
+            <div class="result-mini-team">
+              <img 
+                src="${res.logo1 || CONFIG.defaultImage}" 
+                alt="${escapeHtml(team1)}" 
+                loading="lazy" 
+                onerror="this.src='${CONFIG.defaultImage}'"
+              >
+              <span>${escapeHtml(team1)}</span>
+            </div>
+            <span class="result-mini-score ${statusClass}">${score1} - ${score2}</span>
+            <div class="result-mini-team">
+              <img 
+                src="${res.logo2 || CONFIG.defaultImage}" 
+                alt="${escapeHtml(team2)}" 
+                loading="lazy" 
+                onerror="this.src='${CONFIG.defaultImage}'"
+              >
+              <span>${escapeHtml(team2)}</span>
+            </div>
           </div>
-          <span class="result-mini-score ${statusClass}">${score1} - ${score2}</span>
-          <div class="result-mini-team">
-            <img src="${res.logo2 || CONFIG.defaultImage}" alt="" loading="lazy" onerror="this.src='${CONFIG.defaultImage}'">
-            <span>${escapeHtml(team2)}</span>
+          <div class="result-mini-info">
+            ${escapeHtml(res.competition)} | ${escapeHtml(res.date)}
           </div>
         </div>
-        <div class="result-mini-info">${escapeHtml(res.competition)} | ${escapeHtml(res.date)}</div>
-      </div>`;
+      `;
     })
     .join("");
 }
@@ -395,6 +462,8 @@ function renderRecentResults(resultados) {
 // INICIALIZAÇÃO
 // ============================================
 document.addEventListener("DOMContentLoaded", () => {
+  console.log("🎯 Inicializando Cabuloso News...");
+  
   // Menu Mobile
   const menuToggle = document.getElementById("menuToggle");
   const navMenu = document.getElementById("navMenu");
@@ -405,13 +474,39 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Carrega dados
   loadMasterData();
-  setTimeout(hideLoadingScreen, 4000);
+  
+  // Fallback de segurança: esconde loading após 10s
+  setTimeout(() => {
+    hideLoadingScreen();
+  }, 10000);
 });
 
-const forceRefreshAll = () => {
-  localStorage.removeItem("cache_master_data");
+// ============================================
+// FUNÇÕES GLOBAIS (expostas para HTML)
+// ============================================
+
+/**
+ * Força refresh de todos os dados (limpa cache)
+ */
+const forceRefreshAll = async () => {
+  console.log("🔄 Forçando refresh completo...");
+  
+  // Limpa sessionStorage
+  sessionStorage.removeItem("cache_master_data_v3");
+  
+  // Limpa Cache API
+  if ('caches' in window) {
+    await caches.delete('cabuloso-v1');
+  }
+  
+  // Recarrega página
   location.reload();
 };
 
+// Expõe para uso global
 window.forceRefreshAll = forceRefreshAll;
+
+// Debug no console
+console.log("💡 Dica: Use window.cabulosoCache.stats() para ver estatísticas do cache");

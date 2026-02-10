@@ -1,18 +1,13 @@
-import { getFromCache, saveToCache } from "./cache.js";
+// script-brasileirao.js - VERSÃO OTIMIZADA
+// Reutiliza dados já carregados pelo script.js (sem fazer novas requisições!)
+
+import { getFromCache } from "./cache.js";
 
 const CONFIG_BRASILEIRAO = {
-  apiUrlBrasileiro:
-    "https://cabuloso-api.cabulosonews92.workers.dev/?type=tabela_br",
-  apiUrlMineiro:
-    "https://cabuloso-api.cabulosonews92.workers.dev/?type=tabela_mg",
-  apiUrlJogos: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
-  defaultEscudo:
-    "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
-  CACHE_TTL: 10 * 60 * 1000, // 10 minutos
+  defaultEscudo: "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
 };
 
 const stateBrasileirao = {
-  isLoading: true,
   dadosCompletos: null,
   currentFilter: "todos",
   campeonatoAtual: "brasileirao",
@@ -78,63 +73,64 @@ const encontrarMelhorSegundo = (grupoA, grupoB, grupoC) => {
 };
 
 // ============================================
-// MAIN DATA LOADER
+// MAIN DATA LOADER - REUTILIZA CACHE! ⭐
 // ============================================
 const loadMasterDataBrasileirao = async () => {
-  // Alteramos a chave para v2 para limpar lixo de cache anterior
-  const CACHE_KEY = "master_data_brasileirao_v2";
+  // ⭐ USA A MESMA CHAVE DO script.js - Reutiliza dados!
+  const CACHE_KEY = "master_data_v3";
   const container = document.getElementById("tabela-container");
 
   try {
-    let data;
+    console.log("📦 Tentando reutilizar dados do cache principal...");
+    
+    // Reutiliza dados já carregados pelo script.js
     const cached = getFromCache(CACHE_KEY);
-
+    
     if (cached) {
-      data = cached;
-    } else {
-      console.log("🌐 Buscando novos dados das APIs...");
+      console.log("✅ Dados reutilizados do cache! (Sem requisição HTTP)");
       
-      // Realiza apenas UMA chamada para cada API
-      const [brasileiro, mineiro, jogos] = await Promise.all([
-        fetch(`${CONFIG_BRASILEIRAO.apiUrlBrasileiro}&t=${Date.now()}`).then(res => res.json()),
-        fetch(`${CONFIG_BRASILEIRAO.apiUrlMineiro}&t=${Date.now()}`).then(res => res.json()),
-        fetch(`${CONFIG_BRASILEIRAO.apiUrlJogos}&t=${Date.now()}`).then(res => res.json())
-      ]);
-
-      // 1. Normaliza Tabela Brasileiro (ignora agenda daqui)
-      const brRaw = Array.isArray(brasileiro) ? brasileiro[0] : brasileiro;
-
-      // 2. Normaliza Tabela Mineiro
-      let mineiroFinal = [];
-      if (Array.isArray(mineiro) && mineiro[0]?.tabela) {
-        mineiroFinal = mineiro[0].tabela;
-      }
-
-      // 3. Normaliza Jogos (Agenda e Resultados)
-      const jogosData = Array.isArray(jogos) ? jogos[0] : jogos;
-
-      data = {
-        tabela_brasileiro: brRaw?.tabela_brasileiro || null,
-        tabela_mineiro: mineiroFinal,
-        // FORÇAMOS a pegar apenas da API de Jogos
-        agenda: jogosData?.agenda || [], 
-        resultados: jogosData?.resultados || []
+      // Extrai apenas o que precisa do objeto consolidado
+      stateBrasileirao.dadosCompletos = {
+        tabela_brasileiro: cached.tabelas?.brasileiro || null,
+        tabela_mineiro: cached.tabelas?.mineiro || [],
+        agenda: cached.agenda || [],
+        resultados: cached.resultados || []
       };
-
-      saveToCache(CACHE_KEY, data, CONFIG_BRASILEIRAO.CACHE_TTL);
+      
+      // Renderiza tudo
+      renderizarAgenda(stateBrasileirao.dadosCompletos.agenda);
+      refreshCurrentView();
+      return;
     }
 
-    stateBrasileirao.dadosCompletos = data;
+    // Se não tem cache, avisa o usuário
+    console.warn("⚠️ Cache não encontrado!");
     
-    // Renderiza a agenda logo após carregar
-    if (data.agenda) {
-        renderizarAgenda(data.agenda);
+    if (container) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#999;">
+          <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6b6b;"></i>
+          <p style="margin-top:20px; font-size:18px;">Dados não carregados ainda.</p>
+          <p style="margin-top:10px; color:#666;">Por favor, visite a página inicial primeiro ou aguarde.</p>
+          <button 
+            onclick="window.location.href='/'" 
+            style="margin-top:20px; padding:12px 24px; background:#003399; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;"
+          >
+            Ir para Página Inicial
+          </button>
+        </div>
+      `;
     }
     
-    refreshCurrentView();
   } catch (error) {
     console.error("❌ Erro:", error);
-    if (container) container.innerHTML = `<p>Erro ao carregar dados.</p>`;
+    if (container) {
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px;">
+          <p style="color:#ff6b6b;">Erro ao carregar dados: ${error.message}</p>
+        </div>
+      `;
+    }
   }
 };
 
@@ -146,6 +142,7 @@ const refreshCurrentView = () => {
   if (!data) return;
 
   const camp = stateBrasileirao.campeonatoAtual;
+  
   if (camp === "brasileirao") {
     renderizarTabelaCompleta(data.tabela_brasileiro);
   } else if (camp === "mineiro") {
@@ -194,7 +191,11 @@ const renderizarTabelaCompleta = (data) => {
             <span class="numero-posicao">${isCruzeiro ? "🦊" : ""}${posicao}º</span>
           </div>
           <div class="time-info">
-            <img src="${time.escudo || CONFIG_BRASILEIRAO.defaultEscudo}" class="escudo-pequeno">
+            <img 
+              src="${time.escudo || CONFIG_BRASILEIRAO.defaultEscudo}" 
+              class="escudo-pequeno"
+              onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
+            >
             <span class="nome-time-texto">${escapeHtml(time.nome)}</span>
           </div>
         </td>
@@ -211,6 +212,7 @@ const renderizarTabelaCompleta = (data) => {
 
 const renderizarTabelaMineiro = (data) => {
   const container = document.getElementById("tabela-container");
+  
   if (!data || data.length === 0) {
     container.innerHTML = "<p>Tabela do Mineiro indisponível.</p>";
     return;
@@ -278,7 +280,12 @@ const renderizarAgenda = (jogos) => {
   if (!container) return;
 
   if (!jogos || jogos.length === 0) {
-    container.innerHTML = '<div class="error-jogos"><p>Nenhum jogo na agenda.</p></div>';
+    container.innerHTML = `
+      <div class="error-jogos">
+        <i class="far fa-calendar-times" style="font-size:32px; color:#999;"></i>
+        <p style="margin-top:10px; color:#999;">Nenhum jogo na agenda</p>
+      </div>
+    `;
     return;
   }
 
@@ -289,23 +296,41 @@ const renderizarAgenda = (jogos) => {
         j.campeonato?.toLowerCase().includes(stateBrasileirao.currentFilter.toLowerCase())
       );
 
+  if (filtrados.length === 0) {
+    container.innerHTML = `
+      <div class="error-jogos">
+        <i class="fas fa-filter" style="font-size:32px; color:#999;"></i>
+        <p style="margin-top:10px; color:#999;">Nenhum jogo encontrado para este filtro</p>
+      </div>
+    `;
+    return;
+  }
+
   // Mostra os 5 primeiros
   const proximos = filtrados.slice(0, 5);
 
   container.innerHTML = proximos.map(jogo => `
     <article class="next-match destaque-cruzeiro">
       <div class="match-date">
-        <i class="far fa-calendar"></i> ${jogo.data} - ${jogo.hora}
+        <i class="far fa-calendar"></i> ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}
       </div>
       <div class="match-teams">
         <div class="match-team">
-          <img src="${jogo.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo}" onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'">
+          <img 
+            src="${jogo.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo}" 
+            alt="${escapeHtml(jogo.mandante)}"
+            onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
+          >
           <span>${escapeHtml(jogo.mandante)}</span>
         </div>
         <span class="vs">X</span>
         <div class="match-team">
           <span>${escapeHtml(jogo.visitante)}</span>
-          <img src="${jogo.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo}" onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'">
+          <img 
+            src="${jogo.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo}" 
+            alt="${escapeHtml(jogo.visitante)}"
+            onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
+          >
         </div>
       </div>
       <div class="match-info">
@@ -334,7 +359,7 @@ const initInterface = () => {
       btn.classList.add("active");
       btn.setAttribute("aria-selected", "true");
 
-      // Muda estado e atualiza tela sem fetch
+      // Muda estado e atualiza tela SEM FETCH!
       stateBrasileirao.campeonatoAtual = value;
       updateLegend(value);
       refreshCurrentView();
@@ -350,6 +375,7 @@ const initInterface = () => {
       btn.classList.add("active");
 
       stateBrasileirao.currentFilter = btn.dataset.filter;
+      
       if (stateBrasileirao.dadosCompletos?.agenda) {
         renderizarAgenda(stateBrasileirao.dadosCompletos.agenda);
       }
@@ -367,6 +393,7 @@ const initInterface = () => {
       widgetToggle.setAttribute("aria-expanded", "true");
     });
   }
+  
   if (widgetClose && widget) {
     widgetClose.addEventListener("click", () => {
       widget.classList.remove("active");
@@ -396,15 +423,24 @@ const updateLegend = (campeonato) => {
 };
 
 const initBrasileirao = () => {
+  console.log("🎯 Inicializando página de Tabelas...");
   initInterface();
   loadMasterDataBrasileirao();
   updateLegend("brasileirao");
 };
 
+// ============================================
+// INICIALIZAÇÃO
+// ============================================
 initBrasileirao();
 
-const forceRefreshAll = () => {
-  localStorage.removeItem("cache_master_data");
+// Força refresh (limpa cache)
+const forceRefreshAll = async () => {
+  console.log("🔄 Forçando refresh completo...");
+  sessionStorage.removeItem("cache_master_data_v3");
+  if ('caches' in window) {
+    await caches.delete('cabuloso-v1');
+  }
   location.reload();
 };
 
