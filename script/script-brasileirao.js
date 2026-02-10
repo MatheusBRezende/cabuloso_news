@@ -1,7 +1,7 @@
-// script-brasileirao.js - VERSÃO OTIMIZADA
-// Reutiliza dados já carregados pelo script.js (sem fazer novas requisições!)
+// script-brasileirao.js - VERSÃO CORRIGIDA (usa window.cabulosoCacheModule)
 
-import { getFromCache } from "./cache.js";
+// Obtém funções do cache global
+const { getFromCache } = window.cabulosoCacheModule || {};
 
 const CONFIG_BRASILEIRAO = {
   defaultEscudo: "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
@@ -76,20 +76,24 @@ const encontrarMelhorSegundo = (grupoA, grupoB, grupoC) => {
 // MAIN DATA LOADER - REUTILIZA CACHE! ⭐
 // ============================================
 const loadMasterDataBrasileirao = async () => {
-  // ⭐ USA A MESMA CHAVE DO script.js - Reutiliza dados!
+  // Verifica se cache está disponível
+  if (!window.cabulosoCacheModule) {
+    console.error("❌ Cache module não disponível! Aguardando...");
+    setTimeout(loadMasterDataBrasileirao, 100);
+    return;
+  }
+
   const CACHE_KEY = "master_data_v3";
   const container = document.getElementById("tabela-container");
 
   try {
     console.log("📦 Tentando reutilizar dados do cache principal...");
     
-    // Reutiliza dados já carregados pelo script.js
     const cached = getFromCache(CACHE_KEY);
     
     if (cached) {
       console.log("✅ Dados reutilizados do cache! (Sem requisição HTTP)");
       
-      // Extrai apenas o que precisa do objeto consolidado
       stateBrasileirao.dadosCompletos = {
         tabela_brasileiro: cached.tabelas?.brasileiro || null,
         tabela_mineiro: cached.tabelas?.mineiro || [],
@@ -97,13 +101,11 @@ const loadMasterDataBrasileirao = async () => {
         resultados: cached.resultados || []
       };
       
-      // Renderiza tudo
       renderizarAgenda(stateBrasileirao.dadosCompletos.agenda);
       refreshCurrentView();
       return;
     }
 
-    // Se não tem cache, avisa o usuário
     console.warn("⚠️ Cache não encontrado!");
     
     if (container) {
@@ -134,9 +136,6 @@ const loadMasterDataBrasileirao = async () => {
   }
 };
 
-/**
- * Atualiza a visualização com base na aba selecionada (Sem nova requisição)
- */
 const refreshCurrentView = () => {
   const data = stateBrasileirao.dadosCompletos;
   if (!data) return;
@@ -218,7 +217,6 @@ const renderizarTabelaMineiro = (data) => {
     return;
   }
 
-  // Divide em grupos de 4
   const grupoA = data.slice(0, 4);
   const grupoB = data.slice(4, 8);
   const grupoC = data.slice(8, 12);
@@ -289,7 +287,6 @@ const renderizarAgenda = (jogos) => {
     return;
   }
 
-  // Filtra por campeonato se houver filtro ativo
   const filtrados = stateBrasileirao.currentFilter === 'todos'
     ? jogos
     : jogos.filter(j => 
@@ -306,7 +303,6 @@ const renderizarAgenda = (jogos) => {
     return;
   }
 
-  // Mostra os 5 primeiros
   const proximos = filtrados.slice(0, 5);
 
   container.innerHTML = proximos.map(jogo => `
@@ -345,13 +341,11 @@ const renderizarAgenda = (jogos) => {
 // ============================================
 
 const initInterface = () => {
-  // Configuração das abas de campeonato
   const buttons = document.querySelectorAll(".campeonato-btn");
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const value = btn.dataset.campeonato;
 
-      // Atualiza UI dos botões
       buttons.forEach((b) => {
         b.classList.remove("active");
         b.setAttribute("aria-selected", "false");
@@ -359,14 +353,12 @@ const initInterface = () => {
       btn.classList.add("active");
       btn.setAttribute("aria-selected", "true");
 
-      // Muda estado e atualiza tela SEM FETCH!
       stateBrasileirao.campeonatoAtual = value;
       updateLegend(value);
       refreshCurrentView();
     });
   });
 
-  // Configuração do Widget de Filtro
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
       document
@@ -382,7 +374,6 @@ const initInterface = () => {
     });
   });
 
-  // Toggle do Widget
   const widgetToggle = document.getElementById("widget-toggle");
   const widget = document.getElementById("games-widget");
   const widgetClose = document.getElementById("widget-close");
@@ -424,6 +415,13 @@ const updateLegend = (campeonato) => {
 
 const initBrasileirao = () => {
   console.log("🎯 Inicializando página de Tabelas...");
+  
+  if (!window.cabulosoCacheModule) {
+    console.error("❌ Cache module não disponível! Aguardando...");
+    setTimeout(initBrasileirao, 100);
+    return;
+  }
+
   initInterface();
   loadMasterDataBrasileirao();
   updateLegend("brasileirao");
@@ -432,9 +430,12 @@ const initBrasileirao = () => {
 // ============================================
 // INICIALIZAÇÃO
 // ============================================
-initBrasileirao();
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initBrasileirao);
+} else {
+  initBrasileirao();
+}
 
-// Força refresh (limpa cache)
 const forceRefreshAll = async () => {
   console.log("🔄 Forçando refresh completo...");
   sessionStorage.removeItem("cache_master_data_v3");
