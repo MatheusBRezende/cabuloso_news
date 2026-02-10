@@ -1,4 +1,4 @@
-// cache.js - VERSÃO OTIMIZADA E COMPATÍVEL (SEM ERROS DE SYNTAX)
+// cache.js - VERSÃO CORRIGIDA (Compatível com script comum e módulos)
 const CACHE_NAME = 'cabuloso-v1';
 const STORAGE_TYPE = sessionStorage;
 
@@ -34,13 +34,13 @@ const getFromCache = (key) => {
 };
 
 /**
- * Cache API - Salva a Response
+ * Cache API - Salva a Response (CORRIGIDO: usa clone())
  */
 const saveToCacheAPI = async (url, response) => {
   if (!('caches' in window) || !response) return;
   try {
     const cache = await caches.open(CACHE_NAME);
-    // IMPORTANTE: O clone garante que não dê erro de "body already used"
+    // IMPORTANTE: Clone antes de salvar para evitar "body already used"
     await cache.put(url, response.clone());
     console.log("✅ Salvo no Cache API:", url);
   } catch (e) {
@@ -115,8 +115,31 @@ window.cabulosoCache = {
   stats: getCacheStats
 };
 
-// --- COMPATIBILIDADE COM MÓDULOS (SCRIPT.JS) ---
-// Isso permite que o 'import' funcione sem quebrar o script comum
-export { saveToCache, getFromCache, saveToCacheAPI, getFromCacheAPI, clearExpiredCache, getCacheStats };
+// --- COMPATIBILIDADE COM MÓDULOS ---
+// Verifica se está sendo usado como módulo ES6
+if (typeof module !== 'undefined' && module.exports) {
+  // Node.js / CommonJS
+  module.exports = {
+    saveToCache,
+    getFromCache,
+    saveToCacheAPI,
+    getFromCacheAPI,
+    clearExpiredCache,
+    getCacheStats
+  };
+}
+
+// Para módulos ES6 (import/export)
+// Apenas declara as funções globalmente, o export será feito condicionalmente
+if (typeof window !== 'undefined') {
+  window.cabulosoCacheExports = {
+    saveToCache,
+    getFromCache,
+    saveToCacheAPI,
+    getFromCacheAPI,
+    clearExpiredCache,
+    getCacheStats
+  };
+}
 
 console.log("✅ Cache API carregada globalmente como window.cabulosoCache");

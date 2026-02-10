@@ -1,13 +1,28 @@
-import { getFromCache } from './cache.js';
+// live-match-detector.js - VERSÃO CORRIGIDA
+// Usa importação alternativa para compatibilidade
+
+// Tenta importar do cache.js, se falhar usa window.cabulosoCache
+let getFromCache;
+try {
+  // Tenta importação ES6
+  if (window.cabulosoCacheExports) {
+    getFromCache = window.cabulosoCacheExports.getFromCache;
+  } else {
+    // Fallback para global
+    getFromCache = window.cabulosoCache.getFromCache;
+  }
+} catch (e) {
+  console.warn("⚠️ Usando cache global", e);
+  getFromCache = window.cabulosoCache.getFromCache;
+}
 
 const LiveMatchDetector = (() => {
   const CONFIG = {
-    // ⭐ MUDANÇA: Usa endpoint consolidado quando possível
     webhookUrl: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
     webhookUrlConsolidado: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos",
     
     checkInterval: 60000, // 1 minuto
-    minutoAMinutoUrl: "../minuto-a-minuto.html",
+    minutoAMinutoUrl: "./minuto-a-minuto.html",
     storageKey: "cabuloso_live_match_dismissed",
   };
 
@@ -16,14 +31,14 @@ const LiveMatchDetector = (() => {
   let modalShown = false;
 
   /**
-   * ⭐ OTIMIZADO: Tenta reutilizar cache antes de fazer requisição
+   * OTIMIZADO: Tenta reutilizar cache antes de fazer requisição
    */
   const startMonitoringIfGameIsToday = async () => {
     try {
       let agenda = null;
 
       // 1. TENTA REUTILIZAR CACHE DO ENDPOINT CONSOLIDADO
-      const CACHE_KEY = "master_data_v3"; // Mesma chave do script.js
+      const CACHE_KEY = "master_data_v3";
       const cachedData = getFromCache(CACHE_KEY);
 
       if (cachedData && cachedData.agenda) {
@@ -79,17 +94,12 @@ const LiveMatchDetector = (() => {
   };
 
   /**
-   * Loop de checagem - Poderia verificar se o jogo começou
+   * Loop de checagem
    */
   const startCheckLoop = () => {
     if (checkIntervalId) clearInterval(checkIntervalId);
     checkIntervalId = setInterval(async () => {
-        // Aqui você poderia chamar a API de placar em tempo real
-        // Mas isso já é feito pelo minuto-a-minuto.js
         console.log("🔍 Checando status do jogo de hoje...");
-        
-        // Opcional: Verificar se o jogo começou e atualizar o modal
-        // await checkIfGameStarted();
     }, CONFIG.checkInterval);
   };
 
@@ -108,7 +118,7 @@ const LiveMatchDetector = (() => {
       .live-badge-pulse { display: inline-flex; align-items: center; gap: 0.5rem; background: #ef4444; color: white; padding: 0.5rem 1rem; border-radius: 9999px; font-weight: 700; animation: pulse 2s infinite; margin-bottom: 1rem; }
       .live-modal-score { font-size: 2.5rem; font-weight: 800; color: #003399; margin: 1rem 0; display: block; }
       .live-modal-actions { display: flex; gap: 1rem; margin-top: 1.5rem; }
-      .btn-live { flex: 1; padding: 1rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; text-decoration: none; }
+      .btn-live { flex: 1; padding: 1rem; border-radius: 0.5rem; font-weight: 700; cursor: pointer; border: none; transition: 0.3s; text-decoration: none; display: block; text-align: center; }
       .btn-primary { background: #003399; color: white; }
       .btn-primary:hover { background: #002266; }
       .btn-secondary { background: #f3f4f6; color: #6b7280; }
@@ -126,7 +136,7 @@ const LiveMatchDetector = (() => {
     modal.id = "liveMatchModal";
     modal.className = "live-match-modal";
     modal.innerHTML = `
-      <div class="live-modal-overlay" onclick="hideModal()"></div>
+      <div class="live-modal-overlay"></div>
       <div class="live-modal-content">
         <div class="live-badge-pulse">● AO VIVO</div>
         <h2 style="color:#1f2937; margin-bottom:10px;">JOGO DO CRUZEIRO!</h2>
@@ -239,5 +249,7 @@ if (document.readyState === 'loading') {
   LiveMatchDetector.init();
 }
 
-// Debug no console
+// Expõe globalmente para debug
+window.LiveMatchDetector = LiveMatchDetector;
+
 console.log("💡 Dica: Use LiveMatchDetector.showModalDebug() para testar o modal");
