@@ -87,7 +87,6 @@ body {
     overflow-x: hidden;
 }
 
-/* ESCONDE O HERO QUANDO HÁ JOGO AO VIVO */
 body.live-match .hero {
     display: none !important;
 }
