@@ -76,63 +76,48 @@ const encontrarMelhorSegundo = (grupoA, grupoB, grupoC) => {
 // MAIN DATA LOADER - REUTILIZA CACHE! ⭐
 // ============================================
 const loadMasterDataBrasileirao = async () => {
-  // Verifica se cache está disponível
-  if (!window.cabulosoCacheModule) {
-    console.error("❌ Cache module não disponível! Aguardando...");
-    setTimeout(loadMasterDataBrasileirao, 100);
-    return;
-  }
-
-  const CACHE_KEY = "master_data_v3";
-  const container = document.getElementById("tabela-container");
+  console.log("📦 Tentando carregar dados para a tabela...");
 
   try {
-    console.log("📦 Tentando reutilizar dados do cache principal...");
-    
-    const cached = getFromCache(CACHE_KEY);
-    
-    if (cached) {
-      console.log("✅ Dados reutilizados do cache! (Sem requisição HTTP)");
-      
-      stateBrasileirao.dadosCompletos = {
-        tabela_brasileiro: cached.tabelas?.brasileiro || null,
-        tabela_mineiro: cached.tabelas?.mineiro || [],
-        agenda: cached.agenda || [],
-        resultados: cached.resultados || []
-      };
-      
-      renderizarAgenda(stateBrasileirao.dadosCompletos.agenda);
-      refreshCurrentView();
+    // 1. TENTA O CACHE PRIMEIRO
+    let data = getFromCache("master_data_v3");
+
+    if (data) {
+      console.log("✅ Dados recuperados do cache com sucesso.");
+      stateBrasileirao.dadosCompletos = data;
+      renderAll();
       return;
     }
 
-    console.warn("⚠️ Cache não encontrado!");
+    // 2. SE NÃO HOUVER CACHE, BUSCA DIRETO DO WORKER (NOVIDADE)
+    console.log("🌐 Cache não encontrado! Buscando dados frescos do Worker...");
+    const response = await fetch("https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos");
     
-    if (container) {
-      container.innerHTML = `
-        <div style="text-align:center; padding:40px; color:#999;">
-          <i class="fas fa-exclamation-triangle" style="font-size:48px; color:#ff6b6b;"></i>
-          <p style="margin-top:20px; font-size:18px;">Dados não carregados ainda.</p>
-          <p style="margin-top:10px; color:#666;">Por favor, visite a página inicial primeiro ou aguarde.</p>
-          <button 
-            onclick="window.location.href='/'" 
-            style="margin-top:20px; padding:12px 24px; background:#003399; color:white; border:none; border-radius:8px; cursor:pointer; font-size:16px; font-weight:600;"
-          >
-            Ir para Página Inicial
-          </button>
-        </div>
-      `;
+    if (!response.ok) throw new Error("Falha ao buscar dados do Worker");
+
+    data = await response.json();
+
+    // Normaliza se vier como Array (padrão n8n)
+    if (Array.isArray(data)) data = data[0];
+
+    if (data) {
+      stateBrasileirao.dadosCompletos = data;
+      
+      // Salva no cache para a próxima vez (reutilizando a lógica do cache.js)
+      if (window.cabulosoCacheModule && window.cabulosoCacheModule.saveToCache) {
+          window.cabulosoCacheModule.saveToCache("master_data_v3", data, 5 * 60 * 1000);
+      }
+      
+      renderAll();
+    } else {
+      throw new Error("Dados vazios do Worker");
     }
-    
+
   } catch (error) {
-    console.error("❌ Erro:", error);
-    if (container) {
-      container.innerHTML = `
-        <div style="text-align:center; padding:40px;">
-          <p style="color:#ff6b6b;">Erro ao carregar dados: ${error.message}</p>
-        </div>
-      `;
-    }
+    console.error("❌ Erro ao carregar dados da tabela:", error);
+    // Opcional: mostrar uma mensagem de erro na tela para o usuário
+    const container = document.getElementById("tabela-corpo");
+    if (container) container.innerHTML = `<tr><td colspan="10">Erro ao carregar classificação. Tente atualizar a página.</td></tr>`;
   }
 };
 

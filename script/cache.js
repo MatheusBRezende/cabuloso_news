@@ -41,15 +41,26 @@
   /**
    * Cache API - Salva a Response (CORRIGIDO: usa clone())
    */
-  async function saveToCacheAPI(url, response) {
-    if (!('caches' in window)) return;
-    try {
-      const cache = await caches.open(CACHE_NAME);
-      await cache.put(url, response);
-    } catch (e) {
-      console.error("⚠️ Cache API falhou:", e);
+/**
+   * Cache API - Salva a Response (CORRIGIDO)
+   */
+async function saveToCacheAPI(url, response) {
+  if (!('caches' in window)) return;
+  
+  try {
+    // VERIFICAÇÃO CRÍTICA: Se o corpo já foi lido por um .json(), não podemos clonar
+    if (response.bodyUsed) {
+      console.warn("⚠️ Não foi possível salvar no Cache API: O corpo já foi lido.");
+      return;
     }
+
+    const cache = await caches.open(CACHE_NAME);
+    // Clonamos aqui para que a resposta original continue disponível para o script.js
+    await cache.put(url, response.clone());
+  } catch (e) {
+    console.error("⚠️ Cache API falhou ao salvar:", e);
   }
+}
 
   /**
    * Recupera do Cache API
