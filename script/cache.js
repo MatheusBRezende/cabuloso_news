@@ -42,14 +42,12 @@
    * Cache API - Salva a Response (CORRIGIDO: usa clone())
    */
   async function saveToCacheAPI(url, response) {
-    if (!('caches' in global) || !response) return;
+    if (!('caches' in window)) return;
     try {
       const cache = await caches.open(CACHE_NAME);
-      // IMPORTANTE: Clone antes de salvar para evitar "body already used"
-      await cache.put(url, response.clone());
-      console.log("✅ Salvo no Cache API:", url);
+      await cache.put(url, response);
     } catch (e) {
-      console.warn("⚠️ Cache API falhou:", e);
+      console.error("⚠️ Cache API falhou:", e);
     }
   }
 

@@ -61,78 +61,66 @@ function showErrorMessage(message) {
 }
 
 // ============================================
-// LÓGICA MESTRE DE DADOS (UMA REQUISIÇÃO!)
+// CARGA DE DADOS PRINCIPAL (CORRIGIDA)
 // ============================================
 async function loadMasterData() {
-  const CACHE_KEY = "master_data_v3"; // v3 para limpar cache antigo
   console.log("🚀 Iniciando carga de dados...");
 
   try {
-    // 1. Tenta sessionStorage primeiro (mais rápido)
-    const cachedData = getFromCache(CACHE_KEY);
-    if (cachedData) {
-      console.log("📦 Dados recuperados do sessionStorage");
-      distributeData(cachedData);
-      hideLoadingScreen();
-      return;
-    }
-
-    // 2. Tenta Cache API (persistente entre sessões)
-    const cachedResponse = await getFromCacheAPI(CONFIG.apiUrl);
-    if (cachedResponse) {
-      console.log("📦 Dados recuperados do Cache API");
-      const data = await cachedResponse.json();
-      
-      // Salva também no sessionStorage para próximas consultas
-      saveToCache(CACHE_KEY, data, CONFIG.CACHE_TTL);
-      
-      distributeData(data);
-      hideLoadingScreen();
-      return;
-    }
-
-    // 3. Busca dados frescos (UMA requisição consolidada!)
-    console.log("🌐 Buscando dados frescos do Worker...");
-    
-    const startTime = performance.now();
-    
-    const response = await fetch(`${CONFIG.apiUrl}&t=${Date.now()}`, {
-      cache: 'no-cache',
-      headers: {
-        'Accept': 'application/json'
+    // 1. Tenta recuperar do Cache API primeiro (Rapidez extrema)
+    if (typeof getFromCacheAPI === 'function') {
+      const cachedResponse = await getFromCacheAPI(CONFIG.apiUrl);
+      if (cachedResponse) {
+        console.log("📦 Usando dados do Cache API");
+        const cachedData = await cachedResponse.json();
+        distributeData(cachedData);
+        hideLoadingScreen();
+        return; // Sai da função se já carregou do cache
       }
-    });
-
-    const fetchTime = performance.now() - startTime;
-    console.log(`⏱️ Tempo de resposta: ${Math.round(fetchTime)}ms`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
     }
 
-    const data = await response.json();
+    // 2. Busca dados frescos do Worker
+    console.log("🌐 Buscando dados frescos do Worker...");
+    const startTime = Date.now();
+    const response = await fetch(CONFIG.apiUrl);
     
-    // Verifica se veio do cache do Worker
-    const cacheStatus = response.headers.get('X-Cache');
-    console.log(`📊 Status do cache do Worker: ${cacheStatus || 'N/A'}`);
-    console.log("✅ Dados recebidos:", data);
+    if (!response.ok) throw new Error(`Erro na requisição: ${response.status}`);
 
-    // 4. Valida dados
-    if (!data || data.error) {
-      throw new Error(data?.error || "Dados inválidos recebidos");
+    // --- SOLUÇÃO DO ERRO "BODY ALREADY USED" ---
+    // Clonamos a resposta ANTES de ler o .json() para poder salvar no cache
+    const responseToCache = response.clone();
+    if (typeof saveToCacheAPI === 'function') {
+      // Chamamos sem await para não travar a renderização do site
+      saveToCacheAPI(CONFIG.apiUrl, responseToCache);
     }
 
-    // 5. Salva em AMBOS os caches
-    saveToCache(CACHE_KEY, data, CONFIG.CACHE_TTL);
-    await saveToCacheAPI(CONFIG.apiUrl, response);
+    // 3. Lê o JSON da resposta original
+    let data = await response.json();
+    console.log(`⏱️ Tempo de resposta: ${Date.now() - startTime}ms`);
 
-    // 6. Distribui para UI
+    // --- TRATAMENTO DE NOTÍCIAS (ARRAY FIX) ---
+    // Se o n8n enviar [ { noticias: [...] } ], nós extraímos o objeto interno
+    if (Array.isArray(data) && data.length > 0) {
+      console.log("📊 Dados recebidos como Array, normalizando...");
+      data = data[0];
+    }
+
+    // 4. Distribui os dados para a interface
     distributeData(data);
+    hideLoadingScreen();
 
   } catch (error) {
-    console.error("❌ Erro na carga de dados:", error);
-    showErrorMessage(`Erro ao carregar dados: ${error.message}`);
-  } finally {
+    console.error("❌ Erro crítico ao carregar dados:", error);
+    
+    // Fallback: Tenta carregar do sessionStorage se tudo mais falhar
+    if (typeof getFromCache === 'function') {
+      const backupData = getFromCache("master_data_v3");
+      if (backupData) {
+        console.log("⚠️ Usando backup do sessionStorage");
+        distributeData(backupData);
+      }
+    }
+    
     hideLoadingScreen();
   }
 }
