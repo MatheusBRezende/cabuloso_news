@@ -207,6 +207,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   initNavigation();
   initTopFloatingButtons();
   
+  // Pré-carregar animações
+  preloadAnimations();
+  
   animationQueue.loadShownEvents();
   
   // Primeira busca imediata
@@ -1186,6 +1189,109 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Escape") closeAllPanels();
   });
 });
+
+/**
+ * RENDERIZAR TIMELINE DE LANCES
+ */
+function renderTimeline(narracao = []) {
+  const timelineContainer = document.getElementById('timeline-container-full');
+  const noEventsMessage = document.getElementById('no-events-message-full');
+  const matchStatusIndicator = document.getElementById('match-status-indicator-full');
+  
+  if (!timelineContainer) {
+    console.warn('⚠️ Container da timeline não encontrado');
+    return;
+  }
+  
+  // Atualizar status do jogo
+  if (matchStatusIndicator) {
+    const status = state.match.status || 'AGUARDANDO';
+    matchStatusIndicator.textContent = status;
+    matchStatusIndicator.className = 'match-status-full';
+    
+    if (status.includes('AO VIVO') || status.includes('TEMPO')) {
+      matchStatusIndicator.classList.add('live');
+    }
+  }
+  
+  // Se não há eventos, mostrar mensagem
+  if (!narracao || narracao.length === 0) {
+    if (noEventsMessage) {
+      noEventsMessage.style.display = 'flex';
+    }
+    // Limpar timeline existente
+    const existingItems = timelineContainer.querySelectorAll('.timeline-item-full');
+    existingItems.forEach(item => item.remove());
+    console.log('📋 Nenhum lance para mostrar ainda');
+    return;
+  }
+  
+  // Ocultar mensagem de "sem eventos"
+  if (noEventsMessage) {
+    noEventsMessage.style.display = 'none';
+  }
+  
+  // Renderizar eventos (do mais recente para o mais antigo)
+  const eventosOrdenados = [...narracao].reverse();
+  
+  // Limpar timeline
+  const existingItems = timelineContainer.querySelectorAll('.timeline-item-full');
+  existingItems.forEach(item => item.remove());
+  
+  eventosOrdenados.forEach((lance) => {
+    const item = document.createElement('div');
+    item.className = 'timeline-item-full';
+    
+    // Detectar tipo de evento
+    let tipoEvento = 'normal';
+    let iconClass = 'fas fa-futbol';
+    let iconColor = 'var(--gray-500)';
+    
+    const descLower = lance.descricao?.toLowerCase() || '';
+    
+    if (descLower.includes('gol') || descLower.includes('goool')) {
+      tipoEvento = 'gol';
+      iconClass = 'fas fa-futbol';
+      iconColor = 'var(--success)';
+      item.style.borderLeft = '3px solid var(--success)';
+    } else if (descLower.includes('cartão amarelo') || descLower.includes('amarelo')) {
+      tipoEvento = 'amarelo';
+      iconClass = 'fas fa-square';
+      iconColor = '#FFC107';
+      item.style.borderLeft = '3px solid #FFC107';
+    } else if (descLower.includes('cartão vermelho') || descLower.includes('vermelho')) {
+      tipoEvento = 'vermelho';
+      iconClass = 'fas fa-square';
+      iconColor = '#F44336';
+      item.style.borderLeft = '3px solid #F44336';
+    } else if (descLower.includes('pênalti') || descLower.includes('penalti')) {
+      tipoEvento = 'penalti';
+      iconClass = 'fas fa-circle-dot';
+      iconColor = 'var(--accent)';
+      item.style.borderLeft = '3px solid var(--accent)';
+    } else if (descLower.includes('substituição') || descLower.includes('substituicao')) {
+      tipoEvento = 'substituicao';
+      iconClass = 'fas fa-retweet';
+      iconColor = 'var(--primary)';
+    }
+    
+    item.innerHTML = `
+      <div class="timeline-time-full">
+        <span>${lance.minuto || '0\''}</span>
+      </div>
+      <div class="timeline-icon-full" style="background-color: ${iconColor}20; border-color: ${iconColor};">
+        <i class="${iconClass}" style="color: ${iconColor};"></i>
+      </div>
+      <div class="timeline-content-full">
+        <p class="timeline-desc-full">${lance.descricao || 'Evento sem descrição'}</p>
+      </div>
+    `;
+    
+    timelineContainer.appendChild(item);
+  });
+  
+  console.log(`✅ Timeline renderizada com ${narracao.length} eventos`);
+}
 
 /**
  * RENDERIZAR ESTATÍSTICAS NO PAINEL FLUTUANTE
