@@ -80,16 +80,18 @@ const loadMasterDataBrasileirao = async () => {
 
   try {
     // 1. TENTA O CACHE PRIMEIRO
-    let data = getFromCache("master_data_v3");
+    let data = getFromCache ? getFromCache("master_data_v3") : null;
 
     if (data) {
       console.log("✅ Dados recuperados do cache com sucesso.");
       stateBrasileirao.dadosCompletos = data;
-      renderAll();
+      // CHAMA AS FUNÇÕES CORRETAS QUE EXISTEM NO SEU SCRIPT
+      renderTable();
+      renderAgenda();
       return;
     }
 
-    // 2. SE NÃO HOUVER CACHE, BUSCA DIRETO DO WORKER (NOVIDADE)
+    // 2. SE NÃO HOUVER CACHE, BUSCA DIRETO DO WORKER
     console.log("🌐 Cache não encontrado! Buscando dados frescos do Worker...");
     const response = await fetch("https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos");
     
@@ -103,21 +105,24 @@ const loadMasterDataBrasileirao = async () => {
     if (data) {
       stateBrasileirao.dadosCompletos = data;
       
-      // Salva no cache para a próxima vez (reutilizando a lógica do cache.js)
+      // Salva no sessionStorage para evitar novos fetches ao navegar
       if (window.cabulosoCacheModule && window.cabulosoCacheModule.saveToCache) {
           window.cabulosoCacheModule.saveToCache("master_data_v3", data, 5 * 60 * 1000);
       }
       
-      renderAll();
+      // CHAMA AS FUNÇÕES CORRETAS QUE EXISTEM NO SEU SCRIPT
+      renderTable();
+      renderAgenda();
     } else {
       throw new Error("Dados vazios do Worker");
     }
 
   } catch (error) {
     console.error("❌ Erro ao carregar dados da tabela:", error);
-    // Opcional: mostrar uma mensagem de erro na tela para o usuário
     const container = document.getElementById("tabela-corpo");
-    if (container) container.innerHTML = `<tr><td colspan="10">Erro ao carregar classificação. Tente atualizar a página.</td></tr>`;
+    if (container) {
+      container.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Erro ao carregar classificação. <br> Verifique sua conexão e atualize a página.</td></tr>`;
+    }
   }
 };
 
