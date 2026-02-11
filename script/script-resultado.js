@@ -1,7 +1,7 @@
 // script-resultado.js - VERSÃO OTIMIZADA E CORRIGIDA
 // Reutiliza dados do endpoint consolidado
 
-const { getFromCache } = window.cabulosoCacheModule || {};
+const { getFromCache, saveToCache } = window.cabulosoCacheModule || {};
 
 const CONFIG_RESULTADOS = {
   // ⭐ Prioriza endpoint consolidado

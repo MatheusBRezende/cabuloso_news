@@ -1,10 +1,72 @@
 /**
  * Cabuloso News - Minuto a Minuto OTIMIZADO
- * Versão: 11.0 - SEM COMPROMETER TEMPO REAL
+ * Versão: 12.0 - COM LOGS PROFISSIONAIS
  * - Mantém 5s de atualização durante jogos ao vivo
  * - Economiza requisições quando não há jogo
  * - Usa cache inteligente do Worker (RAM)
+ * - Sistema de logs organizado e profissional
  */
+
+// ═══════════════════ SISTEMA DE LOGS PROFISSIONAL ═══════════════════
+const Logger = {
+  enabled: true,
+  
+  _format(level, category, message, data) {
+    const timestamp = new Date().toLocaleTimeString('pt-BR');
+    const icons = {
+      info: 'ℹ️',
+      success: '✅',
+      warn: '⚠️',
+      error: '❌',
+      match: '⚽',
+      api: '🔌',
+      cache: '📦'
+    };
+    const icon = icons[level] || 'ℹ️';
+    const prefix = `[${timestamp}] ${icon} [${category}]`;
+    
+    if (data) {
+      console.log(prefix, message, data);
+    } else {
+      console.log(prefix, message);
+    }
+  },
+  
+  info(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('info', category, message, data);
+  },
+  
+  success(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('success', category, message, data);
+  },
+  
+  warn(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('warn', category, message, data);
+  },
+  
+  error(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('error', category, message, data);
+  },
+  
+  match(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('match', category, message, data);
+  },
+  
+  api(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('api', category, message, data);
+  },
+  
+  cache(category, message, data = null) {
+    if (!this.enabled) return;
+    this._format('cache', category, message, data);
+  }
+};
 
 let ultimoLanceId = null;
 let lastValidStats = null;
@@ -33,11 +95,11 @@ const golControl = {
         const data = JSON.parse(saved);
         if (data.matchId === this.matchId && data.timestamp > Date.now() - 3600000) {
           this.lastScore = data.score;
-          console.log('📥 Placar restaurado:', this.lastScore);
+          Logger.info('PLACAR', 'Placar restaurado', this.lastScore);
         }
       }
     } catch (e) {
-      console.warn('Erro ao carregar placar:', e);
+      Logger.warn('PLACAR', 'Erro ao carregar placar', e);
     }
   },
   
@@ -64,7 +126,6 @@ const state = {
     status: "AO VIVO",
     minute: "0'",
   },
-  logsEnabled: true,
 };
 
 const EVENT_PRIORITY = {
@@ -91,10 +152,10 @@ const animationQueue = {
             this.lastEvents.set(hash, time);
           }
         }
-        console.log(`📥 ${this.lastEvents.size} eventos anteriores carregados`);
+        Logger.success('EVENTOS', `${this.lastEvents.size} eventos anteriores carregados`);
       }
     } catch (e) {
-      console.warn('Erro ao carregar eventos:', e);
+      Logger.warn('EVENTOS', 'Erro ao carregar eventos', e);
     }
   },
   
@@ -118,7 +179,7 @@ const animationQueue = {
     }
   
     if (this.lastEvents.has(event.hash)) {
-      console.log('🔄 Evento ignorado (já mostrado):', event.type);
+      Logger.info('EVENTOS', `Evento ${event.type} ignorado (já mostrado)`);
       return;
     }
   
@@ -180,14 +241,18 @@ function startLivePolling(intervalMs = CONFIG.updateIntervalLive) {
   stopLivePolling(); // Limpa qualquer intervalo anterior
   
   state.currentUpdateInterval = intervalMs;
-  console.log(`🔄 Iniciando polling: ${intervalMs}ms (${intervalMs === CONFIG.updateIntervalLive ? 'RÁPIDO - AO VIVO' : intervalMs === CONFIG.updateIntervalPreMatch ? 'MODERADO - PRÉ-JOGO' : 'LENTO - AGUARDANDO'})`);
+  const mode = intervalMs === CONFIG.updateIntervalLive ? 'RÁPIDO - AO VIVO' : 
+               intervalMs === CONFIG.updateIntervalPreMatch ? 'MODERADO - PRÉ-JOGO' : 
+               'LENTO - AGUARDANDO';
+  
+  Logger.info('POLLING', `Iniciando: ${intervalMs}ms (${mode})`);
   
   liveInterval = setInterval(fetchLiveData, intervalMs);
 }
 
 function stopLivePolling() {
   if (liveInterval) {
-    console.log("⏸️ Parando polling automático");
+    Logger.info('POLLING', 'Parando polling automático');
     clearInterval(liveInterval);
     liveInterval = null;
   }
@@ -200,10 +265,14 @@ function preloadAnimations() {
   animationCache.amarelo = "../assets/Carto Amarelo.json";
   animationCache.vermelho = "../assets/Cartão Vermelho.json";
   animationCache.penalti = "../assets/Penalti.json";
-  console.log("🎬 Animações pré-carregadas");
+  Logger.success('ANIMAÇÕES', 'Animações pré-carregadas');
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
+  Logger.success('SISTEMA', '══════════════════════════════════════');
+  Logger.success('SISTEMA', 'CABULOSO NEWS - MINUTO A MINUTO v12.0');
+  Logger.success('SISTEMA', '══════════════════════════════════════');
+  
   initNavigation();
   initTopFloatingButtons();
   
@@ -222,7 +291,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   loadAgenda();
   setInterval(loadAgenda, 60000); // 1 minuto
   
-  console.log("✅ Sistema iniciado com polling adaptativo");
+  Logger.success('SISTEMA', 'Sistema iniciado com sucesso!');
 });
 
 /**
@@ -264,9 +333,7 @@ const fetchLiveData = async () => {
     // 🎯 DECISÃO DE VELOCIDADE
     if (hasError || !data) {
       // ERRO: Modo super lento (60s)
-      if (state.logsEnabled) {
-        console.log("❌ Erro detectado. Aguardando 60s...");
-      }
+      Logger.warn('API', 'Erro detectado. Aguardando 60s...');
       state.matchStarted = false;
       showNextMatchCountdown();
       startLivePolling(CONFIG.updateIntervalIdle);
@@ -279,17 +346,13 @@ const fetchLiveData = async () => {
       
       if (proximoJogo && proximoJogo.minutosParaInicio <= 30) {
         // 30 minutos antes: modo PRÉ-JOGO (15s)
-        if (state.logsEnabled) {
-          console.log(`⏰ Jogo em ${proximoJogo.minutosParaInicio}min. Polling moderado (15s).`);
-        }
+        Logger.info('PRÉ-JOGO', `Jogo em ${proximoJogo.minutosParaInicio}min. Polling moderado (15s).`);
         state.matchStarted = false;
         showNextMatchCountdown();
         startLivePolling(CONFIG.updateIntervalPreMatch);
       } else {
         // Mais de 30min: modo LENTO (60s)
-        if (state.logsEnabled) {
-          console.log("📅 Sem jogos próximos. Polling lento (60s).");
-        }
+        Logger.info('AGENDA', 'Sem jogos próximos. Polling lento (60s).');
         state.matchStarted = false;
         showNextMatchCountdown();
         startLivePolling(CONFIG.updateIntervalIdle);
@@ -301,13 +364,13 @@ const fetchLiveData = async () => {
     if (isLiveMatch) {
       // Garante polling RÁPIDO (5s)
       if (state.currentUpdateInterval !== CONFIG.updateIntervalLive) {
-        console.log("⚽ JOGO AO VIVO DETECTADO! Ativando polling RÁPIDO (5s)");
+        Logger.match('AO VIVO', 'JOGO AO VIVO DETECTADO! Ativando polling RÁPIDO (5s)');
         state.matchStarted = true;
         startLivePolling(CONFIG.updateIntervalLive);
       }
 
       // 5. ATUALIZAÇÃO DOS COMPONENTES VISUAIS
-      if (state.logsEnabled) console.log("✅ Renderizando lances do jogo...");
+      Logger.info('RENDER', 'Renderizando lances do jogo...');
       
       showLiveMatchUI();
 
@@ -327,11 +390,11 @@ const fetchLiveData = async () => {
     }
 
   } catch (error) {
-    console.error("❌ Erro ao buscar dados ao vivo:", error);
+    Logger.error('API', 'Erro ao buscar dados ao vivo', error);
     
     // Em caso de erro de rede, mantém polling lento
     if (state.currentUpdateInterval !== CONFIG.updateIntervalIdle) {
-      console.log("🔄 Erro de rede. Reduzindo frequência...");
+      Logger.warn('API', 'Erro de rede. Reduzindo frequência...');
       startLivePolling(CONFIG.updateIntervalIdle);
     }
   }
@@ -562,42 +625,24 @@ const showNextMatchCountdown = () => {
  * RENDERIZA O CARD DO PRÓXIMO JOGO
  */
 const renderNextMatchCard = (match) => {
-  const container = document.getElementById("live-match-container");
-  if (!container) return;
-
-  // Verifica se o Cruzeiro é o mandante para organizar o escudo na esquerda
-  const isCruzeiroMandante = match.mandante?.toLowerCase().includes("cruzeiro");
-
-  const escudoMandante = match.escudo_mandante || "../assets/default-logo.png";
-  const escudoVisitante = match.escudo_visitante || "../assets/default-logo.png";
-  const nomeMandante = match.mandante || "A definir";
-  const nomeVisitante = match.visitante || "A definir";
-
-  container.innerHTML = `
-    <div class="match-header-card" style="background: linear-gradient(135deg, #1a1f3a 0%, #002266 100%); border: 2px solid var(--primary-light);">
-      <div class="match-status-badge" style="background: var(--accent); color: var(--primary-dark);">
-        <i class="fas fa-clock"></i> PRÓXIMO JOGO
-      </div>
-      <div class="score-row" style="flex-direction: column; gap: 30px; padding: 40px 20px;">
-        <div style="display: flex; justify-content: center; align-items: center; gap: 40px; width: 100%;">
-          <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
-            <img src="${escudoMandante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
-            <span class="team-name">${nomeMandante}</span>
-          </div>
-          <div class="vs-divider">VS</div>
-          <div class="team-info" style="flex-direction: column; text-align: center; flex: 1; max-width: 200px;">
-            <img src="${escudoVisitante}" class="team-logo" style="width: 100px; height: 100px; margin-bottom: 15px;">
-            <span class="team-name">${nomeVisitante}</span>
-          </div>
-        </div>
-        <div class="match-game-info">
-          <div class="match-competition"><i class="fas fa-trophy"></i> ${match.campeonato || 'Partida'}</div>
-          <div class="match-date"><i class="fas fa-calendar-alt"></i> ${match.data}</div>
-          <div class="match-time"><i class="fas fa-clock"></i> ${match.hora}</div>
-        </div>
-      </div>
-    </div>
-  `;
+  // Preenche os novos campos do card melhorado
+  const nextHomeLogo = document.getElementById('next-home-logo');
+  const nextHomeName = document.getElementById('next-home-name');
+  const nextAwayLogo = document.getElementById('next-away-logo');
+  const nextAwayName = document.getElementById('next-away-name');
+  const nextCompetition = document.getElementById('next-competition');
+  const nextStadium = document.getElementById('next-stadium');
+  const nextDatetime = document.getElementById('next-datetime');
+  
+  if (nextHomeLogo) nextHomeLogo.src = match.escudo_mandante || "../assets/default-logo.png";
+  if (nextHomeName) nextHomeName.textContent = match.mandante || "A definir";
+  if (nextAwayLogo) nextAwayLogo.src = match.escudo_visitante || "../assets/default-logo.png";
+  if (nextAwayName) nextAwayName.textContent = match.visitante || "A definir";
+  if (nextCompetition) nextCompetition.textContent = match.campeonato || "Partida";
+  if (nextStadium) nextStadium.textContent = match.estadio || "A definir";
+  if (nextDatetime) nextDatetime.textContent = `${match.data} às ${match.hora}`;
+  
+  Logger.success('PRÓXIMO JOGO', `${match.mandante} vs ${match.visitante} - ${match.data} ${match.hora}`);
 };
 
 /**
@@ -773,12 +818,52 @@ function updateMatchState(data) {
 
 function renderAllComponents(data) {
   renderMatchHeader(data.placar, data.narracao, data.informacoes);
+  
+  // ⚽ NOVA: Posse de bola visual
+  if (data.estatisticas && (data.estatisticas.posse_home || data.estatisticas.posse_away)) {
+    renderPossessionBar(data.estatisticas, data.placar);
+  }
+  
   renderTimelineFullWidth(data.narracao);
   if (data.estatisticas && Object.keys(data.estatisticas).length > 0) {
     renderPanelStats(data.estatisticas);
   }
   updateTopArbitro(data.arbitragem);
   renderPanelLineups(data.escalacao);
+}
+
+/**
+ * ⚽ NOVA FUNCIONALIDADE: Barra visual de posse de bola
+ */
+function renderPossessionBar(stats, placar) {
+  const container = document.getElementById("live-match-container");
+  if (!container || !stats) return;
+  
+  const posseHome = parseInt(stats.posse_home) || 50;
+  const posseAway = parseInt(stats.posse_away) || 50;
+  
+  const possessionHTML = `
+    <div class="possession-bar-container">
+      <div class="possession-bar-title">
+        <i class="fas fa-futbol"></i>
+        <span>POSSE DE BOLA</span>
+      </div>
+      <div class="possession-teams">
+        <span>${placar?.home_name || 'Casa'}</span>
+        <span>${placar?.away_name || 'Visitante'}</span>
+      </div>
+      <div class="possession-bar">
+        <div class="possession-home" style="width: ${posseHome}%">
+          ${posseHome}%
+        </div>
+        <div class="possession-away" style="width: ${posseAway}%">
+          ${posseAway}%
+        </div>
+      </div>
+    </div>
+  `;
+  
+  container.insertAdjacentHTML('beforeend', possessionHTML);
 }
 
 function renderMatchHeader(placar, narracao, informacoes) {
@@ -846,16 +931,16 @@ function renderMatchHeader(placar, narracao, informacoes) {
       </div>
     </div>
 
-    <div class="match-footer-info" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); font-size: 0.8rem; color: var(--gray-300); text-align: center; display: flex; flex-direction: column; gap: 5px;">
-      <div><i class="fas fa-trophy" style="color: var(--accent); margin-right: 5px;"></i> ${nomeCampeonato}</div>
-      <div><i class="fas fa-location-dot" style="color: var(--accent); margin-right: 5px;"></i> ${localPartida}</div>
+    <div class="match-footer-info">
+      <div><i class="fas fa-trophy" ></i> ${nomeCampeonato}</div>
+      <div><i class="fas fa-location-dot" ></i> ${localPartida}</div>
     </div>
   </div>
 `;
 }
 
 /**
- * RENDERIZA TIMELINE EM LARGURA TOTAL
+ * RENDERIZA TIMELINE EM LARGURA TOTAL - NOVOS LANCES PRIMEIRO
  */
 function renderTimelineFullWidth(narracao) {
   const container = document.getElementById("timeline-container-full");
@@ -879,70 +964,77 @@ function renderTimelineFullWidth(narracao) {
     container.removeChild(container.firstChild);
   }
 
-  narracao.forEach((lance) => {
+  // 🎯 LANCES NOVOS PRIMEIRO - Inverte a ordem
+  const lancesInvertidos = [...narracao].reverse();
+
+  lancesInvertidos.forEach((lance, index) => {
     const item = document.createElement("div");
 
-    let iconClass = "";
-    let iconContent = lance.icone || "📝";
-    let extraClass = "lance-normal";
+    let tipoClasse = "";
+    let iconeHtml = lance.icone || "📝";
     const desc = lance.descricao ? lance.descricao.toLowerCase() : "";
+    const tipo = (lance.tipo || "").toLowerCase();
 
-    // Lógica de Ícones
-    if (lance.is_gol || desc.includes("gol")) {
-      iconClass = "icon-goal";
-      iconContent = '<i class="fas fa-futbol"></i>';
-      extraClass = "lance-gol";
-    } else if (desc.includes("amarelo")) {
-      iconClass = "icon-yellow-card";
-      iconContent =
-        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
-    } else if (desc.includes("vermelho")) {
-      iconClass = "icon-red-card";
-      iconContent =
-        '<i class="fas fa-square-full" style="font-size: 0.8em;"></i>';
-    } else if (
-      desc.includes("pênalti") ||
-      desc.includes("penalidade") ||
-      desc.includes("marca da cal")
-    ) {
-      iconClass = "icon-penalty";
-      iconContent = '<i class="fas fa-bullseye"></i>';
-      extraClass = "lance-importante";
+    // Detecta tipo do lance
+    if (lance.is_gol || desc.includes("gol do ") || tipo === "gol") {
+      tipoClasse = "gol";
+      iconeHtml = '<i class="fas fa-futbol"></i>';
+    } else if (desc.includes("cartão amarelo") || desc.includes("amarelo para") || tipo === "cartão amarelo") {
+      tipoClasse = "amarelo";
+      iconeHtml = '<i class="fas fa-square"></i>';
+    } else if (desc.includes("cartão vermelho") || desc.includes("expuls") || tipo === "cartão vermelho") {
+      tipoClasse = "vermelho";
+      iconeHtml = '<i class="fas fa-square"></i>';
+    } else if (desc.includes("pênalti") || desc.includes("penalti") || desc.includes("penalidade")) {
+      tipoClasse = "penalti";
+      iconeHtml = '<i class="fas fa-bullseye"></i>';
+    } else if (tipo === "substituição" || desc.includes("sai:") || desc.includes("entra:")) {
+      tipoClasse = "substituicao";
+      iconeHtml = '<i class="fas fa-retweet"></i>';
+    } else if (tipo === "lance importante" || desc.includes("<strong>")) {
+      tipoClasse = "importante";
+    } else if (tipo === "resumo automático") {
+      tipoClasse = "resumo";
+      iconeHtml = '<i class="fas fa-list-alt"></i>';
     }
 
-    item.className = `timeline-item-full ${extraClass}`;
+    item.className = `timeline-item-full ${tipoClasse}`;
+    
+    // Marca os 5 primeiros lances como "novo"
+    if (index < 5) {
+      item.classList.add("novo");
+      // Remove a classe após 10 segundos
+      setTimeout(() => {
+        item.classList.remove("novo");
+        item.classList.add("novo-fade");
+      }, 10000);
+    }
 
-    let min = "0'";
+    // Extrai minuto
+    let minuto = "0'";
     if (lance.minuto !== undefined && lance.minuto !== null) {
-      min = String(lance.minuto)
-        .replace(/<[^>]*>/g, "")
-        .trim();
+      minuto = String(lance.minuto).replace(/<[^>]*>/g, "").trim();
     }
 
-    // CORREÇÃO: Sanitização de HTML usando textContent
-    const timeElement = document.createElement("div");
-    timeElement.className = "timeline-time-full";
-    timeElement.innerHTML = `<span class="time-badge-full">${min}</span>`;
+    // Extrai período
+    const periodo = lance.periodo || "";
 
-    const contentElement = document.createElement("div");
-    contentElement.className = "timeline-content-full";
-    
-    const iconElement = document.createElement("div");
-    iconElement.className = `timeline-icon-full ${iconClass}`;
-    iconElement.innerHTML = iconContent;
-    
-    const textElement = document.createElement("div");
-    textElement.className = "timeline-text-full";
-    
-    const pElement = document.createElement("p");
-    pElement.textContent = lance.descricao || "";
-    textElement.appendChild(pElement);
-    
-    contentElement.appendChild(iconElement);
-    contentElement.appendChild(textElement);
-    
-    item.appendChild(timeElement);
-    item.appendChild(contentElement);
+    // Monta HTML do item
+    item.innerHTML = `
+      <div class="timeline-marker-full">
+        <div class="timeline-icon-full">${iconeHtml}</div>
+      </div>
+      <div class="timeline-header-full">
+        <div class="timeline-minute-full">
+          ${minuto}
+          ${periodo ? `<span class="timeline-periodo">${periodo}</span>` : ''}
+        </div>
+      </div>
+      <div class="timeline-text-full">
+        ${lance.descricao || 'Sem descrição'}
+      </div>
+      ${lance.timestamp ? `<div class="timeline-timestamp">${new Date(lance.timestamp).toLocaleTimeString('pt-BR')}</div>` : ''}
+    `;
     
     container.appendChild(item);
   });
@@ -1549,7 +1641,7 @@ function dispararAnimacaoFullScreen(tipo) {
 
   if (!overlay || !container || !textOverlay) return;
 
-  textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho");
+  textOverlay.classList.remove("jump", "text-amarelo", "text-vermelho", "text-penalti");
   textOverlay.innerText = "";
   while (container.firstChild) {
     container.removeChild(container.firstChild);
@@ -1557,14 +1649,30 @@ function dispararAnimacaoFullScreen(tipo) {
 
   overlay.style.display = "flex";
 
+  // ⚡ PÊNALTI: Apenas texto, SEM animação Lottie
+  if (tipo === "penalti") {
+    textOverlay.innerText = "⚽ PÊNALTI! ⚽";
+    textOverlay.classList.add("text-penalti");
+    textOverlay.classList.add("jump");
+    
+    // Fecha mais rápido (só texto)
+    setTimeout(() => {
+      textOverlay.classList.remove("jump");
+      overlay.style.display = "none";
+    }, 2000); // 2 segundos apenas
+    
+    return; // Retorna sem carregar Lottie
+  }
+
+  // Textos para outros tipos
   if (tipo === "amarelo") {
-    textOverlay.innerText = "CARTÃO AMARELO";
+    textOverlay.innerText = "🟨 CARTÃO AMARELO";
     textOverlay.classList.add("text-amarelo");
   } else if (tipo === "vermelho") {
-    textOverlay.innerText = "CARTÃO VERMELHO";
+    textOverlay.innerText = "🟥 CARTÃO VERMELHO";
     textOverlay.classList.add("text-vermelho");
-  } else if (tipo === "penalti") {
-    textOverlay.innerText = "PÊNALTI";
+  } else if (tipo === "gol") {
+    textOverlay.innerText = "⚽ GOOOOL! ⚽";
     textOverlay.style.color = "#fff";
   }
 
@@ -1583,35 +1691,39 @@ function dispararAnimacaoFullScreen(tipo) {
   });
   
   anim.addEventListener("complete", () => {
+    // ⚡ REDUZIDO: De 4500ms para 2500ms
     setTimeout(() => {
       textOverlay.classList.remove("jump");
       overlay.style.display = "none";
   
-      anim.destroy(); // ⛔ impede sobreposição
-    }, 4500);
+      anim.destroy();
+    }, 2500); // Animações mais rápidas!
   });  
 }
 
 /**
- * FUNÇÕES DE TESTE PARA DEBUG
+ * FUNÇÕES DE TESTE PARA DEBUG E DEMONSTRAÇÃO
  */
 window.cabulosoTeste = {
+  // ═══ ANIMAÇÕES ═══
   gol: () => {
     dispararAnimacaoFullScreen("gol");
-    console.log("⚽ GOOOOL EM TELA CHEIA!");
+    Logger.match('TESTE', 'Animação de GOL disparada!');
   },
   amarelo: () => {
     dispararAnimacaoFullScreen("amarelo");
-    console.log("🟨 CARTÃO AMARELO EM TELA CHEIA!");
+    Logger.warn('TESTE', 'Animação de CARTÃO AMARELO disparada!');
   },
   vermelho: () => {
     dispararAnimacaoFullScreen("vermelho");
-    console.log("🟥 CARTÃO VERMELHO EM TELA CHEIA!");
+    Logger.error('TESTE', 'Animação de CARTÃO VERMELHO disparada!');
   },
   penalti: () => {
-    console.log("🎯 PÊNALTI DETECTADO!");
     dispararAnimacaoFullScreen("penalti");
+    Logger.info('TESTE', 'Animação de PÊNALTI disparada!');
   },
+  
+  // ═══ PAINÉIS FLUTUANTES ═══
   abrirEstatisticas: () => {
     const overlay = document.getElementById("floating-overlay");
     const statsPanel = document.getElementById("stats-panel");
@@ -1619,6 +1731,7 @@ window.cabulosoTeste = {
       overlay.classList.add("active");
       statsPanel.classList.add("active");
       document.body.style.overflow = "hidden";
+      Logger.success('TESTE', 'Painel de Estatísticas aberto');
     }
   },
   abrirEscalacoes: () => {
@@ -1628,8 +1741,32 @@ window.cabulosoTeste = {
       overlay.classList.add("active");
       lineupPanel.classList.add("active");
       document.body.style.overflow = "hidden";
+      Logger.success('TESTE', 'Painel de Escalações aberto');
     }
   },
+  
+  // ═══ ESTADOS DE INTERFACE ═══
+  mostrarProximoJogo: () => {
+    state.matchStarted = false;
+    showNextMatchCountdown();
+    Logger.info('TESTE', 'Mostrando próximo jogo');
+  },
+  simularJogoAoVivo: () => {
+    state.matchStarted = true;
+    showLiveMatchUI();
+    Logger.match('TESTE', 'Simulando jogo ao vivo');
+  },
+  
+  // ═══ LOGS ═══
+  ligarLogs: () => {
+    Logger.enabled = true;
+    Logger.success('TESTE', 'Logs ATIVADOS');
+  },
+  desligarLogs: () => {
+    Logger.enabled = false;
+    console.log('Logs DESATIVADOS');
+  },
+  
 };
 
 // Salvar dados antes de fechar/recarregar a página
