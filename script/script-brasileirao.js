@@ -86,8 +86,8 @@ const loadMasterDataBrasileirao = async () => {
       console.log("✅ Dados recuperados do cache com sucesso.");
       stateBrasileirao.dadosCompletos = data;
       // CHAMA AS FUNÇÕES CORRETAS QUE EXISTEM NO SEU SCRIPT
-      renderTable();
-      renderAgenda();
+      refreshCurrentView(); // Renderiza a tabela do campeonato atual
+      if (data.agenda) renderizarAgenda(data.agenda); // Renderiza a agenda
       return;
     }
 
@@ -111,8 +111,8 @@ const loadMasterDataBrasileirao = async () => {
       }
       
       // CHAMA AS FUNÇÕES CORRETAS QUE EXISTEM NO SEU SCRIPT
-      renderTable();
-      renderAgenda();
+      refreshCurrentView(); // Renderiza a tabela do campeonato atual
+      if (data.agenda) renderizarAgenda(data.agenda); // Renderiza a agenda
     } else {
       throw new Error("Dados vazios do Worker");
     }
@@ -133,9 +133,9 @@ const refreshCurrentView = () => {
   const camp = stateBrasileirao.campeonatoAtual;
   
   if (camp === "brasileirao") {
-    renderizarTabelaCompleta(data.tabela_brasileiro);
+    renderizarTabelaCompleta(data.tabelas?.brasileiro || data.tabela_brasileiro);
   } else if (camp === "mineiro") {
-    renderizarTabelaMineiro(data.tabela_mineiro);
+    renderizarTabelaMineiro(data.tabelas?.mineiro || data.tabela_mineiro);
   } else {
     renderCopaDoBrasilPlaceholder();
   }
@@ -207,9 +207,17 @@ const renderizarTabelaMineiro = (data) => {
     return;
   }
 
-  const grupoA = data.slice(0, 4);
-  const grupoB = data.slice(4, 8);
-  const grupoC = data.slice(8, 12);
+  // Se data for um array direto, usa ele. Se for objeto com grupos, extrai os dados
+  const tabelaArray = Array.isArray(data) ? data : (data.grupos || []);
+  
+  if (tabelaArray.length === 0) {
+    container.innerHTML = "<p>Tabela do Mineiro indisponível.</p>";
+    return;
+  }
+
+  const grupoA = tabelaArray.slice(0, 4);
+  const grupoB = tabelaArray.slice(4, 8);
+  const grupoC = tabelaArray.slice(8, 12);
   const melhorSegundo = encontrarMelhorSegundo(grupoA, grupoB, grupoC);
 
   const renderGrupo = (grupo, letra) => `
