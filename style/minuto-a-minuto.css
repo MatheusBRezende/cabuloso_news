@@ -1436,4 +1436,468 @@ button {
 
 .timeline-full::-webkit-scrollbar-thumb:hover {
     background: var(--primary);
+}-e 
+
+/* ============================================
+   MELHORIAS V12.0 - ADICIONADAS ABAIXO
+   Data: Fevereiro 2026
+   ============================================ */
+
+/* 
+ * ESTILOS ADICIONAIS PARA MINUTO A MINUTO V12.0
+ * Adicione este arquivo após o minuto-a-minuto.css original
+ * Ou copie os estilos para o arquivo principal
+ */
+
+/* ============================================
+   BADGES E CATEGORIAS DE EVENTOS
+   ============================================ */
+
+/* Timeline Badges */
+.timeline-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-left: 0.5rem;
+  animation: badge-appear 0.3s ease;
+}
+
+@keyframes badge-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Badge GOL */
+.badge-gol {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: white;
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+  }
+  50% {
+    box-shadow: 0 4px 20px rgba(34, 197, 94, 0.6);
+  }
+}
+
+/* Badge PÊNALTI */
+.badge-penalti {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+}
+
+/* Badge VERMELHO */
+.badge-vermelho {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+}
+
+/* Badge AMARELO */
+.badge-amarelo {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: #78350f;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+/* Badge SUBSTITUIÇÃO */
+.badge-substituicao {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+/* Badge IMPORTANTE */
+.badge-importante {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+/* Badge RESUMO */
+.badge-resumo {
+  background: linear-gradient(135deg, #64748b, #475569);
+  color: white;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+}
+
+/* ============================================
+   CATEGORIAS DE TIMELINE ITEMS
+   ============================================ */
+
+/* Item de GOL - Destaque especial */
+.timeline-item-full.gol {
+  border-left: 4px solid #22c55e;
+  background: linear-gradient(90deg, rgba(34, 197, 94, 0.1), transparent);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.2);
+}
+
+.timeline-item-full.gol .timeline-marker-full {
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+}
+
+.timeline-item-full.gol .timeline-icon-full {
+  font-size: 1.5rem;
+  animation: goal-bounce 0.6s ease;
+}
+
+@keyframes goal-bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+}
+
+/* Item de PÊNALTI */
+.timeline-item-full.penalti {
+  border-left: 4px solid #f59e0b;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.1), transparent);
+}
+
+.timeline-item-full.penalti .timeline-marker-full {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+/* Item de CARTÃO VERMELHO */
+.timeline-item-full.vermelho {
+  border-left: 4px solid #ef4444;
+  background: linear-gradient(90deg, rgba(239, 68, 68, 0.1), transparent);
+}
+
+.timeline-item-full.vermelho .timeline-marker-full {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+}
+
+/* Item de CARTÃO AMARELO */
+.timeline-item-full.amarelo {
+  border-left: 4px solid #fbbf24;
+  background: linear-gradient(90deg, rgba(251, 191, 36, 0.1), transparent);
+}
+
+.timeline-item-full.amarelo .timeline-marker-full {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+}
+
+/* Item de SUBSTITUIÇÃO */
+.timeline-item-full.substituicao {
+  border-left: 4px solid #3b82f6;
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08), transparent);
+}
+
+.timeline-item-full.substituicao .timeline-marker-full {
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+}
+
+/* Item IMPORTANTE */
+.timeline-item-full.importante {
+  border-left: 4px solid #8b5cf6;
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.08), transparent);
+}
+
+.timeline-item-full.importante .timeline-marker-full {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+}
+
+/* Item RESUMO */
+.timeline-item-full.resumo {
+  border-left: 4px solid #64748b;
+  background: linear-gradient(90deg, rgba(100, 116, 139, 0.05), transparent);
+}
+
+.timeline-item-full.resumo .timeline-marker-full {
+  background: linear-gradient(135deg, #64748b, #475569);
+}
+
+/* ============================================
+   MELHORIAS NA TIMELINE
+   ============================================ */
+
+/* Timeline Período */
+.timeline-periodo {
+  display: inline-block;
+  padding: 0.2rem 0.6rem;
+  background: var(--gray-200);
+  color: var(--gray-700);
+  border-radius: var(--radius);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  text-transform: uppercase;
+}
+
+/* Timeline Timestamp */
+.timeline-timestamp {
+  margin-top: 0.5rem;
+  font-size: 0.75rem;
+  color: var(--gray-400);
+  font-family: 'Courier New', monospace;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.timeline-timestamp::before {
+  content: "🕐";
+  font-size: 0.85rem;
+}
+
+/* Melhorias no Timeline Header */
+.timeline-header-full {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.timeline-minute-full {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--primary);
+  background: linear-gradient(135deg, var(--primary-light), var(--primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  min-width: 60px;
+}
+
+/* Melhorias no Conteúdo */
+.timeline-text-full {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--gray-700);
+  padding: 0.5rem 0;
+}
+
+/* Destaque para descrições importantes */
+.timeline-item-full.gol .timeline-text-full,
+.timeline-item-full.penalti .timeline-text-full,
+.timeline-item-full.vermelho .timeline-text-full {
+  font-weight: 500;
+  color: var(--gray-900);
+}
+
+/* ============================================
+   ANIMAÇÕES E TRANSIÇÕES
+   ============================================ */
+
+/* Animação de entrada dos itens */
+.timeline-item-full {
+  animation: timeline-slide-in 0.4s ease-out;
+}
+
+@keyframes timeline-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Hover effect melhorado */
+.timeline-item-full:hover {
+  transform: translateX(8px);
+  box-shadow: var(--shadow-lg);
+}
+
+.timeline-item-full.gol:hover {
+  box-shadow: 0 8px 24px rgba(34, 197, 94, 0.3);
+}
+
+.timeline-item-full.penalti:hover {
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.3);
+}
+
+.timeline-item-full.vermelho:hover {
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.3);
+}
+
+/* ============================================
+   RESPONSIVIDADE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .timeline-badge {
+    font-size: 0.65rem;
+    padding: 0.2rem 0.6rem;
+    margin-left: 0.25rem;
+  }
+  
+  .timeline-minute-full {
+    font-size: 1rem;
+    min-width: 50px;
+  }
+  
+  .timeline-text-full {
+    font-size: 0.9rem;
+  }
+  
+  .timeline-header-full {
+    gap: 0.3rem;
+  }
+  
+  .timeline-periodo {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .timeline-badge {
+    display: block;
+    margin: 0.5rem 0 0 0;
+    width: fit-content;
+  }
+  
+  .timeline-header-full {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+/* ============================================
+   INDICADOR "NOVO" PARA LANCES RECENTES
+   ============================================ */
+
+.timeline-item-full.novo::after {
+  content: "NOVO";
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  animation: new-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes new-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Remover indicador "novo" após alguns segundos */
+.timeline-item-full.novo-fade::after {
+  animation: fade-out 0.5s ease-out forwards;
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+}
+
+/* ============================================
+   MELHORIAS NO ÍCONE DA TIMELINE
+   ============================================ */
+
+.timeline-icon-full {
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Ícones específicos com tamanhos ajustados */
+.timeline-item-full.gol .timeline-icon-full {
+  font-size: 1.4rem;
+}
+
+.timeline-item-full.penalti .timeline-icon-full {
+  font-size: 1.3rem;
+}
+
+.timeline-item-full.vermelho .timeline-icon-full,
+.timeline-item-full.amarelo .timeline-icon-full {
+  font-size: 1.2rem;
+}
+
+/* ============================================
+   FILTROS E ORDENAÇÃO (OPCIONAL)
+   ============================================ */
+
+.timeline-filters {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.5rem 1rem;
+  background: white;
+  border: 2px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.filter-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.filter-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0, 51, 153, 0.3);
+}
+
+/* ============================================
+   SCROLL SUAVE E SCROLL INDICATORS
+   ============================================ */
+
+.timeline-container-full {
+  scroll-behavior: smooth;
+}
+
+/* Indicador de scroll */
+.timeline-scroll-indicator {
+  position: sticky;
+  top: 0;
+  height: 3px;
+  background: var(--gray-200);
+  z-index: 10;
+  overflow: hidden;
+}
+
+.timeline-scroll-progress {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  width: 0%;
+  transition: width 0.2s ease;
 }
