@@ -317,11 +317,13 @@ const fetchLiveData = async () => {
       }
 
       updateMatchState(data);
+      renderMatchHeader(data.placar, data.narracao, data.informacoes);
       processarGol();
       detectarNovoLance(data);
       renderTimeline(data.narracao || []);
       renderPanelStats(lastValidStats || data.estatisticas);
-      renderLineups(data.escalacao);
+      renderPanelLineups(data.escalacao);
+      updateTopArbitro(data.arbitragem);
     }
 
   } catch (error) {
