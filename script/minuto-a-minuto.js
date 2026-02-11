@@ -320,7 +320,7 @@ const fetchLiveData = async () => {
       processarGol();
       detectarNovoLance(data);
       renderTimeline(data.narracao || []);
-      renderMatchStats(lastValidStats || data.estatisticas);
+      renderPanelStats(lastValidStats || data.estatisticas);
       renderLineups(data.escalacao);
     }
 
