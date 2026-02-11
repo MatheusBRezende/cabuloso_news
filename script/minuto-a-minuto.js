@@ -495,9 +495,17 @@ function processarNovoLance(lance) {
 const showLiveMatchUI = () => {
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
+  const matchContainer = document.getElementById("live-match-container");
+  
   document.body.classList.add("live-match");
+  
   if (liveSections) liveSections.style.display = "block";
   if (countdownWrapper) countdownWrapper.style.display = "none";
+  
+  // 🔧 CORREÇÃO: Limpa o container da agenda quando jogo ao vivo começar
+  if (matchContainer) {
+    matchContainer.innerHTML = "";
+  }
 
   if (state.countdownInterval) {
     clearInterval(state.countdownInterval);
