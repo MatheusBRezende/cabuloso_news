@@ -1,10 +1,12 @@
 /**
  * Cabuloso News - Minuto a Minuto OTIMIZADO
- * Versão: 12.0 - COM LOGS PROFISSIONAIS
+ * Versão: 13.0 - COM TRATAMENTO APRIMORADO
  * - Mantém 5s de atualização durante jogos ao vivo
  * - Economiza requisições quando não há jogo
  * - Usa cache inteligente do Worker (RAM)
  * - Sistema de logs organizado e profissional
+ * - Tratamento adequado quando não há jogos ao vivo (200 OK em vez de 404)
+ * - Detector de próximos jogos aprimorado
  */
 
 // ═══════════════════ SISTEMA DE LOGS PROFISSIONAL ═══════════════════
@@ -305,12 +307,19 @@ const fetchLiveData = async () => {
       cache: 'no-cache' // Força bypass do cache do navegador, mas permite cache do Worker
     });
     
+    // ✅ Agora o Worker sempre retorna 200 OK
+    if (!response.ok) {
+      throw new Error(`Erro HTTP: ${response.status}`);
+    }
+    
     let data = await response.json();
 
     // Verifica status do cache no Worker
     const cacheStatus = response.headers.get('X-Cache');
+    const matchStatus = response.headers.get('X-Match-Status');
+    
     if (cacheStatus) {
-      console.log(`📦 Cache status: ${cacheStatus}`);
+      Logger.cache('CACHE', `Status: ${cacheStatus}${matchStatus ? ` | Match: ${matchStatus}` : ''}`);
     }
 
     // 1. TRATAMENTO DO ENVELOPE (n8n ou Array)
@@ -325,15 +334,24 @@ const fetchLiveData = async () => {
       data = data[""];
     }
 
-    // 3. LÓGICA INTELIGENTE DE ADAPTAÇÃO DE VELOCIDADE
+    // 3. VERIFICA SE É RESPOSTA "SEM JOGO AO VIVO"
+    if (data && (data.status === "sem_jogo_ao_vivo" || data.mensagem === "Nenhum jogo ao vivo no momento")) {
+      Logger.info('STATUS', 'Nenhum jogo ao vivo no momento');
+      state.matchStarted = false;
+      showNextMatchCountdown();
+      startLivePolling(CONFIG.updateIntervalIdle);
+      return;
+    }
+
+    // 4. LÓGICA INTELIGENTE DE ADAPTAÇÃO DE VELOCIDADE
     const isLiveMatch = data && data.success === true && (data.placar || data.narracao);
     const isAgenda = data && (data.status === "agenda" || data.modo_agenda === true);
     const hasError = data && data.error;
 
     // 🎯 DECISÃO DE VELOCIDADE
-    if (hasError || !data) {
+    if (hasError) {
       // ERRO: Modo super lento (60s)
-      Logger.warn('API', 'Erro detectado. Aguardando 60s...');
+      Logger.warn('API', `Erro na API: ${data.mensagem || 'Desconhecido'}. Aguardando 60s...`);
       state.matchStarted = false;
       showNextMatchCountdown();
       startLivePolling(CONFIG.updateIntervalIdle);
@@ -352,7 +370,8 @@ const fetchLiveData = async () => {
         startLivePolling(CONFIG.updateIntervalPreMatch);
       } else {
         // Mais de 30min: modo LENTO (60s)
-        Logger.info('AGENDA', 'Sem jogos próximos. Polling lento (60s).');
+        const tempoRestante = proximoJogo ? `${proximoJogo.minutosParaInicio}min` : 'sem data definida';
+        Logger.info('AGENDA', `Próximo jogo em ${tempoRestante}. Polling lento (60s).`);
         state.matchStarted = false;
         showNextMatchCountdown();
         startLivePolling(CONFIG.updateIntervalIdle);
@@ -360,7 +379,7 @@ const fetchLiveData = async () => {
       return;
     }
 
-    // 4. JOGO AO VIVO! ⚽
+    // 5. JOGO AO VIVO! ⚽
     if (isLiveMatch) {
       // Garante polling RÁPIDO (5s)
       if (state.currentUpdateInterval !== CONFIG.updateIntervalLive) {
@@ -369,7 +388,7 @@ const fetchLiveData = async () => {
         startLivePolling(CONFIG.updateIntervalLive);
       }
 
-      // 5. ATUALIZAÇÃO DOS COMPONENTES VISUAIS
+      // 6. ATUALIZAÇÃO DOS COMPONENTES VISUAIS
       Logger.info('RENDER', 'Renderizando lances do jogo...');
       
       showLiveMatchUI();
@@ -406,52 +425,58 @@ const fetchLiveData = async () => {
 async function checkProximoJogo() {
   try {
     // 🟢 CORREÇÃO: Verifica se agendaData existe e se a propriedade 'jogos' é um array populado
-    if (state.agendaData && Array.isArray(state.agendaData.jogos) && state.agendaData.jogos.length > 0) {
-      const proximoJogo = state.agendaData.jogos[0];
-      
-      // CORREÇÃO: Validação de dados da data/hora
-      const dataParts = proximoJogo.data ? proximoJogo.data.split('/') : [];
-      const horaParts = proximoJogo.hora ? proximoJogo.hora.split(':') : [];
-      
-      if (dataParts.length !== 3 || horaParts.length < 2) {
-        console.warn("Formato de data/hora inválido:", proximoJogo.data, proximoJogo.hora);
-        return null;
-      }
-      
-      const dia = parseInt(dataParts[0], 10);
-      const mes = parseInt(dataParts[1], 10);
-      const ano = parseInt(dataParts[2], 10);
-      const hora = parseInt(horaParts[0], 10);
-      const minuto = parseInt(horaParts[1] || 0, 10);
-      
-      // Valida valores numéricos
-      if (!isFinite(dia) || !isFinite(mes) || !isFinite(ano) || !isFinite(hora) || !isFinite(minuto)) {
-        console.warn("Valores de data/hora não são números válidos");
-        return null;
-      }
-      
-      // Valida faixas razoáveis
-      if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 2000 || ano > 2100 || 
-          hora < 0 || hora > 23 || minuto < 0 || minuto > 59) {
-        console.warn("Valores de data/hora fora da faixa esperada");
-        return null;
-      }
-      
-      // CORREÇÃO: Cria a data UTC para Brasília (UTC-3)
-      // A hora fornecida é em Brasília, então adicionamos 3 horas para converter para UTC
-      const utcMillis = Date.UTC(ano, mes - 1, dia, hora + 3, minuto);
-      const dataJogo = new Date(utcMillis);
-      
-      const agora = new Date();
-      const minutosParaInicio = Math.floor((dataJogo - agora) / 1000 / 60);
-      
-      return {
-        jogo: proximoJogo,
-        minutosParaInicio: minutosParaInicio
-      };
+    if (!state.agendaData || !Array.isArray(state.agendaData.jogos) || state.agendaData.jogos.length === 0) {
+      Logger.warn('AGENDA', 'Nenhum jogo encontrado na agenda');
+      return null;
     }
+    
+    const proximoJogo = state.agendaData.jogos[0];
+    
+    // CORREÇÃO: Validação de dados da data/hora
+    const dataParts = proximoJogo.data ? proximoJogo.data.split('/') : [];
+    const horaParts = proximoJogo.hora ? proximoJogo.hora.split(':') : [];
+    
+    if (dataParts.length !== 3 || horaParts.length < 2) {
+      Logger.warn('AGENDA', 'Formato de data/hora inválido', { data: proximoJogo.data, hora: proximoJogo.hora });
+      return null;
+    }
+    
+    const dia = parseInt(dataParts[0], 10);
+    const mes = parseInt(dataParts[1], 10);
+    const ano = parseInt(dataParts[2], 10);
+    const hora = parseInt(horaParts[0], 10);
+    const minuto = parseInt(horaParts[1] || 0, 10);
+    
+    // Valida valores numéricos
+    if (!isFinite(dia) || !isFinite(mes) || !isFinite(ano) || !isFinite(hora) || !isFinite(minuto)) {
+      Logger.warn('AGENDA', 'Valores de data/hora não são números válidos');
+      return null;
+    }
+    
+    // Valida faixas razoáveis
+    if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || ano < 2000 || ano > 2100 || 
+        hora < 0 || hora > 23 || minuto < 0 || minuto > 59) {
+      Logger.warn('AGENDA', 'Valores de data/hora fora da faixa esperada');
+      return null;
+    }
+    
+    // CORREÇÃO: Cria a data UTC para Brasília (UTC-3)
+    // A hora fornecida é em Brasília, então adicionamos 3 horas para converter para UTC
+    const utcMillis = Date.UTC(ano, mes - 1, dia, hora + 3, minuto);
+    const dataJogo = new Date(utcMillis);
+    
+    const agora = new Date();
+    const minutosParaInicio = Math.floor((dataJogo - agora) / 1000 / 60);
+    
+    Logger.success('PRÓXIMO JOGO', `${proximoJogo.mandante} vs ${proximoJogo.visitante} - ${proximoJogo.data} ${proximoJogo.hora}`);
+    
+    return {
+      jogo: proximoJogo,
+      minutosParaInicio: minutosParaInicio
+    };
+    
   } catch (e) {
-    console.warn("Erro ao verificar próximo jogo:", e);
+    Logger.error('AGENDA', 'Erro ao verificar próximo jogo', e);
   }
   return null; // Retorna null se não houver jogos ou em caso de erro
 }
