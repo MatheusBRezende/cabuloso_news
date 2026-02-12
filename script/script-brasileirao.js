@@ -135,7 +135,10 @@ const refreshCurrentView = () => {
   if (camp === "brasileirao") {
     renderizarTabelaCompleta(data.tabelas?.brasileiro || data.tabela_brasileiro);
   } else if (camp === "mineiro") {
-    renderizarTabelaMineiro(data.tabelas?.mineiro || data.tabela_mineiro);
+    // Desembala { classificacao: [...] } se necessário, pois renderizarTabelaMineiro espera array direto
+    const mineiroRaw = data.tabelas?.mineiro || data.tabela_mineiro;
+    const mineiroArray = mineiroRaw?.classificacao || (Array.isArray(mineiroRaw) ? mineiroRaw : []);
+    renderizarTabelaMineiro(mineiroArray);
   } else {
     renderCopaDoBrasilPlaceholder();
   }
