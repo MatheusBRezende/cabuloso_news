@@ -95,6 +95,8 @@
             console.log("🔥 JOGO ESTÁ PRÓXIMO! (5min antes ou rolando)");
             
             // Configura os dados do jogo atual
+            // Usa hora_exibida se disponivel (simulacao), senao usa hora normal
+            const horaParaExibir = jogoHoje.hora_exibida || jogoHoje.hora;
             currentLiveMatch = {
               mandante: jogoHoje.mandante,
               visitante: jogoHoje.visitante,
@@ -102,10 +104,10 @@
               escudo_visitante: jogoHoje.escudo_visitante,
               placar_mandante: 0,
               placar_visitante: 0,
-              tempo: "HOJE ÀS " + jogoHoje.hora,
+              tempo: "HOJE ÀS " + horaParaExibir,
               campeonato: jogoHoje.campeonato,
               estadio: jogoHoje.estadio,
-              hora: jogoHoje.hora
+              hora: horaParaExibir
             };
 
             // Adiciona os indicadores visuais
