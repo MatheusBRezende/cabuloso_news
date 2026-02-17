@@ -350,19 +350,22 @@ const renderizarSemifinalMineiro = (jogos) => {
     const adversario = escapeHtml(jogo.adversario || "A definir");
     const mandante = isMandante ? "Cruzeiro" : adversario;
     const visitante = isMandante ? adversario : "Cruzeiro";
+    // FIX 2: Botão de ação aponta para a página ao vivo (interna)
     const linkHtml = jogo.link_ge
-      ? `<a href="${escapeHtml(jogo.link_ge)}" target="_blank" rel="noopener" class="btn-ge">
-           <i class="fas fa-external-link-alt"></i> Ver no GE
+      ? `<a href="minuto-a-minuto.html" class="btn-ge">
+           <i class="fas fa-play-circle"></i> Acompanhar Ao Vivo
          </a>`
       : "";
 
-    // Tenta pegar escudo do adversário a partir da agenda
+    // FIX 1: Lógica de escudo corrigida
+    // Se Cruzeiro é MANDANTE → adversário é visitante na agenda → pega escudo_visitante
+    // Se Cruzeiro é VISITANTE → adversário é mandante na agenda → pega escudo_mandante
     const agendaJogo = stateBrasileirao.dadosCompletos?.agenda?.find(j =>
       j.mandante === jogo.adversario || j.visitante === jogo.adversario
     );
     const escudoAdversario = isMandante
-      ? (agendaJogo?.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo)
-      : (agendaJogo?.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo);
+      ? (agendaJogo?.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo)
+      : (agendaJogo?.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo);
 
     return `
       <article class="next-match semifinal-card cruzeiro-row fade-in-up">
@@ -549,14 +552,22 @@ const initInterface = () => {
     });
   });
 
+  // FIX 4: Widget toggle — abre E fecha ao clicar novamente
   const widgetToggle = document.getElementById("widget-toggle");
   const widget = document.getElementById("games-widget");
   const widgetClose = document.getElementById("widget-close");
 
   if (widgetToggle && widget) {
-    widgetToggle.addEventListener("click", () => {
-      widget.classList.add("active");
-      widgetToggle.setAttribute("aria-expanded", "true");
+    widgetToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const isOpen = widget.classList.contains("active");
+      if (isOpen) {
+        widget.classList.remove("active");
+        widgetToggle.setAttribute("aria-expanded", "false");
+      } else {
+        widget.classList.add("active");
+        widgetToggle.setAttribute("aria-expanded", "true");
+      }
     });
   }
 
@@ -566,6 +577,15 @@ const initInterface = () => {
       if (widgetToggle) widgetToggle.setAttribute("aria-expanded", "false");
     });
   }
+
+  // Fecha o widget ao clicar fora
+  document.addEventListener("click", (e) => {
+    if (!widget || !widgetToggle) return;
+    if (!widget.contains(e.target) && !widgetToggle.contains(e.target)) {
+      widget.classList.remove("active");
+      widgetToggle.setAttribute("aria-expanded", "false");
+    }
+  });
 };
 
 const updateLegend = (campeonato) => {

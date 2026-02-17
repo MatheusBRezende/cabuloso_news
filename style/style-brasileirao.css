@@ -1407,244 +1407,382 @@ ul { list-style: none; }
   }
 }
 
+
 /* ============================================
-   SEMIFINAL MINEIRO - ESTILOS
+   SEMIFINAL MINEIRO - REDESIGN COMPLETO v2
    ============================================ */
 
 .semifinal-container {
-  padding: var(--space-4) 0;
+  padding: var(--space-2) 0 var(--space-8);
 }
 
+/* ── Banner principal ── */
 .semifinal-header {
   text-align: center;
-  padding: var(--space-6) var(--space-4);
-  margin-bottom: var(--space-6);
-  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  padding: var(--space-10) var(--space-6);
+  margin-bottom: var(--space-8);
+  background: linear-gradient(150deg, #001a66 0%, #003399 55%, #001a66 100%);
   border-radius: var(--radius-xl);
-  border: 2px solid var(--accent);
+  border: 1px solid rgba(255,215,0,0.35);
   position: relative;
   overflow: hidden;
+  box-shadow:
+    0 0 0 1px rgba(255,215,0,0.08),
+    0 16px 48px rgba(0,20,80,0.5);
 }
 
 .semifinal-header::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at top, rgba(255,215,0,0.12) 0%, transparent 70%);
+  background:
+    radial-gradient(ellipse at 25% 60%, rgba(255,215,0,0.07) 0%, transparent 55%),
+    radial-gradient(ellipse at 75% 40%, rgba(255,215,0,0.07) 0%, transparent 55%);
   pointer-events: none;
+}
+
+.semifinal-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
 }
 
 .semifinal-title-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
-  background: rgba(255,215,0,0.15);
+  background: rgba(255,215,0,0.12);
   border: 1px solid rgba(255,215,0,0.4);
   color: var(--accent);
-  font-size: 0.8rem;
-  font-weight: 700;
-  letter-spacing: 0.1em;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
-  padding: var(--space-1) var(--space-3);
+  padding: 5px 14px;
   border-radius: var(--radius-full);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 
 .semifinal-title {
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: clamp(1.4rem, 4vw, 2rem);
   font-weight: 800;
   color: var(--white);
   margin: 0 0 var(--space-2) 0;
-  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  letter-spacing: -0.02em;
+  text-shadow: 0 2px 16px rgba(0,0,0,0.4);
 }
 
 .semifinal-subtitle {
-  color: rgba(255,255,255,0.8);
-  font-size: 0.95rem;
+  color: rgba(255,255,255,0.65);
+  font-size: 0.88rem;
   margin: 0;
 }
 
-/* Grupos de jogos (Semifinal 1, Semifinal 2...) */
+/* ── Seção de grupos ── */
 .semifinal-jogos {
   display: flex;
   flex-direction: column;
-  gap: var(--space-8);
+  gap: var(--space-10);
 }
 
 .semifinal-grupo {
   display: flex;
   flex-direction: column;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .semifinal-grupo-header {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.78rem;
+  font-weight: 800;
   color: var(--accent);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding-bottom: var(--space-2);
-  border-bottom: 1px solid rgba(255,215,0,0.2);
+  letter-spacing: 0.12em;
+  padding: var(--space-2) var(--space-3);
+  background: rgba(255,215,0,0.05);
+  border: 1px solid rgba(255,215,0,0.12);
+  border-radius: var(--radius);
 }
 
 .semifinal-jogo-count {
   margin-left: auto;
-  font-size: 0.75rem;
+  font-size: 0.7rem;
   font-weight: 500;
-  color: var(--gray-400);
+  color: var(--gray-500);
   text-transform: none;
   letter-spacing: 0;
+  background: rgba(255,255,255,0.06);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
 }
 
-/* Card de cada jogo da semifinal */
+/* ── Grid dos cards (dois por linha no desktop) ── */
+.semifinal-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--space-5);
+}
+
+/* ── Card individual de jogo ── */
 .semifinal-card {
-  background: linear-gradient(135deg, var(--gray-800) 0%, rgba(0,33,99,0.6) 100%);
-  border: 1px solid rgba(0,51,153,0.4);
-  border-radius: var(--radius-lg);
-  padding: var(--space-5);
+  background: var(--gray-800);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-5) var(--space-4);
   position: relative;
   overflow: hidden;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
 }
 
 .semifinal-card::before {
   content: "";
   position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 4px;
-  background: linear-gradient(to bottom, var(--accent), var(--primary-light));
-  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--accent) 0%, rgba(255,215,0,0.1) 100%);
+  border-radius: 3px 0 0 3px;
 }
 
 .semifinal-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 24px rgba(0,51,153,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(0,0,0,0.35);
+  border-color: rgba(255,215,0,0.18);
+}
+
+/* Destaque para o jogo de hoje */
+.semifinal-card.jogo-hoje {
+  background: linear-gradient(145deg, #0b1f5e 0%, #001650 100%);
+  border-color: rgba(255,215,0,0.28);
+  box-shadow: 0 0 24px rgba(255,215,0,0.08);
+}
+
+.semifinal-card.jogo-hoje::before {
+  width: 4px;
+  background: var(--accent);
+}
+
+/* ── Topo do card (badges) ── */
+.semifinal-card-top {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .semifinal-fase-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
+  gap: 5px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--accent);
-  background: rgba(255,215,0,0.1);
-  border: 1px solid rgba(255,215,0,0.25);
-  padding: 3px var(--space-2);
+  background: rgba(255,215,0,0.08);
+  border: 1px solid rgba(255,215,0,0.2);
+  padding: 3px 10px;
   border-radius: var(--radius-full);
-  margin-bottom: var(--space-3);
 }
 
-.semifinal-teams {
+.semifinal-hoje-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #fff;
+  background: #e53935;
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  animation: hoje-pulse 1.8s ease-in-out infinite;
+}
+
+.semifinal-hoje-badge i {
+  font-size: 0.5rem;
+}
+
+@keyframes hoje-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(229,57,53,0.4); }
+  50% { box-shadow: 0 0 0 5px rgba(229,57,53,0); }
+}
+
+/* ── Data/hora ── */
+.semifinal-card .match-date {
+  font-size: 0.78rem;
+  color: var(--gray-400);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin: var(--space-3) 0;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
 }
 
-.semifinal-teams .match-team {
+/* ── Times ── */
+.semifinal-teams {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.semifinal-team {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-2);
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--radius-lg);
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
   text-align: center;
+  transition: background 0.18s;
+  min-width: 0;
 }
 
-.semifinal-teams .match-team span {
+.semifinal-team:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.semifinal-team.team-cruzeiro {
+  background: rgba(0,51,153,0.22);
+  border-color: rgba(0,80,200,0.3);
+}
+
+.semifinal-escudo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  filter: drop-shadow(0 3px 6px rgba(0,0,0,0.35));
+}
+
+.semifinal-team-name {
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   color: var(--white);
+  line-height: 1.25;
+  word-break: break-word;
 }
 
-.semifinal-teams .team-cruzeiro span {
+.team-cruzeiro .semifinal-team-name {
   color: var(--accent);
 }
 
-.semifinal-teams .escudo-pequeno {
-  width: 44px;
-  height: 44px;
-  object-fit: contain;
+.semifinal-mando-label {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--gray-500);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* ── VS central ── */
+.semifinal-vs-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0 4px;
 }
 
 .semifinal-vs {
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 900;
-  color: var(--gray-400);
-  padding: 0 var(--space-2);
-  flex-shrink: 0;
+  color: var(--gray-600);
+  line-height: 1;
 }
 
-.semifinal-card .match-date {
-  font-size: 0.82rem;
-  color: var(--gray-400);
+/* ── Footer do card ── */
+.semifinal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid rgba(255,255,255,0.06);
+  flex-wrap: wrap;
+}
+
+.semifinal-estadio {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  min-width: 0;
+  overflow: hidden;
 }
 
-.semifinal-card .match-info {
-  font-size: 0.82rem;
-  color: var(--gray-400);
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  margin-top: var(--space-2);
-}
-
-.semifinal-card .match-info strong {
+.semifinal-estadio strong {
   color: var(--gray-300);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Botão "Ver no GE" */
+/* ── Botão "Acompanhar Ao Vivo" / "Ver no GE" ── */
 .btn-ge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-1);
-  margin-top: var(--space-3);
-  padding: var(--space-1) var(--space-3);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--primary);
-  background: rgba(255,215,0,0.12);
-  border: 1px solid rgba(255,215,0,0.3);
+  gap: 6px;
+  padding: 7px 16px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background: var(--accent);
   border-radius: var(--radius-full);
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  box-shadow: 0 2px 10px rgba(255,215,0,0.25);
+  flex-shrink: 0;
 }
 
 .btn-ge:hover {
-  background: var(--accent);
-  color: var(--primary-dark);
+  background: #ffe033;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 18px rgba(255,215,0,0.4);
 }
 
-/* Responsive */
-@media (max-width: 480px) {
-  .semifinal-title {
-    font-size: 1.25rem;
+/* ── Responsive ── */
+@media (max-width: 640px) {
+  .semifinal-cards-grid {
+    grid-template-columns: 1fr;
   }
 
-  .semifinal-teams .match-team span {
-    font-size: 0.82rem;
+  .semifinal-escudo {
+    width: 44px;
+    height: 44px;
   }
 
-  .semifinal-teams .escudo-pequeno {
-    width: 36px;
-    height: 36px;
+  .semifinal-team-name {
+    font-size: 0.78rem;
   }
 
   .semifinal-card {
-    padding: var(--space-4) var(--space-3);
+    padding: var(--space-4) var(--space-4) var(--space-3);
+  }
+
+  .semifinal-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-ge {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .semifinal-header {
+    padding: var(--space-6) var(--space-4);
   }
 }

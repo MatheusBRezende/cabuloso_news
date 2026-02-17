@@ -237,6 +237,23 @@ function gerarHashLance(minuto, descricao, tipo = '') {
 let liveInterval = null;
 
 /**
+ * FIX 3: Limpa cache do localStorage quando não há jogo ao vivo
+ * Evita que dados do jogo anterior fiquem persistindo
+ */
+function limparCacheAoVivo() {
+  try {
+    localStorage.removeItem('cabuloso_shown_events');
+    localStorage.removeItem('cabuloso_last_score');
+    // Também reseta o estado interno
+    ultimoLanceId = null;
+    lastValidStats = null;
+    Logger.info('CACHE', 'Cache do jogo ao vivo limpo com sucesso');
+  } catch (e) {
+    Logger.warn('CACHE', 'Erro ao limpar cache', e);
+  }
+}
+
+/**
  * POLLING INTELIGENTE - Adapta velocidade baseado no estado do jogo
  */
 function startLivePolling(intervalMs = CONFIG.updateIntervalLive) {
@@ -307,7 +324,16 @@ const fetchLiveData = async () => {
       cache: 'no-cache' // Força bypass do cache do navegador, mas permite cache do Worker
     });
     
-    // ✅ Agora o Worker sempre retorna 200 OK
+    // FIX: Se Worker retorna 404 = sem jogo ao vivo, limpa cache e mostra countdown
+    if (response.status === 404) {
+      Logger.info('STATUS', 'Worker retornou 404 — sem jogo ao vivo. Limpando cache...');
+      limparCacheAoVivo();
+      state.matchStarted = false;
+      showNextMatchCountdown();
+      startLivePolling(CONFIG.updateIntervalIdle);
+      return;
+    }
+
     if (!response.ok) {
       throw new Error(`Erro HTTP: ${response.status}`);
     }
@@ -335,8 +361,14 @@ const fetchLiveData = async () => {
     }
 
     // 3. VERIFICA SE É RESPOSTA "SEM JOGO AO VIVO"
-    if (data && (data.status === "sem_jogo_ao_vivo" || data.mensagem === "Nenhum jogo ao vivo no momento")) {
-      Logger.info('STATUS', 'Nenhum jogo ao vivo no momento');
+    if (data && (
+      data.status === "sem_jogo_ao_vivo" ||
+      data.error === "no_live_match" ||
+      data.mensagem === "Nenhum jogo ao vivo no momento"
+    )) {
+      Logger.info('STATUS', 'Nenhum jogo ao vivo no momento. Limpando cache...');
+      // FIX 3: Limpa localStorage para não persistir dados do jogo anterior
+      limparCacheAoVivo();
       state.matchStarted = false;
       showNextMatchCountdown();
       startLivePolling(CONFIG.updateIntervalIdle);
@@ -603,43 +635,60 @@ const showLiveMatchUI = () => {
 
 /**
  * EXIBE O COUNTDOWN E ESCONDE O MINUTO A MINUTO
+ *
+ * CORREÇÃO DA RACE CONDITION:
+ * fetchLiveData() é chamado ANTES de loadAgenda(), então quando não há
+ * jogo ao vivo, a agenda ainda está vazia (null). Nesse caso NÃO devemos
+ * mostrar o fallback "Sem Próximos Jogos" — apenas aguardar a agenda carregar.
+ * O loadAgenda() vai chamar showNextMatchCountdown() novamente com os dados.
  */
 const showNextMatchCountdown = () => {
   const nextMatch = getNextMatchFromAgenda();
 
   if (!nextMatch) {
-    console.warn("⚠️ Nenhum próximo jogo encontrado na agenda");
-    
-    // Mostra uma mensagem padrão se não houver próximos jogos
+    // Se a agenda ainda não foi carregada (null), aguarda silenciosamente
+    // sem mostrar nada — loadAgenda() chamará este método em seguida
+    if (!state.agendaData) {
+      Logger.info('COUNTDOWN', 'Agenda ainda não carregada, aguardando...');
+      return;
+    }
+
+    // Agenda foi carregada mas realmente não tem jogos futuros
+    Logger.warn('COUNTDOWN', 'Agenda carregada mas sem próximos jogos');
+
     const liveSections = document.getElementById("live-match-sections");
     const countdownWrapper = document.getElementById("countdown-wrapper");
-    
+    const container = document.getElementById("live-match-container");
+
     if (liveSections) liveSections.style.display = "none";
+
+    // Limpa o live-match-container para não sobrepor nada
+    if (container) container.innerHTML = "";
+
     if (countdownWrapper) {
       countdownWrapper.style.display = "block";
-      
-      // Mensagem de fallback
-      const container = document.getElementById("live-match-container");
-      if (container) {
-        container.innerHTML = `
-          <div class="match-header-card" style="text-align: center; padding: 40px;">
-            <div class="match-status-badge" style="background: var(--gray-600);">
-              <i class="fas fa-calendar-times"></i> SEM PRÓXIMOS JOGOS
-            </div>
-            <div style="margin-top: 20px; color: var(--gray-300);">
-              Nenhum jogo encontrado na agenda
-            </div>
-          </div>
-        `;
-      }
+      // Injeta mensagem de fallback DENTRO do countdown-wrapper, não no container
+      const timerEl = document.getElementById("timer-text");
+      const noteEl = countdownWrapper.querySelector(".countdown-note");
+      if (timerEl) timerEl.textContent = "--";
+      if (noteEl) noteEl.textContent = "Nenhum jogo agendado no momento.";
+
+      // Mostra indicação no header do card
+      const headerEl = document.getElementById("next-home-name");
+      const awayEl   = document.getElementById("next-away-name");
+      if (headerEl) headerEl.textContent = "A definir";
+      if (awayEl)   awayEl.textContent   = "A definir";
     }
     return;
   }
 
   const liveSections = document.getElementById("live-match-sections");
   const countdownWrapper = document.getElementById("countdown-wrapper");
+  const container = document.getElementById("live-match-container");
 
   if (liveSections) liveSections.style.display = "none";
+  // Limpa qualquer mensagem de fallback anterior no container
+  if (container) container.innerHTML = "";
   if (countdownWrapper) countdownWrapper.style.display = "block";
 
   renderNextMatchCard(nextMatch);
