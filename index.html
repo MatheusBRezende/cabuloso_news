@@ -3,166 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta
-      name="description"
-      content="Cabuloso News - O Portal do Maior de Minas. Notícias, tabelas, resultados e estatísticas do Cruzeiro Esporte Clube."
-    />
+    <meta name="description" content="Cabuloso News - O Portal do Maior de Minas. Notícias, tabelas, resultados e estatísticas do Cruzeiro Esporte Clube." />
     <meta name="theme-color" content="#003399" />
     <title>Cabuloso News | Portal do Cruzeiro</title>
-
-    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bebas+Neue&family=Poppins:wght@300;400;500;600;700;800&display=swap"
-      rel="stylesheet"
-    />
-
-    <!-- Icons -->
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
-    />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <link rel="icon" type="image/png" href="assets/logo.png" />
-
-    <!-- Styles -->
     <link rel="stylesheet" href="./style/styles.css" />
   </head>
   <body>
-    <!-- Loading Screen -->
     <div id="loadingScreen" class="loading-screen">
       <div class="loading-content">
-        <div class="loading-logo">
-          <i><img src="./assets/logo.png" alt="" /></i>
-        </div>
+        <div class="loading-logo"><img src="./assets/logo.png" alt="" /></div>
         <span class="loading-text">Cabuloso News</span>
-        <div class="loading-bar">
-          <div class="loading-progress"></div>
-        </div>
+        <div class="loading-bar"><div class="loading-progress"></div></div>
       </div>
     </div>
 
-    <!-- Header -->
     <header class="header">
       <nav class="nav">
         <a href="index.html" class="logo">
-          <div class="logo-icon">
-            <img src="./assets/logo.png" alt="" />
-          </div>
+          <div class="logo-icon"><img src="./assets/logo.png" alt="" /></div>
           <div class="logo-text">
             <span class="logo-main">Cabuloso</span>
             <span class="logo-sub">News</span>
           </div>
         </a>
-
         <ul class="nav-menu" id="navMenu">
-          <li>
-            <a href="index.html" class="nav-link active"
-              ><i class="fas fa-home"></i> Início</a
-            >
-          </li>
-          <li>
-            <a href="competicao.html" class="nav-link"
-              ><i class="fas fa-table"></i> Tabela</a
-            >
-          </li>
-          <li>
-            <a href="resultados.html" class="nav-link"
-              ><i class="fas fa-trophy"></i> Resultados</a
-            >
-          </li>
-          <li>
-            <a href="minuto-a-minuto.html" class="nav-link"
-              ><i class="fas fa-play-circle"></i> Ao Vivo</a
-            >
-          </li>
+          <li><a href="index.html" class="nav-link active"><i class="fas fa-home"></i> Início</a></li>
+          <li><a href="competicao.html" class="nav-link"><i class="fas fa-table"></i> Tabela</a></li>
+          <li><a href="resultados.html" class="nav-link"><i class="fas fa-trophy"></i> Resultados</a></li>
+          <li><a href="minuto-a-minuto.html" class="nav-link"><i class="fas fa-play-circle"></i> Ao Vivo</a></li>
         </ul>
-
         <button class="menu-toggle" id="menuToggle" aria-label="Menu">
-          <span></span>
-          <span></span>
-          <span></span>
+          <span></span><span></span><span></span>
         </button>
       </nav>
     </header>
 
     <main>
-      <!-- Hero Section -->
       <section class="hero">
-        <div class="hero-bg">
-          <div class="hero-pattern"></div>
-        </div>
+        <div class="hero-bg"><div class="hero-pattern"></div></div>
         <div class="hero-content">
-          <div class="hero-badge">
-            <i class="fas fa-star"></i>
-            <span>Maior de Minas</span>
-          </div>
+          <div class="hero-badge"><i class="fas fa-star"></i><span>Maior de Minas</span></div>
           <h1 class="hero-title">
             <span class="title-line">Bem-vindo ao</span>
             <span class="title-highlight">Cabuloso News</span>
           </h1>
-          <p class="hero-subtitle">
-            Seu portal completo de notícias, tabelas e resultados do Cruzeiro
-            Esporte Clube
-          </p>
+          <p class="hero-subtitle">Seu portal completo de notícias, tabelas e resultados do Cruzeiro Esporte Clube</p>
           <div class="hero-actions">
-            <a href="#noticias" class="btn btn-primary">
-              <i class="fas fa-newspaper"></i>
-              Ver Notícias
-            </a>
-            <a href="competicao.html" class="btn btn-outline">
-              <i class="fas fa-chart-line"></i>
-              Classificação
-            </a>
+            <a href="#noticias" class="btn btn-primary"><i class="fas fa-newspaper"></i> Ver Notícias</a>
+            <a href="competicao.html" class="btn btn-outline"><i class="fas fa-chart-line"></i> Classificação</a>
           </div>
         </div>
         <div class="hero-visual">
-          <div class="hero-shield">
-            <img src="./assets/logo.png" alt="" />
-          </div>
+          <div class="hero-shield"><img src="./assets/logo.png" alt="" /></div>
         </div>
       </section>
 
-      <!-- News Section -->
       <section class="news-section" id="noticias">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-newspaper"></i>
-              Últimas Notícias
-            </h2>
+            <h2 class="section-title"><i class="fas fa-newspaper"></i> Últimas Notícias</h2>
             <div class="section-line"></div>
           </div>
-
-          <!-- Container para notícias -->
           <div class="news-grid" id="newsContainer"></div>
-
-          <!-- Botão de carregar mais -->
-          <div
-            id="loadMoreContainer"
-            class="load-more-container"
-            style="text-align: center; margin-top: 2rem; display: none"
-          >
-            <button id="btnLoadMore" class="btn btn-primary">
-              <i class="fas fa-plus"></i> Carregar Mais Notícias
-            </button>
+          <div id="loadMoreContainer" class="load-more-container" style="text-align: center; margin-top: 2rem; display: none">
+            <button id="btnLoadMore" class="btn btn-primary"><i class="fas fa-plus"></i> Carregar Mais Notícias</button>
           </div>
         </div>
       </section>
 
-      <!-- Widgets Section -->
       <section class="widgets-section">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">
-              <i class="fas fa-chart-simple"></i>
-              Acompanhe os Últimos Resultados
-            </h2>
+            <h2 class="section-title"><i class="fas fa-chart-simple"></i> Acompanhe os Últimos Resultados</h2>
             <div class="section-line"></div>
           </div>
-
           <div class="widgets-grid">
-            <!-- Mini Table Widget -->
             <div class="widget-card">
               <div class="widget-header">
                 <h3><i class="fas fa-list-ol"></i> Brasileirão Série A</h3>
@@ -170,63 +90,36 @@
               </div>
               <div class="widget-body">
                 <table class="mini-table">
-                  <thead>
-                    <tr>
-                      <th>Pos</th>
-                      <th>Time</th>
-                      <th>Pts</th>
-                    </tr>
-                  </thead>
-                  <tbody id="miniTableBody">
-                    <tr>
-                      <td colspan="3" class="loading-cell">Carregando...</td>
-                    </tr>
-                  </tbody>
+                  <thead><tr><th>Pos</th><th>Time</th><th>Pts</th></tr></thead>
+                  <tbody id="miniTableBody"><tr><td colspan="3" class="loading-cell">Carregando...</td></tr></tbody>
                 </table>
               </div>
             </div>
-
-            <!-- Next Matches Widget -->
             <div class="widget-card">
               <div class="widget-header">
                 <h3><i class="fas fa-calendar-days"></i> Próximos Jogos</h3>
                 <a href="competicao.html" class="widget-link">Ver agenda</a>
               </div>
-              <div class="widget-body" id="nextMatchesWidget">
-                <div class="loading-cell">Carregando...</div>
-              </div>
+              <div class="widget-body" id="nextMatchesWidget"><div class="loading-cell">Carregando...</div></div>
             </div>
-
-            <!-- Results Widget -->
             <div class="widget-card">
               <div class="widget-header">
-                <h3>
-                  <i class="fas fa-clock-rotate-left"></i> Últimos Resultados
-                </h3>
+                <h3><i class="fas fa-clock-rotate-left"></i> Últimos Resultados</h3>
                 <a href="resultados.html" class="widget-link">Ver todos</a>
               </div>
-              <div class="widget-body" id="recentResultsWidget">
-                <div class="loading-cell">Carregando...</div>
-              </div>
+              <div class="widget-body" id="recentResultsWidget"><div class="loading-cell">Carregando...</div></div>
             </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
       <div class="container">
         <div class="footer-content">
           <div class="footer-brand">
             <div class="footer-logo">
-              <img
-                src="./assets/logo.png"
-                alt=""
-                class="footer-logo-img"
-                width="50"
-                height="50"
-              />
+              <img src="./assets/logo.png" alt="" class="footer-logo-img" width="50" height="50" />
               <span>Cabuloso News</span>
             </div>
             <p>Portal dedicado aos torcedores do Cruzeiro Esporte Clube.</p>
@@ -234,46 +127,25 @@
           <div class="footer-links">
             <h4>Navegação</h4>
             <ul>
-              <li>
-                <a href="index.html"><i class="fas fa-home"></i> Início</a>
-              </li>
-              <li>
-                <a href="competicao.html"
-                  ><i class="fas fa-table"></i> Tabela</a
-                >
-              </li>
-              <li>
-                <a href="resultados.html"
-                  ><i class="fas fa-trophy"></i> Resultados</a
-                >
-              </li>
-              <li>
-                <a href="minuto-a-minuto/minuto-a-minuto.html"
-                  ><i class="fas fa-play-circle"></i> Ao Vivo</a
-                >
-              </li>
+              <li><a href="index.html"><i class="fas fa-home"></i> Início</a></li>
+              <li><a href="competicao.html"><i class="fas fa-table"></i> Tabela</a></li>
+              <li><a href="resultados.html"><i class="fas fa-trophy"></i> Resultados</a></li>
+              <li><a href="minuto-a-minuto.html"><i class="fas fa-play-circle"></i> Ao Vivo</a></li>
             </ul>
           </div>
           <div class="footer-contact">
             <h4>Contato</h4>
-            <p><i class="fas fa-envelope"></i> cabulosonews92@gmail.com</p>
+            <p><i class="fas fa-envelope"></i> contato@cabulosonews.com.br</p>
           </div>
         </div>
         <div class="footer-bottom">
-          <p>
-            &copy; 2025 Cabuloso News - Site de fãs para fãs. Sem vínculo
-            oficial com o Cruzeiro EC.
-          </p>
+          <p>&copy; 2025 Cabuloso News - Site de fãs para fãs. Sem vínculo oficial com o Cruzeiro EC.</p>
         </div>
       </div>
     </footer>
 
-    <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Scripts -->
     <script src="./script/cache.js"></script>
-    <script src="./script/live-match-detector.js"></script>
     <script src="./script/script.js"></script>
   </body>
 </html>
