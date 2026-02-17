@@ -1406,3 +1406,245 @@ ul { list-style: none; }
     height: 8px;
   }
 }
+
+/* ============================================
+   SEMIFINAL MINEIRO - ESTILOS
+   ============================================ */
+
+.semifinal-container {
+  padding: var(--space-4) 0;
+}
+
+.semifinal-header {
+  text-align: center;
+  padding: var(--space-6) var(--space-4);
+  margin-bottom: var(--space-6);
+  background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+  border-radius: var(--radius-xl);
+  border: 2px solid var(--accent);
+  position: relative;
+  overflow: hidden;
+}
+
+.semifinal-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at top, rgba(255,215,0,0.12) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.semifinal-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: rgba(255,215,0,0.15);
+  border: 1px solid rgba(255,215,0,0.4);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-3);
+}
+
+.semifinal-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--white);
+  margin: 0 0 var(--space-2) 0;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.semifinal-subtitle {
+  color: rgba(255,255,255,0.8);
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* Grupos de jogos (Semifinal 1, Semifinal 2...) */
+.semifinal-jogos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.semifinal-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.semifinal-grupo-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding-bottom: var(--space-2);
+  border-bottom: 1px solid rgba(255,215,0,0.2);
+}
+
+.semifinal-jogo-count {
+  margin-left: auto;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--gray-400);
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* Card de cada jogo da semifinal */
+.semifinal-card {
+  background: linear-gradient(135deg, var(--gray-800) 0%, rgba(0,33,99,0.6) 100%);
+  border: 1px solid rgba(0,51,153,0.4);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.semifinal-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--accent), var(--primary-light));
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+.semifinal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0,51,153,0.3);
+}
+
+.semifinal-fase-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(255,215,0,0.1);
+  border: 1px solid rgba(255,215,0,0.25);
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-3);
+}
+
+.semifinal-teams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin: var(--space-3) 0;
+}
+
+.semifinal-teams .match-team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  text-align: center;
+}
+
+.semifinal-teams .match-team span {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--white);
+}
+
+.semifinal-teams .team-cruzeiro span {
+  color: var(--accent);
+}
+
+.semifinal-teams .escudo-pequeno {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.semifinal-vs {
+  font-size: 1.4rem;
+  font-weight: 900;
+  color: var(--gray-400);
+  padding: 0 var(--space-2);
+  flex-shrink: 0;
+}
+
+.semifinal-card .match-date {
+  font-size: 0.82rem;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.semifinal-card .match-info {
+  font-size: 0.82rem;
+  color: var(--gray-400);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.semifinal-card .match-info strong {
+  color: var(--gray-300);
+}
+
+/* Botão "Ver no GE" */
+.btn-ge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  padding: var(--space-1) var(--space-3);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: rgba(255,215,0,0.12);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: var(--radius-full);
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.btn-ge:hover {
+  background: var(--accent);
+  color: var(--primary-dark);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .semifinal-title {
+    font-size: 1.25rem;
+  }
+
+  .semifinal-teams .match-team span {
+    font-size: 0.82rem;
+  }
+
+  .semifinal-teams .escudo-pequeno {
+    width: 36px;
+    height: 36px;
+  }
+
+  .semifinal-card {
+    padding: var(--space-4) var(--space-3);
+  }
+}
