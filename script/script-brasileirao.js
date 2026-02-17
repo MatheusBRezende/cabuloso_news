@@ -1,10 +1,10 @@
-// script-brasileirao.js - COM DETECÇÃO AUTOMÁTICA DE SEMIFINAL
+// script-brasileirao.js - VERSÃO FINAL CORRIGIDA
 
-// Obtém funções do cache global
 const { getFromCache } = window.cabulosoCacheModule || {};
 
 const CONFIG_BRASILEIRAO = {
   defaultEscudo: "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png",
+  escudoCruzeiro: "https://s.sde.globo.com/media/organizations/2021/02/13/cruzeiro_2021.svg",
 };
 
 const stateBrasileirao = {
@@ -55,36 +55,51 @@ const getRowZoneClassMineiro = (posicao, isMelhorSegundo = false) => {
 };
 
 const encontrarMelhorSegundo = (grupoA, grupoB, grupoC) => {
-  const segundos = [
-    grupoA[1] || null,
-    grupoB[1] || null,
-    grupoC[1] || null,
-  ].filter((t) => t !== null);
-
+  const segundos = [grupoA[1] || null, grupoB[1] || null, grupoC[1] || null].filter(Boolean);
   if (segundos.length === 0) return null;
-
   segundos.sort((a, b) => {
     if (b.pontos !== a.pontos) return b.pontos - a.pontos;
     if (b.vitorias !== a.vitorias) return b.vitorias - a.vitorias;
     return (b.saldo || 0) - (a.saldo || 0);
   });
-
   return segundos[0]?.time || null;
 };
 
 // ============================================
-// DETECÇÃO AUTOMÁTICA: TABELA OU SEMIFINAL?
-// Retorna true se a tabela de grupos está encerrada
-// (nenhum time tem menos de N jogos ou array vazio)
+// NORMALIZA ARRAY DE JOGOS DA SEMIFINAL
+// Suporta todos os formatos possíveis:
+//   1. Array direto:       [ { fase, adversario, ... }, ... ]
+//   2. Aninhado nível 1:   [ { jogos: [ {...}, ... ] } ]
+//   3. Objeto com jogos:   { jogos: [ {...}, ... ] }
+//   4. Array n8n bruto:    [ { json: { fase, ... } }, ... ]
 // ============================================
-const tabelaGruposEncerrada = (mineiroArray) => {
-  // Se não veio array de grupos, considera encerrada
-  if (!mineiroArray || mineiroArray.length < 12) return true;
+const normalizarSemifinalJogos = (raw) => {
+  if (!raw) return null;
 
-  // Se todos os times jogaram ao menos 3 rodadas, fase de grupos está em andamento
-  // Quando os grupos terminam, a API para de retornar dados de classificação
-  // e o worker retorna os jogos da semifinal no lugar
-  return false;
+  let arr = null;
+
+  if (Array.isArray(raw)) {
+    if (raw[0]?.jogos && Array.isArray(raw[0].jogos)) {
+      // Caso 2: [ { jogos: [...] } ]
+      arr = raw[0].jogos;
+    } else if (raw[0]?.json?.fase) {
+      // Caso 4: formato n8n bruto [ { json: { fase, ... } } ]
+      arr = raw.map(i => i.json);
+    } else if (raw[0]?.fase || raw[0]?.adversario) {
+      // Caso 1: array direto
+      arr = raw;
+    }
+  } else if (typeof raw === "object" && raw.jogos && Array.isArray(raw.jogos)) {
+    // Caso 3: { jogos: [...] }
+    arr = raw.jogos;
+  }
+
+  // Valida que os itens têm campos mínimos esperados
+  if (arr && arr.length > 0 && (arr[0]?.fase || arr[0]?.adversario)) {
+    return arr;
+  }
+
+  return null;
 };
 
 // ============================================
@@ -94,7 +109,6 @@ const loadMasterDataBrasileirao = async () => {
   console.log("📦 Tentando carregar dados para a tabela...");
 
   try {
-    // 1. TENTA O CACHE PRIMEIRO
     let data = getFromCache ? getFromCache("master_data_v3") : null;
 
     if (data) {
@@ -105,24 +119,21 @@ const loadMasterDataBrasileirao = async () => {
       return;
     }
 
-    // 2. SE NÃO HOUVER CACHE, BUSCA DO WORKER
     console.log("🌐 Cache não encontrado! Buscando dados frescos do Worker...");
     const response = await fetch("https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos");
-    
+
     if (!response.ok) throw new Error("Falha ao buscar dados do Worker");
 
     data = await response.json();
-
-    // Normaliza se vier como Array (padrão n8n)
     if (Array.isArray(data)) data = data[0];
 
     if (data) {
       stateBrasileirao.dadosCompletos = data;
-      
-      if (window.cabulosoCacheModule && window.cabulosoCacheModule.saveToCache) {
+
+      if (window.cabulosoCacheModule?.saveToCache) {
         window.cabulosoCacheModule.saveToCache("master_data_v3", data, 5 * 60 * 1000);
       }
-      
+
       refreshCurrentView();
       if (data.agenda) renderizarAgenda(data.agenda);
     } else {
@@ -133,17 +144,24 @@ const loadMasterDataBrasileirao = async () => {
     console.error("❌ Erro ao carregar dados da tabela:", error);
     const container = document.getElementById("tabela-container");
     if (container) {
-      container.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:20px;">Erro ao carregar classificação. <br> Verifique sua conexão e atualize a página.</td></tr>`;
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#999;">
+          <i class="fas fa-exclamation-circle" style="font-size:32px; margin-bottom:12px; display:block;"></i>
+          Erro ao carregar classificação.<br>Verifique sua conexão e atualize a página.
+        </div>`;
     }
   }
 };
 
+// ============================================
+// REFRESH: decide o que renderizar
+// ============================================
 const refreshCurrentView = () => {
   const data = stateBrasileirao.dadosCompletos;
   if (!data) return;
 
   const camp = stateBrasileirao.campeonatoAtual;
-  
+
   if (camp === "brasileirao") {
     renderizarTabelaCompleta(data.tabelas?.brasileiro || data.tabela_brasileiro);
 
@@ -151,34 +169,27 @@ const refreshCurrentView = () => {
     const mineiroRaw = data.tabelas?.mineiro || data.tabela_mineiro;
     const mineiroArray = mineiroRaw?.classificacao || (Array.isArray(mineiroRaw) ? mineiroRaw : []);
 
-    // ──────────────────────────────────────────────────────
-    // DETECÇÃO AUTOMÁTICA ✨
-    // Se a API não retornou tabela de grupos mas retornou
-    // dados de semifinal, exibe o card de semifinal.
-    // Prioridade: semifinal > tabela de grupos.
-    // ──────────────────────────────────────────────────────
-    const semifinalData = data.tabelas?.mineiro_semifinal
-      || data.mineiro_semifinal
-      || data.semifinal_mineiro
-      || null;
+    // Tenta encontrar dados de semifinal em qualquer chave possível
+    const semifinalRaw =
+      data.tabelas?.mineiro_semifinal ||
+      data.mineiro_semifinal ||
+      data.semifinal_mineiro ||
+      null;
 
-    const temSemifinal = semifinalData && (
-      Array.isArray(semifinalData) ? semifinalData.length > 0
-      : semifinalData.jogos && semifinalData.jogos.length > 0
-    );
+    // ✅ Normaliza independente do formato que vier do Worker/n8n
+    const semifinalJogos = normalizarSemifinalJogos(semifinalRaw);
 
+    const temSemifinal = !!(semifinalJogos && semifinalJogos.length > 0);
     const temTabelaGrupos = mineiroArray.length >= 12;
 
+    console.log(`🔍 Mineiro — temTabelaGrupos: ${temTabelaGrupos}, temSemifinal: ${temSemifinal}`);
+
     if (temSemifinal && !temTabelaGrupos) {
-      // Fase de grupos encerrada → mostra semifinal
       console.log("🏆 Fase de grupos encerrada, exibindo Semifinal do Mineiro.");
-      const jogos = Array.isArray(semifinalData) ? semifinalData : semifinalData.jogos;
-      renderizarSemifinalMineiro(jogos);
+      renderizarSemifinalMineiro(semifinalJogos);
     } else if (temTabelaGrupos) {
-      // Fase de grupos ainda ativa → mostra tabela normal
       renderizarTabelaMineiro(mineiroArray);
     } else {
-      // Fallback: sem dados de nenhum tipo
       document.getElementById("tabela-container").innerHTML =
         "<p style='text-align:center;padding:30px;color:#999;'>Dados do Mineiro indisponíveis no momento.</p>";
     }
@@ -189,9 +200,8 @@ const refreshCurrentView = () => {
 };
 
 // ============================================
-// RENDERING FUNCTIONS
+// RENDER: Tabela Brasileirão
 // ============================================
-
 const renderizarTabelaCompleta = (data) => {
   const container = document.getElementById("tabela-container");
   if (!data || !data.classificacao) {
@@ -227,8 +237,8 @@ const renderizarTabelaCompleta = (data) => {
             <span class="numero-posicao">${isCruzeiro ? "🦊" : ""}${posicao}º</span>
           </div>
           <div class="time-info">
-            <img 
-              src="${time.escudo || CONFIG_BRASILEIRAO.defaultEscudo}" 
+            <img
+              src="${time.escudo || CONFIG_BRASILEIRAO.defaultEscudo}"
               class="escudo-pequeno"
               onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
             >
@@ -246,16 +256,19 @@ const renderizarTabelaCompleta = (data) => {
   container.innerHTML = html;
 };
 
+// ============================================
+// RENDER: Tabela Mineiro (fase de grupos)
+// ============================================
 const renderizarTabelaMineiro = (data) => {
   const container = document.getElementById("tabela-container");
-  
+
   if (!data || data.length === 0) {
     container.innerHTML = "<p>Tabela do Mineiro indisponível.</p>";
     return;
   }
 
   const tabelaArray = Array.isArray(data) ? data : (data.grupos || []);
-  
+
   if (tabelaArray.length === 0) {
     container.innerHTML = "<p>Tabela do Mineiro indisponível.</p>";
     return;
@@ -271,20 +284,18 @@ const renderizarTabelaMineiro = (data) => {
       <div class="grupo-header"><h3>Grupo ${letra}</h3></div>
       <table class="grupo-table">
         <tbody>
-          ${grupo
-            .map((time, idx) => {
-              const isCruzeiro = time.time?.toLowerCase().includes("cruzeiro");
-              const isMelhor2 = idx === 1 && time.time === melhorSegundo;
-              const zone = getZoneClassMineiro(idx + 1, isMelhor2);
-              return `
+          ${grupo.map((time, idx) => {
+            const isCruzeiro = time.time?.toLowerCase().includes("cruzeiro");
+            const isMelhor2 = idx === 1 && time.time === melhorSegundo;
+            const zone = getZoneClassMineiro(idx + 1, isMelhor2);
+            return `
               <tr class="${isCruzeiro ? "cruzeiro-row" : ""} ${getRowZoneClassMineiro(idx + 1, isMelhor2)}">
                 <td><span class="zona-indicador ${zone}"></span>${idx + 1}º</td>
                 <td>${escapeHtml(time.time)}</td>
                 <td><strong>${time.pontos}</strong></td>
                 <td>${time.jogos}</td>
               </tr>`;
-            })
-            .join("")}
+          }).join("")}
         </tbody>
       </table>
     </div>`;
@@ -298,13 +309,12 @@ const renderizarTabelaMineiro = (data) => {
 };
 
 // ============================================
-// 🆕 RENDER SEMIFINAL MINEIRO
-// Recebe array com os jogos no formato do seu n8n:
-// { fase, adversario, mando, data, hora, estadio, link_ge }
+// RENDER: Semifinal do Mineiro
+// Recebe array já normalizado via normalizarSemifinalJogos()
 // ============================================
 const renderizarSemifinalMineiro = (jogos) => {
   const container = document.getElementById("tabela-container");
-  
+
   if (!jogos || jogos.length === 0) {
     container.innerHTML = `
       <div class="fase-copa fade-in-up">
@@ -320,7 +330,7 @@ const renderizarSemifinalMineiro = (jogos) => {
     return;
   }
 
-  // Agrupa os jogos por fase (ex: "Semifinal 1", "Semifinal 2")
+  // Agrupa por fase (ex: "Semifinal 1", "Semifinal 2")
   const porFase = {};
   jogos.forEach(jogo => {
     const chave = jogo.fase || "Semifinal";
@@ -330,21 +340,29 @@ const renderizarSemifinalMineiro = (jogos) => {
 
   const formatarData = (dataStr) => {
     if (!dataStr) return "A definir";
-    const [ano, mes, dia] = dataStr.split("-");
-    return `${dia}/${mes}/${ano}`;
+    const partes = dataStr.split("-");
+    if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+    return dataStr;
   };
 
   const renderJogo = (jogo) => {
     const isMandante = jogo.mando === "Mandante";
-    const cruzeiro = "Cruzeiro";
     const adversario = escapeHtml(jogo.adversario || "A definir");
-    const mandante = isMandante ? cruzeiro : adversario;
-    const visitante = isMandante ? adversario : cruzeiro;
+    const mandante = isMandante ? "Cruzeiro" : adversario;
+    const visitante = isMandante ? adversario : "Cruzeiro";
     const linkHtml = jogo.link_ge
       ? `<a href="${escapeHtml(jogo.link_ge)}" target="_blank" rel="noopener" class="btn-ge">
            <i class="fas fa-external-link-alt"></i> Ver no GE
          </a>`
       : "";
+
+    // Tenta pegar escudo do adversário a partir da agenda
+    const agendaJogo = stateBrasileirao.dadosCompletos?.agenda?.find(j =>
+      j.mandante === jogo.adversario || j.visitante === jogo.adversario
+    );
+    const escudoAdversario = isMandante
+      ? (agendaJogo?.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo)
+      : (agendaJogo?.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo);
 
     return `
       <article class="next-match semifinal-card cruzeiro-row fade-in-up">
@@ -358,8 +376,8 @@ const renderizarSemifinalMineiro = (jogos) => {
         </div>
         <div class="match-teams semifinal-teams">
           <div class="match-team ${isMandante ? "team-cruzeiro" : ""}">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Cruzeiro_Esporte_Clube_%28logo%29.svg/150px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png"
-                 alt="Cruzeiro"
+            <img src="${isMandante ? CONFIG_BRASILEIRAO.escudoCruzeiro : escudoAdversario}"
+                 alt="${mandante}"
                  onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
                  class="escudo-pequeno">
             <span>${mandante}</span>
@@ -367,8 +385,8 @@ const renderizarSemifinalMineiro = (jogos) => {
           <span class="vs semifinal-vs">X</span>
           <div class="match-team ${!isMandante ? "team-cruzeiro" : ""}">
             <span>${visitante}</span>
-            <img src="${CONFIG_BRASILEIRAO.defaultEscudo}"
-                 alt="${adversario}"
+            <img src="${!isMandante ? CONFIG_BRASILEIRAO.escudoCruzeiro : escudoAdversario}"
+                 alt="${visitante}"
                  onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
                  class="escudo-pequeno">
           </div>
@@ -389,9 +407,7 @@ const renderizarSemifinalMineiro = (jogos) => {
           <span>Semifinal</span>
         </div>
         <h2 class="semifinal-title">Campeonato Mineiro 2026</h2>
-        <p class="semifinal-subtitle">
-          🦊 O Cruzeiro está na semifinal! Confira os jogos abaixo.
-        </p>
+        <p class="semifinal-subtitle">🦊 O Cruzeiro está na semifinal! Confira os jogos abaixo.</p>
       </div>
       <div class="semifinal-jogos">
   `;
@@ -410,13 +426,16 @@ const renderizarSemifinalMineiro = (jogos) => {
   html += `</div></div>`;
   container.innerHTML = html;
 
-  // Atualiza a legenda: esconde zonas de tabela, não faz sentido na semi
+  // Esconde legenda de zonas (não se aplica na semifinal)
   const lMin = document.getElementById("legend-mineiro");
   const lContainer = document.getElementById("legend-container");
   if (lMin) lMin.style.display = "none";
   if (lContainer) lContainer.style.display = "none";
 };
 
+// ============================================
+// RENDER: Copa do Brasil (placeholder)
+// ============================================
 const renderCopaDoBrasilPlaceholder = () => {
   const container = document.getElementById("tabela-container");
   const nomeCamp = document.getElementById("campeonato-nome");
@@ -437,6 +456,9 @@ const renderCopaDoBrasilPlaceholder = () => {
   }
 };
 
+// ============================================
+// RENDER: Agenda (widget de próximos jogos)
+// ============================================
 const renderizarAgenda = (jogos) => {
   const container = document.querySelector('.games-list');
   if (!container) return;
@@ -452,7 +474,7 @@ const renderizarAgenda = (jogos) => {
 
   const filtrados = stateBrasileirao.currentFilter === 'todos'
     ? jogos
-    : jogos.filter(j => 
+    : jogos.filter(j =>
         j.campeonato?.toLowerCase().includes(stateBrasileirao.currentFilter.toLowerCase())
       );
 
@@ -465,17 +487,15 @@ const renderizarAgenda = (jogos) => {
     return;
   }
 
-  const proximos = filtrados.slice(0, 5);
-
-  container.innerHTML = proximos.map(jogo => `
+  container.innerHTML = filtrados.slice(0, 5).map(jogo => `
     <article class="next-match destaque-cruzeiro">
       <div class="match-date">
         <i class="far fa-calendar"></i> ${escapeHtml(jogo.data)} - ${escapeHtml(jogo.hora)}
       </div>
       <div class="match-teams">
         <div class="match-team">
-          <img 
-            src="${jogo.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo}" 
+          <img
+            src="${jogo.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo}"
             alt="${escapeHtml(jogo.mandante)}"
             onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
           >
@@ -484,8 +504,8 @@ const renderizarAgenda = (jogos) => {
         <span class="vs">X</span>
         <div class="match-team">
           <span>${escapeHtml(jogo.visitante)}</span>
-          <img 
-            src="${jogo.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo}" 
+          <img
+            src="${jogo.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo}"
             alt="${escapeHtml(jogo.visitante)}"
             onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
           >
@@ -501,20 +521,17 @@ const renderizarAgenda = (jogos) => {
 // ============================================
 // INTERFACE & INITIALIZATION
 // ============================================
-
 const initInterface = () => {
   const buttons = document.querySelectorAll(".campeonato-btn");
   buttons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const value = btn.dataset.campeonato;
-
       buttons.forEach((b) => {
         b.classList.remove("active");
         b.setAttribute("aria-selected", "false");
       });
       btn.classList.add("active");
       btn.setAttribute("aria-selected", "true");
-
       stateBrasileirao.campeonatoAtual = value;
       updateLegend(value);
       refreshCurrentView();
@@ -523,13 +540,9 @@ const initInterface = () => {
 
   document.querySelectorAll(".filter-btn").forEach((btn) => {
     btn.addEventListener("click", () => {
-      document
-        .querySelectorAll(".filter-btn")
-        .forEach((b) => b.classList.remove("active"));
+      document.querySelectorAll(".filter-btn").forEach((b) => b.classList.remove("active"));
       btn.classList.add("active");
-
       stateBrasileirao.currentFilter = btn.dataset.filter;
-      
       if (stateBrasileirao.dadosCompletos?.agenda) {
         renderizarAgenda(stateBrasileirao.dadosCompletos.agenda);
       }
@@ -546,7 +559,7 @@ const initInterface = () => {
       widgetToggle.setAttribute("aria-expanded", "true");
     });
   }
-  
+
   if (widgetClose && widget) {
     widgetClose.addEventListener("click", () => {
       widget.classList.remove("active");
@@ -567,8 +580,6 @@ const updateLegend = (campeonato) => {
     if (lMin) lMin.style.display = "none";
     lContainer.style.display = "block";
   } else if (campeonato === "mineiro") {
-    // A legenda de zonas só faz sentido na fase de grupos.
-    // Se estivermos na semifinal, renderizarSemifinalMineiro() vai esconder ela.
     if (lBr) lBr.style.display = "none";
     if (lMin) lMin.style.display = "flex";
     lContainer.style.display = "block";
@@ -579,7 +590,7 @@ const updateLegend = (campeonato) => {
 
 const initBrasileirao = () => {
   console.log("🎯 Inicializando página de Tabelas...");
-  
+
   if (!window.cabulosoCacheModule) {
     console.error("❌ Cache module não disponível! Aguardando...");
     setTimeout(initBrasileirao, 100);
