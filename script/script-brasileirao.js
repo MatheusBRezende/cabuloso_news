@@ -170,7 +170,9 @@ const refreshCurrentView = () => {
     const mineiroArray = mineiroRaw?.classificacao || (Array.isArray(mineiroRaw) ? mineiroRaw : []);
 
     // Tenta encontrar dados de semifinal em qualquer chave possível
+    // Worker v2 retorna em data.tabelas.mineiro.semifinal
     const semifinalRaw =
+      data.tabelas?.mineiro?.semifinal ||
       data.tabelas?.mineiro_semifinal ||
       data.mineiro_semifinal ||
       data.semifinal_mineiro ||
