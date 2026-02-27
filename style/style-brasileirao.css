@@ -402,11 +402,23 @@
    /* === TABLE WRAPPER === */
    .table-section { margin-bottom: var(--space-8); }
    
+   /* Wrapper base: sem fundo — cada conteúdo define a própria aparência */
    .table-wrapper {
-     background: var(--white);
      border-radius: var(--radius-xl);
-     box-shadow: var(--shadow-lg);
      overflow: hidden;
+   }
+
+   /* Brasileirão: fundo branco com borda (aplicado via JS adicionando classe) */
+   .table-wrapper.brasileirao-wrapper {
+     background: var(--white);
+     box-shadow: var(--shadow-lg);
+     border: 1px solid var(--border);
+   }
+
+   /* Suporte nativo :has() para browsers modernos */
+   .table-wrapper:has(#tabela-brasileirao) {
+     background: var(--white);
+     box-shadow: var(--shadow-lg);
      border: 1px solid var(--border);
    }
    
@@ -880,9 +892,22 @@
    
    .semifinal-cards-grid {
      display: grid;
-     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
      gap: var(--space-5);
+     align-items: start;
    }
+
+   /* Placar */
+   .semifinal-placar {
+     display: flex; align-items: center; justify-content: center;
+     gap: 4px; font-family: var(--font-display);
+     font-size: 1.6rem; font-weight: 900; line-height: 1;
+   }
+   .semifinal-placar span { color: var(--white); }
+   .semifinal-placar .placar-sep { color: var(--gray-500); font-size: 1.2rem; }
+   .semifinal-placar.placar-encerrado span { color: var(--gray-300); }
+   .semifinal-placar.placar-ao-vivo span { color: var(--accent); }
+   .semifinal-placar.placar-ao-vivo .placar-sep { color: var(--accent-dark); }
    
    .semifinal-card {
      background: var(--gray-800);
@@ -942,7 +967,8 @@
      50% { box-shadow: 0 0 0 5px rgba(229,57,53,0); }
    }
    
-   .semifinal-card .match-date {
+   .semifinal-card .match-date,
+   .semifinal-card-date {
      font-size: 0.75rem; color: var(--gray-400);
      display: flex; align-items: center;
      gap: var(--space-2); margin-bottom: var(--space-4);

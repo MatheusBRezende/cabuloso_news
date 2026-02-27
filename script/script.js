@@ -307,7 +307,7 @@ function renderNextMatches(agenda) {
   const container = document.getElementById("nextMatchesWidget");
   if (!container) return;
 
-  const proximos = agenda.slice(0, 3);
+  const proximos = agenda.slice(0, 6);
   
   if (proximos.length === 0) {
     container.innerHTML = `

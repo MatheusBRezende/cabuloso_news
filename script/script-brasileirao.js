@@ -156,11 +156,27 @@ const loadMasterDataBrasileirao = async () => {
 // ============================================
 // REFRESH: decide o que renderizar
 // ============================================
+const TITULOS_CAMPEONATO = {
+  "brasileirao":    "Brasileirão Serie A",
+  "mineiro":        "Campeonato Mineiro 2026",
+  "copa-do-brasil": "Copa do Brasil 2026",
+};
+
 const refreshCurrentView = () => {
   const data = stateBrasileirao.dadosCompletos;
   if (!data) return;
 
   const camp = stateBrasileirao.campeonatoAtual;
+
+  // FIX: atualiza o título do hero sempre que a view muda
+  const nomeCamp = document.getElementById("campeonato-nome");
+  if (nomeCamp) nomeCamp.textContent = TITULOS_CAMPEONATO[camp] || "Competições 2026";
+
+  // FIX: adiciona/remove classe do wrapper para controlar fundo branco
+  const wrapper = document.querySelector(".table-wrapper");
+  if (wrapper) {
+    wrapper.classList.toggle("brasileirao-wrapper", camp === "brasileirao");
+  }
 
   if (camp === "brasileirao") {
     renderizarTabelaCompleta(data.tabelas?.brasileiro || data.tabela_brasileiro);
@@ -169,8 +185,6 @@ const refreshCurrentView = () => {
     const mineiroRaw = data.tabelas?.mineiro || data.tabela_mineiro;
     const mineiroArray = mineiroRaw?.classificacao || (Array.isArray(mineiroRaw) ? mineiroRaw : []);
 
-    // Tenta encontrar dados de semifinal em qualquer chave possível
-    // Worker v2 retorna em data.tabelas.mineiro.semifinal
     const semifinalRaw =
       data.tabelas?.mineiro?.semifinal ||
       data.tabelas?.mineiro_semifinal ||
@@ -178,7 +192,6 @@ const refreshCurrentView = () => {
       data.semifinal_mineiro ||
       null;
 
-    // ✅ Normaliza independente do formato que vier do Worker/n8n
     const semifinalJogos = normalizarSemifinalJogos(semifinalRaw);
 
     const temSemifinal = !!(semifinalJogos && semifinalJogos.length > 0);
@@ -348,59 +361,94 @@ const renderizarSemifinalMineiro = (jogos) => {
   };
 
   const renderJogo = (jogo) => {
-    const isMandante = jogo.mando === "Mandante";
-    const adversario = escapeHtml(jogo.adversario || "A definir");
-    const mandante = isMandante ? "Cruzeiro" : adversario;
-    const visitante = isMandante ? adversario : "Cruzeiro";
-    // FIX 2: Botão de ação aponta para a página ao vivo (interna)
-    const linkHtml = jogo.link_ge
-      ? `<a href="minuto-a-minuto.html" class="btn-ge">
-           <i class="fas fa-play-circle"></i> Acompanhar Ao Vivo
-         </a>`
-      : "";
+    // ── Quem é o mandante (casa) e quem é o visitante?
+    // jogo.mando = "Mandante" → Cruzeiro joga em casa
+    // jogo.mando = "Visitante" → Adversário joga em casa
+    const cruzEhCasa = jogo.mando === "Mandante";
 
-    // FIX 1: Lógica de escudo corrigida
-    // Se Cruzeiro é MANDANTE → adversário é visitante na agenda → pega escudo_visitante
-    // Se Cruzeiro é VISITANTE → adversário é mandante na agenda → pega escudo_mandante
-    const agendaJogo = stateBrasileirao.dadosCompletos?.agenda?.find(j =>
-      j.mandante === jogo.adversario || j.visitante === jogo.adversario
-    );
-    const escudoAdversario = isMandante
-      ? (agendaJogo?.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo)
-      : (agendaJogo?.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo);
+    const nomeAdversario = escapeHtml(jogo.adversario || "A definir");
+
+    // Escudo do adversário: vem do n8n; fallback na agenda
+    let escudoAdversario = jogo.escudo_adversario || null;
+    if (!escudoAdversario) {
+      const agendaJogo = stateBrasileirao.dadosCompletos?.agenda?.find(j =>
+        j.mandante === jogo.adversario || j.visitante === jogo.adversario
+      );
+      escudoAdversario = cruzEhCasa
+        ? (agendaJogo?.escudo_visitante || CONFIG_BRASILEIRAO.defaultEscudo)
+        : (agendaJogo?.escudo_mandante || CONFIG_BRASILEIRAO.defaultEscudo);
+    }
+
+    // ── Define explicitamente LADO ESQUERDO (casa) e LADO DIREITO (fora)
+    const timeEsquerda = {
+      nome:      cruzEhCasa ? "Cruzeiro"      : nomeAdversario,
+      escudo:    cruzEhCasa ? CONFIG_BRASILEIRAO.escudoCruzeiro : escudoAdversario,
+      isCruz:    cruzEhCasa,
+      label:     "Casa",
+      // placar da posição mandante
+      placar:    cruzEhCasa ? jogo.placar_cruzeiro : jogo.placar_adversario,
+    };
+    const timeDireita = {
+      nome:      cruzEhCasa ? nomeAdversario  : "Cruzeiro",
+      escudo:    cruzEhCasa ? escudoAdversario : CONFIG_BRASILEIRAO.escudoCruzeiro,
+      isCruz:    !cruzEhCasa,
+      label:     "Fora",
+      placar:    cruzEhCasa ? jogo.placar_adversario : jogo.placar_cruzeiro,
+    };
+
+    // ── Placar: usa placar_cruzeiro / placar_adversario (formato n8n novo)
+    const temPlacar = timeEsquerda.placar != null && timeDireita.placar != null;
+    const encerrado = jogo.jogo_encerrado || false;
+    const aoVivo    = jogo.jogo_ao_vivo   || false;
+
+    const vsOuPlacar = temPlacar
+      ? `<div class="semifinal-placar ${encerrado ? "placar-encerrado" : aoVivo ? "placar-ao-vivo" : "placar-encerrado"}">
+           <span>${timeEsquerda.placar}</span>
+           <span class="placar-sep">–</span>
+           <span>${timeDireita.placar}</span>
+         </div>`
+      : `<span class="vs semifinal-vs">X</span>`;
+
+    const isHoje  = jogo.data === new Date().toISOString().split("T")[0];
+    const linkGe  = jogo.link_ge || "";
+
+    const renderTime = (time) => `
+      <div class="semifinal-team ${time.isCruz ? "team-cruzeiro" : ""}">
+        <img src="${time.escudo}"
+             alt="${time.nome}"
+             onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
+             class="semifinal-escudo">
+        <span class="semifinal-team-name">${time.nome}</span>
+        <span class="semifinal-mando-label">${time.label}</span>
+      </div>`;
 
     return `
-      <article class="next-match semifinal-card cruzeiro-row fade-in-up">
-        <div class="semifinal-fase-badge">
-          <i class="fas fa-shield-alt"></i> ${escapeHtml(jogo.fase || "Semifinal")}
+      <article class="semifinal-card cruzeiro-row fade-in-up${isHoje ? " jogo-hoje" : ""}">
+        <div class="semifinal-card-top">
+          <span class="semifinal-fase-badge">
+            <i class="fas fa-shield-alt"></i> ${escapeHtml(jogo.fase || "Semifinal")}
+          </span>
+          ${isHoje ? `<span class="semifinal-hoje-badge"><i class="fas fa-circle"></i> HOJE</span>` : ""}
         </div>
-        <div class="match-date">
-          <i class="far fa-calendar"></i>
-          ${formatarData(jogo.data)} &nbsp;|&nbsp;
+        <div class="semifinal-card-date">
+          <i class="far fa-calendar-alt"></i> ${formatarData(jogo.data)}
+          &nbsp;|&nbsp;
           <i class="far fa-clock"></i> ${escapeHtml(jogo.hora || "A definir")}
         </div>
-        <div class="match-teams semifinal-teams">
-          <div class="match-team ${isMandante ? "team-cruzeiro" : ""}">
-            <img src="${isMandante ? CONFIG_BRASILEIRAO.escudoCruzeiro : escudoAdversario}"
-                 alt="${mandante}"
-                 onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
-                 class="escudo-pequeno">
-            <span>${mandante}</span>
-          </div>
-          <span class="vs semifinal-vs">X</span>
-          <div class="match-team ${!isMandante ? "team-cruzeiro" : ""}">
-            <span>${visitante}</span>
-            <img src="${!isMandante ? CONFIG_BRASILEIRAO.escudoCruzeiro : escudoAdversario}"
-                 alt="${visitante}"
-                 onerror="this.src='${CONFIG_BRASILEIRAO.defaultEscudo}'"
-                 class="escudo-pequeno">
-          </div>
+        <div class="semifinal-teams">
+          ${renderTime(timeEsquerda)}
+          <div class="semifinal-vs-box">${vsOuPlacar}</div>
+          ${renderTime(timeDireita)}
         </div>
-        <div class="match-info">
-          <i class="fas fa-map-marker-alt"></i>
-          <strong>${escapeHtml(jogo.estadio || "A definir")}</strong>
+        <div class="semifinal-footer">
+          <div class="semifinal-estadio">
+            <i class="fas fa-map-marker-alt"></i>
+            <strong>${escapeHtml(jogo.estadio || "A definir")}</strong>
+          </div>
+          ${linkGe ? `<a href="${escapeHtml(linkGe)}" target="_blank" rel="noopener" class="btn-ge">
+            <i class="fas fa-play-circle"></i> Acompanhar
+          </a>` : ""}
         </div>
-        ${linkHtml}
       </article>`;
   };
 
@@ -424,7 +472,9 @@ const renderizarSemifinalMineiro = (jogos) => {
           <i class="fas fa-flag"></i> ${escapeHtml(fase)}
           <span class="semifinal-jogo-count">${jogosFase.length} jogo${jogosFase.length > 1 ? "s" : ""}</span>
         </div>
-        ${jogosFase.map(renderJogo).join("")}
+        <div class="semifinal-cards-grid">
+          ${jogosFase.map(renderJogo).join("")}
+        </div>
       </div>`;
   });
 
