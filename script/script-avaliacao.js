@@ -1264,8 +1264,10 @@ function criarCardJogador(jogador) {
         ? `<img src="${escHtml(jogador.foto)}" alt="" onerror="this.parentNode.textContent='${(jogador.nome||'?').charAt(0).toUpperCase()}'" loading="lazy" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
         : (jogador.nome||'?').charAt(0).toUpperCase()
     }</div>
-    <div class="jogador-nome">${escHtml(jogador.nome)}</div>
-    <div class="jogador-posicao-label">${escHtml(jogador.posicao)}</div>
+    <div class="jogador-info-col">
+      <div class="jogador-nome">${escHtml(jogador.nome)}</div>
+      <div class="jogador-posicao-label">${escHtml(jogador.posicao)}</div>
+    </div>
     <div class="nota-system">
       <div class="nota-stars nota-stars-main" id="nota-stars-${sanitizeId(jogador.nome)}">
         ${[1,2,3,4,5].map(n=>`<span class="nota-star nota-star-lg" data-n="${n}" title="${n*2}/10">★</span>`).join('')}
@@ -1351,10 +1353,32 @@ function renderJogadores(partida) {
     const ib=ORDEM.findIndex(o=>b.toLowerCase().includes(o.toLowerCase()));
     return (ia===-1?99:ia)-(ib===-1?99:ib);
   });
-  navEl.innerHTML=posOrd.map(p=>`<button class="posicao-btn" data-pos="${escHtml(p)}">${escHtml(p)}</button>`).join('');
-  navEl.querySelectorAll('.posicao-btn').forEach(btn=>{
-    btn.addEventListener('click',()=>{navEl.querySelectorAll('.posicao-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');scrollToPosicao(btn.dataset.pos);});
+  // Adiciona botão "Todos" no início
+  const todasPos = ['Todos', ...posOrd];
+  navEl.innerHTML = todasPos.map(p =>
+    `<button class="posicao-btn" data-pos="${escHtml(p)}">${escHtml(p)}</button>`
+  ).join('');
+
+  function filtrarPosicao(posAtiva) {
+    navEl.querySelectorAll('.posicao-btn').forEach(b => b.classList.remove('active'));
+    navEl.querySelector(`[data-pos="${CSS.escape(posAtiva)}"]`)?.classList.add('active');
+    track.querySelectorAll('.grupo-pos').forEach(g => {
+      if (posAtiva === 'Todos') {
+        g.style.display = '';
+      } else {
+        g.style.display = g.dataset.pos === posAtiva ? '' : 'none';
+      }
+    });
+    // No desktop, scroll para o grupo
+    if (window.innerWidth > 768 && posAtiva !== 'Todos') {
+      scrollToPosicao(posAtiva);
+    }
+  }
+
+  navEl.querySelectorAll('.posicao-btn').forEach(btn => {
+    btn.addEventListener('click', () => filtrarPosicao(btn.dataset.pos));
   });
+
   track.innerHTML='';
   posOrd.forEach(pos=>{
     const g=document.createElement('div'); g.className='grupo-pos'; g.dataset.pos=pos;
@@ -1365,7 +1389,10 @@ function renderJogadores(partida) {
     posicoes[pos].forEach(j=>g.appendChild(criarCardJogador(j)));
     track.appendChild(g);
   });
-  if(navEl.firstElementChild) navEl.firstElementChild.classList.add('active');
+
+  // Começa com "Todos" ativo
+  filtrarPosicao('Todos');
+
   $('arrow-left')&&($('arrow-left').onclick=()=>track.scrollBy({left:-200,behavior:'smooth'}));
   $('arrow-right')&&($('arrow-right').onclick=()=>track.scrollBy({left:200,behavior:'smooth'}));
 }
@@ -1755,6 +1782,8 @@ async function selecionarPartida(id) {
   if (fabStats && !fabStats._bound) { fabStats._bound=true; fabStats.addEventListener('click', () => toggleSidePanel('stats')); }
   if (fabEsc   && !fabEsc._bound)   { fabEsc._bound=true;   fabEsc.addEventListener('click',   () => toggleSidePanel('escalacao')); }
   if (fabChat  && !fabChat._bound)  { fabChat._bound=true;  fabChat.addEventListener('click',  () => toggleChatWidget()); }
+  // Botão de pontuação no FAB (mobile)
+  initFabPontuacao();
   // Reset nota_time UI
   initNotaTimeStars();
   renderPlacarInterno(partida);
@@ -1921,3 +1950,132 @@ document.addEventListener('DOMContentLoaded',async()=>{
   if(state.partidas.length===1) await selecionarPartida(state.partidas[0].id);
   iniciarPolling(); // inicia verificação automática de mudanças
 });
+// ============================================================
+// FAB PONTUAÇÃO — botão mobile + modal bottom sheet
+// ============================================================
+function initFabPontuacao() {
+  const fabBar = $('fab-bar');
+  if (!fabBar) return;
+
+  // Só injetar em mobile
+  if (window.innerWidth > 768) return;
+
+  // Cria o botão se ainda não existir
+  let fabPts = document.getElementById('fab-pontuacao');
+  if (!fabPts) {
+    fabPts = document.createElement('button');
+    fabPts.id = 'fab-pontuacao';
+    fabPts.className = 'fab-btn';
+    fabPts.style.background = 'linear-gradient(135deg, #ffd700, #f59e0b)';
+    fabPts.style.color = '#001533';
+    fabPts.setAttribute('aria-label', 'Pontuação da partida');
+    fabPts.innerHTML = '<i class="fas fa-star-half-alt"></i><span>Pontuação</span>';
+    fabBar.insertBefore(fabPts, fabBar.firstChild);
+  }
+
+  if (!fabPts._bound) {
+    fabPts._bound = true;
+    fabPts.addEventListener('click', abrirModalPontuacao);
+  }
+
+  // Cria o modal se ainda não existir
+  if (!document.getElementById('pontuacao-modal-overlay')) {
+    const overlay = document.createElement('div');
+    overlay.id = 'pontuacao-modal-overlay';
+    overlay.className = 'pontuacao-modal-overlay';
+    overlay.innerHTML = `
+      <div class="pontuacao-modal" id="pontuacao-modal">
+        <div class="pontuacao-modal-header">
+          <span class="pontuacao-modal-titulo"><i class="fas fa-star-half-alt"></i> Pontuação da Partida</span>
+          <button class="pontuacao-modal-close" id="pontuacao-modal-close"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="pontuacao-modal-total-row">
+          <span class="pontuacao-modal-num" id="pm-total">—</span>
+          <div class="pontuacao-modal-info">
+            <span class="pontuacao-modal-badge" id="pm-badge">—</span>
+            <span class="pontuacao-modal-lbl">pontos totais</span>
+          </div>
+        </div>
+        <div class="pontuacao-modal-items" id="pm-items"></div>
+        <div class="pontuacao-modal-regra">
+          <i class="fas fa-info-circle"></i>
+          ⚽ <b>+10</b> por gol &nbsp;·&nbsp; 🛡️ <b>−5</b> gol sofrido &nbsp;·&nbsp; 🟨 <b>−1</b> amarelo &nbsp;·&nbsp; 🟥 <b>−3</b> vermelho
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) fecharModalPontuacao();
+    });
+    document.getElementById('pontuacao-modal-close')
+      .addEventListener('click', fecharModalPontuacao);
+  }
+}
+
+function abrirModalPontuacao() {
+  const pmTotal = document.getElementById('pm-total');
+  const pmBadge = document.getElementById('pm-badge');
+  const pmItems = document.getElementById('pm-items');
+  if (!pmTotal || !pmItems) return;
+
+  // Recalcula direto do state — não depende do widget oculto
+  const partida = state.partidaSelecionada;
+  const todos   = partida?.eventos_timeline || [];
+
+  const golsCru = todos.filter(e => e.is_cruzeiro && e.tipo === 'GOAL').length;
+  const golsSof = todos.filter(e => !e.is_cruzeiro && e.tipo === 'GOAL').length;
+  const amCru   = todos.filter(e => e.is_cruzeiro && e.tipo === 'YELLOW_CARD').length;
+  const vmCru   = todos.filter(e => e.is_cruzeiro && e.tipo === 'RED_CARD').length;
+  const impCru  = todos.filter(e => e.is_cruzeiro && e.tipo === 'IMPORTANT').length;
+
+  const ptGols = golsCru * 10;
+  const ptSof  = golsSof * -5;
+  const ptAm   = amCru   * -1;
+  const ptVm   = vmCru   * -3;
+  const ptImp  = impCru  *  1;
+  const total  = ptGols + ptSof + ptAm + ptVm + ptImp;
+
+  const cls   = getClassificacao(total);
+  const sinal = total >= 0 ? '+' : '';
+
+  // Total
+  pmTotal.textContent = `${sinal}${total}`;
+  pmTotal.style.color = total >= 0 ? '#ffd700' : '#f87171';
+
+  // Badge
+  pmBadge.textContent = cls.texto;
+  pmBadge.className   = `pontuacao-modal-badge ${cls.cls}`;
+
+  // Itens
+  function item(icone, label, pts, mostrar) {
+    if (!mostrar) return '';
+    const s = pts >= 0 ? '+' : '';
+    const c = pts >= 0 ? '#86efac' : '#fca5a5';
+    return `<div class="pontuacao-modal-item">
+      <span class="pontuacao-modal-item-icone">${icone}</span>
+      <span class="pontuacao-modal-item-label">${label}</span>
+      <span class="pontuacao-modal-item-valor" style="color:${c}">${s}${pts}</span>
+    </div>`;
+  }
+
+  const linhas = [
+    item('⚽', `${golsCru} gol${golsCru !== 1 ? 's' : ''} marcado${golsCru !== 1 ? 's' : ''}`, ptGols, golsCru > 0),
+    item('🛡️', `${golsSof} gol${golsSof !== 1 ? 's' : ''} sofrido${golsSof !== 1 ? 's' : ''}`, ptSof,  golsSof > 0),
+    item('🟨', `${amCru} cartão${amCru !== 1 ? 'ões' : ''} amarelo${amCru !== 1 ? 's' : ''}`,  ptAm,   amCru > 0),
+    item('🟥', `${vmCru} cartão${vmCru !== 1 ? 'ões' : ''} vermelho${vmCru !== 1 ? 's' : ''}`, ptVm,   vmCru > 0),
+    item('🔹', `${impCru} lance${impCru !== 1 ? 's' : ''} importante${impCru !== 1 ? 's' : ''}`, ptImp, impCru > 0),
+  ].filter(Boolean).join('');
+
+  pmItems.innerHTML = linhas ||
+    '<div style="color:rgba(255,255,255,.5);font-size:.85rem;padding:8px 0">Sem eventos registrados ainda</div>';
+
+  const overlay = document.getElementById('pontuacao-modal-overlay');
+  if (overlay) overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function fecharModalPontuacao() {
+  const overlay = document.getElementById('pontuacao-modal-overlay');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
