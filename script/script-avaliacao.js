@@ -1500,8 +1500,7 @@ async function renderChatWidget() {
       const reacoesHtml = REACOES.map((r, ri) => {
         const cnt = reacoes[r.emoji] || 0;
         const ativa = minhaReacao === r.emoji ? 'ativa' : '';
-        return `<button class="reacao-btn ${ativa}" data-avid="${escHtml(av.id)}" data-emoji="${escHtml(r.emoji)}" data-ri="${ri}" data-pid="${escHtml(partidaId)}" title="${escHtml(r.label)}">
-          ${r.emoji}<span class="reacao-count" id="rc-${sanitizeId(av.id)}-${ri}">${cnt||''}</span></button>`;
+        return `<button class="reacao-btn ${ativa}" data-avid="${escHtml(av.id)}" data-emoji="${escHtml(r.emoji)}" data-ri="${ri}" data-pid="${escHtml(partidaId)}" title="${escHtml(r.label)}">${r.emoji}<span class="reacao-count">${cnt||''}</span></button>`;
       }).join('');
       return `<div class="chat-comentario">
         <div class="chat-avatar" style="background:${avatarColors[cidx]}">${av.nick.charAt(0).toUpperCase()}</div>
@@ -1736,23 +1735,39 @@ async function carregarComunidade(partidaId) {
 async function reagirComentario(btn) {
   const avId=btn.dataset.avid, emoji=btn.dataset.emoji, pid=btn.dataset.pid;
   if(!avId||!emoji||!pid) return;
-  const getCountSpan = (id, em) => {
+
+  // Escopo: busca sempre dentro do card pai do botão clicado,
+  // evitando conflito com IDs duplicados entre o chat widget e a seção de comunidade
+  const card = btn.closest('.comentario-card, .chat-comentario');
+  const getCountSpan = (em) => {
     const ri = REACOES.findIndex(r=>r.emoji===em);
-    return ri>=0 ? document.getElementById(`rc-${sanitizeId(id)}-${ri}`) : null;
+    if (ri < 0) return null;
+    // Prioriza busca no card local; fallback para getElementById
+    return card
+      ? card.querySelector(`.reacao-count:nth-of-type(${ri + 1}), [id$="-${ri}"]`)
+        ?? card.querySelectorAll('.reacao-count')[ri] ?? null
+      : document.getElementById(`rc-${sanitizeId(avId)}-${ri}`);
   };
+  const getPrevBtn = (em) => {
+    // Busca o botão anterior no mesmo card, não no DOM global
+    return card
+      ? card.querySelector(`.reacao-btn[data-emoji="${em}"]`)
+      : document.querySelector(`.reacao-btn[data-avid="${avId}"][data-emoji="${em}"]`);
+  };
+
   const anterior=getReacao(avId);
   if(anterior===emoji){
     removerRea(avId); btn.classList.remove('ativa');
-    const c=getCountSpan(avId,emoji);
+    const c=getCountSpan(emoji);
     if(c){const n=Math.max(0,(parseInt(c.textContent)||1)-1);c.textContent=n||'';}
     await salvarReacao(pid,avId,null);
   } else {
     if(anterior){
-      const pb=document.querySelector(`.reacao-btn[data-avid="${avId}"][data-emoji="${anterior}"]`);
-      if(pb){ pb.classList.remove('ativa'); const pc=getCountSpan(avId,anterior); if(pc){const n=Math.max(0,(parseInt(pc.textContent)||1)-1);pc.textContent=n||'';} }
+      const pb=getPrevBtn(anterior);
+      if(pb){ pb.classList.remove('ativa'); const pc=getCountSpan(anterior); if(pc){const n=Math.max(0,(parseInt(pc.textContent)||1)-1);pc.textContent=n||'';} }
     }
     salvarRea(avId,emoji); btn.classList.add('ativa');
-    const c=getCountSpan(avId,emoji);
+    const c=getCountSpan(emoji);
     if(c){c.textContent=(parseInt(c.textContent)||0)+1;}
     btn.style.transform='scale(1.3)'; setTimeout(()=>btn.style.transform='',180);
     await salvarReacao(pid,avId,emoji);
