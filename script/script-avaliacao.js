@@ -1488,21 +1488,32 @@ async function renderChatWidget() {
       return;
     }
     const avatarColors = ['#003399','#1a4db8','#e74c3c','#27ae60','#f39c12','#8e44ad','#16a085'];
+    const partidaId = partida.id;
     body.innerHTML = comentarios.map(av => {
       const data  = new Date(av.ts).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
       const cidx  = av.nick.charCodeAt(0) % avatarColors.length;
       const ntChip = av.nota_time
         ? `<span class="nota-chip nota-chip-time" style="margin-right:4px"><i class="fas fa-shield-alt"></i> Time ${av.nota_time}/10</span>`
         : '';
+      const reacoes = av.reacoes || {'👍':0,'❤️':0,'🔥':0,'😂':0,'😡':0};
+      const minhaReacao = getReacao(av.id);
+      const reacoesHtml = REACOES.map((r, ri) => {
+        const cnt = reacoes[r.emoji] || 0;
+        const ativa = minhaReacao === r.emoji ? 'ativa' : '';
+        return `<button class="reacao-btn ${ativa}" data-avid="${escHtml(av.id)}" data-emoji="${escHtml(r.emoji)}" data-ri="${ri}" data-pid="${escHtml(partidaId)}" title="${escHtml(r.label)}">
+          ${r.emoji}<span class="reacao-count" id="rc-${sanitizeId(av.id)}-${ri}">${cnt||''}</span></button>`;
+      }).join('');
       return `<div class="chat-comentario">
         <div class="chat-avatar" style="background:${avatarColors[cidx]}">${av.nick.charAt(0).toUpperCase()}</div>
         <div class="chat-balao">
           <div class="chat-nick">${escHtml(av.nick)} <span class="chat-data">${data}</span></div>
           <p class="chat-texto">${escHtml(av.obs)}</p>
           ${ntChip ? `<div style="margin-top:4px">${ntChip}</div>` : ''}
+          <div class="comentario-reacoes" style="margin-top:6px">${reacoesHtml}</div>
         </div>
       </div>`;
     }).join('');
+    body.querySelectorAll('.reacao-btn').forEach(btn => btn.addEventListener('click', () => reagirComentario(btn)));
   } catch(e) {
     body.innerHTML = '<div class="sem-comentarios"><i class="fas fa-exclamation-circle"></i><p>Erro ao carregar.</p></div>';
   }
