@@ -257,15 +257,22 @@ function converterEventos(timeline, nomeCruzeiro) {
     return norm(ev.time)===normCru ? 'cruzeiro' : 'adversario';
   }
 
+  // Texto principal do evento: narracao tem prioridade, senão usa titulo (formato API GE)
+  function getTexto(ev) {
+    return (ev.narracao||'').trim() || (ev.titulo||'').trim();
+  }
+
   for (const ev of timeline) {
     if (ev.tipo==='SUMMARY_AUTOMATIC'||ev.tipo==='STANDOUT_PLAYER') continue;
     const ordem=getPeriodOrder(ev.minuto);
     if (ordem===0||ordem===4) continue;
     if (ev.tipo==='NORMAL') {
-      const n=(ev.narracao||'').toLowerCase().trim();
+      // Usa titulo como fallback quando narracao está vazio (formato da API GE)
+      const n = getTexto(ev).toLowerCase();
       if (!n||BORING.some(b=>n.startsWith(b))) continue;
     }
-    const key=`${ev.minuto}|${ev.tipo}|${(ev.narracao||'').substring(0,40)}`;
+    const textoEv = getTexto(ev);
+    const key=`${ev.minuto}|${ev.tipo}|${textoEv.substring(0,40)}`;
     if (seen.has(key)) continue; seen.add(key);
 
     const lado = getLado(ev);
@@ -273,25 +280,39 @@ function converterEventos(timeline, nomeCruzeiro) {
 
     let jogador='',jogador_entra='',label='';
     if (ev.tipo==='GOAL') {
-      const m=(ev.narracao||'').match(/⚽\s*([A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+)*)/);
-      jogador=m?m[1].trim():'';
+      jogador = ev.jogador || '';
+      if (!jogador) {
+        const m=textoEv.match(/⚽\s*([A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+)*)/);
+        jogador=m?m[1].trim():'';
+      }
       label=isCruzeiro?`⚽ GOL DO ${(nomeCruzeiro||'CRUZEIRO').toUpperCase()}!`:'⚽ Gol do adversário';
     } else if (ev.tipo==='YELLOW_CARD'||ev.tipo==='RED_CARD') {
-      const m=(ev.narracao||'').match(/(?:para|de)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+)*)/i);
-      jogador=m?m[1].trim():'';
+      jogador = ev.jogador || '';
+      if (!jogador) {
+        const m=textoEv.match(/(?:para|de)\s+([A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+(?:\s+[A-ZÁÉÍÓÚÂÊÔÃÕÜ][a-záéíóúâêôãõü]+)*)/i);
+        jogador=m?m[1].trim():'';
+      }
       label=ev.titulo||(ev.tipo==='RED_CARD'?'Vermelho!':'Cartão Amarelo');
     } else if (ev.tipo==='SUBSTITUTION') {
-      const sai=(ev.narracao||'').match(/sai\s+([^,]+),/i);
-      const entra=(ev.narracao||'').match(/entra\s+(.+?)(?:\.|$)/i);
-      const sub=(ev.narracao||'').match(/([A-ZÁÉÍÓÚ][a-záéíóú]+(?: [A-ZÁÉÍÓÚ][a-záéíóú]+)*)\s+substitui\s+([A-ZÁÉÍÓÚ][a-záéíóú]+(?: [A-ZÁÉÍÓÚ][a-záéíóú]+)*)/i);
-      if (sai&&entra){jogador=sai[1].trim();jogador_entra=entra[1].replace(/\.\s*aos.*$/,'').trim();}
-      else if (sub){jogador_entra=sub[1].trim();jogador=sub[2].trim();}
-      label='Substituição';
+      if (ev.jogador && ev.jogador.includes('➔')) {
+        const partes = ev.jogador.split('➔');
+        jogador = partes[0].trim();
+        jogador_entra = partes[1]?.trim();
+      } else {
+        const sai=textoEv.match(/sai\s+([^,]+),/i);
+        const entra=textoEv.match(/entra\s+(.+?)(?:\.|$)/i);
+        const sub=textoEv.match(/([A-ZÁÉÍÓÚ][a-záéíóú]+(?: [A-ZÁÉÍÓÚ][a-záéíóú]+)*)\s+substitui\s+([A-ZÁÉÍÓÚ][a-záéíóú]+(?: [A-ZÁÉÍÓÚ][a-záéíóú]+)*)/i);
+        if (sai&&entra){jogador=sai[1].trim();jogador_entra=entra[1].replace(/\.\s*aos.*$/,'').trim();}
+        else if (sub){jogador_entra=sub[1].trim();jogador=sub[2].trim();}
+        else if (ev.jogador){jogador=ev.jogador;}
+      }
+      label = ev.titulo || 'Substituição';
     } else if (ev.tipo==='IMPORTANT') {
       const titulo=(ev.titulo||'').replace(/^[🔹▶️◽⚽🟨🟥🔄]\s*/u,'').trim();
-      label=titulo&&titulo.length>3?titulo:(limpar(ev.narracao)||'Lance Importante');
+      label=titulo&&titulo.length>3?titulo:(limpar(textoEv)||'Lance Importante');
     } else {
-      label=limpar(ev.narracao)||ev.titulo||'Lance';
+      // NORMAL — usa titulo que é onde a GE coloca o texto
+      label = ev.titulo || limpar(ev.narracao) || 'Lance';
     }
 
     eventos.push({
@@ -424,8 +445,8 @@ function normalizarJogo(jogo, idx) {
   // ── Nomes e escudos ──────────────────────────────────────
   const nomeCru  = cru?.nome   || jogo.partida?.time_visitante || 'Cruzeiro';
   const nomeAdv  = adv?.nome   || jogo.partida?.time_casa      || 'Adversário';
-  const escCru   = cru?.escudos?.png   || CONFIG_AV.defaultEscudo;
-  const escAdv   = adv?.escudos?.png   || CONFIG_AV.defaultEscudo;
+  const escCru   = cru?.escudo || cru?.escudos?.png || CONFIG_AV.defaultEscudo;
+  const escAdv   = adv?.escudo || adv?.escudos?.png || CONFIG_AV.defaultEscudo;
 
   // ── Placar ───────────────────────────────────────────────
   let golsCru, golsAdv;
@@ -855,14 +876,25 @@ function renderEscalacao(partida) {
   if (!escCasa && !escVis) { slot.innerHTML = '<div style="padding:20px;color:#94a3b8;text-align:center;font-size:.82rem">Escalação não disponível</div>'; return; }
 
   function listaJogadores(lista, limite=11) {
-    if (!lista || !lista.length) return '<li class="escal-jogador" style="color:#94a3b8">–</li>';
-    return lista.slice(0, limite).map(j => `
+    // Aceita tanto objetos {nome,posicao,numero} quanto strings "Nome - POS - Num"
+    const normalizada = (lista||[]).map(j => {
+      if (typeof j === 'string') {
+        const x = j.split(' - ');
+        return { nome: x[0]?.trim()||'', posicao: converterPosicao(x[1]?.trim()||''), numero: x[2]?.trim()||'' };
+      }
+      return { nome: j.nome||j.nome_formatado||'', posicao: j.posicao||'', numero: j.numero||j.num||'' };
+    });
+    if (!normalizada.length) return '<li class="escal-jogador" style="color:#94a3b8">–</li>';
+    return normalizada.slice(0, limite).map(j => `
       <li class="escal-jogador">
         <span class="escal-num">${j.numero||''}</span>
         <span class="escal-pos">${j.posicao||''}</span>
-        <span class="escal-nome">${j.nome||j.nome_formatado||''}</span>
+        <span class="escal-nome">${j.nome||''}</span>
       </li>`).join('');
   }
+
+  // Extrai lista de jogadores: tenta titulares primeiro, depois titulares_simplificado
+  const getTitulares = (esc) => esc?.titulares?.length ? esc.titulares : (esc?.titulares_simplificado || []);
 
   slot.innerHTML = `
     <div class="escal-body" id="escal-body">
@@ -873,7 +905,7 @@ function renderEscalacao(partida) {
             <strong>${escHtml(partida.mandante)}</strong>
           </div>
           ${escCasa?.tecnico ? `<div class="escal-tecnico">Técnico: ${escHtml(escCasa.tecnico)}</div>` : ''}
-          <ul class="escal-lista">${listaJogadores(escCasa?.titulares)}</ul>
+          <ul class="escal-lista">${listaJogadores(getTitulares(escCasa))}</ul>
         </div>
         <div class="escal-time-col">
           <div class="escal-time-header vis">
@@ -881,7 +913,7 @@ function renderEscalacao(partida) {
             <strong>${escHtml(partida.visitante)}</strong>
           </div>
           ${escVis?.tecnico ? `<div class="escal-tecnico">Técnico: ${escHtml(escVis.tecnico)}</div>` : ''}
-          <ul class="escal-lista">${listaJogadores(escVis?.titulares)}</ul>
+          <ul class="escal-lista">${listaJogadores(getTitulares(escVis))}</ul>
         </div>
       </div>
     </div>`;
