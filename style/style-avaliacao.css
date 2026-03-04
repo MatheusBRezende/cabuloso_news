@@ -3724,6 +3724,160 @@
  font-size: 0.62rem;
 }
 
+/* ── WIDGET FLUTUANTE DE PONTUAÇÃO ──────────────────────────── */
+.pontuacao-widget {
+  position: fixed;
+  bottom: 100px;
+  left: 22px;
+  width: 280px;
+  background: linear-gradient(160deg, #001533 0%, #003399 65%, #1a4db8 100%);
+  border-radius: 14px;
+  border: 1.5px solid rgba(255, 215, 0, 0.35);
+  box-shadow: 0 8px 32px rgba(0, 51, 153, 0.4);
+  z-index: 900;
+  overflow: hidden;
+  color: #fff;
+}
+
+.pw-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid rgba(255, 215, 0, 0.15);
+  transition: background 0.15s;
+}
+.pw-header:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.pw-titulo {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pw-titulo i {
+  color: #ffd700;
+}
+
+.pw-total {
+  font-family: "Oswald", sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #ffd700;
+  line-height: 1;
+}
+
+.pw-badge {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.pw-badge.excelente {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+.pw-badge.boa {
+  background: rgba(34, 197, 94, 0.15);
+  color: #86efac;
+  border: 1px solid rgba(34, 197, 94, 0.25);
+}
+.pw-badge.regular {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+}
+.pw-badge.ruim {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+.pw-badge.pessima {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.pw-chevron {
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.5);
+  transition: transform 0.25s ease;
+}
+.pw-chevron.rotated {
+  transform: rotate(180deg);
+}
+
+.pw-body {
+  overflow: hidden;
+}
+.pw-body.collapsed {
+  display: none;
+}
+
+.pw-items {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 10px 12px 6px;
+}
+
+.pw-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 7px;
+  padding: 6px 10px;
+}
+.pw-item-icone {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+.pw-item-label {
+  flex: 1;
+  font-weight: 500;
+}
+.pw-item-valor {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.95rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.pw-regra {
+  font-size: 0.64rem;
+  color: rgba(255, 255, 255, 0.35);
+  line-height: 1.5;
+  padding: 6px 12px 10px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+}
+.pw-regra i {
+  color: rgba(255, 215, 0, 0.4);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.pw-regra b {
+  color: rgba(255, 255, 255, 0.6);
+}
+
 /* ── FAB BAR — botões flutuantes ───────────────────────────── */
 .fab-bar {
  position: fixed;
@@ -4336,15 +4490,7 @@
 
  /* ── WIDGET DE PONTUAÇÃO ─── */
  .pontuacao-widget {
-   bottom: 78px;
-   left: 14px;
-   width: min(260px, calc(100vw - 160px));
- }
- .pw-total {
-   font-size: 1.2rem;
- }
- .pw-titulo {
-   font-size: 0.68rem;
+   display: none !important;
  }
 
  /* ── COMUNIDADE ─── */
@@ -4409,10 +4555,8 @@
    font-size: 0.78rem;
  }
 
- .pontuacao-widget {
-   bottom: 70px;
-   left: 10px;
-   width: min(240px, calc(100vw - 130px));
+ .pontuacao-widget-mobile-hidden {
+   display: none;
  }
 }
 

@@ -846,8 +846,12 @@ function renderPontuacaoPanel(partida) {
 
   pwItems.innerHTML = linhas || '<div class="pw-item" style="color:rgba(255,255,255,.4);font-size:.8rem">Sem eventos ainda</div>';
 
-  // Mostra o widget
-  widget.style.display = 'block';
+  // Mostra o widget apenas em desktop; no mobile usa o modal FAB
+  if (window.innerWidth > 768) {
+    widget.style.display = 'block';
+  } else {
+    widget.style.display = 'none';
+  }
 
   // Inicializa toggle (uma única vez)
   const pwToggle  = document.getElementById('pw-toggle');
@@ -856,8 +860,8 @@ function renderPontuacaoPanel(partida) {
   if (pwToggle && !pwToggle._initialized) {
     pwToggle._initialized = true;
     pwToggle.addEventListener('click', () => {
-      const col = pwBody.classList.toggle('pw-collapsed');
-      pwChevron.classList.toggle('collapsed', col);
+      const col = pwBody.classList.toggle('collapsed');
+      pwChevron.classList.toggle('rotated', col);
       pwToggle.setAttribute('aria-expanded', !col);
     });
     pwToggle.addEventListener('keydown', e => {
