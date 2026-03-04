@@ -2,6 +2,7 @@
  * script-avaliacao.js — CABULOSO NEWS v4
  * Melhorias: timeline com time identificado, toggle do painel,
  * sistema de nota individual melhorado, comunidade compacta
+ * ✅ CORRIGIDO: estatísticas do boxscore ESPN, fotos, alinhamento casa/visitante
  */
 
 const CONFIG_AV = {
@@ -74,7 +75,6 @@ function getIdsSnapshot(partidas) {
 
 async function pollingAvaliacao() {
   try {
-    // Adiciona ?_t= para evitar cache do browser/CDN
     const res = await fetch(
       CONFIG_AV.avaliacaoUrl + '&_t=' + Date.now(),
       { signal: AbortSignal.timeout(8000) }
@@ -95,19 +95,17 @@ async function pollingAvaliacao() {
     }
 
     const snapshot = getIdsSnapshot(novas);
-    if (snapshot === _pollingIdsAnterior) return; // nada mudou
+    if (snapshot === _pollingIdsAnterior) return;
 
     console.log('[POLLING] Mudança detectada! Atualizando partidas...');
     _pollingIdsAnterior = snapshot;
     state.partidas = novas;
     renderPartidas(novas);
 
-    // Se só tem 1 partida e nenhuma está selecionada, abre automaticamente
     if (novas.length === 1 && !state.partidaSelecionada) {
       await selecionarPartida(novas[0].id);
     }
 
-    // Se a partida atualmente selecionada mudou (ex: encerrou), atualiza o painel
     if (state.partidaSelecionada) {
       const atualizada = novas.find(p => p.id === state.partidaSelecionada.id);
       if (atualizada) {
@@ -125,7 +123,6 @@ async function pollingAvaliacao() {
 
 function iniciarPolling() {
   if (_pollingInterval) clearInterval(_pollingInterval);
-  // Verifica a cada 30 segundos se há partidas novas ou mudanças
   _pollingInterval = setInterval(pollingAvaliacao, 30000);
   console.log('[POLLING] Iniciado (intervalo: 30s)');
 }
@@ -155,7 +152,6 @@ const removerRea = id      => localStorage.removeItem(`rc_${id}`);
 const estrelasHtml = n  => [1,2,3,4,5].map(i=>i<=n?'★':'☆').join('');
 const sanitizeId   = n  => (n||'').replace(/[^a-zA-Z0-9]/g,'_');
 
-// Etiqueta de qualidade para a nota
 function getNotaLabel(nota) {
   if (!nota || nota<1) return {txt:'', cls:''};
   if (nota<=2)  return {txt:'Ruim',    cls:'nota-ruim'};
@@ -184,6 +180,7 @@ function converterJogadores(esc) {
         numero:  item.numero  || item.num || '?',
         nome:    item.nome    || item.name || '?',
         posicao: converterPosicao(item.posicao || item.position || ''),
+        // ✅ foto: lê campo foto do parser ESPN (headshot URL)
         foto:    item.foto    || item.photo || null,
         slug:    item.slug    || null,
       });
@@ -249,15 +246,12 @@ function converterEventos(timeline, nomeCruzeiro) {
   const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const normCru = norm(nomeCruzeiro||'');
 
-  // ✅ Identifica se o evento é do Cruzeiro pelo ev.time,
-  //    independente de ser mandante ou visitante
   function getLado(ev) {
     if (ev.lado) return ev.lado;
     if (!ev.time || ev.time==='neutro') return 'neutro';
     return norm(ev.time)===normCru ? 'cruzeiro' : 'adversario';
   }
 
-  // Texto principal do evento: narracao tem prioridade, senão usa titulo (formato API GE)
   function getTexto(ev) {
     return (ev.narracao||'').trim() || (ev.titulo||'').trim();
   }
@@ -267,7 +261,6 @@ function converterEventos(timeline, nomeCruzeiro) {
     const ordem=getPeriodOrder(ev.minuto);
     if (ordem===0||ordem===4) continue;
     if (ev.tipo==='NORMAL') {
-      // Usa titulo como fallback quando narracao está vazio (formato da API GE)
       const n = getTexto(ev).toLowerCase();
       if (!n||BORING.some(b=>n.startsWith(b))) continue;
     }
@@ -311,7 +304,6 @@ function converterEventos(timeline, nomeCruzeiro) {
       const titulo=(ev.titulo||'').replace(/^[🔹▶️◽⚽🟨🟥🔄]\s*/u,'').trim();
       label=titulo&&titulo.length>3?titulo:(limpar(textoEv)||'Lance Importante');
     } else {
-      // NORMAL — usa titulo que é onde a GE coloca o texto
       label = ev.titulo || limpar(ev.narracao) || 'Lance';
     }
 
@@ -329,7 +321,6 @@ function converterEventos(timeline, nomeCruzeiro) {
     return (parseInt(a.minuto)||0)-(parseInt(b.minuto)||0);
   });
 
-  // Calcula o placar acumulado no momento de cada gol
   let _gcasa = 0, _gvis = 0;
   for (const ev of sorted) {
     if (ev.tipo === 'GOAL') {
@@ -402,8 +393,6 @@ async function salvarReacao(partidaId, avaliacaoId, emoji) {
 
 // ============================================================
 // IDENTIFICAÇÃO DO CRUZEIRO
-// Detecta qual time é o Cruzeiro pelo nome, sigla ou id
-// Independente de ser mandante ou visitante
 // ============================================================
 const CRUZEIRO_TOKENS = ['cruzeiro', 'cru'];
 
@@ -417,17 +406,14 @@ function identificarCruzeiro(jogo) {
   };
 
   if (jogo.times?.casa || jogo.times?.visitante) {
-    // Formato novo: { times: { casa: {...}, visitante: {...} } }
     const tcasa = jogo.times.casa;
     const tvis  = jogo.times.visitante;
     if (ehCruzeiro(tcasa)) return { cru: tcasa, adv: tvis, cruEhCasa: true  };
     if (ehCruzeiro(tvis))  return { cru: tvis,  adv: tcasa, cruEhCasa: false };
-    // Fallback: assume casa (comportamento antigo, nunca deve chegar aqui)
     return { cru: tcasa, adv: tvis, cruEhCasa: true };
   }
 
   if (jogo.times?.cruzeiro || jogo.times?.adversario) {
-    // Formato antigo: { times: { cruzeiro: {...}, adversario: {...} } }
     return { cru: jogo.times.cruzeiro, adv: jogo.times.adversario, cruEhCasa: true };
   }
 
@@ -435,35 +421,31 @@ function identificarCruzeiro(jogo) {
 }
 
 // ============================================================
-// CARREGAR DADOS — suporte multi-partida (worker v5.x)
+// CARREGAR DADOS — suporte multi-partida
 // ============================================================
 function normalizarJogo(jogo, idx) {
   if (!jogo?.partida) return null;
 
   const { cru, adv, cruEhCasa } = identificarCruzeiro(jogo);
 
-  // ── Nomes e escudos ──────────────────────────────────────
   const nomeCru  = cru?.nome   || jogo.partida?.time_visitante || 'Cruzeiro';
   const nomeAdv  = adv?.nome   || jogo.partida?.time_casa      || 'Adversário';
   const escCru   = cru?.escudo || cru?.escudos?.png || CONFIG_AV.defaultEscudo;
   const escAdv   = adv?.escudo || adv?.escudos?.png || CONFIG_AV.defaultEscudo;
 
-  // ── Placar ───────────────────────────────────────────────
   let golsCru, golsAdv;
   if (jogo.times?.casa || jogo.times?.visitante) {
-    // Formato novo
     golsCru = cruEhCasa ? (jogo.placar?.casa ?? 0) : (jogo.placar?.visitante ?? 0);
     golsAdv = cruEhCasa ? (jogo.placar?.visitante ?? 0) : (jogo.placar?.casa ?? 0);
   } else {
-    // Formato antigo
     golsCru = jogo.placar?.cruzeiro  ?? 0;
     golsAdv = jogo.placar?.adversario ?? 0;
   }
 
-  // ── Escalação e estatísticas do Cruzeiro ─────────────────
   let escalacaoCru, statCru, statAdv;
   if (jogo.times?.casa || jogo.times?.visitante) {
     escalacaoCru = cruEhCasa ? jogo.escalacoes?.casa      : jogo.escalacoes?.visitante;
+    // ✅ CORREÇÃO: estatisticas agora indexadas por casa/visitante (vindas do ESPN boxscore)
     statCru      = cruEhCasa ? jogo.estatisticas?.casa     : jogo.estatisticas?.visitante;
     statAdv      = cruEhCasa ? jogo.estatisticas?.visitante: jogo.estatisticas?.casa;
   } else {
@@ -472,7 +454,6 @@ function normalizarJogo(jogo, idx) {
     statAdv      = jogo.estatisticas?.adversario;
   }
 
-  // ── Display: preserva ordem real da partida (mandante × visitante) ──
   const mandante        = cruEhCasa ? nomeCru  : nomeAdv;
   const visitante       = cruEhCasa ? nomeAdv  : nomeCru;
   const escudoMandante  = cruEhCasa ? escCru   : escAdv;
@@ -492,7 +473,6 @@ function normalizarJogo(jogo, idx) {
     gols_mandante:    golsMandante,
     gols_visitante:   golsVisitante,
     placar_txt:       jogo.placar?.texto || `${mandante} ${golsMandante} x ${golsVisitante} ${visitante}`,
-    // ↓ guardamos o nome real do Cruzeiro para usar na lógica de eventos
     nome_cruzeiro:    nomeCru,
     nome_adversario:  nomeAdv,
     encerrada: !!(jogo.partida_encerrada || jogo._encerrada
@@ -502,14 +482,16 @@ function normalizarJogo(jogo, idx) {
     jogadores:           converterJogadores(escalacaoCru),
     eventos_timeline:    converterEventos(jogo.timeline, nomeCru),
     pontuacao_cruzeiro:  calcPontuacao(jogo.timeline, nomeCru),
+    // ✅ Estatísticas armazenadas como cruzeiro/adversario para cálculos internos
     estatisticas:        (statCru||statAdv) ? { cruzeiro: statCru, adversario: statAdv } : null,
+    // ✅ Também guarda se Cruzeiro é mandante, para alinhar barras no render
+    _cruEhMandante:      cruEhCasa,
     _jogoRaw:            jogo,
   };
 }
 
 async function carregarDadosAvaliacao() {
   try {
-    // cache: 'no-store' garante que o browser não sirva versão antiga
     const res   = await fetch(
       CONFIG_AV.avaliacaoUrl + '&_t=' + Date.now(),
       { signal: AbortSignal.timeout(8000), cache: 'no-store' }
@@ -517,11 +499,9 @@ async function carregarDadosAvaliacao() {
     if (!res.ok) throw new Error('HTTP '+res.status);
     const dados = await res.json();
 
-    // Worker v5.2 → array; worker v5.1 / n8n direto → objeto único
     const lista = Array.isArray(dados) ? dados : (dados?.partida ? [dados] : []);
     if (!lista.length) return [];
 
-    // Normaliza e deduplica por id
     const vistos = new Set();
     const resultado = [];
     for (let i = 0; i < lista.length; i++) {
@@ -537,7 +517,6 @@ async function carregarDadosAvaliacao() {
     return [];
   }
 }
-
 
 // ============================================================
 // PRÓXIMO JOGO — countdown quando não há partida disponível
@@ -570,7 +549,6 @@ async function buscarProximoJogoEExibir(container) {
 }
 
 function parseDataJogo(data, hora) {
-  // data formato "25/02" ou "25/02/2026", hora "20:00"
   const partes = data.split('/');
   const dia  = parseInt(partes[0]);
   const mes  = parseInt(partes[1]) - 1;
@@ -639,7 +617,7 @@ function iniciarCountdown(target) {
     const diff = target - new Date();
     if (diff <= 0) {
       clearInterval(_countdownInterval);
-      ['pjcd-d','pjcd-h','pjcd-m','pjcd-s'].forEach(id => { const e=$( id); if(e) e.textContent='00'; });
+      ['pjcd-d','pjcd-h','pjcd-m','pjcd-s'].forEach(id => { const e=$(id); if(e) e.textContent='00'; });
       return;
     }
     const d = Math.floor(diff / 86400000);
@@ -654,7 +632,7 @@ function iniciarCountdown(target) {
 }
 
 // ============================================================
-// RENDER — PARTIDAS (novo layout com dois estados)
+// RENDER — PARTIDAS
 // ============================================================
 function buildCardHtml(p) {
   const av        = jaAvaliou(p.id);
@@ -719,11 +697,11 @@ function renderPartidas(partidas) {
   const el = $('partidas-lista');
   if (el) { el.innerHTML = partidas.map(buildCardHtml).join(''); bindCardEvents(el); }
 
-  // Mostra countdown se todas encerradas
   if (partidas.every(p => p.encerrada)) {
     buscarProximoJogoEExibir($('proximo-jogo-wrapper'));
   }
 }
+
 // ============================================================
 // FECHAR PAINEL
 // ============================================================
@@ -732,7 +710,6 @@ function fecharPainelAvaliacao() {
   if (av) av.style.display = 'none';
   const id = state.partidaSelecionada?.id;
   state.partidaSelecionada = null;
-  // Restaura visual do footer do card
   if (id) {
     const footer = document.getElementById('btn-card-' + id);
     if (footer) {
@@ -744,7 +721,6 @@ function fecharPainelAvaliacao() {
     c.classList.remove('selected');
     c.querySelector('.partida-card-chevron')?.classList.remove('rotated');
   });
-  // Esconde FABs, widget de pontuação e fecha painéis laterais
   const fab = $('fab-bar'); if (fab) fab.style.display = 'none';
   const pw = document.getElementById('pontuacao-widget'); if (pw) pw.style.display = 'none';
   fecharSidePanel('stats');
@@ -753,10 +729,7 @@ function fecharPainelAvaliacao() {
 }
 
 // ============================================================
-// RENDER — PLACAR
-// ============================================================
-// ============================================================
-// RENDER — PLACAR INTERNO (novo layout wireframe)
+// RENDER — PLACAR INTERNO
 // ============================================================
 function renderPlacarInterno(partida) {
   const el = document.getElementById('placar-interno');
@@ -782,7 +755,6 @@ function renderPlacarInterno(partida) {
 // RENDER — PONTUAÇÃO AUTOMÁTICA DA PARTIDA
 // ============================================================
 function renderPontuacaoPanel(partida) {
-  // Agora alimenta o widget flutuante (#pontuacao-widget) em vez do slot inline
   const widget = document.getElementById('pontuacao-widget');
   const pwTotal = document.getElementById('pw-total');
   const pwBadge = document.getElementById('pw-badge-cls');
@@ -791,7 +763,6 @@ function renderPontuacaoPanel(partida) {
 
   const todos = partida.eventos_timeline || [];
 
-  // Contadores separados para Cruzeiro
   const golsCru   = todos.filter(e => e.is_cruzeiro && e.tipo === 'GOAL').length;
   const golsSof   = todos.filter(e => !e.is_cruzeiro && e.tipo === 'GOAL').length;
   const amCru     = todos.filter(e => e.is_cruzeiro && e.tipo === 'YELLOW_CARD').length;
@@ -808,23 +779,18 @@ function renderPontuacaoPanel(partida) {
   const cls = getClassificacao(total);
   const sinalTotal = total >= 0 ? '+' : '';
 
-  // Atualiza total com animação de pulso se mudou
   const totalStr = `${sinalTotal}${total}`;
   if (pwTotal.textContent !== totalStr) {
     pwTotal.textContent = totalStr;
     pwTotal.classList.remove('pw-update');
-    void pwTotal.offsetWidth; // reflow para reiniciar animação
+    void pwTotal.offsetWidth;
     pwTotal.classList.add('pw-update');
   }
 
-  // Cor do total
   pwTotal.style.color = total >= 0 ? '#ffd700' : '#f87171';
-
-  // Badge de classificação
   pwBadge.textContent = cls.texto;
   pwBadge.className = `pw-badge ${cls.cls}`;
 
-  // Itens do breakdown
   function pwItem(icone, label, pts, mostrar) {
     if (!mostrar) return '';
     const sinal = pts >= 0 ? '+' : '';
@@ -846,14 +812,12 @@ function renderPontuacaoPanel(partida) {
 
   pwItems.innerHTML = linhas || '<div class="pw-item" style="color:rgba(255,255,255,.4);font-size:.8rem">Sem eventos ainda</div>';
 
-  // Mostra o widget apenas em desktop; no mobile usa o modal FAB
   if (window.innerWidth > 768) {
     widget.style.display = 'block';
   } else {
     widget.style.display = 'none';
   }
 
-  // Inicializa toggle (uma única vez)
   const pwToggle  = document.getElementById('pw-toggle');
   const pwBody    = document.getElementById('pw-body');
   const pwChevron = document.getElementById('pw-chevron');
@@ -869,18 +833,21 @@ function renderPontuacaoPanel(partida) {
     });
   }
 }
+
 function renderEscalacao(partida) {
   const slot = document.getElementById('escalacao-slot');
   if (!slot) return;
-  slot.innerHTML = ''; // limpa conteúdo anterior
+  slot.innerHTML = '';
 
   const jogo = partida._jogoRaw || {};
   const escCasa = jogo.escalacoes?.casa || jogo.escalacao_cruzeiro;
   const escVis  = jogo.escalacoes?.visitante || jogo.escalacao_adversario;
-  if (!escCasa && !escVis) { slot.innerHTML = '<div style="padding:20px;color:#94a3b8;text-align:center;font-size:.82rem">Escalação não disponível</div>'; return; }
+  if (!escCasa && !escVis) {
+    slot.innerHTML = '<div style="padding:20px;color:#94a3b8;text-align:center;font-size:.82rem">Escalação não disponível</div>';
+    return;
+  }
 
   function listaJogadores(lista, limite=11) {
-    // Aceita tanto objetos {nome,posicao,numero} quanto strings "Nome - POS - Num"
     const normalizada = (lista||[]).map(j => {
       if (typeof j === 'string') {
         const x = j.split(' - ');
@@ -897,7 +864,6 @@ function renderEscalacao(partida) {
       </li>`).join('');
   }
 
-  // Extrai lista de jogadores: tenta titulares primeiro, depois titulares_simplificado
   const getTitulares = (esc) => esc?.titulares?.length ? esc.titulares : (esc?.titulares_simplificado || []);
 
   slot.innerHTML = `
@@ -925,8 +891,12 @@ function renderEscalacao(partida) {
 
 function renderPlacarCard(partida) {
   const el=$('placar-card'); if(!el) return;
+  // ✅ CORREÇÃO: alinha estatísticas com o lado correto do placar-card
+  const cruEhMandante = partida._cruEhMandante !== false;
   const statsHtml=partida.estatisticas?(()=>{
-    const c=partida.estatisticas.cruzeiro||{}, a=partida.estatisticas.adversario||{};
+    const st = partida.estatisticas;
+    const c = cruEhMandante ? (st.cruzeiro||{}) : (st.adversario||{});
+    const a = cruEhMandante ? (st.adversario||{}) : (st.cruzeiro||{});
     const rows=[
       ['Posse',`${c.posse_bola??'—'}%`,`${a.posse_bola??'—'}%`,c.posse_bola,a.posse_bola],
       ['Finalizações',c.finalizacoes??'—',a.finalizacoes??'—',c.finalizacoes,a.finalizacoes],
@@ -963,11 +933,12 @@ function renderPlacarCard(partida) {
 
 // ============================================================
 // RENDER — ESTATÍSTICAS DA PARTIDA (painel dedicado)
+// ✅ CORRIGIDO: alinha dados de stats com lado visual correto
 // ============================================================
 function renderEstatisticas(partida) {
   const slot = document.getElementById('estatisticas-slot');
   if (!slot) return;
-  slot.innerHTML = ''; // limpa
+  slot.innerHTML = '';
 
   const st = partida.estatisticas;
   if (!st) {
@@ -975,8 +946,16 @@ function renderEstatisticas(partida) {
     return;
   }
 
-  const c = st.cruzeiro || st.casa || {};
-  const a = st.adversario || st.visitante || {};
+  // ✅ CORREÇÃO PRINCIPAL: verifica se Cruzeiro é mandante ou visitante
+  // para colocar os dados do lado correto (esquerda = mandante, direita = visitante)
+  const cruEhMandante = partida._cruEhMandante !== false;
+  const c = cruEhMandante
+    ? (st.cruzeiro   || st.casa      || {})
+    : (st.adversario || st.visitante || {});
+  const a = cruEhMandante
+    ? (st.adversario || st.visitante || {})
+    : (st.cruzeiro   || st.casa      || {});
+
   const nomeCasa = escHtml(partida.mandante);
   const nomeVis  = escHtml(partida.visitante);
 
@@ -986,6 +965,8 @@ function renderEstatisticas(partida) {
     const tot = nc + na;
     const pct = tot ? Math.round((nc / tot) * 100) : 50;
     const venceCasa = maiorMelhor ? nc >= na : nc <= na;
+    // Só mostra a linha se ao menos um lado tem valor
+    if (vc === null && va === null) return '';
     return `<div class="est-row">
       <span class="est-val est-casa ${venceCasa&&tot?'est-winner':''}">${vc ?? '—'}${label==='Posse'?'%':''}</span>
       <div class="est-mid">
@@ -1000,19 +981,25 @@ function renderEstatisticas(partida) {
   }
 
   const rows = [
-    statRow('Posse', c.posse_bola, a.posse_bola),
-    statRow('Finalizações', c.finalizacoes, a.finalizacoes),
-    statRow('No Gol', c.finalizacoes_no_gol, a.finalizacoes_no_gol),
-    statRow('Bloqueadas', c.finalizacoes_bloqueadas, a.finalizacoes_bloqueadas),
-    statRow('Escanteios', c.escanteios, a.escanteios),
-    statRow('Faltas', c.faltas, a.faltas, false),
-    statRow('Passes Certos', c.passes_certos, a.passes_certos),
-    statRow('Total de Passes', c.passes_totais, a.passes_totais),
-    statRow('Desarmes', c.desarmes, a.desarmes),
-    statRow('Amarelos', c.cartoes_amarelos, a.cartoes_amarelos, false),
-    statRow('Vermelhos', c.cartoes_vermelhos, a.cartoes_vermelhos, false),
-    statRow('Impedimentos', c.impedimentos, a.impedimentos, false),
+    statRow('Posse',          c.posse_bola,             a.posse_bola),
+    statRow('Finalizações',   c.finalizacoes,            a.finalizacoes),
+    statRow('No Gol',         c.finalizacoes_no_gol,     a.finalizacoes_no_gol),
+    statRow('Bloqueadas',     c.finalizacoes_bloqueadas, a.finalizacoes_bloqueadas),
+    statRow('Escanteios',     c.escanteios,              a.escanteios),
+    statRow('Faltas',         c.faltas,                  a.faltas,         false),
+    statRow('Passes Certos',  c.passes_certos,           a.passes_certos),
+    statRow('Total de Passes',c.passes_totais,           a.passes_totais),
+    statRow('Desarmes',       c.desarmes,                a.desarmes),
+    statRow('Defesas',        c.defesas_goleiro,         a.defesas_goleiro),
+    statRow('Amarelos',       c.cartoes_amarelos,        a.cartoes_amarelos, false),
+    statRow('Vermelhos',      c.cartoes_vermelhos,       a.cartoes_vermelhos, false),
+    statRow('Impedimentos',   c.impedimentos,            a.impedimentos,    false),
   ].filter(Boolean).join('');
+
+  if (!rows) {
+    slot.innerHTML = '<div style="padding:20px;color:#94a3b8;text-align:center;font-size:.82rem">Estatísticas não disponíveis</div>';
+    return;
+  }
 
   slot.innerHTML = `
     <div class="est-times-header">
@@ -1028,6 +1015,7 @@ function renderEstatisticas(partida) {
     </div>
     <div class="est-rows">${rows}</div>`;
 }
+
 function getClassificacao(pts) {
   if (pts>=25) return {texto:'Excelente',cls:'excelente'};
   if (pts>=15) return {texto:'Boa',cls:'boa'};
@@ -1036,7 +1024,6 @@ function getClassificacao(pts) {
   return           {texto:'Péssima',cls:'pessima'};
 }
 
-// Determina cor/classe do chip pelo tipo de evento
 function getChipClass(tipo, isCruzeiro) {
   if (tipo==='GOAL') return isCruzeiro ? 'htl-chip-gol-casa' : 'htl-chip-gol-vis';
   if (tipo==='RED_CARD') return isCruzeiro ? 'htl-chip-vm-casa' : 'htl-chip-vm-vis';
@@ -1046,7 +1033,6 @@ function getChipClass(tipo, isCruzeiro) {
   return 'htl-chip-normal';
 }
 
-// Texto legível para o tooltip do evento
 function getDetalheLance(ev, nomeCasa, nomeVis) {
   const time = ev.is_cruzeiro ? nomeCasa : (ev.lado==='adversario' ? nomeVis : '');
   const min  = ev.minuto ? `${ev.minuto}'` : '';
@@ -1090,11 +1076,8 @@ function renderHorizontalTimeline(partida) {
   state.nomeCasa   = partida.mandante;
   state.nomeVis    = partida.visitante;
 
-  // ✅ Para tooltips e labels de eventos usamos nome_cruzeiro/nome_adversario
-  // (não mandante/visitante, pois o Cruzeiro pode ser qualquer um dos lados)
   const nomeCruzeiro = partida.nome_cruzeiro || partida.mandante;
   const nomeAdversario = partida.nome_adversario || partida.visitante;
-  // Para compatibilidade com getDetalheLance, passamos cruzeiro como "casa" e adversario como "vis"
   const nomeCasa = nomeCruzeiro;
   const nomeVis  = nomeAdversario;
 
@@ -1104,11 +1087,9 @@ function renderHorizontalTimeline(partida) {
   const vmTotal = todos.filter(e=>e.tipo==='RED_CARD').length;
   const subs    = todos.filter(e=>e.tipo==='SUBSTITUTION').length;
 
-  // Filtra apenas eventos relevantes (exclui NORMAL genérico)
   const TIPOS_CHIP = ['GOAL','RED_CARD','YELLOW_CARD','SUBSTITUTION','IMPORTANT'];
   const relevantes  = todos.filter(e=>TIPOS_CHIP.includes(e.tipo));
 
-  // Agrupa por período
   const ev1T  = relevantes.filter(e=>e.periodo_ordem===1);
   const evINT = relevantes.filter(e=>e.periodo_ordem===2);
   const ev2T  = relevantes.filter(e=>e.periodo_ordem===3);
@@ -1118,7 +1099,6 @@ function renderHorizontalTimeline(partida) {
     const min    = ev.minuto ? `${ev.minuto}'` : '';
     const det    = getDetalheLance(ev, nomeCasa, nomeVis);
     const idx    = todos.indexOf(ev);
-    // Lado: casa=esquerda, vis=direita, neutro=centro (sem indicador)
     const ladoCls = ev.is_cruzeiro ? 'htl-lado-casa' : (ev.lado==='adversario' ? 'htl-lado-vis' : '');
     return `<button class="htl-chip ${cls} ${ladoCls}" data-ev="${idx}"
         aria-label="${escHtml(det.titulo)}"
@@ -1147,7 +1127,6 @@ function renderHorizontalTimeline(partida) {
     buildPeriodoFaixa(ev2T, '2º Tempo', '2T'),
   ].filter(Boolean).join('');
 
-  // Legenda de times (substituiu o cabeçalho-cabecalho antigo)
   const legenda = `
     <div class="htl-legenda">
       <span class="htl-leg-item htl-leg-casa">
@@ -1161,7 +1140,6 @@ function renderHorizontalTimeline(partida) {
       </span>
     </div>`;
 
-  // Painel de detalhe (fechado por padrão, abre ao clicar)
   const painelDetalhe = `<div class="htl-detalhe-panel" id="htl-detalhe" style="display:none;"></div>`;
 
   el.innerHTML=`
@@ -1185,14 +1163,12 @@ function renderHorizontalTimeline(partida) {
     </div>
   `;
 
-  // ✅ Guarda nome_cruzeiro e nome_adversario para uso nos tooltips (não mandante/visitante)
   el._eventos    = todos;
-  el._nomeCasa   = nomeCruzeiro;   // cruzeiro = "casa" na lógica de is_cruzeiro
+  el._nomeCasa   = nomeCruzeiro;
   el._nomeVis    = nomeAdversario;
   el._escudoCasa = partida.escudo_mandante;
   el._escudoVis  = partida.escudo_visitante;
 
-  // Toggle collapsar timeline
   const htlToggle = document.getElementById('htl-toggle-btn');
   const htlBody   = document.getElementById('htl-body');
   if (htlToggle && htlBody) {
@@ -1207,7 +1183,6 @@ function renderHorizontalTimeline(partida) {
   }
 }
 
-// Abre painel de detalhe ao clicar num chip
 function abrirDetalheTimeline(idx) {
   const panel = document.getElementById('htl-detalhe');
   const tpEl  = $('timeline-panel');
@@ -1219,7 +1194,6 @@ function abrirDetalheTimeline(idx) {
   const ev = todos[idx];
   if (!ev) return;
 
-  // Toggle: fecha se já está aberto para o mesmo evento
   if (panel.dataset.openIdx === String(idx) && panel.style.display !== 'none') {
     panel.style.display='none';
     panel.dataset.openIdx='';
@@ -1238,19 +1212,14 @@ function abrirDetalheTimeline(idx) {
   const escudo  = isCasa ? tpEl._escudoCasa : (isVis ? tpEl._escudoVis : '');
   const timeNome = isCasa ? nomeCasa : (isVis ? nomeVis : '');
 
-  // Texto da narração (limpo, sem timestamps e sem placar embutido)
-  const narracaoCompleta = ev.narracao
-    ? limpar(ev.narracao)
-    : '';
+  const narracaoCompleta = ev.narracao ? limpar(ev.narracao) : '';
   const descricaoExtra = narracaoCompleta && narracaoCompleta !== det.titulo.replace(/^[⚽🟨🟥🔄🔹]\s*/u,'')
     ? `<p class="htl-det-narracao">${escHtml(narracaoCompleta)}</p>` : '';
 
-  // Para gols, mostra o placar calculado (correto) em vez do que veio na narração
   const placarGolHtml = (ev.tipo === 'GOAL' && ev.placar_neste_momento)
     ? `<p class="htl-det-placar">⚽ Placar: ${escHtml(tpEl._nomeCasa)} ${ev.placar_neste_momento.casa} × ${ev.placar_neste_momento.vis} ${escHtml(tpEl._nomeVis)}</p>`
     : '';
 
-  // Cor de destaque por tipo
   const corMap = {
     GOAL: isCasa ? '#003399' : '#dc2626',
     RED_CARD: '#dc2626', YELLOW_CARD: '#d97706',
@@ -1276,7 +1245,7 @@ function abrirDetalheTimeline(idx) {
 }
 
 // ============================================================
-// RENDER — JOGADORES com nota 1-10 via slider
+// RENDER — JOGADORES com nota 1-10 via estrelas
 // ============================================================
 function scrollToPosicao(pos) {
   const g=document.querySelector(`.grupo-pos[data-pos="${pos}"]`);
@@ -1293,13 +1262,18 @@ function criarCardJogador(jogador) {
   const card=document.createElement('div'); card.className='jogador-card'; card.dataset.nome=jogador.nome;
   const notaId=`nota-display-${sanitizeId(jogador.nome)}`;
 
+  // ✅ Foto do jogador com fallback para inicial
+  const fotoHtml = jogador.foto
+    ? `<img src="${escHtml(jogador.foto)}" alt="${escHtml(jogador.nome)}"
+         onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
+         loading="lazy"
+         style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">
+       <span style="display:none;width:100%;height:100%;border-radius:50%;align-items:center;justify-content:center;font-weight:700;font-size:1.1rem;">${(jogador.nome||'?').charAt(0).toUpperCase()}</span>`
+    : (jogador.nome||'?').charAt(0).toUpperCase();
+
   card.innerHTML=`
     <div class="jogador-numero">${jogador.numero||'?'}</div>
-    <div class="jogador-avatar">${
-      jogador.foto
-        ? `<img src="${escHtml(jogador.foto)}" alt="" onerror="this.parentNode.textContent='${(jogador.nome||'?').charAt(0).toUpperCase()}'" loading="lazy" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
-        : (jogador.nome||'?').charAt(0).toUpperCase()
-    }</div>
+    <div class="jogador-avatar">${fotoHtml}</div>
     <div class="jogador-info-col">
       <div class="jogador-nome">${escHtml(jogador.nome)}</div>
       <div class="jogador-posicao-label">${escHtml(jogador.posicao)}</div>
@@ -1316,7 +1290,6 @@ function criarCardJogador(jogador) {
     <button class="obs-toggle"><i class="fas fa-comment" style="font-size:.6rem"></i> + obs</button>
     <div class="obs-mini"><textarea maxlength="100" placeholder="${escHtml(jogador.nome.split(' ')[0])}..." rows="2"></textarea></div>`;
 
-  // ✅ Usa jaAvaliou() diretamente para não depender do estado global desatualizado
   const jaAvaliadoNestaPartida = jaAvaliou(state.partidaSelecionada?.id || '');
   if(jaAvaliadoNestaPartida){card.style.pointerEvents='none';card.style.opacity='0.7';return card;}
 
@@ -1335,15 +1308,12 @@ function criarCardJogador(jogador) {
       card.classList.remove('avaliado'); return;
     }
 
-    // Atualiza badge
     badgeEl.textContent=n; badgeEl.className='nota-badge changed';
     setTimeout(()=>badgeEl.classList.remove('changed'),250);
 
-    // Atualiza label
     const {txt,cls}=getNotaLabel(n);
     lblEl.textContent=txt; lblEl.className=`nota-label ${cls}`;
 
-    // Atualiza estrelas (1 estrela = 2 pontos)
     const estrelas = Math.ceil(n/2);
     starsEl.querySelectorAll('.nota-star').forEach(s=>{
       const sN=+s.dataset.n;
@@ -1354,11 +1324,9 @@ function criarCardJogador(jogador) {
     card.classList.add('avaliado');
   }
 
-  // Estrelas clicáveis (1 estrela = 2 pontos)
   starsEl.querySelectorAll('.nota-star').forEach(star=>{
     star.addEventListener('click',()=>{
-      const n = +star.dataset.n * 2; // 1★=2, 2★=4, 3★=6, 4★=8, 5★=10
-      // Clique na mesma nota deseleciona
+      const n = +star.dataset.n * 2;
       const atual = state.notas[jogador.nome]?.nota;
       setNota(atual === n ? 0 : n);
     });
@@ -1389,7 +1357,6 @@ function renderJogadores(partida) {
     const ib=ORDEM.findIndex(o=>b.toLowerCase().includes(o.toLowerCase()));
     return (ia===-1?99:ia)-(ib===-1?99:ib);
   });
-  // Adiciona botão "Todos" no início
   const todasPos = ['Todos', ...posOrd];
   navEl.innerHTML = todasPos.map(p =>
     `<button class="posicao-btn" data-pos="${escHtml(p)}">${escHtml(p)}</button>`
@@ -1405,7 +1372,6 @@ function renderJogadores(partida) {
         g.style.display = g.dataset.pos === posAtiva ? '' : 'none';
       }
     });
-    // No desktop, scroll para o grupo
     if (window.innerWidth > 768 && posAtiva !== 'Todos') {
       scrollToPosicao(posAtiva);
     }
@@ -1426,7 +1392,6 @@ function renderJogadores(partida) {
     track.appendChild(g);
   });
 
-  // Começa com "Todos" ativo
   filtrarPosicao('Todos');
 
   $('arrow-left')&&($('arrow-left').onclick=()=>track.scrollBy({left:-200,behavior:'smooth'}));
@@ -1434,7 +1399,7 @@ function renderJogadores(partida) {
 }
 
 // ============================================================
-// PAINÉIS LATERAIS FLUTUANTES — Stats (esquerda) / Escalação (direita)
+// PAINÉIS LATERAIS FLUTUANTES
 // ============================================================
 function toggleSidePanel(tipo) {
   const panelId   = tipo === 'stats' ? 'panel-stats' : 'panel-escalacao';
@@ -1445,7 +1410,6 @@ function toggleSidePanel(tipo) {
   const fab       = $(fabId);
   if (!panel) return;
   const isOpen = panel.classList.contains('open');
-  // Fecha o outro painel se aberto
   const outro = tipo === 'stats' ? 'escalacao' : 'stats';
   fecharSidePanel(outro);
   if (isOpen) {
@@ -1468,7 +1432,6 @@ function fecharSidePanel(tipo) {
   if (panel)   panel.classList.remove('open');
   if (overlay) overlay.classList.remove('active');
   if (fab)     fab.classList.remove('fab-active');
-  // Remove body lock apenas se nenhum painel estiver aberto
   if (!$('panel-stats')?.classList.contains('open') &&
       !$('panel-escalacao')?.classList.contains('open')) {
     document.body.classList.remove('side-panel-open');
@@ -1569,7 +1532,6 @@ function initNotaTimeStars() {
   lblEl.textContent   = '/10 · Clique para avaliar';
   wrap.querySelectorAll('.nt-star').forEach(s => { s.classList.remove('ativa','semi'); });
 
-  // ✅ Usa jaAvaliou() diretamente para garantir estado correto ao trocar de partida
   const jaAvaliadoAqui = jaAvaliou(state.partidaSelecionada?.id || '');
   if (jaAvaliadoAqui) {
     wrap.style.pointerEvents = 'none';
@@ -1601,7 +1563,6 @@ function initNotaTimeStars() {
         s.classList.toggle('ativa', +s.dataset.n <= (state.nota_time / 2));
       });
       updateDisplay(state.nota_time);
-      // micro-animação
       star.classList.add('pop'); setTimeout(() => star.classList.remove('pop'), 220);
     });
     star.addEventListener('mouseenter', () => highlight(+star.dataset.n));
@@ -1610,7 +1571,7 @@ function initNotaTimeStars() {
 }
 
 // ============================================================
-// TOGGLE da seção "Avaliar Partida"
+// TOGGLE da seção de jogadores
 // ============================================================
 function initToggleJogadores() {
   const section = document.querySelector('.jogadores-section');
@@ -1627,7 +1588,7 @@ function initToggleJogadores() {
 }
 
 // ============================================================
-// ENVIO
+// ENVIO DA AVALIAÇÃO
 // ============================================================
 async function enviarAvaliacao() {
   const partida=state.partidaSelecionada;
@@ -1694,7 +1655,6 @@ async function carregarComunidade(partidaId) {
     avaliacoes=avaliacoes.filter(a=>a.ts>limite);
     badgeEl.textContent=`${avaliacoes.length} avaliação${avaliacoes.length!==1?'ões':''}`;
 
-    // Média da nota_time da torcida
     const notasTime = avaliacoes.map(a => a.nota_time).filter(n => n > 0);
     const ntcEl = document.getElementById('nota-time-comunidade');
     const ntcValor = document.getElementById('ntc-valor');
@@ -1703,7 +1663,6 @@ async function carregarComunidade(partidaId) {
     if (ntcEl && ntcValor && ntcEst && ntcVotos) {
       if (notasTime.length) {
         const media = notasTime.reduce((a,b)=>a+b,0) / notasTime.length;
-        const cls = getClassificacao(media * 2);
         ntcValor.textContent = media.toFixed(1);
         ntcValor.className = `ntc-valor ntv-${getNotaLabel(media).cls}`;
         ntcEst.innerHTML = [1,2,3,4,5].map(i=>i<=Math.round(media/2)?'<span class="ntc-star ativa">★</span>':'<span class="ntc-star">★</span>').join('');
@@ -1713,6 +1672,7 @@ async function carregarComunidade(partidaId) {
         ntcEl.style.display = 'none';
       }
     }
+
     const jogadores=state.partidaSelecionada?.jogadores||[];
     if(!avaliacoes.length){
       mediasGrid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#94a3b8;padding:12px;font-size:.82rem;">Seja o primeiro a avaliar!</div>';
@@ -1772,20 +1732,16 @@ async function reagirComentario(btn) {
   const avId=btn.dataset.avid, emoji=btn.dataset.emoji, pid=btn.dataset.pid;
   if(!avId||!emoji||!pid) return;
 
-  // Escopo: busca sempre dentro do card pai do botão clicado,
-  // evitando conflito com IDs duplicados entre o chat widget e a seção de comunidade
   const card = btn.closest('.comentario-card, .chat-comentario');
   const getCountSpan = (em) => {
     const ri = REACOES.findIndex(r=>r.emoji===em);
     if (ri < 0) return null;
-    // Prioriza busca no card local; fallback para getElementById
     return card
       ? card.querySelector(`.reacao-count:nth-of-type(${ri + 1}), [id$="-${ri}"]`)
         ?? card.querySelectorAll('.reacao-count')[ri] ?? null
       : document.getElementById(`rc-${sanitizeId(avId)}-${ri}`);
   };
   const getPrevBtn = (em) => {
-    // Busca o botão anterior no mesmo card, não no DOM global
     return card
       ? card.querySelector(`.reacao-btn[data-emoji="${em}"]`)
       : document.querySelector(`.reacao-btn[data-avid="${avId}"][data-emoji="${em}"]`);
@@ -1815,14 +1771,11 @@ async function reagirComentario(btn) {
 // ============================================================
 async function selecionarPartida(id) {
   const partida=state.partidas.find(p=>p.id===id); if(!partida) return;
-  // ✅ Sempre relê o localStorage ao trocar de partida — garante estado limpo
   state.partidaSelecionada=partida; state.notas={}; state.nota_time=0;
-  state.avaliacaoEnviada = jaAvaliou(id);  // relê do localStorage, não confia no estado global
+  state.avaliacaoEnviada = jaAvaliou(id);
   const av=$('avaliacao-section');
   if(av){av.style.display='block';setTimeout(()=>av.scrollIntoView({behavior:'smooth',block:'start'}),100);}
-  // Remove placar-card duplicado (já mostrado nas tabs)
   const pc=$('placar-card'); if(pc) pc.style.display='none';
-  // Atualiza visual de todos os cards
   document.querySelectorAll('.partida-card').forEach(c => {
     const isThis = c.dataset.id === id;
     c.classList.toggle('selected', isThis);
@@ -1835,18 +1788,14 @@ async function selecionarPartida(id) {
       }
     }
   });
-  // Mostra FABs
   const fab = $('fab-bar'); if (fab) fab.style.display = 'flex';
-  // Bind FABs (apenas uma vez)
   const fabStats = $('fab-stats');
   const fabEsc   = $('fab-escalacao');
   const fabChat  = $('fab-chat');
   if (fabStats && !fabStats._bound) { fabStats._bound=true; fabStats.addEventListener('click', () => toggleSidePanel('stats')); }
   if (fabEsc   && !fabEsc._bound)   { fabEsc._bound=true;   fabEsc.addEventListener('click',   () => toggleSidePanel('escalacao')); }
   if (fabChat  && !fabChat._bound)  { fabChat._bound=true;  fabChat.addEventListener('click',  () => toggleChatWidget()); }
-  // Botão de pontuação no FAB (mobile)
   initFabPontuacao();
-  // Reset nota_time UI
   initNotaTimeStars();
   renderPlacarInterno(partida);
   renderPontuacaoPanel(partida);
@@ -1855,7 +1804,6 @@ async function selecionarPartida(id) {
   renderEscalacao(partida);
   renderJogadores(partida);
 
-  // Garante que o toggle esteja inicializado e expandido
   const section = document.querySelector('.jogadores-section');
   if (section) {
     section.classList.remove('collapsed');
@@ -1863,11 +1811,8 @@ async function selecionarPartida(id) {
     if (chevron) chevron.innerHTML = '<i class="fas fa-chevron-down"></i>';
   }
   initToggleJogadores();
-
-  // Botão Esconder partida
   iniciarBotaoEsconder(id);
 
-  // Accordion de médias — inicializa
   const accToggle = document.querySelector('.medias-accordion-toggle');
   if (accToggle && !accToggle._initialized) {
     accToggle._initialized = true;
@@ -1878,7 +1823,6 @@ async function selecionarPartida(id) {
     });
   }
 
-  // Toggle comunidade section
   const comToggle = document.getElementById('comunidade-toggle-btn');
   const comBody   = document.getElementById('comunidade-body');
   if (comToggle && comBody && !comToggle._initialized) {
@@ -1907,7 +1851,6 @@ function setOcultas(arr) { localStorage.setItem(OCULTAS_KEY, JSON.stringify(arr)
 function isOculta(id) { return getOcultas().includes(id); }
 
 function iniciarBotaoEsconder(id) {
-  // Inicializa toggle do header "Dados da Partida"
   const dadosToggle = document.getElementById('dados-header-toggle');
   const dadosBody   = document.getElementById('dados-body');
   if (dadosToggle && dadosBody && !dadosToggle._initialized) {
@@ -1952,13 +1895,11 @@ function aplicarEstadoOculto(id) {
   const oculta = isOculta(id);
   const els = ['timeline-panel','jogadores-section','comunidade-section','ja-avaliou-msg'];
   els.forEach(elId=>{
-    const el=$( elId); if(!el) return;
-    // Não esconde ja-avaliou se houver mensagem de confirmação
+    const el=$(elId); if(!el) return;
     if (elId==='ja-avaliou-msg' && el.style.display==='none') return;
     if (oculta) el.dataset.escondido='1', el.style.opacity='0.15', el.style.pointerEvents='none';
     else delete el.dataset.escondido, el.style.opacity='', el.style.pointerEvents='';
   });
-  // Submit area separado
   const sa=$('submit-area');
   if(sa&&!state.avaliacaoEnviada){
     if(oculta) sa.style.display='none';
@@ -1969,9 +1910,6 @@ function aplicarEstadoOculto(id) {
 // ============================================================
 // INICIALIZAÇÃO
 // ============================================================
-
-// Função utilitária para o admin resetar a partida via console ou botão externo
-// Uso: resetarPartidaKV('cabuloso2026')
 window.resetarPartidaKV = async function(adminKey) {
   if (!adminKey) { console.error('[RESET] Informe a chave admin'); return; }
   try {
@@ -1987,7 +1925,6 @@ window.resetarPartidaKV = async function(adminKey) {
     console.log('[RESET] Resposta:', data);
     if (data.ok) {
       showToast('✅ KV resetado! Recarregando partidas...', 'success');
-      // Força recarregamento imediato
       setTimeout(async () => {
         state.partidas = await carregarDadosAvaliacao();
         _pollingIdsAnterior = getIdsSnapshot(state.partidas);
@@ -2007,22 +1944,20 @@ document.addEventListener('DOMContentLoaded',async()=>{
   const ta=$('observacao-geral-input'),ct=$('char-count');
   if(ta&&ct) ta.addEventListener('input',()=>ct.textContent=ta.value.length);
   state.partidas=await carregarDadosAvaliacao();
-  _pollingIdsAnterior = getIdsSnapshot(state.partidas); // salva snapshot inicial
+  _pollingIdsAnterior = getIdsSnapshot(state.partidas);
   renderPartidas(state.partidas);
   if(state.partidas.length===1) await selecionarPartida(state.partidas[0].id);
-  iniciarPolling(); // inicia verificação automática de mudanças
+  iniciarPolling();
 });
+
 // ============================================================
 // FAB PONTUAÇÃO — botão mobile + modal bottom sheet
 // ============================================================
 function initFabPontuacao() {
   const fabBar = $('fab-bar');
   if (!fabBar) return;
-
-  // Só injetar em mobile
   if (window.innerWidth > 768) return;
 
-  // Cria o botão se ainda não existir
   let fabPts = document.getElementById('fab-pontuacao');
   if (!fabPts) {
     fabPts = document.createElement('button');
@@ -2040,7 +1975,6 @@ function initFabPontuacao() {
     fabPts.addEventListener('click', abrirModalPontuacao);
   }
 
-  // Cria o modal se ainda não existir
   if (!document.getElementById('pontuacao-modal-overlay')) {
     const overlay = document.createElement('div');
     overlay.id = 'pontuacao-modal-overlay';
@@ -2080,7 +2014,6 @@ function abrirModalPontuacao() {
   const pmItems = document.getElementById('pm-items');
   if (!pmTotal || !pmItems) return;
 
-  // Recalcula direto do state — não depende do widget oculto
   const partida = state.partidaSelecionada;
   const todos   = partida?.eventos_timeline || [];
 
@@ -2100,15 +2033,11 @@ function abrirModalPontuacao() {
   const cls   = getClassificacao(total);
   const sinal = total >= 0 ? '+' : '';
 
-  // Total
   pmTotal.textContent = `${sinal}${total}`;
   pmTotal.style.color = total >= 0 ? '#ffd700' : '#f87171';
-
-  // Badge
   pmBadge.textContent = cls.texto;
   pmBadge.className   = `pontuacao-modal-badge ${cls.cls}`;
 
-  // Itens
   function item(icone, label, pts, mostrar) {
     if (!mostrar) return '';
     const s = pts >= 0 ? '+' : '';
