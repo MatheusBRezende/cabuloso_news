@@ -173,13 +173,18 @@ function converterPosicao(pos) {
 
 function converterJogadores(esc) {
   const list = [];
-  const p = arr => (arr || []).forEach(item => {
+  // ✅ FIX v5.9: isReserva=true → posicao_raw "SUB" vira "Reserva" em vez de herdar "MEC" errado
+  const p = (arr, isReserva = false) => (arr || []).forEach(item => {
     if (!item) return;
     if (typeof item === 'object') {
+      const posRaw = (item.posicao_raw || '').toUpperCase();
+      const posicao = (isReserva && posRaw === 'SUB')
+        ? 'Reserva'
+        : converterPosicao(item.posicao || item.position || '');
       list.push({
         numero:  item.numero  || item.num || '?',
         nome:    item.nome    || item.name || '?',
-        posicao: converterPosicao(item.posicao || item.position || ''),
+        posicao,
         // ✅ foto: lê campo foto do parser ESPN (headshot URL)
         foto:    item.foto    || item.photo || null,
         slug:    item.slug    || null,
@@ -191,13 +196,13 @@ function converterJogadores(esc) {
       list.push({
         numero:  x[2]?.trim() || '?',
         nome:    x[0]?.trim() || '?',
-        posicao: converterPosicao(x[1]?.trim()),
+        posicao: isReserva ? 'Reserva' : converterPosicao(x[1]?.trim()),
         foto:    null, slug: null,
       });
     }
   });
-  p(esc?.titulares);
-  p(esc?.reservas);
+  p(esc?.titulares, false);
+  p(esc?.reservas, true);
   return list;
 }
 
@@ -1065,67 +1070,158 @@ function getDetalheLance(ev, nomeCasa, nomeVis) {
   return { titulo: ev.label || 'Lance', sub: min };
 }
 
+// ============================================================
+// CLASSIFICAR LANCE — mapeia texto/emoji de lances_detalhados
+// para tipo, ícone, tamanho de chip e cor
+// ============================================================
+function classificarLance(texto) {
+  const t = texto || '';
+  if (/⚽/.test(t) && /[Gg]o+l/.test(t))                   return { tipo:'GOAL',         icone:'⚽', tam:'xl', cor:'#22c55e' };
+  if (/🟥/.test(t) || /[Cc]art[aã]o vermelho/.test(t))     return { tipo:'RED_CARD',      icone:'🟥', tam:'xl', cor:'#ef4444' };
+  if (/🟨/.test(t) || /[Cc]art[aã]o amarelo/.test(t))      return { tipo:'YELLOW_CARD',   icone:'🟨', tam:'md', cor:'#eab308' };
+  if (/🔄/.test(t) || /[Ss]ubstitui[cç][aã]o|[Ee]ntra.*[Ss]ai/.test(t)) return { tipo:'SUB', icone:'🔄', tam:'md', cor:'#64748b' };
+  if (/🧤/.test(t) || /[Dd]efesa de/.test(t))              return { tipo:'SAVE',          icone:'🧤', tam:'md', cor:'#3b82f6' };
+  if (/VAR/.test(t))                                        return { tipo:'VAR',           icone:'📺', tam:'md', cor:'#8b5cf6' };
+  if (/🛡️/.test(t) || /[Cc]hute bloqueado/.test(t))        return { tipo:'BLOCKED',       icone:'🛡️', tam:'sm', cor:'#6366f1' };
+  if (/💨/.test(t) || /[Ff]inaliza[cç][aã]o.*saiu/.test(t))return { tipo:'SHOT',          icone:'💨', tam:'sm', cor:'#94a3b8' };
+  if (/🚩/.test(t) && /[Ee]scanteio/.test(t))              return { tipo:'CORNER',        icone:'🚩', tam:'sm', cor:'#0ea5e9' };
+  if (/[Ii]mpedimento/.test(t))                             return { tipo:'OFFSIDE',       icone:'🔺', tam:'sm', cor:'#f97316' };
+  if (/⏸️/.test(t) || /les[aã]o|[Pp]ausa na partida/.test(t)) return { tipo:'INJURY',    icone:'⏸️', tam:'sm', cor:'#f59e0b' };
+  if (/▶️/.test(t) || /[Jj]ogo retomado/.test(t))          return { tipo:'RESUME',        icone:'▶️', tam:'xs', cor:'#475569' };
+  if (/📋/.test(t) || /[Tt]imes anunciados/.test(t))        return { tipo:'LINEUP',        icone:'📋', tam:'xs', cor:'#475569' };
+  if (/🏁/.test(t))                                         return { tipo:'PERIOD_START',  icone:'🏁', tam:'xs', cor:'#64748b' };
+  if (/[Ff]alta/.test(t))                                   return { tipo:'FOUL',          icone:'⚠️', tam:'xs', cor:'#475569' };
+  return                                                     { tipo:'NORMAL',               icone:'·',  tam:'xs', cor:'#334155' };
+}
+
+// Agrupa lances_detalhados em períodos detectando marcadores de texto
+function agruparLancesPorPeriodo(lances) {
+  const grupos = { PRE:[], '1T':[], INT:[], '2T':[], '3T':[] };
+  let periodo = '1T';
+  for (const l of lances) {
+    const t = l.texto || '';
+    if (/📋|[Tt]imes anunciados|[Aa]quecendo/.test(t))      periodo = 'PRE';
+    else if (/🏁.*[Pp]rimeiro|[Cc]ome[cç]a o primeiro/.test(t)) periodo = '1T';
+    else if (/[Ii]ntervalo|[Ff]im do primeiro|[Pp]rimeiro tempo encerrado/.test(t)) periodo = 'INT';
+    else if (/🏁.*[Ss]egundo|[Cc]ome[cç]a o segundo/.test(t)) periodo = '2T';
+    else if (/[Pp]r[oó]rroga[cç][aã]o|[Ee]xtra [Tt]ime/.test(t)) periodo = '3T';
+    grupos[periodo].push(l);
+  }
+  return grupos;
+}
+
+// ============================================================
+// RENDER — TIMELINE HORIZONTAL (v5.9 — usa lances_detalhados)
+// Chips de 4 tamanhos conforme importância do lance:
+//   xl → gol, vermelho  |  md → amarelo, sub, defesa, VAR
+//   sm → escanteio, impedimento, bloqueio, lesão
+//   xs → falta, retomada, normal (pequenos pontos discretos)
+// ============================================================
 function renderHorizontalTimeline(partida) {
-  const el=$('timeline-panel'); if(!el) return;
-  const todos=partida.eventos_timeline||[];
-  if (!todos.length) { el.style.display='none'; return; }
-  el.style.display='block';
+  const el = $('timeline-panel');
+  if (!el) return;
+
+  const lancesBrutos = partida._jogoRaw?.lances_detalhados || [];
+  const todosEv      = partida.eventos_timeline || [];
+
+  // Precisa de pelo menos uma fonte de dados
+  if (!lancesBrutos.length && !todosEv.length) { el.style.display='none'; return; }
+  el.style.display = 'block';
 
   state.escudoCasa = partida.escudo_mandante;
   state.escudoVis  = partida.escudo_visitante;
   state.nomeCasa   = partida.mandante;
   state.nomeVis    = partida.visitante;
 
-  const nomeCruzeiro = partida.nome_cruzeiro || partida.mandante;
-  const nomeAdversario = partida.nome_adversario || partida.visitante;
-  const nomeCasa = nomeCruzeiro;
-  const nomeVis  = nomeAdversario;
+  const nomeCasa = partida.nome_cruzeiro  || partida.mandante;
+  const nomeVis  = partida.nome_adversario || partida.visitante;
 
-  const golsCru = todos.filter(e=>e.is_cruzeiro&&e.tipo==='GOAL').length;
-  const golsAdv = todos.filter(e=>!e.is_cruzeiro&&e.tipo==='GOAL').length;
-  const amTotal = todos.filter(e=>e.tipo==='YELLOW_CARD').length;
-  const vmTotal = todos.filter(e=>e.tipo==='RED_CARD').length;
-  const subs    = todos.filter(e=>e.tipo==='SUBSTITUTION').length;
+  // ── Resumo no header (baseado em eventos_timeline estruturados) ──
+  const golsCru = todosEv.filter(e=>e.is_cruzeiro&&e.tipo==='GOAL').length;
+  const golsAdv = todosEv.filter(e=>!e.is_cruzeiro&&e.tipo==='GOAL').length;
+  const amTotal = todosEv.filter(e=>e.tipo==='YELLOW_CARD').length;
+  const vmTotal = todosEv.filter(e=>e.tipo==='RED_CARD').length;
+  const subs    = todosEv.filter(e=>e.tipo==='SUBSTITUTION').length;
 
-  const TIPOS_CHIP = ['GOAL','RED_CARD','YELLOW_CARD','SUBSTITUTION','IMPORTANT'];
-  const relevantes  = todos.filter(e=>TIPOS_CHIP.includes(e.tipo));
+  // ── Monta lista unificada de chips a partir de lances_detalhados ──
+  // Cada item: { texto, minuto, _cls (classificarLance result), _idx }
+  const lancesValidos = lancesBrutos
+    .filter(l => l.texto?.trim())
+    .map((l, i) => ({ ...l, _cls: classificarLance(l.texto), _idx: i }));
 
-  const ev1T  = relevantes.filter(e=>e.periodo_ordem===1);
-  const evINT = relevantes.filter(e=>e.periodo_ordem===2);
-  const ev2T  = relevantes.filter(e=>e.periodo_ordem===3);
+  // Se não tiver lances_detalhados, fallback para eventos_timeline (comportamento antigo)
+  const usarLancesDetalhados = lancesValidos.length > 0;
 
-  function buildChip(ev) {
-    const cls    = getChipClass(ev.tipo, ev.is_cruzeiro);
-    const min    = ev.minuto ? `${ev.minuto}'` : '';
-    const det    = getDetalheLance(ev, nomeCasa, nomeVis);
-    const idx    = todos.indexOf(ev);
-    const ladoCls = ev.is_cruzeiro ? 'htl-lado-casa' : (ev.lado==='adversario' ? 'htl-lado-vis' : '');
-    return `<button class="htl-chip ${cls} ${ladoCls}" data-ev="${idx}"
-        aria-label="${escHtml(det.titulo)}"
-        onclick="abrirDetalheTimeline(${idx})">
-      <span class="htl-chip-icone">${ev.icone||'▶️'}</span>
-      ${min ? `<span class="htl-chip-min">${min}</span>` : ''}
+  // Tamanhos gerenciados por CSS: .htl-ld-xl / md / sm / xs
+
+  function buildChipLD(l) {
+    const cls     = l._cls;
+    const tam     = cls.tam;
+    const min     = l.minuto ? `<span class="htl-ld-min">${escHtml(l.minuto)}</span>` : '';
+    const naoTrad = l._traduzido === false ? '<span class="htl-ld-en">EN</span>' : '';
+    const label   = escHtml(l.texto.substring(0, 80));
+    return `<button class="htl-ld-chip htl-ld-${tam} htl-ld-${cls.tipo}" data-ld="${l._idx}" aria-label="${label}" title="${label}"
+        onclick="abrirDetalheLD(${l._idx})">
+      <span>${cls.icone}</span>${min}${naoTrad}
     </button>`;
   }
 
-  function buildPeriodoFaixa(evs, nome, labelShort) {
-    if (!evs.length) return '';
-    const chips = evs.map(buildChip).join('');
-    return `
-      <div class="htl-periodo">
-        <div class="htl-periodo-label">${labelShort}</div>
-        <div class="htl-faixa">
-          <div class="htl-linha"></div>
-          <div class="htl-chips">${chips}</div>
-        </div>
-      </div>`;
+  // Fallback: chip antigo para eventos_timeline
+  function buildChipEv(ev) {
+    const cls    = getChipClass(ev.tipo, ev.is_cruzeiro);
+    const det    = getDetalheLance(ev, nomeCasa, nomeVis);
+    const idx    = todosEv.indexOf(ev);
+    const ladoCls = ev.is_cruzeiro ? 'htl-lado-casa' : (ev.lado==='adversario' ? 'htl-lado-vis' : '');
+    const min    = ev.minuto ? `<span class="htl-chip-min">${ev.minuto}'</span>` : '';
+    return `<button class="htl-chip ${cls} ${ladoCls}" data-ev="${idx}" aria-label="${escHtml(det.titulo)}" onclick="abrirDetalheTimeline(${idx})">
+      <span class="htl-chip-icone">${ev.icone||'▶️'}</span>${min}
+    </button>`;
   }
 
-  const faixas = [
-    buildPeriodoFaixa(ev1T, '1º Tempo', '1T'),
-    buildPeriodoFaixa(evINT, 'Intervalo', 'INT'),
-    buildPeriodoFaixa(ev2T, '2º Tempo', '2T'),
-  ].filter(Boolean).join('');
+  // ── Monta faixas por período ──
+  let faixas = '';
+
+  if (usarLancesDetalhados) {
+    const grupos = agruparLancesPorPeriodo(lancesValidos);
+    const periodos = [
+      { key:'PRE', label:'Pré' },
+      { key:'1T',  label:'1T'  },
+      { key:'INT', label:'INT' },
+      { key:'2T',  label:'2T'  },
+      { key:'3T',  label:'Prorr' },
+    ];
+    for (const { key, label } of periodos) {
+      const itens = grupos[key] || [];
+      if (!itens.length) continue;
+      const chips = itens.map(buildChipLD).join('');
+      faixas += `
+        <div class="htl-periodo">
+          <div class="htl-periodo-label">${label}</div>
+          <div class="htl-faixa">
+            <div class="htl-linha"></div>
+            <div class="htl-chips" style="flex-wrap:wrap;gap:4px;">${chips}</div>
+          </div>
+        </div>`;
+    }
+  } else {
+    // Fallback com eventos_timeline
+    const TIPOS = ['GOAL','RED_CARD','YELLOW_CARD','SUBSTITUTION','IMPORTANT'];
+    const rel  = todosEv.filter(e=>TIPOS.includes(e.tipo));
+    const ev1T = rel.filter(e=>e.periodo_ordem===1);
+    const evINT= rel.filter(e=>e.periodo_ordem===2);
+    const ev2T = rel.filter(e=>e.periodo_ordem===3);
+    const mkFaixa = (evs, lbl) => {
+      if (!evs.length) return '';
+      return `<div class="htl-periodo">
+        <div class="htl-periodo-label">${lbl}</div>
+        <div class="htl-faixa">
+          <div class="htl-linha"></div>
+          <div class="htl-chips">${evs.map(buildChipEv).join('')}</div>
+        </div>
+      </div>`;
+    };
+    faixas = mkFaixa(ev1T,'1T') + mkFaixa(evINT,'INT') + mkFaixa(ev2T,'2T');
+  }
 
   const legenda = `
     <div class="htl-legenda">
@@ -1140,18 +1236,17 @@ function renderHorizontalTimeline(partida) {
       </span>
     </div>`;
 
-  const painelDetalhe = `<div class="htl-detalhe-panel" id="htl-detalhe" style="display:none;"></div>`;
-
-  el.innerHTML=`
+  el.innerHTML = `
     <div class="htl-header htl-header-toggle" id="htl-toggle-btn" role="button" tabindex="0" aria-expanded="true">
       <div class="htl-titulo"><i class="fas fa-stream"></i> Lance a Lance</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <div class="htl-resumo-chips">
-          ${golsCru ?`<span class="resumo-chip chip-gol">⚽ ${golsCru} gol${golsCru>1?'s':''}</span>`:''}
-          ${golsAdv ?`<span class="resumo-chip chip-gol-adv">⚽ ${golsAdv} sofrido${golsAdv>1?'s':''}</span>`:''}
-          ${amTotal ?`<span class="resumo-chip chip-cartao">🟨 ${amTotal}</span>`:''}
-          ${vmTotal ?`<span class="resumo-chip chip-vermelho">🟥 ${vmTotal}</span>`:''}
-          ${subs    ?`<span class="resumo-chip chip-sub">🔄 ${subs}</span>`:''}
+          ${golsCru  ? `<span class="resumo-chip chip-gol">⚽ ${golsCru} gol${golsCru>1?'s':''}</span>` : ''}
+          ${golsAdv  ? `<span class="resumo-chip chip-gol-adv">⚽ ${golsAdv} sofrido${golsAdv>1?'s':''}</span>` : ''}
+          ${amTotal  ? `<span class="resumo-chip chip-cartao">🟨 ${amTotal}</span>` : ''}
+          ${vmTotal  ? `<span class="resumo-chip chip-vermelho">🟥 ${vmTotal}</span>` : ''}
+          ${subs     ? `<span class="resumo-chip chip-sub">🔄 ${subs}</span>` : ''}
+          ${usarLancesDetalhados ? `<span class="resumo-chip chip-total">${lancesValidos.length} lances</span>` : ''}
         </div>
         <span class="htl-toggle-chevron"><i class="fas fa-chevron-up"></i></span>
       </div>
@@ -1159,30 +1254,81 @@ function renderHorizontalTimeline(partida) {
     <div class="htl-body" id="htl-body">
       ${legenda}
       <div class="htl-periodos">${faixas}</div>
-      ${painelDetalhe}
-    </div>
-  `;
+      <div class="htl-detalhe-panel" id="htl-detalhe" style="display:none;"></div>
+    </div>`;
 
-  el._eventos    = todos;
-  el._nomeCasa   = nomeCruzeiro;
-  el._nomeVis    = nomeAdversario;
-  el._escudoCasa = partida.escudo_mandante;
-  el._escudoVis  = partida.escudo_visitante;
+  // Armazena dados para painel de detalhe
+  el._eventos     = todosEv;
+  el._lances      = lancesValidos;
+  el._nomeCasa    = nomeCasa;
+  el._nomeVis     = nomeVis;
+  el._escudoCasa  = partida.escudo_mandante;
+  el._escudoVis   = partida.escudo_visitante;
 
   const htlToggle = document.getElementById('htl-toggle-btn');
   const htlBody   = document.getElementById('htl-body');
   if (htlToggle && htlBody) {
-    const toggleTimeline = () => {
-      const collapsed = htlBody.classList.toggle('htl-collapsed');
+    const toggle = () => {
+      const col = htlBody.classList.toggle('htl-collapsed');
       const icon = htlToggle.querySelector('.htl-toggle-chevron i');
-      if (icon) icon.className = collapsed ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
-      htlToggle.setAttribute('aria-expanded', !collapsed);
+      if (icon) icon.className = col ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+      htlToggle.setAttribute('aria-expanded', !col);
     };
-    htlToggle.addEventListener('click', toggleTimeline);
-    htlToggle.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') toggleTimeline(); });
+    htlToggle.addEventListener('click', toggle);
+    htlToggle.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') toggle(); });
   }
 }
 
+// ── Detalhe para lances_detalhados (novo) ──
+function abrirDetalheLD(idx) {
+  const panel = document.getElementById('htl-detalhe');
+  const tpEl  = $('timeline-panel');
+  if (!panel || !tpEl) return;
+
+  const lances = tpEl._lances || [];
+  const l = lances.find(x => x._idx === idx);
+  if (!l) return;
+
+  // Toggle: fechar se já aberto
+  if (panel.dataset.openLd === String(idx) && panel.style.display !== 'none') {
+    panel.style.display = 'none';
+    panel.dataset.openLd = '';
+    tpEl.querySelectorAll('[data-ld]').forEach(c => c.classList.remove('ativo'));
+    return;
+  }
+
+  // Ativar chip clicado
+  tpEl.querySelectorAll('[data-ld]').forEach(c => c.classList.remove('ativo'));
+  tpEl.querySelector(`[data-ld="${idx}"]`)?.classList.add('ativo');
+  panel.dataset.openLd = String(idx);
+
+  const naoTrad = l._traduzido === false
+    ? `<span class="htl-ld-en" style="font-size:.7rem;padding:1px 6px;margin-left:6px">EN — não traduzido</span>` : '';
+
+  // Usar cor do CSS do tipo para border-left
+  const corMap = {
+    GOAL:'#003399', RED_CARD:'#ef4444', YELLOW_CARD:'#ca8a04',
+    SUB:'#64748b', SAVE:'#3b82f6', VAR:'#8b5cf6',
+    BLOCKED:'#6366f1', SHOT:'#94a3b8', CORNER:'#0284c7',
+    OFFSIDE:'#ea580c', INJURY:'#d97706',
+  };
+  const cor = corMap[l._cls.tipo] || '#94a3b8';
+
+  panel.style.display = 'block';
+  panel.innerHTML = `
+    <div class="htl-det-inner" style="border-left-color:${cor}">
+      <div class="htl-det-topo">
+        <span class="htl-chip-icone">${l._cls.icone}</span>
+        <div class="htl-det-info">
+          <strong>${escHtml(l.texto)}${naoTrad}</strong>
+        </div>
+        ${l.minuto ? `<span class="htl-det-min" style="color:${cor}">${escHtml(l.minuto)}</span>` : ''}
+        <button class="htl-det-fechar" onclick="abrirDetalheLD(${idx})">✕</button>
+      </div>
+    </div>`;
+}
+
+// ── Detalhe para eventos_timeline (fallback — mantido compatível) ──
 function abrirDetalheTimeline(idx) {
   const panel = document.getElementById('htl-detalhe');
   const tpEl  = $('timeline-panel');
@@ -1195,8 +1341,7 @@ function abrirDetalheTimeline(idx) {
   if (!ev) return;
 
   if (panel.dataset.openIdx === String(idx) && panel.style.display !== 'none') {
-    panel.style.display='none';
-    panel.dataset.openIdx='';
+    panel.style.display='none'; panel.dataset.openIdx='';
     document.querySelectorAll('.htl-chip').forEach(c=>c.classList.remove('htl-chip-ativo'));
     return;
   }
@@ -1205,26 +1350,19 @@ function abrirDetalheTimeline(idx) {
   document.querySelector(`.htl-chip[data-ev="${idx}"]`)?.classList.add('htl-chip-ativo');
   panel.dataset.openIdx = String(idx);
 
-  const det     = getDetalheLance(ev, nomeCasa, nomeVis);
-  const min     = ev.minuto ? `${ev.minuto}'` : '';
-  const isCasa  = ev.is_cruzeiro;
-  const isVis   = ev.lado==='adversario';
-  const escudo  = isCasa ? tpEl._escudoCasa : (isVis ? tpEl._escudoVis : '');
-  const timeNome = isCasa ? nomeCasa : (isVis ? nomeVis : '');
+  const det  = getDetalheLance(ev, nomeCasa, nomeVis);
+  const min  = ev.minuto ? `${ev.minuto}'` : '';
+  const isCasa = ev.is_cruzeiro;
+  const isVis  = ev.lado==='adversario';
+  const escudo = isCasa ? tpEl._escudoCasa : (isVis ? tpEl._escudoVis : '');
 
   const narracaoCompleta = ev.narracao ? limpar(ev.narracao) : '';
   const descricaoExtra = narracaoCompleta && narracaoCompleta !== det.titulo.replace(/^[⚽🟨🟥🔄🔹]\s*/u,'')
     ? `<p class="htl-det-narracao">${escHtml(narracaoCompleta)}</p>` : '';
+  const placarGolHtml = (ev.tipo==='GOAL' && ev.placar_neste_momento)
+    ? `<p class="htl-det-placar">⚽ Placar: ${escHtml(tpEl._nomeCasa)} ${ev.placar_neste_momento.casa} × ${ev.placar_neste_momento.vis} ${escHtml(tpEl._nomeVis)}</p>` : '';
 
-  const placarGolHtml = (ev.tipo === 'GOAL' && ev.placar_neste_momento)
-    ? `<p class="htl-det-placar">⚽ Placar: ${escHtml(tpEl._nomeCasa)} ${ev.placar_neste_momento.casa} × ${ev.placar_neste_momento.vis} ${escHtml(tpEl._nomeVis)}</p>`
-    : '';
-
-  const corMap = {
-    GOAL: isCasa ? '#003399' : '#dc2626',
-    RED_CARD: '#dc2626', YELLOW_CARD: '#d97706',
-    SUBSTITUTION: '#475569', IMPORTANT: '#1d4ed8',
-  };
+  const corMap = { GOAL: isCasa?'#003399':'#dc2626', RED_CARD:'#dc2626', YELLOW_CARD:'#d97706', SUBSTITUTION:'#475569', IMPORTANT:'#1d4ed8' };
   const cor = corMap[ev.tipo] || '#475569';
 
   panel.style.display='block';
@@ -1239,10 +1377,26 @@ function abrirDetalheTimeline(idx) {
         ${min ? `<span class="htl-det-min" style="color:${cor}">${min}</span>` : ''}
         <button class="htl-det-fechar" onclick="abrirDetalheTimeline(${idx})">✕</button>
       </div>
-      ${descricaoExtra}
-      ${placarGolHtml}
+      ${descricaoExtra}${placarGolHtml}
     </div>`;
 }
+
+// ============================================================
+// FIX v5.9: PROXY DE FOTOS ESPN
+// ESPN bloqueia hotlink de outros domínios — roteamos via worker
+// ============================================================
+function proxyFotoUrl(url) {
+  if (!url) return null;
+  if (!url.includes('espncdn.com')) return url;
+  return `https://cabuloso-api.cabulosonews92.workers.dev/?type=proxy-img&url=${encodeURIComponent(url)}`;
+}
+
+// ============================================================
+// FIX v5.9: RENDER — LANCES DETALHADOS (play-by-play textual)
+// O campo lances_detalhados existia no JSON mas nunca era renderizado
+// ============================================================
+  // renderLancesDetalhados removed — lances agora na timeline horizontal (v5.9)
+
 
 // ============================================================
 // RENDER — JOGADORES com nota 1-10 via estrelas
@@ -1262,9 +1416,10 @@ function criarCardJogador(jogador) {
   const card=document.createElement('div'); card.className='jogador-card'; card.dataset.nome=jogador.nome;
   const notaId=`nota-display-${sanitizeId(jogador.nome)}`;
 
-  // ✅ Foto do jogador com fallback para inicial
-  const fotoHtml = jogador.foto
-    ? `<img src="${escHtml(jogador.foto)}" alt="${escHtml(jogador.nome)}"
+  // ✅ FIX v5.9: foto roteada via proxy do worker (ESPN bloqueia hotlink direto)
+  const fotoSrc = proxyFotoUrl(jogador.foto);
+  const fotoHtml = fotoSrc
+    ? `<img src="${escHtml(fotoSrc)}" alt="${escHtml(jogador.nome)}"
          onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"
          loading="lazy"
          style="width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;">

@@ -1876,6 +1876,164 @@
    box-shadow: 0 0 0 4px rgba(220, 38, 38, 0);
  }
 }
+/* ══════════════════════════════════════════════════════════════
+   TIMELINE — CHIPS DETALHADOS v5.9
+   Sistema por tamanho (xl/md/sm/xs) + tipo de lance
+   ══════════════════════════════════════════════════════════════ */
+
+/* Base */
+.htl-ld-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  border-style: solid;
+  transition: transform .14s, box-shadow .14s;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  font-family: "Nunito", sans-serif;
+  line-height: 1;
+}
+
+/* Tamanhos */
+.htl-ld-xl {
+  min-width: 44px;
+  height: 44px;
+  font-size: 1.3rem;
+  border-width: 2px;
+  box-shadow: 0 3px 10px rgba(0,0,0,.14);
+}
+.htl-ld-md {
+  min-width: 34px;
+  height: 34px;
+  font-size: 1.05rem;
+  border-width: 2px;
+  box-shadow: 0 2px 6px rgba(0,0,0,.1);
+}
+.htl-ld-sm {
+  min-width: 26px;
+  height: 26px;
+  font-size: .82rem;
+  border-width: 1.5px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+.htl-ld-xs {
+  min-width: 15px;
+  height: 15px;
+  font-size: .55rem;
+  border-width: 1px;
+  opacity: .5;
+}
+
+/* Estados interativos */
+.htl-ld-chip:hover {
+  transform: scale(1.18);
+  box-shadow: 0 5px 16px rgba(0,0,0,.22);
+  z-index: 2;
+  opacity: 1 !important;
+}
+.htl-ld-chip.ativo {
+  outline: 3px solid rgba(0,51,153,.35);
+  outline-offset: 2px;
+  transform: scale(1.12);
+  opacity: 1 !important;
+}
+
+/* Tipos — cores para tema CLARO */
+.htl-ld-GOAL {
+  background: #003399;
+  border-color: #0044cc;
+  color: #ffd700;
+}
+.htl-ld-RED_CARD {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+  animation: pulse-vm .9s ease infinite;
+}
+.htl-ld-YELLOW_CARD {
+  background: #fefce8;
+  border-color: #ca8a04;
+  color: #78350f;
+}
+.htl-ld-SUB {
+  background: #f1f5f9;
+  border-color: #64748b;
+  color: #1e293b;
+}
+.htl-ld-SAVE {
+  background: #eff6ff;
+  border-color: #3b82f6;
+  color: #1d4ed8;
+}
+.htl-ld-VAR {
+  background: #f5f3ff;
+  border-color: #8b5cf6;
+  color: #5b21b6;
+}
+.htl-ld-BLOCKED {
+  background: #eef2ff;
+  border-color: #6366f1;
+  color: #3730a3;
+}
+.htl-ld-SHOT {
+  background: #f8fafc;
+  border-color: #94a3b8;
+  color: #334155;
+}
+.htl-ld-CORNER {
+  background: #e0f2fe;
+  border-color: #0284c7;
+  color: #0c4a6e;
+}
+.htl-ld-OFFSIDE {
+  background: #fff7ed;
+  border-color: #ea580c;
+  color: #9a3412;
+}
+.htl-ld-INJURY {
+  background: #fffbeb;
+  border-color: #d97706;
+  color: #78350f;
+}
+.htl-ld-RESUME,
+.htl-ld-PERIOD_START,
+.htl-ld-LINEUP {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #475569;
+}
+.htl-ld-FOUL,
+.htl-ld-NORMAL {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+  color: #64748b;
+}
+
+/* Minuto e badge EN dentro do chip */
+.htl-ld-min {
+  font-family: "Oswald", sans-serif;
+  font-size: .58rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 2px;
+  opacity: .75;
+}
+.htl-ld-en {
+  font-size: .42rem;
+  font-weight: 700;
+  background: rgba(217,119,6,.15);
+  color: #b45309;
+  border-radius: 2px;
+  padding: 0 2px;
+  line-height: 1.4;
+  letter-spacing: .3px;
+  margin-top: 1px;
+}
+
 
 /* Painel de detalhe */
 .htl-detalhe-panel {
