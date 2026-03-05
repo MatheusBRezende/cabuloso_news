@@ -23,7 +23,7 @@
       webhookUrlAoVivo:      "https://cabuloso-api.cabulosonews92.workers.dev/?type=ao-vivo",
       webhookUrlConsolidado: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos",
       checkInterval:         30000,       // 30 segundos
-      minutoAMinutoUrl:      "./minuto-a-minuto.html",
+      minutoAMinutoUrl:      "../avaliacao.html",
       storageKey:            "cabuloso_live_match_dismissed",
       minutosAntes:          5,           // Mostrar 5 minutos antes
     };
