@@ -70,7 +70,9 @@ let _pollingInterval = null;
 let _pollingIdsAnterior = '';
 
 function getIdsSnapshot(partidas) {
-  return partidas.map(p => p.id + '|' + p.encerrada).join(',');
+  return partidas.map(p =>
+    `${p.id}|${p.encerrada}|${p.placar?.casa}-${p.placar?.visitante}|${p.timeline?.length || 0}`
+  ).join(',');
 }
 
 async function pollingAvaliacao() {
