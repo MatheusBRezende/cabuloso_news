@@ -76,6 +76,7 @@ function getIdsSnapshot(partidas) {
 }
 
 async function pollingAvaliacao() {
+  console.log('[POLLING] Executando verificação...', new Date().toLocaleTimeString());
   try {
     const res = await fetch(
       CONFIG_AV.avaliacaoUrl + '&_t=' + Date.now(),
