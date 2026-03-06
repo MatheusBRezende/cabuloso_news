@@ -258,7 +258,7 @@ function getCor(tipo) {
   return {GOAL:'#22c55e',YELLOW_CARD:'#eab308',RED_CARD:'#ef4444',SUBSTITUTION:'#64748b',IMPORTANT:'#3b82f6'}[tipo]||'#94a3b8';
 }
 
-function converterEventos(timeline, nomeCruzeiro) {
+function converterEventos(timeline, nomeCruzeiro, cruEhCasa) {
   if (!Array.isArray(timeline)) return [];
   const BORING=[
     'jogo segue em andamento','jogo em andamento',
@@ -345,9 +345,11 @@ function converterEventos(timeline, nomeCruzeiro) {
   });
 
   let _gcasa = 0, _gvis = 0;
+  const _isMandante = cruEhCasa !== false; // default true se não informado
   for (const ev of sorted) {
     if (ev.tipo === 'GOAL') {
-      if (ev.is_cruzeiro) _gcasa++;
+      const golDoCaseiro = _isMandante ? ev.is_cruzeiro : !ev.is_cruzeiro;
+      if (golDoCaseiro) _gcasa++;
       else _gvis++;
       ev.placar_neste_momento = { casa: _gcasa, vis: _gvis };
     }
@@ -433,11 +435,20 @@ function identificarCruzeiro(jogo) {
     const tvis  = jogo.times.visitante;
     if (ehCruzeiro(tcasa)) return { cru: tcasa, adv: tvis, cruEhCasa: true  };
     if (ehCruzeiro(tvis))  return { cru: tvis,  adv: tcasa, cruEhCasa: false };
+    // Nenhum dos times identificado como Cruzeiro: preserva casa/visitante sem assumir lado
     return { cru: tcasa, adv: tvis, cruEhCasa: true };
   }
 
   if (jogo.times?.cruzeiro || jogo.times?.adversario) {
-    return { cru: jogo.times.cruzeiro, adv: jogo.times.adversario, cruEhCasa: true };
+    // Verifica se o Cruzeiro é o mandante pelo campo explícito da partida
+    const ehMandante = jogo.partida?.mandante != null
+      ? !!jogo.partida.mandante
+      : (jogo.partida?.time_casa
+          ? CRUZEIRO_TOKENS.some(t =>
+              (jogo.partida.time_casa || '').toLowerCase().normalize('NFD')
+                .replace(/[\u0300-\u036f]/g,'').includes(t))
+          : true); // fallback conservador: assume mandante se não há info
+    return { cru: jogo.times.cruzeiro, adv: jogo.times.adversario, cruEhCasa: ehMandante };
   }
 
   return { cru: null, adv: null, cruEhCasa: true };
@@ -503,7 +514,7 @@ function normalizarJogo(jogo, idx) {
                   || jogo.status_detalhado?.status === 'Encerrada'
                   || jogo.status_detalhado?.periodoId === 'POS_JOGO'),
     jogadores:           converterJogadores(escalacaoCru),
-    eventos_timeline:    converterEventos(jogo.timeline, nomeCru),
+    eventos_timeline:    converterEventos(jogo.timeline, nomeCru, cruEhCasa),
     pontuacao_cruzeiro:  calcPontuacao(jogo.timeline, nomeCru),
     // ✅ Estatísticas armazenadas como cruzeiro/adversario para cálculos internos
     estatisticas:        (statCru||statAdv) ? { cruzeiro: statCru, adversario: statAdv } : null,
