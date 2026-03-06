@@ -71,7 +71,7 @@ let _pollingIdsAnterior = '';
 
 function getIdsSnapshot(partidas) {
   return partidas.map(p =>
-    `${p.id}|${p.encerrada}|${p.placar?.casa}-${p.placar?.visitante}|${p.periodo || ''}|${p.timeline?.length || 0}`
+    `${p.id}|${p.encerrada}|${p.gols_mandante}-${p.gols_visitante}|${p.pontuacao_cruzeiro || 0}|${p.eventos_timeline?.length || 0}`
   ).join(',');
 }
 
