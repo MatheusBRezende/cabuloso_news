@@ -79,7 +79,10 @@ async function pollingAvaliacao() {
       CONFIG_AV.avaliacaoUrl + '&_t=' + Date.now(),
       { signal: AbortSignal.timeout(8000) }
     );
-    if (!res.ok) return;
+    if (!res.ok) {
+      console.warn('[POLLING] Worker retornou', res.status, '— aguardando próximo ciclo');
+      return;
+    }
     const dados = await res.json();
     const lista = Array.isArray(dados) ? dados : (dados?.partida ? [dados] : []);
     if (!lista.length) return;
