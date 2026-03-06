@@ -187,8 +187,7 @@ function initNews(noticiasData) {
   const container = document.getElementById("newsContainer");
   if (!container) return;
 
-  // Ordena por data (mais recente primeiro)
-  noticiasData.sort((a, b) => parseNewsDate(b.date) - parseNewsDate(a.date));
+  // Ordem preservada do n8n (intercalação Terra/Zeiro já feita no backend)
   allNews = noticiasData;
   displayedNewsCount = 0;
 
