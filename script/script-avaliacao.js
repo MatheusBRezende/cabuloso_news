@@ -70,9 +70,21 @@ let _pollingInterval = null;
 let _pollingIdsAnterior = '';
 
 function getIdsSnapshot(partidas) {
-  return partidas.map(p =>
-    `${p.id}|${p.encerrada}|${p.gols_mandante}-${p.gols_visitante}|${p.pontuacao_cruzeiro || 0}|${p.eventos_timeline?.length || 0}`
-  ).join(',');
+  // FIX: usa _ts do worker (muda a cada escrita no KV) + timeline bruta + periodo
+  // Antes usava eventos_timeline (filtrado) — nunca detectava mudanca real nos dados
+  return partidas.map(p => {
+    const raw = p._jogoRaw || {};
+    return [
+      p.id,
+      p.encerrada,
+      p.gols_mandante,
+      p.gols_visitante,
+      raw._ts                       || 0,
+      raw.timeline?.length          || 0,
+      raw.lances_detalhados?.length || 0,
+      raw.status_detalhado?.periodo || raw.status_detalhado?.periodoId || '',
+    ].join('|');
+  }).join(',');
 }
 
 async function pollingAvaliacao() {
