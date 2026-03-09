@@ -1123,18 +1123,48 @@ function classificarLance(texto) {
   return                                                     { tipo:'NORMAL',               icone:'·',  tam:'xs', cor:'#334155' };
 }
 
-// Agrupa lances_detalhados em períodos detectando marcadores de texto
+// Agrupa lances_detalhados em períodos.
+// Prioridade: campo `periodo` do lance (vindo do parser ESPN, ex: "1T", "2T", "PE")
+// Fallback: detecção por texto progressivo (para lances sem campo periodo preenchido)
 function agruparLancesPorPeriodo(lances) {
   const grupos = { PRE:[], '1T':[], INT:[], '2T':[], '3T':[] };
-  let periodo = '1T';
+
+  // Mapa de normalização: converte valores do parser para chaves do grupo
+  const normalizarPeriodo = (p) => {
+    const s = String(p || '').trim().toUpperCase();
+    if (s === 'PE' || s === 'PRORROGACAO' || s === 'ET') return '3T';
+    if (s === '2T' || s === '2') return '2T';
+    if (s === '1T' || s === '1') return '1T';
+    if (s === 'INT' || s === 'INTERVALO') return 'INT';
+    if (s === 'PRE') return 'PRE';
+    return null; // desconhecido → vai para detecção por texto
+  };
+
+  // Mantém estado de período atual para lances sem o campo `periodo`
+  let periodoCorrente = '1T';
+
   for (const l of lances) {
     const t = l.texto || '';
-    if (/📋|[Tt]imes anunciados|[Aa]quecendo/.test(t))      periodo = 'PRE';
-    else if (/🏁.*[Pp]rimeiro|[Cc]ome[cç]a o primeiro/.test(t)) periodo = '1T';
-    else if (/[Ii]ntervalo|[Ff]im do primeiro|[Pp]rimeiro tempo encerrado/.test(t)) periodo = 'INT';
-    else if (/🏁.*[Ss]egundo|[Cc]ome[cç]a o segundo/.test(t)) periodo = '2T';
-    else if (/[Pp]r[oó]rroga[cç][aã]o|[Ee]xtra [Tt]ime/.test(t)) periodo = '3T';
-    grupos[periodo].push(l);
+
+    // ── Atualiza o período corrente pelos marcadores de texto ──
+    // Isso garante que lances sem `periodo` herdem o contexto correto
+    if      (/📋|[Tt]imes anunciados|[Aa]quecendo/.test(t))          periodoCorrente = 'PRE';
+    else if (/🏁.*[Pp]rimeiro|[Cc]ome[cç]a o primeiro/.test(t))       periodoCorrente = '1T';
+    else if (/[Ii]ntervalo|[Ff]im do primeiro|[Pp]rimeiro tempo encerrado/.test(t)) periodoCorrente = 'INT';
+    else if (/🏁.*[Ss]egundo|▶️.*[Ss]egundo|[Cc]ome[cç]a o segundo/.test(t)) periodoCorrente = '2T';
+    else if (/[Pp]r[oó]rroga[cç][aã]o|[Ee]xtra [Tt]ime|PE /.test(t)) periodoCorrente = '3T';
+
+    // ── Determina o período deste lance ──
+    // 1. Campo `periodo` explícito do parser (fonte mais confiável)
+    const periodoExplicito = l.periodo ? normalizarPeriodo(l.periodo) : null;
+    // 2. Fallback: período corrente detectado por texto
+    const periodoFinal = periodoExplicito || periodoCorrente;
+
+    // Sincroniza o estado corrente com o valor explícito do lance
+    // para que os próximos lances sem `periodo` herdem corretamente
+    if (periodoExplicito) periodoCorrente = periodoExplicito;
+
+    grupos[periodoFinal].push(l);
   }
   return grupos;
 }
