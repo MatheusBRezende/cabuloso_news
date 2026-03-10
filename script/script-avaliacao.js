@@ -135,7 +135,7 @@ async function pollingAvaliacao() {
       }
     }
   } catch (e) {
-    console.warn('[POLLING] Erro:', e.message);
+    console.warn('[POLLING] Erro (timeout ou rede):', e.message);
   }
 }
 
@@ -526,13 +526,19 @@ function normalizarJogo(jogo, idx) {
 
 async function carregarDadosAvaliacao() {
   try {
-    const res   = await fetch(
+    const res = await fetch(
       CONFIG_AV.avaliacaoUrl + '&_t=' + Date.now(),
-      { signal: AbortSignal.timeout(8000), cache: 'no-store' }
+      { signal: AbortSignal.timeout(10000), cache: 'no-store' }
     );
-    if (!res.ok) throw new Error('HTTP '+res.status);
-    const dados = await res.json();
 
+    // 503 = n8n/HF Space offline (situação normal no plano free)
+    // 404 = sem jogo ativo — ambos devem exibir "próximo jogo", não travar
+    if (!res.ok) {
+      console.warn('[AV] Worker retornou HTTP', res.status, '— exibindo próximo jogo');
+      return [];
+    }
+
+    const dados = await res.json();
     const lista = Array.isArray(dados) ? dados : (dados?.partida ? [dados] : []);
     if (!lista.length) return [];
 
@@ -547,7 +553,7 @@ async function carregarDadosAvaliacao() {
     }
     return resultado;
   } catch (e) {
-    console.error('[AV] Erro ao carregar dados:', e);
+    console.warn('[AV] Falha ao carregar dados (timeout ou rede):', e.message);
     return [];
   }
 }
