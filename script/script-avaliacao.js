@@ -224,8 +224,11 @@ function converterJogadores(esc) {
   return list;
 }
 
+// ✅ FIX v5.10: valores consistentes com a legenda exibida na UI:
+//   ⚽ +10 por gol  ·  🟨 −1 amarelo  ·  🟥 −3 vermelho  ·  🔹 +1 lance importante
+//   (antes era YELLOW:-3 e RED:-5 — não batia com o que o usuário via na tela)
 function calcPontos(tipo) {
-  return {GOAL:10,YELLOW_CARD:-3,RED_CARD:-5,SUBSTITUTION:0,IMPORTANT:1}[tipo]||0;
+  return {GOAL:10, YELLOW_CARD:-1, RED_CARD:-3, SUBSTITUTION:0, IMPORTANT:1}[tipo]||0;
 }
 
 function getPeriodOrder(minuto) {
@@ -251,11 +254,26 @@ function limpar(narracao) {
     .replace(/^[▶️◽⚽🟨🟥🔄🔹]\s*/u,'').trim();
 }
 
+// ✅ FIX v5.10: todos os tipos do parser 365scores v4 mapeados
 function getIcone(tipo) {
-  return {GOAL:'⚽',YELLOW_CARD:'🟨',RED_CARD:'🟥',SUBSTITUTION:'🔄',IMPORTANT:'🔹'}[tipo]||'▶️';
+  return {
+    GOAL:'⚽', YELLOW_CARD:'🟨', YELLOW_RED_CARD:'🟨🟥', RED_CARD:'🟥',
+    SUBSTITUTION:'🔄', IMPORTANT:'🔹', ASSIST:'🅰️',
+    ATTEMPT_SAVED:'🧤', ATTEMPT_BLOCKED:'🛡️', MISS:'💨',
+    CORNER:'🚩', OFFSIDE:'🔺', FOUL:'⚠️', FREE_KICK:'⚠️',
+    INJURY:'🏥', VAR:'📺', PENALTY:'🎯', PENALTY_MISSED:'❌',
+    COMMENT:'💬', HIGHLIGHT:'⭐', FULL_TIME:'🏁', HALF_TIME:'⏸️', KICK_OFF:'🟢',
+  }[tipo]||'▶️';
 }
 function getCor(tipo) {
-  return {GOAL:'#22c55e',YELLOW_CARD:'#eab308',RED_CARD:'#ef4444',SUBSTITUTION:'#64748b',IMPORTANT:'#3b82f6'}[tipo]||'#94a3b8';
+  return {
+    GOAL:'#22c55e', YELLOW_CARD:'#eab308', YELLOW_RED_CARD:'#f97316', RED_CARD:'#ef4444',
+    SUBSTITUTION:'#64748b', IMPORTANT:'#3b82f6', ASSIST:'#818cf8',
+    ATTEMPT_SAVED:'#3b82f6', ATTEMPT_BLOCKED:'#6366f1', MISS:'#94a3b8',
+    CORNER:'#0ea5e9', OFFSIDE:'#f97316', FOUL:'#94a3b8', FREE_KICK:'#94a3b8',
+    INJURY:'#f59e0b', VAR:'#8b5cf6', PENALTY:'#10b981', PENALTY_MISSED:'#ef4444',
+    COMMENT:'#475569', HIGHLIGHT:'#f59e0b', FULL_TIME:'#64748b', HALF_TIME:'#64748b',
+  }[tipo]||'#94a3b8';
 }
 
 function converterEventos(timeline, nomeCruzeiro, cruEhCasa) {
@@ -270,29 +288,47 @@ function converterEventos(timeline, nomeCruzeiro, cruEhCasa) {
   const normCru = norm(nomeCruzeiro||'');
 
   // ── Deduplicação de eventos importantes ──────────────────────────────────
-  // A timeline pode ter o mesmo evento em prioridade 1 e 2 com minutoInt
-  // DIFERENTE (ex: 90 e 90.08 para o mesmo gol de acréscimo). Usar minutoInt
-  // exato como chave falha nesses casos. Solução: para GOAL/CARD/SUB,
-  // rastrear por tipo+jogador+periodo e rejeitar duplicatas dentro de 1 minuto.
-  const TIPOS_DED = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION']);
-  // Map: "tipo|jogador_norm|periodo" → minutoInt do primeiro evento visto
-  const primeiroVisto = new Map();
-
+  // A timeline chega com pares prio1 (365events) + prio2 (pbp) para o mesmo
+  // evento, às vezes com minutoInt e jogador diferentes entre as fontes.
+  // ✅ FIX v5.10: dois critérios de deduplicação, em ordem de prioridade:
+  //   1. tipo+jogador(normalizado)+time+periodo com |minuto| < 1  (critério exato)
+  //   2. tipo+time+periodo com |minuto| < 1 E um dos jogadores vazio (critério relaxado)
+  //      — cobre o caso em que 365events omite o nome mas pbp tem, ou vice-versa.
+  const TIPOS_DED = new Set(['GOAL','YELLOW_CARD','YELLOW_RED_CARD','RED_CARD','SUBSTITUTION','PENALTY']);
+  const primeiroVisto  = new Map(); // chave_exata → minutoInt
+  const primeiroSemJog = new Map(); // chave_sem_jogador → {minuto, jogador}
   function isDuplicata(ev) {
     if (!TIPOS_DED.has(ev.tipo)) return false;
-    const jogNorm = norm(ev.jogador || '');
-    const periodo = ev.periodo || '';
-    const chave = `${ev.tipo}|${jogNorm}|${periodo}`;
+    const jogNorm  = norm(ev.jogador || '');
+    const timeNorm = norm(ev.time    || '');
+    const periodo  = ev.periodo || '';
     const minAtual = typeof ev.minutoInt === 'number' ? ev.minutoInt : parseFloat(ev.minutoInt) || 0;
-    const minAnterior = primeiroVisto.get(chave);
-    if (minAnterior === undefined) {
-      primeiroVisto.set(chave, minAtual);
-      return false; // primeiro a aparecer: mantém
+
+    // Critério 1: chave completa (tipo+jogador+time+periodo)
+    if (jogNorm) {
+      const chaveExata = `${ev.tipo}|${jogNorm}|${timeNorm}|${periodo}`;
+      const minAnt = primeiroVisto.get(chaveExata);
+      if (minAnt === undefined) {
+        primeiroVisto.set(chaveExata, minAtual);
+      } else if (Math.abs(minAtual - minAnt) < 1.5) {
+        return true; // duplicata exata
+      } else {
+        primeiroVisto.set(chaveExata, minAtual);
+      }
     }
-    // Mesmo evento se a diferença de minuto for < 1 (cobre 90 vs 90.08, 45 vs 45.03, etc.)
-    if (Math.abs(minAtual - minAnterior) < 1) return true; // duplicata
-    // Evento genuinamente diferente (mesmo jogador, outro tempo de jogo)
-    primeiroVisto.set(chave, minAtual);
+
+    // Critério 2: chave relaxada (tipo+time+periodo) — captura quando jogador vem vazio
+    const chaveSemJog = `${ev.tipo}|${timeNorm}|${periodo}`;
+    const anterior = primeiroSemJog.get(chaveSemJog);
+    if (anterior === undefined) {
+      primeiroSemJog.set(chaveSemJog, { minuto: minAtual, jogador: jogNorm });
+    } else if (Math.abs(minAtual - anterior.minuto) < 1.5) {
+      // Um tem jogador e o outro não → duplicata do mesmo evento
+      if (!jogNorm || !anterior.jogador) return true;
+    } else {
+      primeiroSemJog.set(chaveSemJog, { minuto: minAtual, jogador: jogNorm });
+    }
+
     return false;
   }
   // ─────────────────────────────────────────────────────────────────────────
@@ -304,18 +340,22 @@ function converterEventos(timeline, nomeCruzeiro, cruEhCasa) {
   }
 
   function getTexto(ev) {
-    return (ev.narracao||'').trim() || (ev.titulo||'').trim();
+    // ✅ FIX v5.10: usa narracao_completa (campo enriquecido do parser v4 com assistente)
+    return (ev.narracao_completa||ev.narracao||'').trim() || (ev.titulo||'').trim();
   }
 
   for (const ev of timeline) {
     if (ev.tipo==='SUMMARY_AUTOMATIC'||ev.tipo==='STANDOUT_PLAYER') continue;
+    // ✅ FIX v5.10: FULL_TIME e HALF_TIME ficam fora da timeline de eventos
+    // (são marcadores estruturais, não lances jogáveis)
+    if (ev.tipo==='FULL_TIME'||ev.tipo==='HALF_TIME'||ev.tipo==='KICK_OFF') continue;
     const ordem=getPeriodOrder(ev.minuto);
     if (ordem===0||ordem===4) continue;
-    if (ev.tipo==='NORMAL') {
+    if (ev.tipo==='NORMAL'||ev.tipo==='COMMENT'||ev.tipo==='HIGHLIGHT') {
       const n = getTexto(ev).toLowerCase();
       if (!n||BORING.some(b=>n.startsWith(b))) continue;
     }
-    if (isDuplicata(ev)) continue; // ← descarta duplicata prio2 com minuto ligeiramente diferente
+    if (isDuplicata(ev)) continue;
     const textoEv = getTexto(ev);
     const key=`${ev.minuto}|${ev.tipo}|${textoEv.substring(0,40)}`;
     if (seen.has(key)) continue; seen.add(key);
@@ -1137,25 +1177,47 @@ function getDetalheLance(ev, nomeCasa, nomeVis) {
 // ============================================================
 // CLASSIFICAR LANCE — mapeia texto/emoji de lances_detalhados
 // para tipo, ícone, tamanho de chip e cor
+// ✅ FIX v5.10: adicionados todos os tipos do parser 365scores v4
 // ============================================================
 function classificarLance(texto) {
   const t = texto || '';
-  if (/⚽/.test(t) && /[Gg]o+l/.test(t))                   return { tipo:'GOAL',         icone:'⚽', tam:'xl', cor:'#22c55e' };
-  if (/🟥/.test(t) || /[Cc]art[aã]o vermelho/.test(t))     return { tipo:'RED_CARD',      icone:'🟥', tam:'xl', cor:'#ef4444' };
-  if (/🟨/.test(t) || /[Cc]art[aã]o amarelo/.test(t))      return { tipo:'YELLOW_CARD',   icone:'🟨', tam:'md', cor:'#eab308' };
-  if (/🔄/.test(t) || /[Ss]ubstitui[cç][aã]o|[Ee]ntra.*[Ss]ai/.test(t)) return { tipo:'SUB', icone:'🔄', tam:'md', cor:'#64748b' };
-  if (/🧤/.test(t) || /[Dd]efesa de/.test(t))              return { tipo:'SAVE',          icone:'🧤', tam:'md', cor:'#3b82f6' };
-  if (/VAR/.test(t))                                        return { tipo:'VAR',           icone:'📺', tam:'md', cor:'#8b5cf6' };
-  if (/🛡️/.test(t) || /[Cc]hute bloqueado/.test(t))        return { tipo:'BLOCKED',       icone:'🛡️', tam:'sm', cor:'#6366f1' };
-  if (/💨/.test(t) || /[Ff]inaliza[cç][aã]o.*saiu/.test(t))return { tipo:'SHOT',          icone:'💨', tam:'sm', cor:'#94a3b8' };
-  if (/🚩/.test(t) && /[Ee]scanteio/.test(t))              return { tipo:'CORNER',        icone:'🚩', tam:'sm', cor:'#0ea5e9' };
-  if (/[Ii]mpedimento/.test(t))                             return { tipo:'OFFSIDE',       icone:'🔺', tam:'sm', cor:'#f97316' };
-  if (/⏸️/.test(t) || /les[aã]o|[Pp]ausa na partida/.test(t)) return { tipo:'INJURY',    icone:'⏸️', tam:'sm', cor:'#f59e0b' };
-  if (/▶️/.test(t) || /[Jj]ogo retomado/.test(t))          return { tipo:'RESUME',        icone:'▶️', tam:'xs', cor:'#475569' };
-  if (/📋/.test(t) || /[Tt]imes anunciados/.test(t))        return { tipo:'LINEUP',        icone:'📋', tam:'xs', cor:'#475569' };
-  if (/🏁/.test(t))                                         return { tipo:'PERIOD_START',  icone:'🏁', tam:'xs', cor:'#64748b' };
-  if (/[Ff]alta/.test(t))                                   return { tipo:'FOUL',          icone:'⚠️', tam:'xs', cor:'#475569' };
-  return                                                     { tipo:'NORMAL',               icone:'·',  tam:'xs', cor:'#334155' };
+  // — Gol e variantes —
+  if (/⚽/.test(t) && /[Gg]o+l/.test(t))                    return { tipo:'GOAL',         icone:'⚽', tam:'xl',  cor:'#22c55e' };
+  // — Cartões —
+  if (/🟥/.test(t) || /[Cc]art[aã]o vermelho/.test(t))      return { tipo:'RED_CARD',      icone:'🟥', tam:'xl',  cor:'#ef4444' };
+  if (/🟨🟥/.test(t) || /2[oº] amarelo|segundo amarelo/i.test(t)) return { tipo:'YELLOW_RED_CARD', icone:'🟨🟥', tam:'xl', cor:'#f97316' };
+  if (/🟨/.test(t) || /[Cc]art[aã]o amarelo/.test(t))       return { tipo:'YELLOW_CARD',   icone:'🟨', tam:'md',  cor:'#eab308' };
+  // — Substituição —
+  if (/🔄/.test(t) || /[Ss]ubstitui[cç][aã]o|[Ee]ntra.*[Ss]ai|[Ss]ai.*[Ee]ntra/.test(t)) return { tipo:'SUBSTITUTION', icone:'🔄', tam:'md', cor:'#64748b' };
+  // — Assistência —
+  if (/🅰️/.test(t) || /[Aa]ssist[eê]ncia/.test(t))          return { tipo:'ASSIST',        icone:'🅰️', tam:'sm',  cor:'#818cf8' };
+  // — Goleiro —
+  if (/🧤/.test(t) || /[Dd]efesa do goleiro|[Dd]efendido/.test(t)) return { tipo:'ATTEMPT_SAVED', icone:'🧤', tam:'md', cor:'#3b82f6' };
+  // — VAR —
+  if (/📺/.test(t) || /VAR/.test(t))                         return { tipo:'VAR',           icone:'📺', tam:'md',  cor:'#8b5cf6' };
+  // — Pênalti —
+  if (/❌/.test(t) || /[Pp][êe]nalt[iy].*perdido|[Pp]erdeu.*[Pp][êe]nalt/.test(t)) return { tipo:'PENALTY_MISSED', icone:'❌', tam:'xl', cor:'#ef4444' };
+  if (/🎯/.test(t) || /[Pp][êe]nalt[iy]/.test(t))           return { tipo:'PENALTY',       icone:'🎯', tam:'xl',  cor:'#10b981' };
+  // — Bloqueio e chute fora —
+  if (/🛡️/.test(t) || /[Cc]hute bloqueado/.test(t))         return { tipo:'BLOCKED',        icone:'🛡️', tam:'sm',  cor:'#6366f1' };
+  if (/💨/.test(t) || /[Ff]inaliza[cç][aã]o.*fora|[Cc]hute.*fora/.test(t)) return { tipo:'MISS', icone:'💨', tam:'sm', cor:'#94a3b8' };
+  // — Escanteio, impedimento, falta —
+  if (/🚩/.test(t) && /[Ee]scanteio/.test(t))               return { tipo:'CORNER',        icone:'🚩', tam:'sm',  cor:'#0ea5e9' };
+  if (/🔺/.test(t) || /[Ii]mpedimento/.test(t))             return { tipo:'OFFSIDE',       icone:'🔺', tam:'sm',  cor:'#f97316' };
+  if (/⚠️/.test(t) || /[Ff]alta/.test(t))                   return { tipo:'FOUL',          icone:'⚠️', tam:'xs',  cor:'#94a3b8' };
+  // — Eventos médicos/lesão —
+  if (/🏥/.test(t) || /⏸️/.test(t) || /[Ll]es[aã]o|[Aa]tendimento/.test(t)) return { tipo:'INJURY', icone:'🏥', tam:'sm', cor:'#f59e0b' };
+  // — Marcadores de período —
+  if (/🏁/.test(t))                                          return { tipo:'FULL_TIME',     icone:'🏁', tam:'xs',  cor:'#64748b' };
+  if (/🟢/.test(t))                                          return { tipo:'KICK_OFF',      icone:'🟢', tam:'xs',  cor:'#22c55e' };
+  if (/⭐/.test(t) || /[Dd]estaque/.test(t))                 return { tipo:'HIGHLIGHT',     icone:'⭐', tam:'xs',  cor:'#f59e0b' };
+  // — Comentário/narração —
+  if (/💬/.test(t))                                          return { tipo:'COMMENT',       icone:'💬', tam:'xs',  cor:'#475569' };
+  // — Retomada/lineup —
+  if (/▶️/.test(t) || /[Jj]ogo retomado/.test(t))           return { tipo:'RESUME',        icone:'▶️', tam:'xs',  cor:'#475569' };
+  if (/📋/.test(t) || /[Tt]imes anunciados/.test(t))         return { tipo:'LINEUP',        icone:'📋', tam:'xs',  cor:'#475569' };
+  // — Fallback —
+  return                                                     { tipo:'NORMAL',               icone:'·',  tam:'xs',  cor:'#334155' };
 }
 
 // Agrupa lances_detalhados em períodos.
@@ -1182,11 +1244,11 @@ function agruparLancesPorPeriodo(lances) {
     const t = l.texto || '';
 
     // ── Atualiza o período corrente pelos marcadores de texto ──
-    // Isso garante que lances sem `periodo` herdem o contexto correto
+    // ✅ FIX v5.10: adicionados marcadores do parser 365scores v4
     if      (/📋|[Tt]imes anunciados|[Aa]quecendo/.test(t))          periodoCorrente = 'PRE';
-    else if (/🏁.*[Pp]rimeiro|[Cc]ome[cç]a o primeiro/.test(t))       periodoCorrente = '1T';
-    else if (/[Ii]ntervalo|[Ff]im do primeiro|[Pp]rimeiro tempo encerrado/.test(t)) periodoCorrente = 'INT';
-    else if (/🏁.*[Ss]egundo|▶️.*[Ss]egundo|[Cc]ome[cç]a o segundo/.test(t)) periodoCorrente = '2T';
+    else if (/🏁.*[Pp]rimeiro|[Cc]ome[cç]a o primeiro|🟢.*1/.test(t)) periodoCorrente = '1T';
+    else if (/[Ii]ntervalo|[Ff]im do primeiro|[Pp]rimeiro tempo encerrado|⏸️.*[Ii]ntervalo/.test(t)) periodoCorrente = 'INT';
+    else if (/🏁.*[Ss]egundo|▶️.*[Ss]egundo|[Cc]ome[cç]a o segundo|🟢.*2/.test(t)) periodoCorrente = '2T';
     else if (/[Pp]r[oó]rroga[cç][aã]o|[Ee]xtra [Tt]ime|PE /.test(t)) periodoCorrente = '3T';
 
     // ── Determina o período deste lance ──
@@ -1238,32 +1300,36 @@ function renderHorizontalTimeline(partida) {
   const subs    = todosEv.filter(e=>e.tipo==='SUBSTITUTION').length;
 
   // ── Monta lista unificada de chips a partir de lances_detalhados ──
-  // Cada item: { texto, minuto, _cls (classificarLance result), _idx }
+  // Deduplica eventos importantes (GOAL, cards, SUBs) que chegam em pares
+  // prio1 (365events) + prio2 (pbp) com minutos ligeiramente diferentes (ex: 90' vs 90+8').
+  // Chave: tipo + jogador_normalizado + time_normalizado + periodo
+  // O TIME é necessário porque jogadores homônimos em times diferentes (ex: Léo Pereira
+  // no Flamengo e no Cruzeiro) são eventos distintos e não devem ser colapsados.
   const lancesValidos = (() => {
     const TIPOS_DED_LD = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION']);
-    const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-    // Map: "tipo|jogador_norm|periodo" → minuto numérico do primeiro visto
-    const primeiroLD = new Map();
-    function minNumerico(m) {
-      // "90+8''" → 90.08, "5'" → 5, "45+3''" → 45.03
+    const normStr = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    function minNum(m) {
       const s = String(m||'');
       const plus = s.match(/(\d+)\+(\d+)/);
       if (plus) return parseFloat(plus[1]) + parseFloat(plus[2]) * 0.01;
       const base = s.match(/(\d+)/);
       return base ? parseFloat(base[1]) : 0;
     }
+    const primeiroLD = new Map(); // chave → minuto numérico do primeiro visto
     return lancesBrutos
       .filter(l => l.texto?.trim())
       .filter(l => {
         const cls = classificarLance(l.texto);
         if (!TIPOS_DED_LD.has(cls.tipo)) return true;
-        const jogNorm = norm(l.jogador || l.texto.replace(/[⚽🟨🟥🔄]/u,'').split('—')[1] || '');
-        const periodo = l.periodo || '';
-        const chave = `${cls.tipo}|${jogNorm}|${periodo}`;
-        const minAtual = minNumerico(l.minuto);
-        const minAnterior = primeiroLD.get(chave);
-        if (minAnterior === undefined) { primeiroLD.set(chave, minAtual); return true; }
-        if (Math.abs(minAtual - minAnterior) < 1) return false; // duplicata
+        const jogNorm  = normStr(l.jogador || '');
+        const timeNorm = normStr(l.time    || '');
+        const periodo  = l.periodo || '';
+        // inclui time na chave para diferenciar homônimos em times distintos
+        const chave = `${cls.tipo}|${jogNorm}|${timeNorm}|${periodo}`;
+        const minAtual = minNum(l.minuto);
+        const minAnt   = primeiroLD.get(chave);
+        if (minAnt === undefined) { primeiroLD.set(chave, minAtual); return true; }
+        if (Math.abs(minAtual - minAnt) < 1) return false; // duplicata
         primeiroLD.set(chave, minAtual);
         return true;
       })
@@ -1475,8 +1541,8 @@ function abrirDetalheTimeline(idx) {
 
   const det  = getDetalheLance(ev, nomeCasa, nomeVis);
   const min  = ev.minuto ? `${ev.minuto}'` : '';
-  // Escudo correto: segue o time do evento (Cruzeiro ou adversário),
-  // independente de qual lado é mandante/visitante na tela.
+  const isCasa = ev.is_cruzeiro;
+  const isVis  = ev.lado==='adversario';
   const escudo = (ev.is_cruzeiro ? tpEl._escudoCru : tpEl._escudoAdv) || '';
 
   const narracaoCompleta = ev.narracao ? limpar(ev.narracao) : '';
