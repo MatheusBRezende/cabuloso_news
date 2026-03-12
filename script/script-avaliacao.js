@@ -1239,9 +1239,36 @@ function renderHorizontalTimeline(partida) {
 
   // ── Monta lista unificada de chips a partir de lances_detalhados ──
   // Cada item: { texto, minuto, _cls (classificarLance result), _idx }
-  const lancesValidos = lancesBrutos
-    .filter(l => l.texto?.trim())
-    .map((l, i) => ({ ...l, _cls: classificarLance(l.texto), _idx: i }));
+  const lancesValidos = (() => {
+    const TIPOS_DED_LD = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION']);
+    const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+    // Map: "tipo|jogador_norm|periodo" → minuto numérico do primeiro visto
+    const primeiroLD = new Map();
+    function minNumerico(m) {
+      // "90+8''" → 90.08, "5'" → 5, "45+3''" → 45.03
+      const s = String(m||'');
+      const plus = s.match(/(\d+)\+(\d+)/);
+      if (plus) return parseFloat(plus[1]) + parseFloat(plus[2]) * 0.01;
+      const base = s.match(/(\d+)/);
+      return base ? parseFloat(base[1]) : 0;
+    }
+    return lancesBrutos
+      .filter(l => l.texto?.trim())
+      .filter(l => {
+        const cls = classificarLance(l.texto);
+        if (!TIPOS_DED_LD.has(cls.tipo)) return true;
+        const jogNorm = norm(l.jogador || l.texto.replace(/[⚽🟨🟥🔄]/u,'').split('—')[1] || '');
+        const periodo = l.periodo || '';
+        const chave = `${cls.tipo}|${jogNorm}|${periodo}`;
+        const minAtual = minNumerico(l.minuto);
+        const minAnterior = primeiroLD.get(chave);
+        if (minAnterior === undefined) { primeiroLD.set(chave, minAtual); return true; }
+        if (Math.abs(minAtual - minAnterior) < 1) return false; // duplicata
+        primeiroLD.set(chave, minAtual);
+        return true;
+      })
+      .map((l, i) => ({ ...l, _cls: classificarLance(l.texto), _idx: i }));
+  })();
 
   // Se não tiver lances_detalhados, fallback para eventos_timeline (comportamento antigo)
   const usarLancesDetalhados = lancesValidos.length > 0;
