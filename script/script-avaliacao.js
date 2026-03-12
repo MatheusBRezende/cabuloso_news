@@ -269,18 +269,33 @@ function converterEventos(timeline, nomeCruzeiro, cruEhCasa) {
   const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
   const normCru = norm(nomeCruzeiro||'');
 
-  // ── Deduplicação de eventos importantes (gol, cartão, sub) ──
-  // A timeline pode conter o mesmo evento com prioridade 1 e 2.
-  // Construímos um set com as chaves dos eventos de prioridade 1
-  // e ignoramos duplicatas de prioridade 2 com a mesma chave.
-  const TIPOS_IMPORTANTES = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION']);
-  const chavesPrio1 = new Set();
-  for (const ev of timeline) {
-    if (ev.prioridade === 1 && TIPOS_IMPORTANTES.has(ev.tipo)) {
-      const jogador = (ev.jogador || '').substring(0, 40);
-      chavesPrio1.add(`${ev.minutoInt ?? ev.minuto}|${ev.tipo}|${jogador}`);
+  // ── Deduplicação de eventos importantes ──────────────────────────────────
+  // A timeline pode ter o mesmo evento em prioridade 1 e 2 com minutoInt
+  // DIFERENTE (ex: 90 e 90.08 para o mesmo gol de acréscimo). Usar minutoInt
+  // exato como chave falha nesses casos. Solução: para GOAL/CARD/SUB,
+  // rastrear por tipo+jogador+periodo e rejeitar duplicatas dentro de 1 minuto.
+  const TIPOS_DED = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION']);
+  // Map: "tipo|jogador_norm|periodo" → minutoInt do primeiro evento visto
+  const primeiroVisto = new Map();
+
+  function isDuplicata(ev) {
+    if (!TIPOS_DED.has(ev.tipo)) return false;
+    const jogNorm = norm(ev.jogador || '');
+    const periodo = ev.periodo || '';
+    const chave = `${ev.tipo}|${jogNorm}|${periodo}`;
+    const minAtual = typeof ev.minutoInt === 'number' ? ev.minutoInt : parseFloat(ev.minutoInt) || 0;
+    const minAnterior = primeiroVisto.get(chave);
+    if (minAnterior === undefined) {
+      primeiroVisto.set(chave, minAtual);
+      return false; // primeiro a aparecer: mantém
     }
+    // Mesmo evento se a diferença de minuto for < 1 (cobre 90 vs 90.08, 45 vs 45.03, etc.)
+    if (Math.abs(minAtual - minAnterior) < 1) return true; // duplicata
+    // Evento genuinamente diferente (mesmo jogador, outro tempo de jogo)
+    primeiroVisto.set(chave, minAtual);
+    return false;
   }
+  // ─────────────────────────────────────────────────────────────────────────
 
   function getLado(ev) {
     if (ev.lado) return ev.lado;
@@ -300,14 +315,7 @@ function converterEventos(timeline, nomeCruzeiro, cruEhCasa) {
       const n = getTexto(ev).toLowerCase();
       if (!n||BORING.some(b=>n.startsWith(b))) continue;
     }
-
-    // Pula eventos de prioridade 2 que têm um equivalente de prioridade 1
-    if (ev.prioridade === 2 && TIPOS_IMPORTANTES.has(ev.tipo)) {
-      const jogador = (ev.jogador || '').substring(0, 40);
-      const chave = `${ev.minutoInt ?? ev.minuto}|${ev.tipo}|${jogador}`;
-      if (chavesPrio1.has(chave)) continue;
-    }
-
+    if (isDuplicata(ev)) continue; // ← descarta duplicata prio2 com minuto ligeiramente diferente
     const textoEv = getTexto(ev);
     const key=`${ev.minuto}|${ev.tipo}|${textoEv.substring(0,40)}`;
     if (seen.has(key)) continue; seen.add(key);
@@ -1350,7 +1358,6 @@ function renderHorizontalTimeline(partida) {
   el._nomeVis     = nomeVis;
   el._escudoCasa  = partida.escudo_mandante;
   el._escudoVis   = partida.escudo_visitante;
-  // Escudos indexados pelo lado do Cruzeiro (independente de ser mandante ou visitante)
   el._escudoCru   = partida._cruEhMandante !== false ? partida.escudo_mandante : partida.escudo_visitante;
   el._escudoAdv   = partida._cruEhMandante !== false ? partida.escudo_visitante : partida.escudo_mandante;
 
@@ -1441,8 +1448,8 @@ function abrirDetalheTimeline(idx) {
 
   const det  = getDetalheLance(ev, nomeCasa, nomeVis);
   const min  = ev.minuto ? `${ev.minuto}'` : '';
-  // Escudo correto: Cruzeiro → escudo do Cruzeiro; adversário → escudo do adversário
-  // (independente de qual lado é mandante/visitante na tela)
+  // Escudo correto: segue o time do evento (Cruzeiro ou adversário),
+  // independente de qual lado é mandante/visitante na tela.
   const escudo = (ev.is_cruzeiro ? tpEl._escudoCru : tpEl._escudoAdv) || '';
 
   const narracaoCompleta = ev.narracao ? limpar(ev.narracao) : '';
