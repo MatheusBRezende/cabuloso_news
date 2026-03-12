@@ -4959,3 +4959,265 @@
 .pontuacao-modal-regra b {
  color: rgba(255, 255, 255, 0.6);
 }
+/* ══════════════════════════════════════════════════════════════
+   TIMELINE VERTICAL v6.0 — vtl-*
+   Feed legível: texto + logo + narração inline por evento.
+   Lances principais sempre visíveis; menores atrás de toggle.
+   ══════════════════════════════════════════════════════════════ */
+
+/* Legenda com logos dos times */
+.vtl-legenda {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid #f0f4f8;
+}
+.vtl-leg-item {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #334155;
+}
+.vtl-leg-escudo {
+  width: 22px;
+  height: 22px;
+  object-fit: contain;
+}
+.vtl-leg-sep {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #94a3b8;
+  flex: 1;
+  text-align: center;
+}
+
+/* Container do feed */
+.vtl-feed {
+  padding: 6px 0 12px;
+}
+
+/* Separador de período */
+.vtl-periodo-sep {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px 4px;
+}
+.vtl-periodo-sep::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #e8eef8;
+}
+.vtl-periodo-pill {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: #fff;
+  background: #003399;
+  padding: 3px 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+/* Linha base de evento */
+.vtl-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  position: relative;
+  padding: 0;
+  transition: background 0.12s;
+}
+.vtl-row:hover {
+  background: #f8fafc;
+}
+
+/* Barra colorida lateral */
+.vtl-barra {
+  width: 3px;
+  align-self: stretch;
+  flex-shrink: 0;
+  margin-left: 16px;
+  border-radius: 2px;
+  min-height: 38px;
+}
+
+/* Coluna do minuto */
+.vtl-minuto-col {
+  width: 36px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding-top: 9px;
+}
+.vtl-min {
+  font-family: "Oswald", sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Corpo do evento */
+.vtl-conteudo {
+  flex: 1;
+  padding: 8px 16px 8px 4px;
+  min-width: 0;
+}
+
+/* Linha 1: escudo + ícone + título + jogador */
+.vtl-linha1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.vtl-escudo {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.vtl-escudo-placeholder {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+.vtl-icone {
+  font-size: 1rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.vtl-titulo {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1.3;
+}
+.vtl-jogador {
+  font-size: 0.82rem;
+  color: #475569;
+  font-weight: 500;
+}
+
+/* Linha 2: assistência, etc. */
+.vtl-linha2 {
+  margin-top: 3px;
+  padding-left: 26px; /* alinha com o título */
+}
+.vtl-assist {
+  font-size: 0.78rem;
+  color: #6366f1;
+  font-weight: 600;
+}
+
+/* Narração inline (apenas eventos principais) */
+.vtl-narracao {
+  margin: 5px 0 0;
+  padding-left: 26px;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+/* Placar no momento do gol */
+.vtl-placar {
+  margin: 4px 0 0;
+  padding-left: 26px;
+  font-family: "Oswald", sans-serif;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #003399;
+}
+
+/* Destaque para eventos PRINCIPAIS */
+.vtl-row--major .vtl-titulo {
+  font-size: 0.92rem;
+}
+.vtl-row--major.vtl-tipo-GOAL {
+  background: linear-gradient(90deg, rgba(0,51,153,0.04) 0%, transparent 100%);
+}
+.vtl-row--major.vtl-tipo-GOAL .vtl-titulo {
+  color: #003399;
+  font-size: 1rem;
+}
+.vtl-row--major.vtl-tipo-RED_CARD,
+.vtl-row--major.vtl-tipo-YELLOW_RED_CARD {
+  background: linear-gradient(90deg, rgba(239,68,68,0.04) 0%, transparent 100%);
+}
+.vtl-row--major.vtl-tipo-PENALTY .vtl-titulo {
+  color: #10b981;
+}
+.vtl-row--major.vtl-tipo-PENALTY_MISSED .vtl-titulo {
+  color: #ef4444;
+}
+
+/* Eventos MENORES — discretos */
+.vtl-row--minor {
+  opacity: 0.75;
+}
+.vtl-row--minor .vtl-titulo {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+}
+.vtl-row--minor .vtl-min {
+  font-size: 0.65rem;
+  opacity: 0.7;
+}
+.vtl-row--minor .vtl-barra {
+  width: 2px;
+  opacity: 0.5;
+}
+.vtl-row--minor:hover {
+  opacity: 1;
+}
+
+/* Botão "Ver mais lances" */
+.vtl-toggle-minor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 20px;
+  background: none;
+  border: none;
+  border-top: 1px dashed #e2e8f0;
+  border-bottom: 1px dashed #e2e8f0;
+  margin: 4px 0;
+  cursor: pointer;
+  font-family: "Nunito", sans-serif;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #003399;
+  text-align: left;
+  transition: background 0.12s;
+}
+.vtl-toggle-minor:hover {
+  background: #f0f4ff;
+}
+.vtl-toggle-minor i {
+  font-size: 0.75rem;
+  color: #003399;
+  transition: transform 0.2s;
+}
+
+/* Responsive: telas pequenas */
+@media (max-width: 480px) {
+  .vtl-barra { margin-left: 10px; }
+  .vtl-minuto-col { width: 30px; }
+  .vtl-conteudo { padding-right: 10px; }
+  .vtl-titulo { font-size: 0.84rem; }
+  .vtl-narracao { font-size: 0.78rem; }
+}

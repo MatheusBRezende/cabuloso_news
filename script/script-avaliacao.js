@@ -129,6 +129,7 @@ async function pollingAvaliacao() {
       if (atualizada) {
         state.partidaSelecionada = atualizada;
         renderPlacarInterno(atualizada);
+        renderPosJogo(atualizada);    // ✅ v7.0
         renderPontuacaoPanel(atualizada);
         renderHorizontalTimeline(atualizada);
         renderEstatisticas(atualizada);
@@ -838,8 +839,101 @@ function fecharPainelAvaliacao() {
 }
 
 // ============================================================
-// RENDER — PLACAR INTERNO
+// RENDER — PÓS-JOGO: resumo destacado + melhor jogador da torcida
+// Aparece no topo do avaliacao-section quando partida.encerrada = true
 // ============================================================
+function renderPosJogo(partida) {
+  // Remove bloco anterior se houver
+  const anterior = document.getElementById('pos-jogo-bloco');
+  if (anterior) anterior.remove();
+
+  if (!partida.encerrada) return;
+
+  // Injeta estilos uma única vez
+  if (!document.getElementById('pos-jogo-styles')) {
+    const s = document.createElement('style');
+    s.id = 'pos-jogo-styles';
+    s.textContent = `
+      .pos-jogo-bloco{background:rgb(255, 255, 255);border:1.5px solid rgba(255,215,0,.25);border-radius:14px;padding:18px 20px 16px;margin-bottom:20px;animation:fadeInPJ .5s ease}
+      @keyframes fadeInPJ{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+      .pos-jogo-header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+      .pos-jogo-badge{background:rgba(255,215,0,.15);color:#ffd700;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:20px;border:1px solid rgba(255,215,0,.3);letter-spacing:.5px;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+      .pos-jogo-placar{font-size:.9rem;color:rgb(0, 0, 0);font-weight:500}
+      .pos-jogo-placar strong{color:#ffd700;font-size:1.05rem;margin:0 4px}
+      .pos-jogo-resumo{font-size:.85rem;color:rgb(0, 0, 0);line-height:1.7;margin:0 0 12px;padding:12px 16px;border-radius:8px;border-left:3px solid #ffd700;box-shadow:inset 0 0 0 1px rgb(255, 255, 255)}
+      .pos-jogo-mvp{display:flex;flex-direction:column;gap:6px}
+      .pos-jogo-mvp-label{font-size:.7rem;color:rgb(0, 0, 0);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:5px}
+      .pos-jogo-mvp-label i{color:#ffd700}
+      .pos-jogo-mvp-inner{display:flex;align-items:center;gap:10px;border-radius:8px;padding:8px 12px;border:1px solid rgba(255,215,0,.15)}
+      .pos-jogo-mvp-foto,.pos-jogo-mvp-avatar{width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid rgba(255,215,0,.4);background:rgba(0,51,153,.5);display:flex;align-items:center;justify-content:center;font-weight:700;color:#ffd700;font-size:1.1rem;flex-shrink:0}
+      .pos-jogo-mvp-info{display:flex;flex-direction:column;gap:2px}
+      .pos-jogo-mvp-nome{font-size:.85rem;color:rgb(0, 0, 0);font-weight:600}
+      .pos-jogo-mvp-rating{font-size:1.2rem;font-weight:800;color:#ffd700;line-height:1}
+      .vtl-min-pre{font-size:.65rem!important;opacity:.6}
+    `;
+    document.head.appendChild(s);
+  }
+
+  const jogo = partida._jogoRaw || {};
+  const resumo = jogo.resumo_da_partida || jogo.partida?.resumo || '';
+  if (!resumo) return;
+
+  const bloco = document.createElement('div');
+  bloco.id = 'pos-jogo-bloco';
+  bloco.className = 'pos-jogo-bloco';
+
+  // Calcula melhor jogador apenas do Cruzeiro
+  let melhorJogador = null;
+  const nomeCasaRaw = (jogo.times?.casa?.nome || '').toLowerCase();
+  const nomeCasaSigla = (jogo.times?.casa?.sigla || '').toUpperCase();
+  const cruzeiroCasa = nomeCasaRaw.includes('cruzeiro') || nomeCasaSigla === 'CRU';
+  const escalacaoCRU = cruzeiroCasa
+    ? jogo.escalacoes?.casa?.titulares
+    : jogo.escalacoes?.visitante?.titulares;
+  const jogadoresCRU = escalacaoCRU || [];
+  if (jogadoresCRU.length) {
+    const comRating = jogadoresCRU.filter(j => j.rating && j.rating > 0);
+    if (comRating.length) {
+      melhorJogador = comRating.reduce((best, j) => j.rating > best.rating ? j : best);
+    }
+  }
+
+  const nomeCasa = escHtml(partida.mandante || '');
+  const nomeVis  = escHtml(partida.visitante || '');
+  const gols     = `${partida.gols_mandante} – ${partida.gols_visitante}`;
+
+  const mvpHtml = melhorJogador ? `
+    <div class="pos-jogo-mvp">
+      <div class="pos-jogo-mvp-label"><i class="fas fa-star"></i> Melhor em Campo (API)</div>
+      <div class="pos-jogo-mvp-inner">
+        ${melhorJogador.foto
+          ? `<img src="${escHtml(melhorJogador.foto)}" alt="" class="pos-jogo-mvp-foto" onerror="this.style.display='none'">`
+          : `<div class="pos-jogo-mvp-avatar">${(melhorJogador.nome||'?').charAt(0)}</div>`}
+        <div class="pos-jogo-mvp-info">
+          <span class="pos-jogo-mvp-nome">${escHtml(melhorJogador.nome)}</span>
+          <span class="pos-jogo-mvp-rating">${melhorJogador.rating?.toFixed(1)}</span>
+        </div>
+      </div>
+    </div>` : '';
+
+  bloco.innerHTML = `
+    <div class="pos-jogo-header">
+      <span class="pos-jogo-badge"><i class="fas fa-flag-checkered"></i> Fim de Jogo</span>
+      <span class="pos-jogo-placar">${nomeCasa} <strong>${gols}</strong> ${nomeVis}</span>
+    </div>
+    <p class="pos-jogo-resumo">${escHtml(resumo)}</p>
+    ${mvpHtml}`;
+
+  // Insere antes dos dados da partida
+  const avSection = document.getElementById('avaliacao-section');
+  const dadosWrapper = document.getElementById('dados-partida-wrapper');
+  if (avSection && dadosWrapper) {
+    avSection.insertBefore(bloco, dadosWrapper);
+  } else if (avSection) {
+    avSection.insertAdjacentElement('afterbegin', bloco);
+  }
+}
+
 function renderPlacarInterno(partida) {
   const el = document.getElementById('placar-interno');
   if (!el) return;
@@ -1267,12 +1361,25 @@ function agruparLancesPorPeriodo(lances) {
 }
 
 // ============================================================
-// RENDER — TIMELINE HORIZONTAL (v5.9 — usa lances_detalhados)
-// Chips de 4 tamanhos conforme importância do lance:
-//   xl → gol, vermelho  |  md → amarelo, sub, defesa, VAR
-//   sm → escanteio, impedimento, bloqueio, lesão
-//   xs → falta, retomada, normal (pequenos pontos discretos)
+// RENDER — TIMELINE VERTICAL v6.0 — Cabuloso News
+// Feed vertical: texto + logo do time + narração inline.
+// Lances PRINCIPAIS (gols, cartões, subs, VAR, lesão) sempre visíveis.
+// Lances MENORES (escanteio, falta, impedimento, etc.) ocultos
+// por padrão — botão "Ver mais lances" expande/recolhe.
 // ============================================================
+window._vtlExpanded = false;
+window.vtlToggleMinor = function () {
+  const wrap  = document.getElementById('vtl-minor-wrap');
+  const btn   = document.getElementById('vtl-toggle-minor');
+  const icon  = btn?.querySelector('i');
+  const lbl   = btn?.querySelector('span');
+  if (!wrap || !btn) return;
+  window._vtlExpanded = !window._vtlExpanded;
+  wrap.style.display = window._vtlExpanded ? 'block' : 'none';
+  if (icon) icon.className = window._vtlExpanded ? 'fas fa-chevron-up' : 'fas fa-chevron-down';
+  if (lbl)  lbl.textContent = window._vtlExpanded ? 'Ocultar lances secundários' : wrap.dataset.label;
+};
+
 function renderHorizontalTimeline(partida) {
   const el = $('timeline-panel');
   if (!el) return;
@@ -1280,180 +1387,255 @@ function renderHorizontalTimeline(partida) {
   const lancesBrutos = partida._jogoRaw?.lances_detalhados || [];
   const todosEv      = partida.eventos_timeline || [];
 
-  // Precisa de pelo menos uma fonte de dados
-  if (!lancesBrutos.length && !todosEv.length) { el.style.display='none'; return; }
+  if (!lancesBrutos.length && !todosEv.length) { el.style.display = 'none'; return; }
   el.style.display = 'block';
+  window._vtlExpanded = false;
 
-  state.escudoCasa = partida.escudo_mandante;
-  state.escudoVis  = partida.escudo_visitante;
-  state.nomeCasa   = partida.mandante;
-  state.nomeVis    = partida.visitante;
+  const nomeCasa = partida.mandante  || '';
+  const nomeVis  = partida.visitante || '';
+  const escCasa  = partida.escudo_mandante  || '';
+  const escVis   = partida.escudo_visitante || '';
 
-  const nomeCasa = partida.nome_cruzeiro  || partida.mandante;
-  const nomeVis  = partida.nome_adversario || partida.visitante;
-
-  // ── Resumo no header (baseado em eventos_timeline estruturados) ──
-  const golsCru = todosEv.filter(e=>e.is_cruzeiro&&e.tipo==='GOAL').length;
-  const golsAdv = todosEv.filter(e=>!e.is_cruzeiro&&e.tipo==='GOAL').length;
-  const amTotal = todosEv.filter(e=>e.tipo==='YELLOW_CARD').length;
-  const vmTotal = todosEv.filter(e=>e.tipo==='RED_CARD').length;
-  const subs    = todosEv.filter(e=>e.tipo==='SUBSTITUTION').length;
-
-  // ── Monta lista unificada de chips a partir de lances_detalhados ──
-  // Deduplica eventos importantes (GOAL, cards, SUBs) que chegam em pares
-  // prio1 (365events) + prio2 (pbp) com minutos ligeiramente diferentes (ex: 90' vs 90+8').
-  // Chave: tipo + jogador_normalizado + time_normalizado + periodo
-  // O TIME é necessário porque jogadores homônimos em times diferentes (ex: Léo Pereira
-  // no Flamengo e no Cruzeiro) são eventos distintos e não devem ser colapsados.
-  const lancesValidos = (() => {
-    const TIPOS_DED_LD = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION']);
-    const normStr = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
-    function minNum(m) {
-      const s = String(m||'');
-      const plus = s.match(/(\d+)\+(\d+)/);
-      if (plus) return parseFloat(plus[1]) + parseFloat(plus[2]) * 0.01;
-      const base = s.match(/(\d+)/);
-      return base ? parseFloat(base[1]) : 0;
-    }
-    const primeiroLD = new Map(); // chave → minuto numérico do primeiro visto
-    return lancesBrutos
-      .filter(l => l.texto?.trim())
-      .filter(l => {
-        const cls = classificarLance(l.texto);
-        if (!TIPOS_DED_LD.has(cls.tipo)) return true;
-        const jogNorm  = normStr(l.jogador || '');
-        const timeNorm = normStr(l.time    || '');
-        const periodo  = l.periodo || '';
-        // inclui time na chave para diferenciar homônimos em times distintos
-        const chave = `${cls.tipo}|${jogNorm}|${timeNorm}|${periodo}`;
-        const minAtual = minNum(l.minuto);
-        const minAnt   = primeiroLD.get(chave);
-        if (minAnt === undefined) { primeiroLD.set(chave, minAtual); return true; }
-        if (Math.abs(minAtual - minAnt) < 1) return false; // duplicata
-        primeiroLD.set(chave, minAtual);
-        return true;
-      })
-      .map((l, i) => ({ ...l, _cls: classificarLance(l.texto), _idx: i }));
-  })();
-
-  // Se não tiver lances_detalhados, fallback para eventos_timeline (comportamento antigo)
-  const usarLancesDetalhados = lancesValidos.length > 0;
-
-  // Tamanhos gerenciados por CSS: .htl-ld-xl / md / sm / xs
-
-  function buildChipLD(l) {
-    const cls     = l._cls;
-    const tam     = cls.tam;
-    const min     = l.minuto ? `<span class="htl-ld-min">${escHtml(l.minuto)}</span>` : '';
-    const naoTrad = l._traduzido === false ? '<span class="htl-ld-en">EN</span>' : '';
-    const label   = escHtml(l.texto.substring(0, 80));
-    return `<button class="htl-ld-chip htl-ld-${tam} htl-ld-${cls.tipo}" data-ld="${l._idx}" aria-label="${label}" title="${label}"
-        onclick="abrirDetalheLD(${l._idx})">
-      <span>${cls.icone}</span>${min}${naoTrad}
-    </button>`;
+  // Qual escudo pertence a qual time? Normaliza para comparação sem acento.
+  const norm = s => (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+  const normCasa = norm(nomeCasa);
+  function escudoDoTime(nomeTime) {
+    return norm(nomeTime) === normCasa ? escCasa : escVis;
   }
 
-  // Fallback: chip antigo para eventos_timeline
-  function buildChipEv(ev) {
-    const cls    = getChipClass(ev.tipo, ev.is_cruzeiro);
-    const det    = getDetalheLance(ev, nomeCasa, nomeVis);
-    const idx    = todosEv.indexOf(ev);
-    const ladoCls = ev.is_cruzeiro ? 'htl-lado-casa' : (ev.lado==='adversario' ? 'htl-lado-vis' : '');
-    const min    = ev.minuto ? `<span class="htl-chip-min">${ev.minuto}'</span>` : '';
-    return `<button class="htl-chip ${cls} ${ladoCls}" data-ev="${idx}" aria-label="${escHtml(det.titulo)}" onclick="abrirDetalheTimeline(${idx})">
-      <span class="htl-chip-icone">${ev.icone||'▶️'}</span>${min}
-    </button>`;
+  // ── Resumo header ──
+  const golsCru = todosEv.filter(e => e.is_cruzeiro && e.tipo === 'GOAL').length;
+  const golsAdv = todosEv.filter(e => !e.is_cruzeiro && e.tipo === 'GOAL').length;
+  const amTotal = todosEv.filter(e => e.tipo === 'YELLOW_CARD').length;
+  const vmTotal = todosEv.filter(e => e.tipo === 'RED_CARD').length;
+  const subs    = todosEv.filter(e => e.tipo === 'SUBSTITUTION').length;
+
+  // ── Deduplica lances_detalhados ──
+  const TIPOS_DED = new Set(['GOAL','YELLOW_CARD','RED_CARD','SUBSTITUTION','PENALTY']);
+  function minNum(m) {
+    const s = String(m||'');
+    const plus = s.match(/(\d+)\+(\d+)/);
+    if (plus) return parseFloat(plus[1]) + parseFloat(plus[2]) * 0.01;
+    const base = s.match(/(\d+)/);
+    return base ? parseFloat(base[1]) : 0;
   }
+  const primLD = new Map();
+  const lancesValidos = lancesBrutos
+    .filter(l => l.texto?.trim())
+    .filter(l => {
+      const cls = classificarLance(l.texto);
+      if (!TIPOS_DED.has(cls.tipo)) return true;
+      const chave = `${cls.tipo}|${norm(l.jogador||'')}|${norm(l.time||'')}|${l.periodo||''}`;
+      const minAtual = minNum(l.minuto);
+      const minAnt = primLD.get(chave);
+      if (minAnt === undefined) { primLD.set(chave, minAtual); return true; }
+      if (Math.abs(minAtual - minAnt) < 1.5) return false;
+      primLD.set(chave, minAtual);
+      return true;
+    })
+    .map((l, i) => ({ ...l, _cls: classificarLance(l.texto), _idx: i }));
 
-  // ── Monta faixas por período ──
-  let faixas = '';
+  const usarLD = lancesValidos.length > 0;
 
-  if (usarLancesDetalhados) {
-    const grupos = agruparLancesPorPeriodo(lancesValidos);
-    const periodos = [
-      { key:'PRE', label:'Pré' },
-      { key:'1T',  label:'1T'  },
-      { key:'INT', label:'INT' },
-      { key:'2T',  label:'2T'  },
-      { key:'3T',  label:'Prorr' },
-    ];
-    for (const { key, label } of periodos) {
-      const itens = grupos[key] || [];
-      if (!itens.length) continue;
-      const chips = itens.map(buildChipLD).join('');
-      faixas += `
-        <div class="htl-periodo">
-          <div class="htl-periodo-label">${label}</div>
-          <div class="htl-faixa">
-            <div class="htl-linha"></div>
-            <div class="htl-chips" style="flex-wrap:wrap;gap:4px;">${chips}</div>
-          </div>
-        </div>`;
-    }
-  } else {
-    // Fallback com eventos_timeline
-    const TIPOS = ['GOAL','RED_CARD','YELLOW_CARD','SUBSTITUTION','IMPORTANT'];
-    const rel  = todosEv.filter(e=>TIPOS.includes(e.tipo));
-    const ev1T = rel.filter(e=>e.periodo_ordem===1);
-    const evINT= rel.filter(e=>e.periodo_ordem===2);
-    const ev2T = rel.filter(e=>e.periodo_ordem===3);
-    const mkFaixa = (evs, lbl) => {
-      if (!evs.length) return '';
-      return `<div class="htl-periodo">
-        <div class="htl-periodo-label">${lbl}</div>
-        <div class="htl-faixa">
-          <div class="htl-linha"></div>
-          <div class="htl-chips">${evs.map(buildChipEv).join('')}</div>
+  // ── Tipos de lances PRINCIPAIS (sempre visíveis) ──
+  const MAJOR = new Set([
+    'GOAL','PENALTY','PENALTY_MISSED',
+    'RED_CARD','YELLOW_RED_CARD','YELLOW_CARD',
+    'SUBSTITUTION','VAR','INJURY','HIGHLIGHT','ASSIST',
+  ]);
+
+  // ── Mapa cor por tipo ──
+  const COR = {
+    GOAL:'#003399', PENALTY:'#10b981', PENALTY_MISSED:'#ef4444',
+    ASSIST:'#6366f1',
+    RED_CARD:'#ef4444', YELLOW_RED_CARD:'#f97316', YELLOW_CARD:'#ca8a04',
+    SUBSTITUTION:'#475569', VAR:'#8b5cf6', INJURY:'#f59e0b',
+    HIGHLIGHT:'#f59e0b', SAVE:'#3b82f6', BLOCKED:'#6366f1',
+    CORNER:'#0ea5e9', OFFSIDE:'#f97316', FOUL:'#94a3b8',
+    SHOT:'#64748b', MISS:'#94a3b8', COMMENT:'#94a3b8', NORMAL:'#cbd5e1',
+  };
+
+  // ── Constrói linha a partir de lances_detalhados ──
+  function buildRowLD(l) {
+    const tipo    = l._cls.tipo;
+    const icone   = l._cls.icone;
+    const cor     = COR[tipo] || '#94a3b8';
+    const isMajor = MAJOR.has(tipo);
+    const escudo  = escudoDoTime(l.time || '');
+
+    // Texto principal: preferência ao campo titulo, fallback ao texto sem emoji inicial
+    const titulo = (l.titulo || l.texto || '')
+      .replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}▶️◽]\s*/gu, '')
+      .trim();
+    const jogador   = l.jogador   ? escHtml(l.jogador)   : '';
+    const assistente = l.assistente ? `<span class="vtl-assist">Assistência: ${escHtml(l.assistente)}</span>` : '';
+    // Narração inline apenas para eventos principais (evita paredes de texto)
+    const narracao  = isMajor && l.narracao?.trim()
+      ? `<p class="vtl-narracao">${escHtml(l.narracao.trim())}</p>` : '';
+
+    const escudoHtml = escudo
+      ? `<img src="${escHtml(escudo)}" class="vtl-escudo" alt="${escHtml(l.time||'')}" loading="lazy" onerror="this.style.display='none'">`
+      : `<span class="vtl-escudo-placeholder"></span>`;
+
+    // ✅ FIX v7.0: "0'" e "'" são eventos pré-jogo → mostra "Pré"
+    const minDisplay = String(l.minuto || '').replace(/'/g, '').trim();
+    const minHtml = (!minDisplay || minDisplay === '0')
+      ? `<span class="vtl-min vtl-min-pre" style="color:${cor}">Pré</span>`
+      : `<span class="vtl-min" style="color:${cor}">${escHtml(String(l.minuto))}</span>`;
+
+    const rowCls = isMajor
+      ? `vtl-row vtl-row--major vtl-tipo-${tipo}`
+      : `vtl-row vtl-row--minor vtl-tipo-${tipo}`;
+
+    return `<div class="${rowCls}">
+      <div class="vtl-barra" style="background:${cor}"></div>
+      <div class="vtl-minuto-col">${minHtml}</div>
+      <div class="vtl-conteudo">
+        <div class="vtl-linha1">
+          ${escudoHtml}
+          <span class="vtl-icone">${icone}</span>
+          <span class="vtl-titulo">${escHtml(titulo)}</span>
+          ${jogador ? `<span class="vtl-jogador">— ${jogador}</span>` : ''}
         </div>
-      </div>`;
-    };
-    faixas = mkFaixa(ev1T,'1T') + mkFaixa(evINT,'INT') + mkFaixa(ev2T,'2T');
+        ${assistente ? `<div class="vtl-linha2">${assistente}</div>` : ''}
+        ${narracao}
+      </div>
+    </div>`;
   }
 
-  const legenda = `
-    <div class="htl-legenda">
-      <span class="htl-leg-item htl-leg-casa">
-        <img src="${escHtml(partida.escudo_mandante)}" alt="" onerror="this.style.display='none'">
-        ${escHtml(partida.mandante)}
-      </span>
-      <span class="htl-leg-sep"></span>
-      <span class="htl-leg-item htl-leg-vis">
-        <img src="${escHtml(partida.escudo_visitante)}" alt="" onerror="this.style.display='none'">
-        ${escHtml(partida.visitante)}
-      </span>
+  // ── Constrói linha a partir de eventos_timeline (fallback) ──
+  function buildRowEv(ev, idx) {
+    const tipo    = ev.tipo || 'NORMAL';
+    const isMajor = MAJOR.has(tipo);
+    const cor     = COR[tipo] || '#94a3b8';
+    const det     = getDetalheLance(ev, nomeCasa, nomeVis);
+    const escudo  = ev.is_cruzeiro ? escCasa : escVis;
+    const icone   = ev.icone || getIcone(tipo);
+    const narracao = isMajor
+      ? limpar(ev.narracao_completa || ev.narracao || '') : '';
+
+    const titulo  = det.titulo.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}▶️◽⚽🟨🟥🔄🔹]\s*/gu, '').trim();
+    const minHtml = ev.minuto
+      ? `<span class="vtl-min" style="color:${cor}">${ev.minuto}'</span>` : '';
+
+    const escudoHtml = escudo
+      ? `<img src="${escHtml(escudo)}" class="vtl-escudo" alt="" loading="lazy" onerror="this.style.display='none'">`
+      : `<span class="vtl-escudo-placeholder"></span>`;
+
+    const rowCls = isMajor
+      ? `vtl-row vtl-row--major vtl-tipo-${tipo}`
+      : `vtl-row vtl-row--minor vtl-tipo-${tipo}`;
+
+    return `<div class="${rowCls}" data-ev="${idx}">
+      <div class="vtl-barra" style="background:${cor}"></div>
+      <div class="vtl-minuto-col">${minHtml}</div>
+      <div class="vtl-conteudo">
+        <div class="vtl-linha1">
+          ${escudoHtml}
+          <span class="vtl-icone">${icone}</span>
+          <span class="vtl-titulo">${escHtml(titulo)}</span>
+          ${det.sub ? `<span class="vtl-jogador">— ${escHtml(det.sub)}</span>` : ''}
+        </div>
+        ${narracao ? `<p class="vtl-narracao">${escHtml(narracao)}</p>` : ''}
+        ${(tipo === 'GOAL' && ev.placar_neste_momento)
+            ? `<p class="vtl-placar">⚽ ${escHtml(nomeCasa)} ${ev.placar_neste_momento.casa} × ${ev.placar_neste_momento.vis} ${escHtml(nomeVis)}</p>` : ''}
+      </div>
     </div>`;
+  }
+
+  // ── Agrupa em períodos ──
+  function agrupar(lances, isLD) {
+    const g = { '1T':[], '2T':[], 'ET':[] };
+    for (const l of lances) {
+      if (isLD) {
+        const p = String(l.periodo || '1T').toUpperCase();
+        const key = (p==='2T'||p==='2') ? '2T' : (p==='3T'||p==='ET'||p==='PE') ? 'ET' : '1T';
+        g[key].push(l);
+      } else {
+        const ord = l.periodo_ordem || 1;
+        const key = ord >= 4 ? 'ET' : ord >= 3 ? '2T' : '1T';
+        g[key].push(l);
+      }
+    }
+    return g;
+  }
+
+  function buildPeriodo(lances, label, isLD) {
+    if (!lances.length) return '';
+    const rows = lances.map((l, i) => isLD ? buildRowLD(l) : buildRowEv(l, i));
+    const major = rows.filter((_, i) => MAJOR.has(isLD ? lances[i]._cls.tipo : lances[i].tipo));
+    const minor = rows.filter((_, i) => !MAJOR.has(isLD ? lances[i]._cls.tipo : lances[i].tipo));
+    return { label, major: major.join(''), minor: minor.join('') };
+  }
+
+  const fonte  = usarLD ? lancesValidos : todosEv;
+  const grupos = agrupar(fonte, usarLD);
+  const partes = [
+    buildPeriodo(grupos['1T'], '1º Tempo', usarLD),
+    buildPeriodo(grupos['2T'], '2º Tempo', usarLD),
+    buildPeriodo(grupos['ET'], 'Prorrogação', usarLD),
+  ].filter(p => p && (p.major || p.minor));
+
+  // Monta HTML separando major (visível) de minor (oculto)
+  let htmlMajor = '';
+  let htmlMinor = '';
+  let countMinor = 0;
+  for (const p of partes) {
+    const sep = `<div class="vtl-periodo-sep"><span class="vtl-periodo-pill">${p.label}</span></div>`;
+    if (p.major) htmlMajor += sep + p.major;
+    if (p.minor) { htmlMinor += (p.major ? '' : sep) + p.minor; countMinor += (p.minor.match(/vtl-row/g)||[]).length; }
+  }
+
+  const toggleHtml = countMinor > 0 ? `
+    <button class="vtl-toggle-minor" id="vtl-toggle-minor" onclick="vtlToggleMinor()">
+      <i class="fas fa-chevron-down"></i>
+      <span>Ver mais lances (${countMinor} eventos)</span>
+    </button>` : '';
+
+  // Header chips resumo
+  const resumoChips = [
+    golsCru  ? `<span class="resumo-chip chip-gol">⚽ ${golsCru} gol${golsCru>1?'s':''}</span>` : '',
+    golsAdv  ? `<span class="resumo-chip chip-gol-adv">⚽ ${golsAdv} sofrido${golsAdv>1?'s':''}</span>` : '',
+    amTotal  ? `<span class="resumo-chip chip-cartao">🟨 ${amTotal}</span>` : '',
+    vmTotal  ? `<span class="resumo-chip chip-vermelho">🟥 ${vmTotal}</span>` : '',
+    subs     ? `<span class="resumo-chip chip-sub">🔄 ${subs}</span>` : '',
+  ].join('');
 
   el.innerHTML = `
     <div class="htl-header htl-header-toggle" id="htl-toggle-btn" role="button" tabindex="0" aria-expanded="true">
       <div class="htl-titulo"><i class="fas fa-stream"></i> Lance a Lance</div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-        <div class="htl-resumo-chips">
-          ${golsCru  ? `<span class="resumo-chip chip-gol">⚽ ${golsCru} gol${golsCru>1?'s':''}</span>` : ''}
-          ${golsAdv  ? `<span class="resumo-chip chip-gol-adv">⚽ ${golsAdv} sofrido${golsAdv>1?'s':''}</span>` : ''}
-          ${amTotal  ? `<span class="resumo-chip chip-cartao">🟨 ${amTotal}</span>` : ''}
-          ${vmTotal  ? `<span class="resumo-chip chip-vermelho">🟥 ${vmTotal}</span>` : ''}
-          ${subs     ? `<span class="resumo-chip chip-sub">🔄 ${subs}</span>` : ''}
-          ${usarLancesDetalhados ? `<span class="resumo-chip chip-total">${lancesValidos.length} lances</span>` : ''}
-        </div>
+        <div class="htl-resumo-chips">${resumoChips}</div>
         <span class="htl-toggle-chevron"><i class="fas fa-chevron-up"></i></span>
       </div>
     </div>
     <div class="htl-body" id="htl-body">
-      ${legenda}
-      <div class="htl-periodos">${faixas}</div>
-      <div class="htl-detalhe-panel" id="htl-detalhe" style="display:none;"></div>
+      <div class="vtl-legenda">
+        ${escCasa ? `<span class="vtl-leg-item"><img src="${escHtml(escCasa)}" class="vtl-leg-escudo" alt="" onerror="this.style.display='none'"><span>${escHtml(nomeCasa)}</span></span>` : ''}
+        <span class="vtl-leg-sep">×</span>
+        ${escVis ? `<span class="vtl-leg-item"><img src="${escHtml(escVis)}" class="vtl-leg-escudo" alt="" onerror="this.style.display='none'"><span>${escHtml(nomeVis)}</span></span>` : ''}
+      </div>
+      <div class="vtl-feed" id="vtl-feed">
+        ${htmlMajor}
+        ${countMinor > 0 ? `
+          ${toggleHtml}
+          <div id="vtl-minor-wrap" style="display:none" data-label="Ver mais lances (${countMinor} eventos)">
+            ${htmlMinor}
+          </div>` : ''}
+      </div>
     </div>`;
 
-  // Armazena dados para painel de detalhe
-  el._eventos     = todosEv;
-  el._lances      = lancesValidos;
-  el._nomeCasa    = nomeCasa;
-  el._nomeVis     = nomeVis;
-  el._escudoCasa  = partida.escudo_mandante;
-  el._escudoVis   = partida.escudo_visitante;
-  el._escudoCru   = partida._cruEhMandante !== false ? partida.escudo_mandante : partida.escudo_visitante;
-  el._escudoAdv   = partida._cruEhMandante !== false ? partida.escudo_visitante : partida.escudo_mandante;
+  // Guarda dados para compatibilidade com funções de detalhe legadas
+  el._eventos    = todosEv;
+  el._lances     = lancesValidos;
+  el._nomeCasa   = nomeCasa;
+  el._nomeVis    = nomeVis;
+  el._escudoCasa = escCasa;
+  el._escudoVis  = escVis;
+  el._escudoCru  = partida._cruEhMandante !== false ? escCasa : escVis;
+  el._escudoAdv  = partida._cruEhMandante !== false ? escVis  : escCasa;
 
+  // Toggle recolher/expandir painel principal
   const htlToggle = document.getElementById('htl-toggle-btn');
   const htlBody   = document.getElementById('htl-body');
   if (htlToggle && htlBody) {
@@ -2142,6 +2324,7 @@ async function selecionarPartida(id) {
   initFabPontuacao();
   initNotaTimeStars();
   renderPlacarInterno(partida);
+  renderPosJogo(partida);       // ✅ v7.0: seção pós-jogo com resumo
   renderPontuacaoPanel(partida);
   renderHorizontalTimeline(partida);
   renderEstatisticas(partida);
