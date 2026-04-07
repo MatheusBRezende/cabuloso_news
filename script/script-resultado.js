@@ -1,16 +1,15 @@
-// script-resultado.js - VERSÃO OTIMIZADA E CORRIGIDA
+// script-resultado.js - VERSÃO CORRIGIDA
 // Reutiliza dados do endpoint consolidado
 
 const { getFromCache, saveToCache } = window.cabulosoCacheModule || {};
 
 const CONFIG_RESULTADOS = {
-  // ⭐ Prioriza endpoint consolidado
   apiUrlConsolidado: "https://cabuloso-api.cabulosonews92.workers.dev/?type=dados-completos",
   apiUrlJogos: "https://cabuloso-api.cabulosonews92.workers.dev/?type=jogos",
   
   itemsPerPage: 12,
   defaultLogo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cruzeiro_Esporte_Clube_%28logo%29.svg/200px-Cruzeiro_Esporte_Clube_%28logo%29.svg.png',
-  CACHE_TTL: 5 * 60 * 1000 // 5 minutos (alinhado com dados consolidados)
+  CACHE_TTL: 5 * 60 * 1000
 };
 
 const state = {
@@ -31,6 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
   loadResultados();
 });
 
+// ============================================
+// NAVEGAÇÃO CORRIGIDA - Menu Hamburguer faz X
+// ============================================
 const initNavigation = () => {
   const menuToggle = document.getElementById('menuToggle');
   const navMenu = document.getElementById('nav-menu');
@@ -38,14 +40,20 @@ const initNavigation = () => {
   if (!menuToggle || !navMenu) return;
 
   menuToggle.addEventListener('click', () => {
+    // Alterna classe active no menu
     navMenu.classList.toggle('active');
+    // Alterna classe active no botão (para o X)
+    menuToggle.classList.toggle('active');
+    
     const isExpanded = navMenu.classList.contains('active');
     menuToggle.setAttribute('aria-expanded', isExpanded);
   });
 
+  // Fecha o menu ao clicar em um link
   navMenu.querySelectorAll('.nav-link').forEach(link => {
     link.addEventListener('click', () => {
       navMenu.classList.remove('active');
+      menuToggle.classList.remove('active'); // Remove a classe do X também
       menuToggle.setAttribute('aria-expanded', 'false');
     });
   });
@@ -121,12 +129,9 @@ const updatePagination = () => {
 
 const scrollToTop = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-/**
- * ⭐ LOAD OTIMIZADO - Reutiliza dados consolidados
- */
 const loadResultados = async () => {
-  const CACHE_KEY_CONSOLIDATED = 'master_data_v3'; // Mesma chave do script.js
-  const CACHE_KEY_RESULTADOS = 'master_data_resultados_v2'; // Fallback
+  const CACHE_KEY_CONSOLIDATED = 'master_data_v3';
+  const CACHE_KEY_RESULTADOS = 'master_data_resultados_v2';
   
   showLoading();
 
@@ -134,14 +139,12 @@ const loadResultados = async () => {
     let data;
     let resultados = null;
 
-    // 1. TENTA REUTILIZAR CACHE DO ENDPOINT CONSOLIDADO (prioridade)
     const cachedConsolidated = getFromCache(CACHE_KEY_CONSOLIDATED);
     
     if (cachedConsolidated && cachedConsolidated.resultados) {
       console.log("📦 Resultados: Reutilizando dados consolidados do cache");
       resultados = cachedConsolidated.resultados;
     } else {
-      // 2. TENTA CACHE LOCAL DE RESULTADOS
       const cachedLocal = getFromCache(CACHE_KEY_RESULTADOS);
       
       if (cachedLocal) {
@@ -149,7 +152,6 @@ const loadResultados = async () => {
         data = cachedLocal;
         resultados = data.resultados || data;
       } else {
-        // 3. BUSCA DADOS CONSOLIDADOS DO WORKER (preferencial)
         console.log("🌐 Resultados: Buscando dados consolidados do Worker...");
         
         try {
@@ -161,8 +163,6 @@ const loadResultados = async () => {
             if (consolidatedData.resultados) {
               console.log("✅ Dados consolidados recebidos com sucesso");
               resultados = consolidatedData.resultados;
-              
-              // Salva no cache consolidado também (para outras páginas)
               saveToCache(CACHE_KEY_CONSOLIDATED, consolidatedData, CONFIG_RESULTADOS.CACHE_TTL);
             }
           }
@@ -170,7 +170,6 @@ const loadResultados = async () => {
           console.warn("⚠️ Endpoint consolidado falhou, tentando endpoint específico...", consolidatedError);
         }
 
-        // 4. FALLBACK: Endpoint específico de jogos
         if (!resultados) {
           console.log("🔄 Usando fallback: endpoint específico de jogos");
           const response = await fetch(`${CONFIG_RESULTADOS.apiUrlJogos}&t=${Date.now()}`);
@@ -179,7 +178,6 @@ const loadResultados = async () => {
 
           let rawData = await response.json();
           
-          // 🟢 CORREÇÃO: Normalização robusta (checa se array não está vazio)
           if (Array.isArray(rawData)) {
             rawData = rawData.length > 0 ? rawData[0] : {};
           }
@@ -187,13 +185,11 @@ const loadResultados = async () => {
           data = rawData || {};
           resultados = data.resultados || [];
           
-          // Salva no cache local
           saveToCache(CACHE_KEY_RESULTADOS, data, CONFIG_RESULTADOS.CACHE_TTL);
         }
       }
     }
 
-    // 5. VALIDA E PROCESSA RESULTADOS
     if (!resultados || !Array.isArray(resultados)) {
       throw new Error("Resultados inválidos ou não encontrados");
     }
@@ -205,7 +201,6 @@ const loadResultados = async () => {
       return;
     }
 
-    // 6. RENDERIZA INTERFACE
     state.filteredResults = [...state.allResults];
     calculateStats();
     updateHeaderStats();
@@ -226,7 +221,6 @@ const filterByCompetition = () => {
   if (state.currentCompetition === 'all') {
     state.filteredResults = [...state.allResults];
   } else {
-    // Filtro mais flexível (case insensitive)
     state.filteredResults = state.allResults.filter(r => 
       r.competition && r.competition.toLowerCase().includes(state.currentCompetition.toLowerCase())
     );
@@ -242,11 +236,10 @@ const calculateStats = () => {
   state.allResults.forEach(res => {
     let s1 = 0, s2 = 0;
     
-    // Tratamento robusto do placar
     if (res.score1 !== undefined) {
        s1 = parseInt(res.score1); s2 = parseInt(res.score2);
     } else if (res.score) {
-       const parts = res.score.split(/[\sx\-]+/); // Separa por espaço, x ou hífen
+       const parts = res.score.split(/[\sx\-]+/);
        if (parts.length >= 2) { s1 = parseInt(parts[0]); s2 = parseInt(parts[1]); }
     }
 
@@ -283,8 +276,11 @@ const updateHeaderStats = () => {
   if (elements.derrotas) elements.derrotas.textContent = state.stats.derrotas;
 };
 
+// ============================================
+// CORREÇÃO: statsGridContainer (não statsCardsContainer)
+// ============================================
 const updateStatsCards = () => {
-  const container = document.getElementById('statsCardsContainer');
+  const container = document.getElementById('statsGridContainer');
   if (!container) return;
 
   let vitorias = 0, empates = 0, derrotas = 0;
@@ -306,10 +302,14 @@ const updateStatsCards = () => {
 
     if (isCruzeiroHome) {
       golsMarcados += s1; golsSofridos += s2;
-      if (s1 > s2) vitorias++; else if (s1 < s2) derrotas++; else empates++;
+      if (s1 > s2) vitorias++; 
+      else if (s1 < s2) derrotas++; 
+      else empates++;
     } else {
       golsMarcados += s2; golsSofridos += s1;
-      if (s2 > s1) vitorias++; else if (s2 < s1) derrotas++; else empates++;
+      if (s2 > s1) vitorias++; 
+      else if (s2 < s1) derrotas++; 
+      else empates++;
     }
   });
 
@@ -534,7 +534,6 @@ const escapeHtml = (text) => {
   return div.innerHTML;
 };
 
-// Expõe para retry button
 window.retryLoadResultados = loadResultados;
 
 console.log("💡 Dica: Use window.retryLoadResultados() para recarregar dados");

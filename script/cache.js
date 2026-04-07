@@ -1,165 +1,110 @@
-// cache.js - VERSÃO FINAL COMPATÍVEL
-// Funciona tanto como <script> normal quanto <script type="module">
+// cache.js - Gerenciamento de cache para Cabuloso News
 
-(function(global) {
+(function () {
   'use strict';
-  
-  const CACHE_NAME = 'cabuloso-v1';
-  const STORAGE_TYPE = sessionStorage;
 
-  /**
-   * Salva no sessionStorage
-   */
+  const CACHE_NAME = 'cabuloso-v1';
+  const STORAGE = sessionStorage;
+
+  /** Salva dado no sessionStorage com TTL */
   function saveToCache(key, data, ttl) {
     try {
-      const item = { data, timestamp: Date.now(), ttl };
-      STORAGE_TYPE.setItem(`cache_${key}`, JSON.stringify(item));
+      STORAGE.setItem(`cache_${key}`, JSON.stringify({ data, timestamp: Date.now(), ttl }));
     } catch (e) {
-      console.warn("⚠️ Storage cheio, limpando...", e);
+      console.warn('⚠️ Storage cheio, limpando cache expirado...', e);
       clearExpiredCache();
     }
   }
 
-  /**
-   * Recupera do sessionStorage
-   */
+  /** Recupera dado do sessionStorage (retorna null se expirado) */
   function getFromCache(key) {
-    const raw = STORAGE_TYPE.getItem(`cache_${key}`);
+    const raw = STORAGE.getItem(`cache_${key}`);
     if (!raw) return null;
     try {
       const item = JSON.parse(raw);
       if (Date.now() - item.timestamp > item.ttl) {
-        STORAGE_TYPE.removeItem(`cache_${key}`);
+        STORAGE.removeItem(`cache_${key}`);
         return null;
       }
       return item.data;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
 
-  /**
-   * Cache API - Salva a Response (CORRIGIDO: usa clone())
-   */
-/**
-   * Cache API - Salva a Response (CORRIGIDO)
-   */
-async function saveToCacheAPI(url, response) {
-  if (!('caches' in window)) return;
-  
-  try {
-    // VERIFICAÇÃO CRÍTICA: Se o corpo já foi lido por um .json(), não podemos clonar
+  /** Salva Response no Cache API (evita erro "body already used") */
+  async function saveToCacheAPI(url, response) {
+    if (!('caches' in window)) return;
     if (response.bodyUsed) {
-      console.warn("⚠️ Não foi possível salvar no Cache API: O corpo já foi lido.");
+      console.warn('⚠️ Não foi possível salvar no Cache API: corpo já lido.');
       return;
     }
-
-    const cache = await caches.open(CACHE_NAME);
-    // Clonamos aqui para que a resposta original continue disponível para o script.js
-    await cache.put(url, response.clone());
-  } catch (e) {
-    console.error("⚠️ Cache API falhou ao salvar:", e);
+    try {
+      const cache = await caches.open(CACHE_NAME);
+      await cache.put(url, response.clone());
+    } catch (e) {
+      console.warn('⚠️ Cache API falhou ao salvar:', e);
+    }
   }
-}
 
-  /**
-   * Recupera do Cache API
-   */
+  /** Recupera Response do Cache API (válida por 5 minutos) */
   async function getFromCacheAPI(url) {
-    if (!('caches' in global)) return null;
+    if (!('caches' in window)) return null;
     try {
       const cache = await caches.open(CACHE_NAME);
       const response = await cache.match(url);
-      if (response) {
-        const dateHeader = response.headers.get('date');
-        if (dateHeader) {
-          const age = (Date.now() - new Date(dateHeader).getTime()) / 1000;
-          if (age < 300) return response;
-        }
+      if (!response) return null;
+      const dateHeader = response.headers.get('date');
+      if (dateHeader) {
+        const ageSeconds = (Date.now() - new Date(dateHeader).getTime()) / 1000;
+        if (ageSeconds < 300) return response;
       }
       return null;
-    } catch (e) {
+    } catch {
       return null;
     }
   }
 
-  /**
-   * Limpa entradas expiradas
-   */
+  /** Remove entradas expiradas do sessionStorage */
   function clearExpiredCache() {
-    for (let i = 0; i < STORAGE_TYPE.length; i++) {
-      const key = STORAGE_TYPE.key(i);
-      if (key && key.startsWith('cache_')) {
-        getFromCache(key.replace('cache_', ''));
-      }
+    const keysToCheck = [];
+    for (let i = 0; i < STORAGE.length; i++) {
+      const key = STORAGE.key(i);
+      if (key && key.startsWith('cache_')) keysToCheck.push(key);
     }
+    keysToCheck.forEach(key => getFromCache(key.slice(6))); // remove prefixo 'cache_'
   }
 
-  /**
-   * Limpa TODO o cache
-   */
-  async function clearAllCabulosoCache() {
-    Object.keys(STORAGE_TYPE).forEach(k => k.startsWith('cache_') && STORAGE_TYPE.removeItem(k));
-    if ('caches' in global) await caches.delete(CACHE_NAME);
-    console.log("✅ Cache limpo");
+  /** Apaga todo o cache (sessionStorage + Cache API) */
+  async function clearAllCache() {
+    Object.keys(STORAGE).forEach(k => k.startsWith('cache_') && STORAGE.removeItem(k));
+    if ('caches' in window) await caches.delete(CACHE_NAME);
+    console.log('✅ Cache limpo com sucesso');
   }
 
-  /**
-   * Estatísticas
-   */
+  /** Estatísticas de cache */
   function getCacheStats() {
-    const stats = { totalItems: 0, items: [] };
-    for (let i = 0; i < STORAGE_TYPE.length; i++) {
-      const key = STORAGE_TYPE.key(i);
-      if (key && key.startsWith('cache_')) {
-        stats.totalItems++;
-        stats.items.push(key);
-      }
+    const keys = [];
+    for (let i = 0; i < STORAGE.length; i++) {
+      const k = STORAGE.key(i);
+      if (k && k.startsWith('cache_')) keys.push(k);
     }
-    return stats;
+    return { totalItems: keys.length, items: keys };
   }
 
-  // API Object
-  const cacheAPI = {
+  // Expõe a API globalmente
+  window.cabulosoCache = {
     saveToCache,
     getFromCache,
     saveToCacheAPI,
     getFromCacheAPI,
     clearExpiredCache,
-    getCacheStats,
-    clear: clearAllCabulosoCache,
-    stats: getCacheStats
+    clear: clearAllCache,
+    stats: getCacheStats,
   };
 
-  // ====================================================================
-  // EXPORTAÇÃO UNIVERSAL - Funciona em todos os ambientes
-  // ====================================================================
+  // Atalho para compatibilidade com script.js
+  window.cabulosoCacheModule = window.cabulosoCache;
 
-  // 1. GLOBAL (window) - Para uso com <script> tag
-  if (typeof global !== 'undefined') {
-    global.cabulosoCache = cacheAPI;
-    
-    // Também expõe funções individuais para imports
-    global.cabulosoCacheModule = {
-      saveToCache,
-      getFromCache,
-      saveToCacheAPI,
-      getFromCacheAPI,
-      clearExpiredCache,
-      getCacheStats
-    };
-  }
-
-  // 2. CommonJS (Node.js)
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = cacheAPI;
-  }
-
-  // 3. AMD
-  if (typeof define === 'function' && define.amd) {
-    define([], function() { return cacheAPI; });
-  }
-
-  console.log("✅ Cache API carregada (window.cabulosoCache disponível)");
-
-})(typeof window !== 'undefined' ? window : this);
+  console.log('✅ Cache inicializado (window.cabulosoCache disponível)');
+})();

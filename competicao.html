@@ -18,37 +18,28 @@
   <body>
     <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
 
-    <header class="header" role="banner">
-      <nav class="navbar" role="navigation" aria-label="Navegação principal">
-        <div class="nav-container">
-          <a href="index.html" class="nav-logo" aria-label="Cabuloso News - Página inicial">
-            <div class="logo-container">
-              <img src="./assets/logo.png" alt="" class="logo" width="40" height="40" />
-              <div class="logo-glow" aria-hidden="true"></div>
-            </div>
-            <div class="logo-text-container">
-              <span class="logo-text">Cabuloso News</span>
-              <span class="logo-subtitle">Maior de Minas</span>
-            </div>
-          </a>
-          <ul class="nav-menu" id="nav-menu" role="menubar">
-            <li class="nav-item" role="none">
-              <a href="index.html" class="nav-link" role="menuitem"><i class="fas fa-home" aria-hidden="true"></i><span>Início</span></a>
-            </li>
-            <li class="nav-item" role="none">
-              <a href="competicao.html" class="nav-link active" role="menuitem" aria-current="page"><i class="fas fa-table"></i><span>Tabela</span></a>
-            </li>
-            <li class="nav-item" role="none">
-              <a href="resultados.html" class="nav-link" role="menuitem"><i class="fas fa-trophy" aria-hidden="true"></i><span>Resultados</span></a>
-            </li>
-            <li class="nav-item" role="none">
-             <a href="avaliacao.html" class="nav-link" role="menuitem"><i class="fas fa-star" aria-hidden="true"></i><span>Avaliar</span></a>
-            </li>
-          </ul>
-          <button class="menu-toggle" id="menuToggle" type="button" aria-label="Abrir menu de navegação" aria-expanded="false" aria-controls="nav-menu">
-            <div class="hamburger" aria-hidden="true"><span></span><span></span><span></span></div>
-          </button>
-        </div>
+    <header class="header">
+      <nav class="nav">
+        <a href="index.html" class="logo">
+          <div class="logo-icon">
+            <img src="./assets/logo.png" alt="" />
+          </div>
+          <div class="logo-text">
+            <span class="logo-main">Cabuloso</span>
+            <span class="logo-sub">News</span>
+          </div>
+        </a>
+
+        <ul class="nav-menu" id="navMenu">
+          <li><a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a></li>
+          <li><a href="competicao.html" class="nav-link active"><i class="fas fa-table"></i> Tabela</a></li>
+          <li><a href="resultados.html" class="nav-link"><i class="fas fa-trophy"></i> Resultados</a></li>
+          <li><a href="avaliacao.html" class="nav-link"><i class="fas fa-star"></i> Avaliar</a></li>
+        </ul>
+
+        <button class="menu-toggle" id="menuToggle" aria-label="Menu">
+          <span></span><span></span><span></span>
+        </button>
       </nav>
     </header>
 
@@ -234,5 +225,6 @@
 
     <script src="./script/cache.js"></script>
     <script src="./script/script-brasileirao.js"></script>
+    <script src="./script/live-match-detector.js"></script>
   </body>
 </html>

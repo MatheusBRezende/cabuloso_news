@@ -1463,14 +1463,20 @@ function renderHorizontalTimeline(partida) {
     const isMajor = MAJOR.has(tipo);
     const escudo  = escudoDoTime(l.time || '');
 
-    // Texto principal: preferência ao campo titulo, fallback ao texto sem emoji inicial
-    const titulo = (l.titulo || l.texto || '')
+    // Para COMMENT/HIGHLIGHT sem título real, a narração É o conteúdo principal
+    const isComentario = tipo === 'COMMENT' || tipo === 'HIGHLIGHT';
+    const tituloRaw = (isComentario && !l.titulo?.trim())
+      ? (l.narracao || l.texto || '')
+      : (l.titulo || l.texto || '');
+    const titulo = tituloRaw
       .replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}▶️◽]\s*/gu, '')
       .trim();
     const jogador   = l.jogador   ? escHtml(l.jogador)   : '';
     const assistente = l.assistente ? `<span class="vtl-assist">Assistência: ${escHtml(l.assistente)}</span>` : '';
-    // Narração inline apenas para eventos principais (evita paredes de texto)
-    const narracao  = isMajor && l.narracao?.trim()
+    // Narração: exibe para eventos principais. Para COMMENT/HIGHLIGHT sem título próprio,
+    // a narração já foi usada como título — evita duplicação.
+    const usouNarracaoComoTitulo = isComentario && !l.titulo?.trim();
+    const narracao = !usouNarracaoComoTitulo && l.narracao?.trim()
       ? `<p class="vtl-narracao">${escHtml(l.narracao.trim())}</p>` : '';
 
     const escudoHtml = escudo
@@ -1511,10 +1517,19 @@ function renderHorizontalTimeline(partida) {
     const det     = getDetalheLance(ev, nomeCasa, nomeVis);
     const escudo  = ev.is_cruzeiro ? escCasa : escVis;
     const icone   = ev.icone || getIcone(tipo);
-    const narracao = isMajor
-      ? limpar(ev.narracao_completa || ev.narracao || '') : '';
 
-    const titulo  = det.titulo.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}▶️◽⚽🟨🟥🔄🔹]\s*/gu, '').trim();
+    // Para COMMENT/HIGHLIGHT: usa narracao como título se o titulo for genérico/vazio
+    const isComentario = tipo === 'COMMENT' || tipo === 'HIGHLIGHT';
+    const narracaoTexto = limpar(ev.narracao_completa || ev.narracao || '');
+    const usouNarracaoComoTitulo = isComentario && !det.titulo?.trim().replace(/^[⚽🟨🟥🔄🔹💬⭐]\s*/u,'');
+
+    const tituloBase = usouNarracaoComoTitulo
+      ? narracaoTexto
+      : det.titulo.replace(/^[\p{Emoji_Presentation}\p{Extended_Pictographic}▶️◽⚽🟨🟥🔄🔹]\s*/gu, '').trim();
+    const titulo = tituloBase.trim();
+
+    const narracao = !usouNarracaoComoTitulo && narracaoTexto
+      ? narracaoTexto : '';
     const minHtml = ev.minuto
       ? `<span class="vtl-min" style="color:${cor}">${ev.minuto}'</span>` : '';
 
@@ -2464,17 +2479,40 @@ window.resetarPartidaKV = async function(adminKey) {
   }
 };
 
-document.addEventListener('DOMContentLoaded',async()=>{
-  const mt=$('menuToggle'),nm=$('nav-menu');
-  if(mt&&nm) mt.addEventListener('click',()=>{mt.classList.toggle('active');nm.classList.toggle('active');mt.setAttribute('aria-expanded',nm.classList.contains('active'));});
-  $('btn-submit')?.addEventListener('click',enviarAvaliacao);
-  const ta=$('observacao-geral-input'),ct=$('char-count');
-  if(ta&&ct) ta.addEventListener('input',()=>ct.textContent=ta.value.length);
-  state.partidas=await carregarDadosAvaliacao();
-  _pollingIdsAnterior = getIdsSnapshot(state.partidas);
-  renderPartidas(state.partidas);
-  if(state.partidas.length===1) await selecionarPartida(state.partidas[0].id);
-  iniciarPolling();
+document.addEventListener('DOMContentLoaded', () => {
+    const menuToggle = document.getElementById('menuToggle');
+    const navMenu = document.getElementById('navMenu');
+
+    // Verifica se os elementos existem para não dar erro no console
+    if (menuToggle && navMenu) {
+        menuToggle.addEventListener('click', function() {
+            // Alterna a classe 'active' no botão (para o X) e no menu (para abrir)
+            this.classList.toggle('active');
+            navMenu.classList.toggle('active');
+            
+            // Impede o scroll do corpo da página quando o menu está aberto
+            document.body.style.overflow = navMenu.classList.contains('active') ? 'hidden' : '';
+        });
+
+        // Fecha o menu automaticamente ao clicar em qualquer link
+        const navLinks = document.querySelectorAll('.nav-link');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                menuToggle.classList.remove('active');
+                navMenu.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+    }
+    
+    // Inicia a lógica de dados que já existia no seu script
+    if (typeof initApp === 'function') {
+        initApp();
+    } else {
+        // Se não houver initApp, chama as funções de carga padrão do seu script
+        pollingAvaliacao();
+        iniciarPolling();
+    }
 });
 
 // ============================================================

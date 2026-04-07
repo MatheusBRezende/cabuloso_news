@@ -675,9 +675,37 @@ const initBrasileirao = () => {
 };
 
 // ============================================
+// MENU MOBILE
+// ============================================
+const initMobileMenu = () => {
+  const menuToggle = document.getElementById("menuToggle");
+  const navMenu = document.getElementById("navMenu");
+  
+  if (!menuToggle || !navMenu) return;
+  
+  menuToggle.addEventListener("click", () => {
+    const isActive = navMenu.classList.contains("active");
+    navMenu.classList.toggle("active");
+    menuToggle.classList.toggle("active");
+    menuToggle.setAttribute("aria-expanded", !isActive);
+  });
+  
+  // Fecha o menu ao clicar em um link
+  const navLinks = navMenu.querySelectorAll(".nav-link");
+  navLinks.forEach(link => {
+    link.addEventListener("click", () => {
+      navMenu.classList.remove("active");
+      menuToggle.classList.remove("active");
+      menuToggle.setAttribute("aria-expanded", "false");
+    });
+  });
+};
+
+// ============================================
 // INICIALIZAÇÃO
 // ============================================
 if (document.readyState === 'loading') {
+  initMobileMenu();
   document.addEventListener('DOMContentLoaded', initBrasileirao);
 } else {
   initBrasileirao();
