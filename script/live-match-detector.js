@@ -401,6 +401,7 @@
   function renderLive(data) {
     currentDataType = 'live';
     bar.classList.add('visible');
+    document.body.classList.add('live-bar-visible');
     liveStatusText.innerHTML = '<span class="live-dot"></span> AO VIVO';
     
     // Compact view
@@ -460,12 +461,14 @@
     document.getElementById('expandedContent').innerHTML = expandedHtml;
     document.getElementById('closeLiveBarBtn')?.addEventListener('click', () => {
       bar.classList.remove('visible');
+      document.body.classList.remove('live-bar-visible');
     });
   }
 
   function renderFuture(data) {
     currentDataType = 'future';
     bar.classList.add('visible');
+    document.body.classList.add('live-bar-visible');
     liveStatusText.innerHTML = '📅 PRÓXIMO JOGO';
     
     const targetDate = parseDate(data.data, data.hora);
@@ -531,6 +534,7 @@
     
     document.getElementById('closeFutureBarBtn')?.addEventListener('click', () => {
       bar.classList.remove('visible');
+      document.body.classList.remove('live-bar-visible');
     });
   }
 
@@ -539,10 +543,12 @@
     // Não exibe automaticamente para não poluir
     currentDataType = 'finished';
     bar.classList.remove('visible');
+    document.body.classList.remove('live-bar-visible');
   }
 
   function showNoGame() {
     bar.classList.remove('visible');
+    document.body.classList.remove('live-bar-visible');
   }
 
   // ─── LÓGICA PRINCIPAL ──────────────────────────────────────────────────

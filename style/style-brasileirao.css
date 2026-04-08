@@ -485,9 +485,23 @@ ul {
   padding: var(--space-8) 0 var(--space-16);
 }
 
-/* === SECTION HEADER === */
+/* === SECTION HEADER - PROFESSIONAL === */
 .section-header {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.section-header::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 80px;
+  height: 3px;
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+  border-radius: 3px;
 }
 
 .header-info {
@@ -501,52 +515,66 @@ ul {
 .section-title {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   font-family: var(--font-display);
-  font-size: clamp(1.3rem, 3vw, 1.8rem);
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
   color: var(--gray-900);
   text-transform: uppercase;
-  letter-spacing: 1.5px;
+  letter-spacing: 2px;
+  font-weight: 600;
 }
 
 .section-icon {
   color: var(--primary);
+  font-size: 1.2em;
+  filter: drop-shadow(0 2px 4px rgba(0, 51, 153, 0.2));
 }
 
 .update-info {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: 0.8rem;
+  gap: var(--space-3);
+  font-size: 0.82rem;
   color: var(--gray-500);
+  font-weight: 600;
+  background: var(--surface-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
 }
 
 .update-pulse {
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   background: var(--success);
   border-radius: 50%;
   animation: pulseDot 2s ease-in-out infinite;
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
 }
 
 @keyframes pulseDot {
-  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.4); }
-  50% { opacity: 0.7; transform: scale(1.1); box-shadow: 0 0 0 4px rgba(22, 163, 74, 0); }
+  0%, 100% { opacity: 1; transform: scale(1); box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2); }
+  50% { opacity: 0.8; transform: scale(1.15); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
 }
 
-/* === TABLE WRAPPER === */
+/* === TABLE WRAPPER - PROFESSIONAL === */
 .table-section {
-  margin-bottom: var(--space-8);
+  margin-bottom: var(--space-10);
 }
 
 .table-wrapper {
   border-radius: var(--radius-xl);
   overflow: hidden;
+  transition: box-shadow 0.3s ease;
+}
+
+.table-wrapper:hover {
+  box-shadow: 0 12px 48px rgba(0, 51, 153, 0.12);
 }
 
 .table-wrapper.brasileirao-wrapper {
   background: var(--white);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--border);
   border: 1px solid var(--border);
 }
 
@@ -603,122 +631,205 @@ ul {
 /* === TABELA BRASILEIRÃO === */
 #tabela-brasileirao {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   min-width: 700px;
+  font-variant-numeric: tabular-nums;
 }
 
 #tabela-brasileirao thead {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: var(--white);
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 #tabela-brasileirao th {
-  padding: var(--space-4) var(--space-3);
+  padding: var(--space-5) var(--space-4);
   text-align: center;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
   font-family: var(--font-display);
+  border-bottom: 3px solid var(--accent);
+  white-space: nowrap;
 }
 
 #tabela-brasileirao th.col-time {
   text-align: left;
-  padding-left: var(--space-4);
+  padding-left: var(--space-6);
 }
 
 #tabela-brasileirao td {
-  padding: var(--space-3) var(--space-2);
-  border-bottom: 1px solid var(--border-light);
+  padding: var(--space-4) var(--space-3);
+  border-bottom: 1px solid var(--border);
   text-align: center;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
   color: var(--gray-700);
+  vertical-align: middle;
 }
 
 #tabela-brasileirao tbody tr {
-  transition: var(--transition);
+  transition: all 0.25s ease;
 }
+
+/* Zebra striping sutil */
+#tabela-brasileirao tbody tr:nth-child(even):not(.row-libertadores):not(.row-preliberta):not(.row-sulamericana):not(.row-rebaixamento):not(.cruzeiro-row) {
+  background: rgba(248, 250, 252, 0.5);
+}
+
 #tabela-brasileirao tbody tr:last-child td {
   border-bottom: none;
 }
+
 #tabela-brasileirao tbody tr:hover {
-  background: var(--gray-50);
+  background: var(--gray-100);
+  transform: scale(1.002);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
 }
 
 .celula-time-completa {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-  padding-left: var(--space-4);
+  gap: var(--space-4);
+  padding-left: var(--space-5);
   text-align: left;
 }
 
 .posicao-container {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  min-width: 50px;
+  gap: var(--space-3);
+  min-width: 58px;
 }
 
 .indicador-zona {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: var(--gray-300);
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+#tabela-brasileirao tbody tr:hover .indicador-zona {
+  transform: scale(1.15);
 }
 
 .numero-posicao {
   font-weight: 800;
-  font-size: 1rem;
-  color: var(--gray-900);
-  min-width: 24px;
+  font-size: 1.1rem;
+  color: var(--gray-800);
+  min-width: 28px;
   font-family: var(--font-display);
+  letter-spacing: -0.5px;
 }
 
 .time-info {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
 }
 
 .escudo-pequeno {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   object-fit: contain;
   flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
+  transition: transform 0.2s ease;
+}
+
+#tabela-brasileirao tbody tr:hover .escudo-pequeno {
+  transform: scale(1.08);
 }
 
 .nome-time-texto {
   font-weight: 700;
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   color: var(--gray-900);
   white-space: nowrap;
+  letter-spacing: 0.2px;
 }
 
 /* Zonas - Indicadores */
-.zona-libertadores { background: var(--zona-libertadores) !important; box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.25); }
-.zona-preliberta { background: var(--zona-preliberta) !important; box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.25); }
-.zona-sulamericana { background: var(--zona-sulamericana) !important; box-shadow: 0 0 0 2px rgba(234, 88, 12, 0.25); }
-.zona-rebaixamento { background: var(--zona-rebaixamento) !important; box-shadow: 0 0 0 2px rgba(220, 38, 38, 0.25); }
-.zona-classificado { background: var(--zona-classificado) !important; box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.25); }
-.zona-classificado-direto { background: var(--zona-classificado-direto) !important; box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.3); }
-.zona-melhor-segundo { background: var(--zona-melhor-segundo) !important; box-shadow: 0 0 0 2px rgba(217, 119, 6, 0.3); }
-.zona-segundo-normal { background: var(--zona-segundo-normal) !important; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3); }
-.zona-repescagem { background: var(--zona-repescagem) !important; box-shadow: 0 0 0 2px rgba(8, 145, 178, 0.3); }
-.zona-eliminado { background: var(--zona-eliminado) !important; box-shadow: 0 0 0 2px rgba(107, 114, 128, 0.2); }
-.zona-cruzeiro { background: var(--zona-cruzeiro) !important; box-shadow: 0 0 0 2px rgba(0, 51, 153, 0.3); }
+.zona-libertadores { 
+  background: var(--zona-libertadores) !important; 
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-preliberta { 
+  background: var(--zona-preliberta) !important; 
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-sulamericana { 
+  background: var(--zona-sulamericana) !important; 
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-rebaixamento { 
+  background: var(--zona-rebaixamento) !important; 
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-classificado { 
+  background: var(--zona-classificado) !important; 
+  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-classificado-direto { 
+  background: var(--zona-classificado-direto) !important; 
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-melhor-segundo { 
+  background: var(--zona-melhor-segundo) !important; 
+  box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-segundo-normal { 
+  background: var(--zona-segundo-normal) !important; 
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-repescagem { 
+  background: var(--zona-repescagem) !important; 
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
+.zona-eliminado { 
+  background: var(--zona-eliminado) !important; 
+  box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15), inset 0 0 0 1px rgba(255, 255, 255, 0.2); 
+}
+.zona-cruzeiro { 
+  background: var(--zona-cruzeiro) !important; 
+  box-shadow: 0 0 0 3px rgba(0, 51, 153, 0.25), inset 0 0 0 1px rgba(255, 255, 255, 0.3); 
+}
 
-/* Linhas coloridas por zona */
-#tabela-brasileirao tbody tr.row-libertadores { background: rgba(30, 64, 175, 0.05); }
-#tabela-brasileirao tbody tr.row-preliberta { background: rgba(59, 130, 246, 0.05); }
-#tabela-brasileirao tbody tr.row-sulamericana { background: rgba(234, 88, 12, 0.05); }
-#tabela-brasileirao tbody tr.row-rebaixamento { background: rgba(220, 38, 38, 0.05); }
-#tabela-brasileirao tbody tr.row-libertadores:hover { background: rgba(30, 64, 175, 0.09); }
-#tabela-brasileirao tbody tr.row-preliberta:hover { background: rgba(59, 130, 246, 0.09); }
-#tabela-brasileirao tbody tr.row-sulamericana:hover { background: rgba(234, 88, 12, 0.09); }
-#tabela-brasileirao tbody tr.row-rebaixamento:hover { background: rgba(220, 38, 38, 0.09); }
+/* Linhas coloridas por zona - visual mais suave */
+#tabela-brasileirao tbody tr.row-libertadores { 
+  background: linear-gradient(90deg, rgba(30, 64, 175, 0.08), rgba(30, 64, 175, 0.03));
+  border-left: 4px solid var(--zona-libertadores);
+}
+#tabela-brasileirao tbody tr.row-preliberta { 
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.08), rgba(59, 130, 246, 0.03));
+  border-left: 4px solid var(--zona-preliberta);
+}
+#tabela-brasileirao tbody tr.row-sulamericana { 
+  background: linear-gradient(90deg, rgba(234, 88, 12, 0.08), rgba(234, 88, 12, 0.03));
+  border-left: 4px solid var(--zona-sulamericana);
+}
+#tabela-brasileirao tbody tr.row-rebaixamento { 
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.08), rgba(220, 38, 38, 0.03));
+  border-left: 4px solid var(--zona-rebaixamento);
+}
+#tabela-brasileirao tbody tr.row-libertadores:hover { 
+  background: linear-gradient(90deg, rgba(30, 64, 175, 0.12), rgba(30, 64, 175, 0.06));
+}
+#tabela-brasileirao tbody tr.row-preliberta:hover { 
+  background: linear-gradient(90deg, rgba(59, 130, 246, 0.12), rgba(59, 130, 246, 0.06));
+}
+#tabela-brasileirao tbody tr.row-sulamericana:hover { 
+  background: linear-gradient(90deg, rgba(234, 88, 12, 0.12), rgba(234, 88, 12, 0.06));
+}
+#tabela-brasileirao tbody tr.row-rebaixamento:hover { 
+  background: linear-gradient(90deg, rgba(220, 38, 38, 0.12), rgba(220, 38, 38, 0.06));
+}
 
 /* Linhas Mineiro */
 .grupo-table tbody tr.row-classificado-direto { background: rgba(5, 150, 105, 0.07); }
@@ -727,219 +838,732 @@ ul {
 .grupo-table tbody tr.row-eliminado { background: rgba(107, 114, 128, 0.07); }
 .grupo-table tbody tr.row-repescagem { background: rgba(8, 145, 178, 0.07); }
 
-/* Destaque Cruzeiro */
+/* Destaque Cruzeiro - linha especial com visual premium */
 .cruzeiro-row {
-  background: linear-gradient(90deg, rgba(0, 51, 153, 0.09), rgba(0, 51, 153, 0.02)) !important;
+  background: linear-gradient(90deg, rgba(0, 51, 153, 0.12), rgba(255, 215, 0, 0.04), rgba(0, 51, 153, 0.02)) !important;
+  border-left: 4px solid var(--primary) !important;
+  position: relative;
+}
+.cruzeiro-row::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--accent);
+  border-radius: 3px 0 0 3px;
+  opacity: 0.6;
 }
 .cruzeiro-row:hover {
-  background: linear-gradient(90deg, rgba(0, 51, 153, 0.14), rgba(0, 51, 153, 0.04)) !important;
+  background: linear-gradient(90deg, rgba(0, 51, 153, 0.18), rgba(255, 215, 0, 0.06), rgba(0, 51, 153, 0.04)) !important;
 }
 .cruzeiro-row .nome-time-texto {
   color: var(--primary);
   font-weight: 800;
+  font-size: 1rem;
 }
 .cruzeiro-row .numero-posicao {
   color: var(--primary);
+  font-weight: 900;
+}
+.cruzeiro-row .escudo-pequeno {
+  filter: drop-shadow(0 2px 8px rgba(0, 51, 153, 0.3));
+}
+
+/* Coluna de pontos com destaque */
+.dado-pontos {
+  position: relative;
 }
 .dado-pontos strong {
   color: var(--gray-900);
-  font-size: 1rem;
-  font-weight: 800;
+  font-size: 1.1rem;
+  font-weight: 900;
+  font-family: var(--font-display);
+  background: linear-gradient(135deg, var(--gray-100), var(--white));
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+  display: inline-block;
+  min-width: 40px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 /* === GRUPOS MINEIRO === */
 .grupos-mineiro {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-  gap: var(--space-6);
-  padding: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--space-8);
+  padding: var(--space-5);
 }
 
 .grupo-card {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  box-shadow: var(--shadow-md);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.grupo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12);
 }
 
 .grupo-header {
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: var(--white);
-  padding: var(--space-3) var(--space-4);
+  padding: var(--space-4) var(--space-5);
   text-align: center;
-  border-bottom: 2px solid rgba(255, 215, 0, 0.2);
+  border-bottom: 3px solid var(--accent);
+  position: relative;
+}
+
+.grupo-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 30% 0%, rgba(255, 215, 0, 0.1) 0%, transparent 60%);
+  pointer-events: none;
 }
 
 .grupo-header h3 {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-2);
-  font-size: 1rem;
-  font-weight: 600;
+  gap: var(--space-3);
+  font-size: 1.1rem;
+  font-weight: 700;
   font-family: var(--font-display);
-  letter-spacing: 1px;
+  letter-spacing: 2px;
   text-transform: uppercase;
+  position: relative;
+  z-index: 1;
+}
+
+.grupo-header h3 i {
+  color: var(--accent);
 }
 
 .grupo-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }
+
 .grupo-table thead {
-  background: var(--surface-2);
+  background: linear-gradient(180deg, var(--surface-2), var(--white));
 }
+
 .grupo-table th {
-  padding: var(--space-3) var(--space-2);
-  font-size: 0.7rem;
-  font-weight: 700;
+  padding: var(--space-4) var(--space-3);
+  font-size: 0.75rem;
+  font-weight: 800;
   text-transform: uppercase;
   color: var(--gray-600);
   text-align: center;
-  letter-spacing: 0.5px;
+  letter-spacing: 1px;
+  border-bottom: 2px solid var(--border);
 }
+
 .grupo-table th:first-child {
   text-align: left;
-  padding-left: var(--space-3);
+  padding-left: var(--space-4);
 }
+
 .grupo-table td {
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-4) var(--space-3);
   border-bottom: 1px solid var(--border-light);
   text-align: center;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   color: var(--gray-700);
+  vertical-align: middle;
 }
+
 .grupo-table tbody tr {
-  transition: var(--transition);
+  transition: all 0.2s ease;
 }
+
 .grupo-table tbody tr:hover {
   background: var(--gray-50);
+  transform: scale(1.005);
 }
+
 .grupo-table tbody tr:last-child td {
   border-bottom: none;
+}
+
+/* Zebra striping para grupos */
+.grupo-table tbody tr:nth-child(even):not(.row-classificado-direto):not(.row-melhor-segundo):not(.cruzeiro-row) {
+  background: rgba(248, 250, 252, 0.6);
 }
 
 /* === LEGENDA === */
 .legend-container {
   background: var(--white);
-  padding: var(--space-5);
+  padding: var(--space-6);
   border-radius: var(--radius-xl);
-  margin-top: var(--space-6);
-  box-shadow: var(--shadow-md);
+  margin-top: var(--space-8);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
   border: 1px solid var(--border);
 }
 
 .legend-header {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-light);
 }
 
 .legend-header h3 {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: 0.9rem;
+  gap: var(--space-3);
+  font-size: 1rem;
   color: var(--gray-900);
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
 }
+
 .legend-header h3 i {
   color: var(--primary);
+  font-size: 1.1rem;
 }
 
 .legend-group {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-4);
+  gap: var(--space-5);
 }
 
 .legend-item {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.legend-item:hover {
+  background: var(--gray-50);
 }
 
 .legend-color {
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   flex-shrink: 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }
 
 .legend-text {
   display: flex;
   flex-direction: column;
-  font-size: 0.8rem;
-  line-height: 1.3;
+  font-size: 0.85rem;
+  line-height: 1.4;
 }
+
 .legend-text strong {
   color: var(--gray-900);
   font-weight: 700;
 }
+
 .legend-text small {
   color: var(--gray-500);
-  font-size: 0.7rem;
+  font-size: 0.75rem;
+  margin-top: 1px;
 }
 
 .legend-item.special {
-  padding: var(--space-2) var(--space-3);
-  background: rgba(0, 51, 153, 0.05);
-  border-radius: var(--radius);
-  border: 1px solid rgba(0, 51, 153, 0.1);
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg, rgba(0, 51, 153, 0.06), rgba(255, 215, 0, 0.04));
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(0, 51, 153, 0.15);
+  margin-top: var(--space-3);
 }
 
-/* === COPA DO BRASIL === */
-.fase-copa {
-  padding: var(--space-6);
+.legend-item.special:hover {
+  background: linear-gradient(135deg, rgba(0, 51, 153, 0.1), rgba(255, 215, 0, 0.06));
 }
-.fase-copa h3 {
+
+/* === COPA DO BRASIL — CARDS DE JOGOS === */
+.copa-jogos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.copa-jogo-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4) var(--space-5);
+  border-left: 3px solid var(--accent);
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+.copa-jogo-card:hover {
+  box-shadow: var(--shadow-md);
+  border-left-color: var(--primary);
+  transform: translateX(2px);
+}
+
+.copa-jogo-data {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 1.2rem;
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  margin-bottom: var(--space-3);
+  font-weight: 600;
+}
+.copa-jogo-data i {
+  color: var(--primary-light);
+}
+.hora-indefinida {
+  margin-left: var(--space-2);
+  background: var(--warning-light);
+  color: var(--warning);
+  padding: 1px 8px;
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.copa-jogo-times {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-3);
+}
+.copa-time {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.copa-time-visitante {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+.copa-time img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+.copa-time span {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--gray-900);
+}
+.copa-time .time-cruzeiro {
+  color: var(--primary);
+  font-weight: 800;
+}
+.copa-vs {
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: var(--gray-400);
+  text-align: center;
+  min-width: 24px;
+}
+
+.copa-jogo-estadio,
+.copa-jogo-fase {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-top: var(--space-1);
+}
+.copa-jogo-estadio i,
+.copa-jogo-fase i {
+  color: var(--primary-light);
+  font-size: 0.7rem;
+}
+
+/* === CAMPEAO MINEIRO - PREMIUM DESIGN === */
+@keyframes campeaoEntrada {
+  from { opacity: 0; transform: translateY(40px) scale(0.9); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes coroa {
+  0%, 100% { transform: translateX(-50%) translateY(0) rotate(-8deg); }
+  50%      { transform: translateX(-50%) translateY(-8px) rotate(8deg); }
+}
+@keyframes brilho {
+  0%, 100% { box-shadow: 0 8px 40px rgba(0, 51, 153, 0.4), 0 0 60px rgba(255, 215, 0, 0.15); }
+  50%      { box-shadow: 0 12px 60px rgba(0, 51, 153, 0.5), 0 0 100px rgba(255, 215, 0, 0.3); }
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes floatBadge {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.campeao-container {
+  animation: campeaoEntrada 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  perspective: 1000px;
+}
+
+.campeao-header {
+  text-align: center;
+  padding: var(--space-16) var(--space-8) var(--space-12);
+  background: 
+    linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, transparent 50%),
+    linear-gradient(160deg, #000d33 0%, #001a66 25%, #003399 50%, #001a66 75%, #000d33 100%);
+  border-radius: var(--radius-2xl);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+  animation: brilho 3s ease-in-out infinite;
+}
+
+.campeao-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 15% 20%, rgba(255, 215, 0, 0.15) 0%, transparent 40%),
+    radial-gradient(ellipse at 85% 80%, rgba(255, 215, 0, 0.1) 0%, transparent 40%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.campeao-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    var(--accent) 20%, 
+    var(--white) 50%, 
+    var(--accent) 80%, 
+    transparent 100%
+  );
+  box-shadow: 0 -4px 30px rgba(255, 215, 0, 0.5);
+}
+
+/* Decorative corner accents */
+.campeao-header .corner-accent {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  border: 2px solid rgba(255, 215, 0, 0.3);
+  pointer-events: none;
+  z-index: 2;
+}
+.campeao-header .corner-accent.top-left {
+  top: 20px;
+  left: 20px;
+  border-right: none;
+  border-bottom: none;
+  border-radius: 12px 0 0 0;
+}
+.campeao-header .corner-accent.top-right {
+  top: 20px;
+  right: 20px;
+  border-left: none;
+  border-bottom: none;
+  border-radius: 0 12px 0 0;
+}
+.campeao-header .corner-accent.bottom-left {
+  bottom: 20px;
+  left: 20px;
+  border-right: none;
+  border-top: none;
+  border-radius: 0 0 0 12px;
+}
+.campeao-header .corner-accent.bottom-right {
+  bottom: 20px;
+  right: 20px;
+  border-left: none;
+  border-top: none;
+  border-radius: 0 0 12px 0;
+}
+
+.campeao-confetti {
+  font-size: 1.8rem;
+  letter-spacing: var(--space-6);
+  margin-bottom: var(--space-5);
+  display: block;
+  position: relative;
+  z-index: 3;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.campeao-titulo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.1));
+  border: 1px solid rgba(255, 215, 0, 0.6);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 800;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 3;
+  box-shadow: 
+    0 4px 20px rgba(255, 215, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: floatBadge 3s ease-in-out infinite;
+}
+
+.campeao-titulo-badge i {
+  font-size: 1.1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.campeao-escudo-wrap {
+  position: relative;
+  display: inline-block;
+  margin-bottom: var(--space-6);
+  z-index: 3;
+}
+
+.campeao-escudo-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -20px;
+  background: radial-gradient(circle, rgba(255, 215, 0, 0.2) 0%, transparent 70%);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.campeao-escudo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 40px rgba(255, 215, 0, 0.6));
+  position: relative;
+  z-index: 1;
+  transition: transform 0.3s ease;
+}
+
+.campeao-header:hover .campeao-escudo {
+  transform: scale(1.05);
+}
+
+.campeao-coroa {
+  position: absolute;
+  top: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2.5rem;
+  animation: coroa 2.5s ease-in-out infinite;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+  z-index: 2;
+}
+
+.campeao-nome {
+  font-family: var(--font-display);
+  font-size: clamp(2.2rem, 7vw, 3.5rem);
+  font-weight: 700;
+  color: var(--white);
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  margin-bottom: var(--space-4);
+  position: relative;
+  z-index: 3;
+  background: linear-gradient(180deg, #ffffff 0%, #ffd700 50%, #ffffff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: none;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+}
+
+.campeao-subtitulo {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-8);
+  position: relative;
+  z-index: 3;
+  letter-spacing: 0.5px;
+}
+
+.campeao-subtitulo strong {
+  color: var(--accent);
+  font-weight: 800;
+}
+
+.campeao-final-resultados {
+  display: inline-flex;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--space-4);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-6);
+  margin-top: var(--space-4);
+  position: relative;
+  z-index: 3;
+  backdrop-filter: blur(10px);
+}
+
+.campeao-final-label {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.campeao-final-label i {
+  font-size: 0.9rem;
+}
+
+.campeao-final-jogo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-4);
+  border-right: 1px solid rgba(255, 215, 0, 0.2);
+}
+
+.campeao-final-jogo:last-child {
+  border-right: none;
+}
+
+.campeao-final-leg {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.6);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+}
+
+.campeao-final-placar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--white);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.campeao-placar-num {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+  background: rgba(0, 0, 0, 0.4);
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  min-width: 40px;
+  text-align: center;
+}
+
+/* === COPA DO BRASIL - PROFESSIONAL === */
+.fase-copa {
+  padding: var(--space-8);
+  background: linear-gradient(180deg, var(--white), var(--surface));
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  margin-bottom: var(--space-6);
+}
+
+.fase-copa h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: 1.3rem;
   color: var(--gray-900);
   margin-bottom: var(--space-6);
   font-family: var(--font-display);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--border-light);
+  position: relative;
 }
+
+.fase-copa h3::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  width: 60px;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--primary));
+  border-radius: 2px;
+}
+
 .fase-copa h3 i {
   color: var(--accent);
+  font-size: 1.1em;
+  filter: drop-shadow(0 2px 4px rgba(255, 215, 0, 0.3));
 }
 
 .aviso-sem-jogos-copa {
   display: flex;
   align-items: flex-start;
-  gap: var(--space-4);
+  gap: var(--space-5);
   padding: var(--space-6);
-  background: linear-gradient(135deg, rgba(0, 51, 153, 0.04), rgba(255, 215, 0, 0.04));
+  background: linear-gradient(135deg, rgba(0, 51, 153, 0.06), rgba(255, 215, 0, 0.04));
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
 }
+
 .aviso-icon {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-  border-radius: 50%;
+  border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 4px 15px rgba(0, 51, 153, 0.25);
+  box-shadow: 0 6px 20px rgba(0, 51, 153, 0.3);
 }
+
 .aviso-icon i {
   color: var(--accent);
-  font-size: 1.2rem;
+  font-size: 1.4rem;
 }
 .aviso-content h3 {
   font-size: 1rem;
   color: var(--primary);
   margin-bottom: var(--space-2);
-  font-family: var(--font-main);
+  font-family: var(--font-display);
   font-weight: 700;
-  text-transform: none;
-  letter-spacing: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 .aviso-content p {
   color: var(--gray-600);
@@ -954,26 +1578,36 @@ ul {
   right: var(--space-6);
   background: linear-gradient(135deg, var(--primary), var(--primary-dark));
   color: var(--white);
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-full);
-  display: flex;
+  display: inline-flex;
+  width: auto;
   align-items: center;
   gap: var(--space-2);
   font-weight: 700;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
+  white-space: nowrap;
   box-shadow: var(--shadow-xl);
-  transition: var(--transition);
-  z-index: 100;
-  border: 1px solid rgba(255, 215, 0, 0.2);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s, bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1010;
+  border: 2px solid rgba(255, 215, 0, 0.35);
 }
 .widget-toggle-btn:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 40px rgba(0, 51, 153, 0.4);
+  border-color: rgba(255, 215, 0, 0.6);
 }
 .widget-toggle-btn i {
   color: var(--accent);
+  font-size: 1rem;
 }
 
+/* Quando a live bar estiver visível, empurra o botão para cima */
+body.live-bar-visible .widget-toggle-btn {
+  bottom: calc(var(--space-6) + 58px);
+}
+
+/* Widget de próximos jogos */
 .games-widget {
   position: fixed;
   bottom: 80px;
@@ -989,6 +1623,12 @@ ul {
   visibility: hidden;
   transition: var(--transition-slow);
   border: 1px solid var(--border);
+  z-index: 1011;
+}
+
+/* Quando live bar (mobile) visível, widget também sobe */
+body.live-bar-visible .games-widget {
+  bottom: calc(80px + 58px);
 }
 .games-widget.active {
   transform: translateY(0);
@@ -1138,124 +1778,179 @@ ul {
   border-left: 3px solid var(--primary);
 }
 
-/* === SEMIFINAL MINEIRO === */
+/* === SEMIFINAL MINEIRO - PROFESSIONAL === */
 .semifinal-container {
-  padding: var(--space-2) 0 var(--space-8);
+  padding: var(--space-4) 0 var(--space-10);
 }
 
 .semifinal-header {
   text-align: center;
-  padding: var(--space-10) var(--space-6);
-  margin-bottom: var(--space-8);
-  background: linear-gradient(150deg, #001a66 0%, #003399 55%, #001a66 100%);
-  border-radius: var(--radius-xl);
-  border: 1px solid rgba(255, 215, 0, 0.3);
+  padding: var(--space-12) var(--space-6) var(--space-10);
+  margin-bottom: var(--space-10);
+  background: 
+    linear-gradient(135deg, rgba(0, 0, 0, 0.2) 0%, transparent 50%),
+    linear-gradient(150deg, #000d33 0%, #001a66 25%, #003399 50%, #001a66 75%, #000d33 100%);
+  border-radius: var(--radius-2xl);
+  border: 2px solid rgba(255, 215, 0, 0.4);
   position: relative;
   overflow: hidden;
-  box-shadow: 0 16px 48px rgba(0, 20, 80, 0.5);
+  box-shadow: 
+    0 20px 60px rgba(0, 20, 80, 0.4),
+    0 0 80px rgba(255, 215, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
+
 .semifinal-header::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 25% 60%, rgba(255, 215, 0, 0.07) 0%, transparent 55%),
-    radial-gradient(ellipse at 75% 40%, rgba(255, 215, 0, 0.07) 0%, transparent 55%);
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(255, 215, 0, 0.12) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 70%, rgba(255, 215, 0, 0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 60%);
   pointer-events: none;
+  z-index: 1;
 }
+
 .semifinal-header::after {
   content: "";
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--accent) 20%, 
+    var(--white) 50%, 
+    var(--accent) 80%, 
+    transparent
+  );
+  box-shadow: 0 -2px 20px rgba(255, 215, 0, 0.5);
 }
 
 .semifinal-title-badge {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2);
-  background: rgba(255, 215, 0, 0.1);
-  border: 1px solid rgba(255, 215, 0, 0.35);
+  gap: var(--space-3);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 215, 0, 0.1));
+  border: 1px solid rgba(255, 215, 0, 0.5);
   color: var(--accent);
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  padding: 5px 14px;
+  padding: var(--space-2) var(--space-5);
   border-radius: var(--radius-full);
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-5);
+  position: relative;
+  z-index: 2;
+  box-shadow: 
+    0 4px 16px rgba(255, 215, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 
 .semifinal-title {
   font-family: var(--font-display);
-  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-size: clamp(1.6rem, 5vw, 2.4rem);
   font-weight: 700;
   color: var(--white);
-  margin: 0 0 var(--space-2) 0;
-  letter-spacing: 1px;
+  margin: 0 0 var(--space-3) 0;
+  letter-spacing: 2px;
   text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
 }
 
 .semifinal-subtitle {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.875rem;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.95rem;
+  font-weight: 600;
   margin: 0;
+  position: relative;
+  z-index: 2;
+  letter-spacing: 0.5px;
 }
 
 .semifinal-jogos {
   display: flex;
   flex-direction: column;
-  gap: var(--space-10);
+  gap: var(--space-12);
 }
+
 .semifinal-grupo {
   display: flex;
   flex-direction: column;
-  gap: var(--space-5);
+  gap: var(--space-6);
 }
+
 .semifinal-grupo-header {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  font-size: 0.75rem;
+  gap: var(--space-3);
+  font-size: 0.8rem;
   font-weight: 800;
-  color: var(--accent);
+  color: var(--primary);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  padding: var(--space-2) var(--space-3);
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.12);
+  letter-spacing: 0.15em;
+  padding: var(--space-3) var(--space-4);
+  background: linear-gradient(135deg, rgba(0, 51, 153, 0.08), rgba(255, 215, 0, 0.04));
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
   border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
 }
+
+.semifinal-grupo-header i {
+  color: var(--accent);
+}
+
 .semifinal-jogo-count {
   margin-left: auto;
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: var(--gray-500);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--gray-600);
   text-transform: none;
   letter-spacing: 0;
-  background: rgba(255, 255, 255, 0.06);
-  padding: 2px 8px;
+  background: var(--white);
+  padding: var(--space-1) var(--space-3);
   border-radius: var(--radius-full);
+  border: 1px solid var(--border);
 }
+
 .semifinal-cards-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: var(--space-5);
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: var(--space-6);
   align-items: start;
 }
 
 .semifinal-placar {
+  min-width: 60px;
+  text-align: center;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
+  gap: 2px;
+  }
+.semifinal-placar span {
   font-family: var(--font-display);
   font-size: 1.6rem;
-  font-weight: 900;
-  line-height: 1;
-}
+  font-weight: 700;
+  color: var(--gray-800);
+  letter-spacing: 3px;
+  background: var(--white);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  }
+.semifinal-placar.placar-ao-vivo span {
+  color: var(--primary);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), rgba(0, 51, 153, 0.1));
+  border-color: var(--primary);
+  }
 .semifinal-placar span {
   color: var(--white);
 }
@@ -1271,38 +1966,39 @@ ul {
 }
 
 .semifinal-card {
-  background: var(--gray-800);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(145deg, var(--white) 0%, var(--surface) 100%);
+  border: 1px solid var(--border);
   border-radius: var(--radius-xl);
   padding: var(--space-5) var(--space-5) var(--space-4);
   position: relative;
   overflow: hidden;
   transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
-}
+  box-shadow: var(--shadow-md);
+  }
 .semifinal-card::before {
   content: "";
   position: absolute;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 3px;
-  background: linear-gradient(180deg, var(--accent) 0%, rgba(255, 215, 0, 0.1) 100%);
-  border-radius: 3px 0 0 3px;
-}
+  width: 4px;
+  background: linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%);
+  border-radius: 4px 0 0 4px;
+  }
 .semifinal-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-  border-color: rgba(255, 215, 0, 0.2);
-}
+  box-shadow: 0 16px 40px rgba(0, 51, 153, 0.15);
+  border-color: var(--primary-light);
+  }
 .semifinal-card.jogo-hoje {
-  background: linear-gradient(145deg, #0b1f5e 0%, #001650 100%);
-  border-color: rgba(255, 215, 0, 0.28);
-  box-shadow: 0 0 24px rgba(255, 215, 0, 0.08);
-}
+  background: linear-gradient(145deg, var(--white) 0%, rgba(0, 51, 153, 0.05) 100%);
+  border-color: var(--primary);
+  box-shadow: 0 4px 24px rgba(0, 51, 153, 0.15);
+  }
 .semifinal-card.jogo-hoje::before {
-  width: 4px;
-  background: var(--accent);
-}
+  width: 5px;
+  background: linear-gradient(180deg, var(--accent) 0%, var(--primary) 100%);
+  }
 
 .semifinal-card-top {
   display: flex;
@@ -1314,17 +2010,18 @@ ul {
 .semifinal-fase-badge {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.62rem;
+  gap: var(--space-1);
+  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-dark) 100%);
+  color: var(--gray-900);
+  border: none;
+  font-size: 0.68rem;
   font-weight: 800;
-  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--accent);
-  background: rgba(255, 215, 0, 0.08);
-  border: 1px solid rgba(255, 215, 0, 0.2);
-  padding: 3px 10px;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
   border-radius: var(--radius-full);
-}
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+  }
 .semifinal-hoje-badge {
   display: inline-flex;
   align-items: center;
@@ -1347,13 +2044,17 @@ ul {
 }
 
 .semifinal-card-date {
-  font-size: 0.75rem;
-  color: var(--gray-400);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gray-700);
   display: flex;
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-4);
-}
+  }
+.semifinal-card-date i {
+  color: var(--primary);
+  }
 
 .semifinal-teams {
   display: flex;
@@ -1366,44 +2067,60 @@ ul {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-3) var(--space-2);
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3);
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: linear-gradient(145deg, var(--surface) 0%, var(--gray-100) 100%);
+  border: 1px solid var(--border);
   text-align: center;
-  transition: background 0.18s;
+  transition: all 0.2s ease;
   min-width: 0;
 }
 .semifinal-team:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: linear-gradient(145deg, var(--white) 0%, var(--surface) 100%);
+  border-color: var(--gray-300);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 .semifinal-team.team-cruzeiro {
-  background: rgba(0, 51, 153, 0.22);
-  border-color: rgba(0, 80, 200, 0.3);
+  background: linear-gradient(145deg, rgba(0, 51, 153, 0.12) 0%, rgba(0, 51, 153, 0.08) 100%);
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px rgba(0, 51, 153, 0.1);
+}
+.semifinal-team.team-cruzeiro:hover {
+  background: linear-gradient(145deg, rgba(0, 51, 153, 0.18) 0%, rgba(0, 51, 153, 0.12) 100%);
+  border-color: var(--primary-light);
+  box-shadow: 0 4px 16px rgba(0, 51, 153, 0.15);
 }
 .semifinal-escudo {
-  width: 54px;
-  height: 54px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
-  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.35));
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.2));
 }
 .semifinal-team-name {
-  font-weight: 700;
-  font-size: 0.82rem;
-  color: var(--white);
-  line-height: 1.25;
+  font-weight: 800;
+  font-size: 0.92rem;
+  color: var(--gray-800);
+  line-height: 1.3;
   word-break: break-word;
 }
 .team-cruzeiro .semifinal-team-name {
-  color: var(--accent);
+  color: var(--primary);
+  font-weight: 900;
 }
 .semifinal-mando-label {
-  font-size: 0.58rem;
-  font-weight: 600;
-  color: var(--gray-500);
-  letter-spacing: 0.08em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--white);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
+  background: var(--gray-600);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+}
+.team-cruzeiro .semifinal-mando-label {
+  background: var(--primary);
 }
 .semifinal-vs-box {
   display: flex;
@@ -1424,22 +2141,28 @@ ul {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  margin-top: var(--space-4);
   gap: var(--space-3);
-  padding-top: var(--space-3);
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
   flex-wrap: wrap;
-}
+  }
 .semifinal-estadio {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
   color: var(--gray-500);
   min-width: 0;
   overflow: hidden;
 }
+.semifinal-estadio i {
+  color: var(--primary);
+}
 .semifinal-estadio strong {
-  color: var(--gray-300);
+  color: var(--gray-700);
+  font-weight: 700;
   font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
@@ -1466,6 +2189,481 @@ ul {
   background: var(--accent-light);
   transform: translateY(-1px);
   box-shadow: 0 4px 18px rgba(255, 215, 0, 0.4);
+}
+
+/* Adicione estas classes de zona para Libertadores - visual aprimorado */
+.zona-libertadores-grupos { 
+  background: linear-gradient(135deg, #1e40af, #2563eb) !important; 
+  box-shadow: 
+    0 0 0 3px rgba(30, 64, 175, 0.3),
+    0 0 12px rgba(30, 64, 175, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.zona-libertadores-playoff { 
+  background: linear-gradient(135deg, #7c3aed, #a78bfa) !important; 
+  box-shadow: 
+    0 0 0 3px rgba(124, 58, 237, 0.3),
+    0 0 12px rgba(124, 58, 237, 0.4),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+.zona-libertadores-eliminado { 
+  background: linear-gradient(135deg, #6b7280, #9ca3af) !important; 
+  box-shadow: 
+    0 0 0 3px rgba(107, 114, 128, 0.2),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.15);
+}
+
+/* Linhas coloridas Libertadores - visual premium */
+.grupo-table tbody tr.row-libertadores-grupos { 
+  background: linear-gradient(90deg, rgba(30, 64, 175, 0.12), rgba(30, 64, 175, 0.04));
+  border-left: 4px solid #1e40af;
+}
+.grupo-table tbody tr.row-libertadores-playoff { 
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.12), rgba(124, 58, 237, 0.04));
+  border-left: 4px solid #7c3aed;
+}
+.grupo-table tbody tr.row-libertadores-eliminado { 
+  background: linear-gradient(90deg, rgba(107, 114, 128, 0.10), rgba(107, 114, 128, 0.03));
+  border-left: 4px solid #6b7280;
+}
+
+/* Hover states para linhas Libertadores */
+.grupo-table tbody tr.row-libertadores-grupos:hover { 
+  background: linear-gradient(90deg, rgba(30, 64, 175, 0.18), rgba(30, 64, 175, 0.08));
+}
+.grupo-table tbody tr.row-libertadores-playoff:hover { 
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.18), rgba(124, 58, 237, 0.08));
+}
+.grupo-table tbody tr.row-libertadores-eliminado:hover { 
+  background: linear-gradient(90deg, rgba(107, 114, 128, 0.15), rgba(107, 114, 128, 0.06));
+}
+
+/* Estilos específicos da Libertadores */
+.libertadores-container {
+  padding: var(--space-2) 0 var(--space-8);
+}
+
+.libertadores-header {
+  text-align: center;
+  padding: var(--space-12) var(--space-6) var(--space-10);
+  margin-bottom: var(--space-10);
+  background: 
+    linear-gradient(135deg, rgba(0, 0, 0, 0.3), transparent 50%),
+    linear-gradient(150deg, #001133 0%, #1e40af 25%, #003399 50%, #1e40af 75%, #001133 100%);
+  border-radius: var(--radius-xl);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  overflow: hidden;
+  position: relative;
+  box-shadow: 
+    0 20px 60px rgba(30, 64, 175, 0.4),
+    0 0 100px rgba(255, 215, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.libertadores-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 20% 30%, rgba(255, 215, 0, 0.15) 0%, transparent 45%),
+    radial-gradient(ellipse at 80% 70%, rgba(30, 64, 175, 0.2) 0%, transparent 50%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.libertadores-header::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, 
+    transparent, 
+    var(--accent) 20%, 
+    var(--white) 50%, 
+    var(--accent) 80%, 
+    transparent
+  );
+  box-shadow: 0 -2px 20px rgba(255, 215, 0, 0.6);
+}
+
+.libertadores-title-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 215, 0, 0.1));
+  border: 1px solid rgba(255, 215, 0, 0.5);
+  color: var(--accent);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  font-weight: 900;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
+  margin-bottom: var(--space-5);
+  position: relative;
+  z-index: 2;
+  box-shadow: 
+    0 4px 20px rgba(255, 215, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.libertadores-title-badge i {
+  font-size: 1.1rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.libertadores-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.8rem, 5vw, 2.8rem);
+  font-weight: 900;
+  color: var(--white);
+  margin: 0 0 var(--space-3) 0;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+  text-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.5),
+    0 4px 20px rgba(30, 64, 175, 0.6),
+    0 0 40px rgba(255, 215, 0, 0.3);
+  background: linear-gradient(180deg, #ffffff 0%, #e0e7ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.libertadores-subtitle {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  position: relative;
+  z-index: 2;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  letter-spacing: 0.5px;
+}
+
+.libertadores-title {
+  font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 2rem);
+  font-weight: 700;
+  color: var(--white);
+  margin: 0 0 var(--space-2) 0;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.libertadores-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.grupos-libertadores {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+  gap: var(--space-8);
+  padding: var(--space-2);
+}
+
+.libertadores-card {
+  position: relative;
+}
+
+.libertadores-card::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.3), transparent 40%, rgba(30, 64, 175, 0.2));
+  border-radius: calc(var(--radius-xl) + 2px);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: -1;
+}
+
+.libertadores-card:hover::before {
+  opacity: 1;
+}
+
+.libertadores-card .grupo-card {
+  box-shadow: 
+    0 8px 32px rgba(30, 64, 175, 0.2),
+    0 0 0 1px rgba(30, 64, 175, 0.1);
+  transition: all 0.3s ease;
+}
+
+.libertadores-card:hover .grupo-card {
+  transform: translateY(-6px);
+  box-shadow: 
+    0 16px 48px rgba(30, 64, 175, 0.3),
+    0 0 60px rgba(255, 215, 0, 0.15);
+}
+
+.libertadores-card .grupo-header {
+  background: linear-gradient(135deg, #1e40af 0%, #003399 50%, #0a2a5c 100%);
+  border-bottom: 3px solid rgba(255, 215, 0, 0.5);
+  position: relative;
+  padding: var(--space-5) var(--space-5);
+}
+
+.libertadores-card .grupo-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: 
+    radial-gradient(ellipse at 30% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 100%, rgba(255, 255, 255, 0.05) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.libertadores-card .grupo-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 2.5px;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
+.libertadores-card .grupo-header h3 i {
+  color: var(--accent);
+  font-size: 1.2rem;
+  filter: drop-shadow(0 2px 6px rgba(255, 215, 0, 0.5));
+}
+
+.libertadores-time-cell {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding-left: var(--space-4);
+}
+.libertadores-time-cell img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  transition: transform 0.2s ease;
+}
+.grupo-table tbody tr:hover .libertadores-time-cell img {
+  transform: scale(1.1);
+}
+.libertadores-time-cell span {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--gray-900);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.2px;
+}
+
+/* No desktop, a live bar ocupa o canto inferior direito (380px de largura).
+   O botão de próximos jogos precisa se afastar horizontalmente ou subir. */
+@media (min-width: 768px) {
+  body.live-bar-visible .widget-toggle-btn {
+    /* Move o botão para a esquerda da live bar + gap */
+    right: calc(20px + 380px + var(--space-4));
+    bottom: var(--space-6);
+  }
+  body.live-bar-visible .games-widget {
+    right: calc(20px + 380px + var(--space-4));
+    bottom: 80px;
+  }
+}
+
+/* Estilos para mata-mata da Libertadores */
+.libertadores-mata-mata {
+  margin-top: var(--space-8);
+  padding: var(--space-4);
+  background: var(--surface);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+}
+
+.mata-mata-header h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 1rem;
+  color: var(--gray-900);
+  margin-bottom: var(--space-4);
+}
+
+.mata-mata-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.mata-mata-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+}
+
+.mata-mata-fase {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--accent-dark);
+  text-transform: uppercase;
+  margin-bottom: var(--space-2);
+}
+
+.mata-mata-jogo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.mata-mata-time {
+  flex: 1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.mata-mata-time i {
+  color: var(--accent);
+  font-size: 0.8rem;
+}
+
+.mata-mata-placar {
+  font-weight: 800;
+  font-size: 1.1rem;
+  color: var(--primary);
+  background: var(--surface-2);
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius);
+}
+
+#legend-mineiro {
+    display: none; /* Padrão escondido */
+    flex-direction: column;
+    gap: 15px;
+    width: 100%;
+    margin-top: 20px;
+}
+
+.show-mineiro-selector #legend-mineiro {
+    display: flex !important;
+}
+
+.fase-selector-container {
+    display: flex !important; /* Garante que o container interno apareça */
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    background: #f1f5f9;
+    padding: 15px;
+    border-radius: 12px;
+}
+
+.btn-fase {
+    padding: 8px 16px;
+    border: 1px solid var(--primary);
+    background: white;
+    color: var(--primary);
+    border-radius: 20px;
+    cursor: pointer;
+    font-family: 'Oswald', sans-serif;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+}
+
+.btn-fase.active {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 10px var(--primary-glow);
+}
+
+.btn-fase:hover {
+    background: var(--primary-light);
+    color: white;
+}
+
+/* === NAVEGAÇÃO DE FASES DO MINEIRO === */
+.fase-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-4);
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.fase-nav-label {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--primary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.fase-nav-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: var(--transition);
+  cursor: pointer;
+  border: 2px solid var(--primary);
+  color: var(--primary);
+  background: transparent;
+  min-width: 110px;
+}
+
+.fase-nav-prev { justify-content: flex-start; }
+.fase-nav-next { justify-content: flex-end; }
+
+.fase-nav-btn:hover {
+  background: var(--primary);
+  color: var(--white);
+  box-shadow: 0 4px 12px var(--primary-glow);
+}
+
+.fase-nav-btn i {
+  font-size: 0.9rem;
+}
+
+.fase-nav-disabled {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2) var(--space-4);
+  min-width: 110px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--gray-200);
+  color: var(--gray-300);
+  cursor: default;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 480px) {
+  .fase-nav-btn span { display: none; }
+  .fase-nav-btn { min-width: 44px; justify-content: center; padding: var(--space-2) var(--space-3); }
+  .fase-nav-disabled { min-width: 44px; }
 }
 
 /* === FOOTER === */
@@ -1557,13 +2755,126 @@ ul {
   }
   .grupos-mineiro {
     grid-template-columns: 1fr;
+    gap: var(--space-6);
+    padding: var(--space-3);
   }
+  
+  /* Tabela responsiva - melhorias */
+  .table-wrapper {
+    border-radius: var(--radius-lg);
+    margin: 0 calc(-1 * var(--space-2));
+  }
+  
+  .table-container {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--primary) var(--gray-100);
+  }
+  
+  .table-container::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .table-container::-webkit-scrollbar-track {
+    background: var(--gray-100);
+    border-radius: 3px;
+  }
+  
+  .table-container::-webkit-scrollbar-thumb {
+    background: var(--primary);
+    border-radius: 3px;
+  }
+  
+  #tabela-brasileirao {
+    min-width: 600px;
+  }
+  
+  #tabela-brasileirao th {
+    padding: var(--space-3) var(--space-2);
+    font-size: 0.7rem;
+    letter-spacing: 0.5px;
+  }
+  
+  #tabela-brasileirao td {
+    padding: var(--space-3) var(--space-2);
+    font-size: 0.85rem;
+  }
+  
+  .celula-time-completa {
+    gap: var(--space-3);
+    padding-left: var(--space-3);
+  }
+  
+  .posicao-container {
+    min-width: 48px;
+    gap: var(--space-2);
+  }
+  
+  .escudo-pequeno {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .nome-time-texto {
+    font-size: 0.85rem;
+  }
+  
+  .numero-posicao {
+    font-size: 0.95rem;
+  }
+  
+  .indicador-zona {
+    width: 10px;
+    height: 10px;
+  }
+  
+  .dado-pontos strong {
+    font-size: 0.95rem;
+    padding: var(--space-1) var(--space-2);
+  }
+  
+  /* Grupos responsivos */
+  .grupo-card {
+    border-radius: var(--radius-lg);
+  }
+  
+  .grupo-table th {
+    padding: var(--space-3) var(--space-2);
+    font-size: 0.7rem;
+  }
+  
+  .grupo-table td {
+    padding: var(--space-3) var(--space-2);
+    font-size: 0.85rem;
+  }
+  
+  /* Legenda responsiva */
+  .legend-container {
+    padding: var(--space-4);
+    margin-top: var(--space-6);
+  }
+  
+  .legend-group {
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+  
+  .legend-item {
+    padding: var(--space-2);
+  }
+  
+  /* Widget responsivo */
   .widget-toggle-btn {
     bottom: var(--space-4);
     right: var(--space-4);
+    left: auto;
+    padding: var(--space-2) var(--space-3);
   }
   .widget-toggle-btn span {
     display: none;
+  }
+  body.live-bar-visible .widget-toggle-btn {
+    bottom: calc(var(--space-4) + 58px);
   }
   .games-widget {
     right: var(--space-4);
@@ -1571,38 +2882,74 @@ ul {
     width: auto;
     bottom: 70px;
   }
-  .celula-time-completa {
-    gap: var(--space-2);
-    padding-left: var(--space-2);
-  }
-  .escudo-pequeno {
-    width: 24px;
-    height: 24px;
-  }
-  .nome-time-texto {
-    font-size: 0.82rem;
-  }
-  #tabela-brasileirao th,
-  #tabela-brasileirao td {
-    padding: var(--space-2) var(--space-1);
-  }
-  .legend-group {
-    flex-direction: column;
-    gap: var(--space-3);
+  body.live-bar-visible .games-widget {
+    bottom: calc(70px + 58px);
   }
 }
 
 @media (max-width: 480px) {
+  #tabela-brasileirao {
+    min-width: 520px;
+  }
+  
+  #tabela-brasileirao th {
+    padding: var(--space-2) var(--space-1);
+    font-size: 0.65rem;
+  }
+  
+  #tabela-brasileirao td {
+    padding: var(--space-2) var(--space-1);
+    font-size: 0.8rem;
+  }
+  
+  .celula-time-completa {
+    gap: var(--space-2);
+    padding-left: var(--space-2);
+  }
+  
   .posicao-container {
-    min-width: 40px;
+    min-width: 42px;
   }
+  
   .numero-posicao {
-    font-size: 0.9rem;
+    font-size: 0.85rem;
+    min-width: 20px;
   }
+  
   .indicador-zona {
     width: 8px;
     height: 8px;
   }
+  
+  .escudo-pequeno {
+    width: 24px;
+    height: 24px;
+  }
+  
+  .nome-time-texto {
+    font-size: 0.78rem;
+  }
+  
+  .dado-pontos strong {
+    font-size: 0.85rem;
+    padding: 2px var(--space-2);
+    min-width: 32px;
+  }
+  
+  /* Grupos em mobile */
+  .grupos-mineiro {
+    padding: var(--space-2);
+    gap: var(--space-4);
+  }
+  
+  .grupo-header {
+    padding: var(--space-3) var(--space-4);
+  }
+  
+  .grupo-header h3 {
+    font-size: 0.95rem;
+  }
+  
   .semifinal-cards-grid {
     grid-template-columns: 1fr;
   }

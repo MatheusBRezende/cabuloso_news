@@ -1,17 +1,24 @@
 <!doctype html>
 <html lang="pt-BR">
   <head>
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6313205148679744"
-     crossorigin="anonymous"></script>
+    <script
+      async
+      src="[https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6313205148679744](https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6313205148679744)"
+      crossorigin="anonymous"
+    ></script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Cabuloso News - Tudo sobre o Maior de Minas. Notícias, tabelas do campeonato, resultados e avaliação dos jogadores do Cruzeiro." />
+    <meta
+      name="description"
+      content="Cabuloso News - Tudo sobre o Maior de Minas. Notícias, tabelas do campeonato, resultados e avaliação dos jogadores do Cruzeiro."
+    />
     <title>CABULOSO NEWS | Competições</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://cdnjs.cloudflare.com" />
-    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="preconnect" href="[https://fonts.googleapis.com](https://fonts.googleapis.com)" />
+    <link rel="preconnect" href="[https://fonts.gstatic.com](https://fonts.gstatic.com)" crossorigin />
+    <link rel="preconnect" href="[https://cdnjs.cloudflare.com](https://cdnjs.cloudflare.com)" />
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Nunito:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="icon" type="image/png" href="assets/logo.png" />
     <link rel="stylesheet" href="./style/style-brasileirao.css" />
   </head>
@@ -22,7 +29,7 @@
       <nav class="nav">
         <a href="index.html" class="logo">
           <div class="logo-icon">
-            <img src="./assets/logo.png" alt="" />
+            <img src="./assets/logo.png" alt="Logo Cabuloso News" />
           </div>
           <div class="logo-text">
             <span class="logo-main">Cabuloso</span>
@@ -31,10 +38,18 @@
         </a>
 
         <ul class="nav-menu" id="navMenu">
-          <li><a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a></li>
-          <li><a href="competicao.html" class="nav-link active"><i class="fas fa-table"></i> Tabela</a></li>
-          <li><a href="resultados.html" class="nav-link"><i class="fas fa-trophy"></i> Resultados</a></li>
-          <li><a href="avaliacao.html" class="nav-link"><i class="fas fa-star"></i> Avaliar</a></li>
+          <li>
+            <a href="index.html" class="nav-link"><i class="fas fa-home"></i> Início</a>
+          </li>
+          <li>
+            <a href="competicao.html" class="nav-link active"><i class="fas fa-table"></i> Tabela</a>
+          </li>
+          <li>
+            <a href="resultados.html" class="nav-link"><i class="fas fa-trophy"></i> Resultados</a>
+          </li>
+          <li>
+            <a href="avaliacao.html" class="nav-link"><i class="fas fa-star"></i> Avaliar</a>
+          </li>
         </ul>
 
         <button class="menu-toggle" id="menuToggle" aria-label="Menu">
@@ -63,6 +78,9 @@
               <button class="campeonato-btn active" data-campeonato="brasileirao" type="button" role="tab" aria-selected="true">
                 <i class="fas fa-futbol" aria-hidden="true"></i><span>Brasileirão</span>
               </button>
+              <button class="campeonato-btn" data-campeonato="libertadores" type="button" role="tab" aria-selected="false">
+                <i class="fas fa-trophy" aria-hidden="true"></i><span>Libertadores</span>
+              </button>
               <button class="campeonato-btn" data-campeonato="mineiro" type="button" role="tab" aria-selected="false">
                 <i class="fas fa-mountain" aria-hidden="true"></i><span>Mineiro</span>
               </button>
@@ -81,7 +99,8 @@
           <div class="section-header">
             <div class="header-info">
               <h2 class="section-title" id="section-title">
-                <i class="fas fa-trophy section-icon" aria-hidden="true"></i> Classificação
+                <i class="fas fa-trophy section-icon" aria-hidden="true"></i>
+                Classificação
               </h2>
               <div class="update-info" aria-live="polite">
                 <div class="update-pulse" aria-hidden="true"></div>
@@ -95,19 +114,11 @@
             <div id="tabela-container" class="table-container" role="region" aria-label="Tabela de classificação">
               <div class="loading-state" aria-busy="true">
                 <div class="loading-spinner">
-                  <div class="spinner" role="status"><span class="sr-only">Carregando...</span></div>
-                </div>
-                <p>Carregando dados do campeonato...</p>
-              </div>
-              <div class="fase-copa fade-in-up" id="copa-static-games" style="display: none">
-                <h3><i class="fas fa-trophy" aria-hidden="true"></i> Copa do Brasil 2026</h3>
-                <div class="aviso-sem-jogos-copa" role="alert">
-                  <div class="aviso-icon" aria-hidden="true"><i class="fas fa-clock"></i></div>
-                  <div class="aviso-content">
-                    <h3>AGUARDE ENQUANTO NÃO HÁ PARTIDAS</h3>
-                    <p>As informações dos próximos jogos da Copa do Brasil serão atualizadas em breve.</p>
+                  <div class="spinner" role="status">
+                    <span class="sr-only">Carregando...</span>
                   </div>
                 </div>
+                <p>Carregando dados do campeonato...</p>
               </div>
             </div>
           </div>
@@ -117,6 +128,7 @@
               <div class="legend-header">
                 <h3><i class="fas fa-info-circle" aria-hidden="true"></i> Legenda</h3>
               </div>
+              
               <div class="legend-group" id="legend-brasileirao" data-campeonato="brasileirao" role="list">
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-libertadores" aria-hidden="true"></span>
@@ -134,36 +146,28 @@
                   <span class="legend-color zona-rebaixamento" aria-hidden="true"></span>
                   <span class="legend-text"><strong>Rebaixamento</strong><small>(17º-20º)</small></span>
                 </div>
-                <div class="legend-item special" role="listitem">
-                  <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
-                  <span class="legend-text"><strong>Cruzeiro</strong><small>Maior de Minas</small></span>
-                </div>
               </div>
+
               <div class="legend-group" id="legend-mineiro" data-campeonato="mineiro" role="list" style="display: none">
+                <div class="fase-selector-container" id="fase-buttons-mineiro">
+                  <button class="btn-fase active" type="button" onclick="filtrarFaseMineiro(event, 'todas')">Todas</button>
+                  <button class="btn-fase" type="button" onclick="filtrarFaseMineiro(event, 'grupos')">Grupos</button>
+                  <button class="btn-fase" type="button" onclick="filtrarFaseMineiro(event, 'semifinal')">Semifinal</button>
+                  <button class="btn-fase" type="button" onclick="filtrarFaseMineiro(event, 'final')">Final</button>
+                </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-classificado-direto" aria-hidden="true"></span>
                   <span class="legend-text"><strong>Classificado Direto</strong><small>(1º de cada grupo)</small></span>
                 </div>
                 <div class="legend-item" role="listitem">
                   <span class="legend-color zona-melhor-segundo" aria-hidden="true"></span>
-                  <span class="legend-text"><strong>Melhor 2º - Classifica</strong><small>(melhor entre os 3)</small></span>
+                  <span class="legend-text"><strong>Melhor 2º</strong><small>(classifica)</small></span>
                 </div>
-                <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-segundo-normal" aria-hidden="true"></span>
-                  <span class="legend-text"><strong>2º Colocado</strong><small>(não classifica)</small></span>
-                </div>
-                <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-eliminado" aria-hidden="true"></span>
-                  <span class="legend-text"><strong>3º Colocado</strong><small>(eliminado)</small></span>
-                </div>
-                <div class="legend-item" role="listitem">
-                  <span class="legend-color zona-repescagem" aria-hidden="true"></span>
-                  <span class="legend-text"><strong>4º - Repescagem</strong><small>(disputa vaga na semi)</small></span>
-                </div>
-                <div class="legend-item special" role="listitem">
-                  <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
-                  <span class="legend-text"><strong>Cruzeiro</strong><small>Maior de Minas</small></span>
-                </div>
+              </div>
+
+              <div class="legend-item special" role="listitem">
+                <span class="legend-color zona-cruzeiro" aria-hidden="true"></span>
+                <span class="legend-text"><strong>Cruzeiro</strong><small>Maior de Minas</small></span>
               </div>
             </div>
           </div>
@@ -199,8 +203,11 @@
         <div class="footer-content">
           <div class="footer-section">
             <div class="footer-logo">
-              <img src="./assets/logo.png" alt="" class="footer-logo-img" width="50" height="50" />
-              <div><h3>Cabuloso News</h3><p>O portal do torcedor celeste</p></div>
+              <img src="./assets/logo.png" alt="Logo Rodapé" class="footer-logo-img" width="50" height="50" />
+              <div>
+                <h3>Cabuloso News</h3>
+                <p>O portal do torcedor celeste</p>
+              </div>
             </div>
           </div>
           <div class="footer-section">
@@ -218,7 +225,7 @@
           </div>
         </div>
         <div class="footer-bottom">
-          <p>&copy; 2025 CabulosoNews - Site de fãs para fãs. Não possuímos vínculo oficial com o Cruzeiro Esporte Clube.</p>
+          <p>&copy; 2026 CabulosoNews - Site de fãs para fãs. Não possuímos vínculo oficial com o Cruzeiro Esporte Clube.</p>
         </div>
       </div>
     </footer>
